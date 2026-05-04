@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
 
@@ -46,8 +46,6 @@ function AdminRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-
-      {/* Public */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/alianza" element={<Alianza />} />
@@ -57,7 +55,6 @@ function AppRoutes() {
       <Route path="/tracking" element={<Tracking />} />
       <Route path="/terminos" element={<Terminos />} />
 
-      {/* Private */}
       <Route path="/app/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/app/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/app/prcard" element={<PrivateRoute><PRCardPage /></PrivateRoute>} />
@@ -66,33 +63,39 @@ function AppRoutes() {
       <Route path="/app/contenido" element={<PrivateRoute><ContentPage /></PrivateRoute>} />
       <Route path="/app/tienda" element={<PrivateRoute><StorePage /></PrivateRoute>} />
 
-      {/* Admin */}
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
-      {/* Redirects */}
       <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-
     </Routes>
   )
 }
 
-// Root
+// ROOT
 export default function App() {
   const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const alreadyLoaded = sessionStorage.getItem("app_loaded")
+
+    if (alreadyLoaded) {
+      setLoaded(true)
+    }
+  }, [])
 
   return (
     <AuthProvider>
 
       {!loaded && (
-        <LoadingScreen onDone={() => setLoaded(true)} />
+        <LoadingScreen
+          onDone={() => {
+            sessionStorage.setItem("app_loaded", "true")
+            setLoaded(true)
+          }}
+        />
       )}
 
-      <div className={`transition-opacity duration-500 ${
-        loaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}>
-        <AppRoutes />
-      </div>
+      {loaded && <AppRoutes />}
 
     </AuthProvider>
   )
