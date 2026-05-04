@@ -1,7 +1,14 @@
+import { useEffect } from 'react'
+
 export default function LoadingScreen({ onDone }) {
-  setTimeout(() => {
-    onDone()
-  }, 1500)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onDone()
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-[#050508] z-50">
