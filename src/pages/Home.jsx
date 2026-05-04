@@ -55,27 +55,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* EXPLORAR */}
-        <section className="space-y-4 animate-fade-up stagger-2">
-          <p className="section-label">Explorar</p>
-
-          <div className="grid grid-cols-2 gap-4">
-
-            <Card link="/cuponeras" icon="🎟️" title="Cuponeras" subtitle="Flexibilidad" />
-            <Card link="/pasaporte-kids" icon="🧒" title="Kids" subtitle="Progreso" />
-            <Card link="/uniformes" icon="👕" title="Uniformes" subtitle="Vestí PR" />
-            <Card link="/tracking" icon="🏷️" title="Tracking" subtitle="Equipos" />
-
-            <a href="/terminos" className="glass p-4 rounded-xl col-span-2 text-center hover:scale-[1.02] transition">
-              <p className="text-white">📜 Reglas</p>
-              <p className="text-gray-400 text-xs">Condiciones del club</p>
-            </a>
-
-          </div>
-        </section>
-
         {/* HORARIOS */}
-        <section className="space-y-4 animate-fade-up stagger-3">
+        <section className="space-y-4 animate-fade-up stagger-2">
           <p className="section-label">Horarios</p>
 
           <div className="flex gap-2 justify-center">
@@ -98,8 +79,40 @@ export default function Home() {
           )}
         </section>
 
-        {/* PLATAFORMAS */}
+        {/* INSCRIPCIONES */}
+        <section className="space-y-4 animate-fade-up stagger-3">
+          <p className="section-label">Inscripciones abiertas</p>
+
+          <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="pr-banner hover:scale-[1.02] transition">
+            <img src="/banner-kids.png" />
+          </a>
+
+          <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="pr-banner hover:scale-[1.02] transition">
+            <img src="/banner-adultos.png" />
+          </a>
+        </section>
+
+        {/* EXPLORAR */}
         <section className="space-y-4 animate-fade-up stagger-4">
+          <p className="section-label">Explorar</p>
+
+          <div className="grid grid-cols-2 gap-4">
+
+            <Card link="/cuponeras" icon="🎟️" title="Cuponeras" subtitle="Flexibilidad" />
+            <Card link="/pasaporte-kids" icon="🧒" title="Kids" subtitle="Progreso" />
+            <Card link="/uniformes" icon="👕" title="Uniformes" subtitle="Vestí PR" />
+            <Card link="/tracking" icon="🏷️" title="Tracking" subtitle="Equipos" />
+
+            <a href="/terminos" className="glass p-4 rounded-xl col-span-2 text-center hover:scale-[1.02] transition">
+              <p className="text-white">📜 Reglas</p>
+              <p className="text-gray-400 text-xs">Condiciones del club</p>
+            </a>
+
+          </div>
+        </section>
+
+        {/* PLATAFORMAS */}
+        <section className="space-y-4 animate-fade-up stagger-5">
           <p className="section-label">Plataformas</p>
 
           <a href="https://puntarollerscard.com/" className="pr-banner hover:scale-[1.02] transition">
@@ -112,7 +125,7 @@ export default function Home() {
         </section>
 
         {/* ALIANZA */}
-        <section className="space-y-4 animate-fade-up stagger-5">
+        <section className="space-y-4 animate-fade-up stagger-6">
           <p className="section-label">Comunidad</p>
 
           <a href="/alianza" className="glass p-4 rounded-xl flex justify-between items-center hover:scale-[1.02] transition">
