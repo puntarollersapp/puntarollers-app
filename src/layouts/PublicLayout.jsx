@@ -6,10 +6,15 @@ export default function PublicLayout({ children }) {
   return (
     <div className="min-h-screen bg-[#050508] text-white pb-20">
 
-      {/* CONTENIDO */}
-      <div>{children}</div>
+      {/* CONTENIDO CON TRANSICION */}
+      <div
+        key={location.pathname}
+        className="animate-page-enter"
+      >
+        {children}
+      </div>
 
-      {/* BARRA INFERIOR */}
+      {/* NAV BAR */}
       <nav className="fixed bottom-0 left-0 w-full glass-dark border-t border-white/5 px-4 py-2 flex justify-around items-center z-50">
 
         <NavItem
@@ -48,19 +53,35 @@ export default function PublicLayout({ children }) {
 
 function NavItem({ href, label, icon, active }) {
   return (
-    <a href={href} className="flex flex-col items-center text-xs">
+    <a
+      href={href}
+      className="flex flex-col items-center text-xs relative group"
+    >
 
-      <span className={`text-lg transition ${
-        active ? "text-yellow-500 scale-110" : "text-gray-400"
-      }`}>
+      {/* ICONO */}
+      <span
+        className={`text-lg transition-all duration-300 ${
+          active
+            ? "text-yellow-500 scale-110 drop-shadow-[0_0_6px_rgba(201,168,76,0.6)]"
+            : "text-gray-400 group-active:scale-95"
+        }`}
+      >
         {icon}
       </span>
 
-      <span className={`mt-1 ${
-        active ? "text-yellow-500" : "text-gray-500"
-      }`}>
+      {/* TEXTO */}
+      <span
+        className={`mt-1 transition ${
+          active ? "text-yellow-500" : "text-gray-500"
+        }`}
+      >
         {label}
       </span>
+
+      {/* GLOW UNDERLINE */}
+      {active && (
+        <div className="absolute -bottom-1 w-6 h-[2px] bg-yellow-500 blur-[2px]" />
+      )}
 
     </a>
   )
