@@ -1,17 +1,13 @@
 import { useState, useEffect } from "react"
 import PublicLayout from "../layouts/PublicLayout"
-import { getCupos } from "../data/cupos"
 
 export default function Home() {
   const [day, setDay] = useState("miercoles")
-  const [cupos, setCupos] = useState(getCupos())
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCupos(getCupos())
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
+  const [cupos, setCupos] = useState({
+    miercoles: { principiantes: 6, avanzado: 3 },
+    sabado: { kids: 8, adultos: 5 }
+  })
 
   return (
     <PublicLayout>
@@ -73,31 +69,15 @@ export default function Home() {
 
           {day === "miercoles" && (
             <div className="space-y-3">
-              <ScheduleCard
-                title="Principiantes"
-                time="19:00 - 20:00"
-                cupos={cupos.miercoles.principiantes}
-              />
-              <ScheduleCard
-                title="Avanzado"
-                time="20:00 - 21:00"
-                cupos={cupos.miercoles.avanzado}
-              />
+              <Card title="Principiantes" time="19:00 - 20:00" cupos={cupos.miercoles.principiantes} />
+              <Card title="Avanzado" time="20:00 - 21:00" cupos={cupos.miercoles.avanzado} />
             </div>
           )}
 
           {day === "sabado" && (
             <div className="space-y-3">
-              <ScheduleCard
-                title="PR Kids"
-                time="19:00 - 20:00"
-                cupos={cupos.sabado.kids}
-              />
-              <ScheduleCard
-                title="Adultos"
-                time="20:00 - 21:00"
-                cupos={cupos.sabado.adultos}
-              />
+              <Card title="PR Kids" time="19:00 - 20:00" cupos={cupos.sabado.kids} />
+              <Card title="Adultos" time="20:00 - 21:00" cupos={cupos.sabado.adultos} />
             </div>
           )}
         </section>
@@ -106,17 +86,37 @@ export default function Home() {
         <section className="space-y-4">
           <p className="section-label">Inscripciones</p>
 
-          <img
-            src="/banners/kids.jpg"
-            alt="Kids"
-            className="rounded-xl"
-          />
+          <a href="https://form.jotform.com/Claudinio/inscripcioneskids">
+            <img src="/banner-kids.png" className="rounded-xl w-full" />
+          </a>
 
-          <img
-            src="/banners/adultos.jpg"
-            alt="Adultos"
-            className="rounded-xl"
-          />
+          <a href="https://form.jotform.com/Claudinio/Inscripciones2026">
+            <img src="/banner-adultos.png" className="rounded-xl w-full" />
+          </a>
+        </section>
+
+        {/* PLATAFORMAS */}
+        <section className="space-y-4">
+          <p className="section-label">Plataformas</p>
+
+          <a href="https://puntarollerscard.com/">
+            <img src="/banner-prcard.png" className="rounded-xl w-full" />
+          </a>
+
+          <a href="https://rollermap.vercel.app/">
+            <img src="/banner-rollermap.png" className="rounded-xl w-full" />
+          </a>
+        </section>
+
+        {/* ALIANZA */}
+        <section className="space-y-4">
+          <p className="section-label">Alianza</p>
+
+          <a href="/alianza">
+            <div className="glass p-4 rounded-xl text-center">
+              🤝 Alianza Rollers
+            </div>
+          </a>
         </section>
 
       </div>
@@ -126,7 +126,7 @@ export default function Home() {
 
 /* COMPONENTES */
 
-function ScheduleCard({ title, time, cupos }) {
+function Card({ title, time, cupos }) {
   return (
     <div className="glass p-4 rounded-2xl flex justify-between items-center">
       <div>
@@ -146,9 +146,7 @@ function Tab({ active, children, onClick }) {
     <button
       onClick={onClick}
       className={`px-5 py-2 rounded-full text-sm ${
-        active
-          ? "bg-yellow-600 text-white"
-          : "glass text-gray-400"
+        active ? "bg-yellow-600 text-white" : "glass text-gray-400"
       }`}
     >
       {children}
