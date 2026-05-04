@@ -8,6 +8,7 @@ export default function Home() {
     <PublicLayout>
       <div className="px-4 py-6 space-y-12">
 
+        {/* HERO */}
         <section className="text-center space-y-4">
           <h1 className="text-3xl font-bold text-white leading-tight">
             No es solo patinar,
@@ -26,76 +27,59 @@ export default function Home() {
             </a>
 
             <a href="#inscripciones" className="btn-ghost">
-              Empezar ahora
+              Inscribirme
             </a>
           </div>
         </section>
 
+        {/* INSCRIPCIONES */}
         <section id="inscripciones" className="space-y-4">
           <p className="section-label">Inscripciones abiertas</p>
 
           <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="pr-banner">
-            <img src="/banner-kids.png" alt="Inscripciones PR Kids" />
+            <img src="/banner-kids.png" alt="PR Kids" />
           </a>
 
           <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="pr-banner">
-            <img src="/banner-adultos.png" alt="Inscripciones Adultos" />
+            <img src="/banner-adultos.png" alt="Adultos" />
           </a>
         </section>
 
+        {/* ACCESOS DIRECTOS (REEMPLAZA LO CONFUSO) */}
         <section className="space-y-4">
-          <p className="section-label">Punta Rollers</p>
-
-          <div className="grid grid-cols-1 gap-3 text-center">
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">Comunidad</p>
-              <p className="text-gray-400 text-xs">Rodamos juntos</p>
-            </div>
-
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">Progreso</p>
-              <p className="text-gray-400 text-xs">Evolucionás en cada clase</p>
-            </div>
-
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">Experiencia</p>
-              <p className="text-gray-400 text-xs">Clases, salidas, comunidad y momentos PR</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <p className="section-label">El club</p>
+          <p className="section-label">Accesos rápidos</p>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">PR Kids</p>
-              <p className="text-gray-400 text-xs">Desde 4 años</p>
-            </div>
 
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">Adultos</p>
-              <p className="text-gray-400 text-xs">Todos los niveles</p>
-            </div>
+            <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="glass p-4 rounded-xl text-center">
+              <p className="text-white font-medium">🧒 PR Kids</p>
+              <p className="text-gray-400 text-xs">Inscribir niño</p>
+            </a>
 
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">PR Card</p>
-              <p className="text-gray-400 text-xs">Beneficios exclusivos</p>
-            </div>
+            <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="glass p-4 rounded-xl text-center">
+              <p className="text-white font-medium">🧑 Adultos</p>
+              <p className="text-gray-400 text-xs">Inscribirme</p>
+            </a>
 
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">Alianza</p>
-              <p className="text-gray-400 text-xs">Red nacional</p>
-            </div>
+            <a href="https://puntarollerscard.com/" className="glass p-4 rounded-xl text-center">
+              <p className="text-white font-medium">💳 PR Card</p>
+              <p className="text-gray-400 text-xs">Ver beneficios</p>
+            </a>
+
+            <a href="https://chat.whatsapp.com/EmQnKWP0T6o62Pln03omq0" className="glass p-4 rounded-xl text-center">
+              <p className="text-white font-medium">🌍 Comunidad</p>
+              <p className="text-gray-400 text-xs">Unirme</p>
+            </a>
+
           </div>
         </section>
 
+        {/* HORARIOS */}
         <section className="space-y-4">
           <p className="section-label">Horarios</p>
 
           <div className="flex gap-2 justify-center">
             <button
-              type="button"
               onClick={() => setDay("miercoles")}
               className={`px-4 py-2 rounded-full text-sm ${
                 day === "miercoles"
@@ -107,7 +91,6 @@ export default function Home() {
             </button>
 
             <button
-              type="button"
               onClick={() => setDay("sabado")}
               className={`px-4 py-2 rounded-full text-sm ${
                 day === "sabado"
@@ -121,112 +104,48 @@ export default function Home() {
 
           {day === "miercoles" && (
             <div className="space-y-3">
-              <ScheduleCard
-                title="Adultos Principiantes"
-                time="19:00 - 20:00"
-                place="Parada 2 · Aire libre"
-                cupos="6 disponibles"
-              />
-
-              <ScheduleCard
-                title="Adultos Intermedio / Avanzado"
-                time="20:00 - 21:00"
-                place="Parada 2 · Aire libre"
-                cupos="3 disponibles"
-              />
+              <ScheduleCard title="Adultos Principiantes" time="19:00 - 20:00" place="Parada 2 · Aire libre" cupos="6 disponibles" />
+              <ScheduleCard title="Adultos Intermedio / Avanzado" time="20:00 - 21:00" place="Parada 2 · Aire libre" cupos="3 disponibles" />
             </div>
           )}
 
           {day === "sabado" && (
             <div className="space-y-3">
-              <ScheduleCard
-                title="PR Kids"
-                time="19:00 - 20:00"
-                place="Pista cerrada"
-                cupos="5 disponibles"
-              />
-
-              <ScheduleCard
-                title="Adultos · Clase mixta"
-                time="20:00 - 21:00"
-                place="Pista cerrada"
-                cupos="4 disponibles"
-              />
+              <ScheduleCard title="PR Kids" time="19:00 - 20:00" place="Pista cerrada" cupos="5 disponibles" />
+              <ScheduleCard title="Adultos" time="20:00 - 21:00" place="Pista cerrada" cupos="4 disponibles" />
             </div>
           )}
         </section>
 
+        {/* GALERÍA */}
         <section className="space-y-4">
           <p className="section-label">Galería</p>
 
           <div className="grid grid-cols-2 gap-4">
-            <a
-              href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_"
-              target="_blank"
-              rel="noreferrer"
-              className="glass p-4 rounded-xl text-center"
-            >
+
+            <a href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_" target="_blank" className="glass p-4 rounded-xl text-center">
               <p className="text-white font-medium">📸 Clases</p>
-              <p className="text-gray-400 text-xs">
-                Se actualiza después de cada clase
-              </p>
+              <p className="text-gray-400 text-xs">Se suben después de cada clase</p>
             </a>
 
-            <a
-              href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ"
-              target="_blank"
-              rel="noreferrer"
-              className="glass p-4 rounded-xl text-center"
-            >
-              <p className="text-white font-medium">🎉 Rolleadas</p>
-              <p className="text-gray-400 text-xs">
-                Se suben luego de cada evento
-              </p>
+            <a href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ" target="_blank" className="glass p-4 rounded-xl text-center">
+              <p className="text-white font-medium">🎉 Eventos</p>
+              <p className="text-gray-400 text-xs">Fotos de rolleadas</p>
             </a>
+
           </div>
         </section>
 
+        {/* PLATAFORMAS */}
         <section className="space-y-4">
           <p className="section-label">Plataformas</p>
 
-          <a href="https://puntarollerscard.com/" target="_blank" rel="noreferrer" className="pr-banner">
-            <img src="/banner-prcard.png" alt="PR Card" />
+          <a href="https://puntarollerscard.com/" className="pr-banner">
+            <img src="/banner-prcard.png" />
           </a>
 
-          <a href="https://rollermap.vercel.app/" target="_blank" rel="noreferrer" className="pr-banner">
-            <img src="/banner-rollermap.png" alt="RollerMap" />
-          </a>
-        </section>
-
-        <section className="space-y-4">
-          <p className="section-label">Comunidad</p>
-
-          <a
-            href="https://chat.whatsapp.com/EmQnKWP0T6o62Pln03omq0"
-            target="_blank"
-            rel="noreferrer"
-            className="pr-banner"
-          >
-            <img src="/banner-alianza.png" alt="Alianza Rollers" />
-          </a>
-
-          <a
-            href="https://www.instagram.com/alianzaroller"
-            target="_blank"
-            rel="noreferrer"
-            className="btn-ghost w-full"
-          >
-            Ver Instagram de Alianza
-          </a>
-        </section>
-
-        <section className="text-center space-y-3 pt-4">
-          <p className="text-white font-medium">
-            ¿Ya sos parte de Punta Rollers?
-          </p>
-
-          <a href="/login" className="btn-gold w-full">
-            Entrar al club
+          <a href="https://rollermap.vercel.app/" className="pr-banner">
+            <img src="/banner-rollermap.png" />
           </a>
         </section>
 
