@@ -1,9 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
 
-// Pages
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -21,7 +20,6 @@ import Uniformes from './pages/Uniformes'
 import Tracking from './pages/Tracking'
 import Terminos from './pages/Terminos'
 
-// Guards
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
   const location = useLocation()
@@ -42,7 +40,6 @@ function AdminRoute({ children }) {
   return children
 }
 
-// Routes
 function AppRoutes() {
   return (
     <Routes>
@@ -71,32 +68,20 @@ function AppRoutes() {
   )
 }
 
-// ROOT
 export default function App() {
   const [loaded, setLoaded] = useState(false)
 
-  useEffect(() => {
-    const alreadyLoaded = sessionStorage.getItem("app_loaded")
-
-    if (alreadyLoaded) {
-      setLoaded(true)
-    }
-  }, [])
-
   return (
     <AuthProvider>
-
       {!loaded && (
-        <LoadingScreen
-          onDone={() => {
-            sessionStorage.setItem("app_loaded", "true")
-            setLoaded(true)
-          }}
-        />
+        <LoadingScreen onDone={() => setLoaded(true)} />
       )}
 
-      {loaded && <AppRoutes />}
-
+      <div className={`transition-opacity duration-500 ${
+        loaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
+        <AppRoutes />
+      </div>
     </AuthProvider>
   )
 }
