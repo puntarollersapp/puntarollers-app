@@ -22,7 +22,7 @@ export default function Home() {
           </p>
 
           <div className="flex gap-3 justify-center pt-2">
-            <a href="/login" className="btn-gold">
+            <a href="/app/dashboard" className="btn-gold">
               Entrar al club
             </a>
 
@@ -37,39 +37,51 @@ export default function Home() {
           <p className="section-label">Inscripciones abiertas</p>
 
           <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="pr-banner">
-            <img src="/banner-kids.png" alt="PR Kids" />
+            <img src="/banner-kids.png" />
           </a>
 
           <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="pr-banner">
-            <img src="/banner-adultos.png" alt="Adultos" />
+            <img src="/banner-adultos.png" />
           </a>
         </section>
 
-        {/* ACCESOS DIRECTOS (REEMPLAZA LO CONFUSO) */}
+        {/* QUIÉNES SOMOS */}
+        <section className="space-y-4 text-center">
+          <p className="section-label">Quiénes somos</p>
+
+          <div className="glass p-5 rounded-xl space-y-2">
+            <p className="text-white font-medium">
+              Punta Rollers
+            </p>
+            <p className="text-gray-400 text-sm">
+              Escuela de patín en línea en Punta del Este.
+              Clases para niños y adultos, todos los niveles.
+            </p>
+            <p className="text-gray-500 text-xs">
+              Más que aprender, venís a vivir la experiencia PR.
+            </p>
+          </div>
+        </section>
+
+        {/* DÓNDE ESTAMOS */}
         <section className="space-y-4">
-          <p className="section-label">Accesos rápidos</p>
+          <p className="section-label">Dónde estamos</p>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-3">
 
-            <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="glass p-4 rounded-xl text-center">
-              <p className="text-white font-medium">🧒 PR Kids</p>
-              <p className="text-gray-400 text-xs">Inscribir niño</p>
-            </a>
+            <div className="glass p-4 rounded-xl">
+              <p className="text-white font-medium">📍 Parada 2</p>
+              <p className="text-gray-400 text-xs">
+                Punta del Este · Aire libre
+              </p>
+            </div>
 
-            <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="glass p-4 rounded-xl text-center">
-              <p className="text-white font-medium">🧑 Adultos</p>
-              <p className="text-gray-400 text-xs">Inscribirme</p>
-            </a>
-
-            <a href="https://puntarollerscard.com/" className="glass p-4 rounded-xl text-center">
-              <p className="text-white font-medium">💳 PR Card</p>
-              <p className="text-gray-400 text-xs">Ver beneficios</p>
-            </a>
-
-            <a href="https://chat.whatsapp.com/EmQnKWP0T6o62Pln03omq0" className="glass p-4 rounded-xl text-center">
-              <p className="text-white font-medium">🌍 Comunidad</p>
-              <p className="text-gray-400 text-xs">Unirme</p>
-            </a>
+            <div className="glass p-4 rounded-xl">
+              <p className="text-white font-medium">🏟️ Pista cerrada</p>
+              <p className="text-gray-400 text-xs">
+                Maldonado · Clases indoor
+              </p>
+            </div>
 
           </div>
         </section>
@@ -79,33 +91,29 @@ export default function Home() {
           <p className="section-label">Horarios</p>
 
           <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => setDay("miercoles")}
+            <button onClick={() => setDay("miercoles")}
               className={`px-4 py-2 rounded-full text-sm ${
                 day === "miercoles"
                   ? "bg-yellow-600 text-white"
                   : "glass text-gray-400"
-              }`}
-            >
+              }`}>
               Miércoles
             </button>
 
-            <button
-              onClick={() => setDay("sabado")}
+            <button onClick={() => setDay("sabado")}
               className={`px-4 py-2 rounded-full text-sm ${
                 day === "sabado"
                   ? "bg-yellow-600 text-white"
                   : "glass text-gray-400"
-              }`}
-            >
+              }`}>
               Sábado
             </button>
           </div>
 
           {day === "miercoles" && (
             <div className="space-y-3">
-              <ScheduleCard title="Adultos Principiantes" time="19:00 - 20:00" place="Parada 2 · Aire libre" cupos="6 disponibles" />
-              <ScheduleCard title="Adultos Intermedio / Avanzado" time="20:00 - 21:00" place="Parada 2 · Aire libre" cupos="3 disponibles" />
+              <ScheduleCard title="Adultos Principiantes" time="19:00 - 20:00" place="Parada 2" cupos="6 disponibles" />
+              <ScheduleCard title="Intermedio / Avanzado" time="20:00 - 21:00" place="Parada 2" cupos="3 disponibles" />
             </div>
           )}
 
@@ -125,12 +133,16 @@ export default function Home() {
 
             <a href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_" target="_blank" className="glass p-4 rounded-xl text-center">
               <p className="text-white font-medium">📸 Clases</p>
-              <p className="text-gray-400 text-xs">Se suben después de cada clase</p>
+              <p className="text-gray-400 text-xs">
+                Fotos después de cada clase
+              </p>
             </a>
 
             <a href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ" target="_blank" className="glass p-4 rounded-xl text-center">
               <p className="text-white font-medium">🎉 Eventos</p>
-              <p className="text-gray-400 text-xs">Fotos de rolleadas</p>
+              <p className="text-gray-400 text-xs">
+                Rolleadas y salidas
+              </p>
             </a>
 
           </div>
