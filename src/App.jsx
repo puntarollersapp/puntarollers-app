@@ -17,6 +17,8 @@ import Admin from './pages/Admin'
 import Alianza from './pages/Alianza'
 import Cuponeras from './pages/Cuponeras'
 import PasaporteKids from './pages/PasaporteKids'
+import Uniformes from './pages/Uniformes'
+import Tracking from './pages/Tracking'
 
 // Guards
 function PrivateRoute({ children }) {
@@ -50,6 +52,8 @@ function AppRoutes() {
       <Route path="/alianza" element={<Alianza />} />
       <Route path="/cuponeras" element={<Cuponeras />} />
       <Route path="/pasaporte-kids" element={<PasaporteKids />} />
+      <Route path="/uniformes" element={<Uniformes />} />
+      <Route path="/tracking" element={<Tracking />} />
 
       {/* Private */}
       <Route path="/app/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
