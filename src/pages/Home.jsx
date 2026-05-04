@@ -21,14 +21,37 @@ export default function Home() {
             Bienvenido a Punta Rollers
           </p>
 
-          <div className="flex gap-3 justify-center pt-2">
-            <a href="/app/dashboard" className="btn-gold">
-              Entrar al club
+          <div className="space-y-2 pt-2">
+            <a href="/login" className="btn-gold w-full">
+              Entrar como alumno
             </a>
 
-            <a href="#inscripciones" className="btn-ghost">
-              Inscribirme
+            <a href="/admin" className="text-xs text-gray-500 underline">
+              Acceso administrador
             </a>
+          </div>
+        </section>
+
+        {/* QUIÉNES SOMOS */}
+        <section className="space-y-4 text-center">
+          <p className="section-label">Quiénes somos</p>
+
+          <div className="glass p-5 rounded-xl space-y-3">
+            <p className="text-white font-semibold text-lg">
+              🛼 Punta Rollers
+            </p>
+
+            <p className="text-gray-300 text-sm">
+              Escuela de patín en línea en Punta del Este.
+            </p>
+
+            <p className="text-gray-400 text-sm">
+              Clases para niños y adultos, desde nivel inicial hasta avanzado.
+            </p>
+
+            <p className="text-gray-500 text-xs">
+              🔥 Aprendés, progresás y formás parte de una comunidad real.
+            </p>
           </div>
         </section>
 
@@ -43,24 +66,6 @@ export default function Home() {
           <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="pr-banner">
             <img src="/banner-adultos.png" />
           </a>
-        </section>
-
-        {/* QUIÉNES SOMOS */}
-        <section className="space-y-4 text-center">
-          <p className="section-label">Quiénes somos</p>
-
-          <div className="glass p-5 rounded-xl space-y-2">
-            <p className="text-white font-medium">
-              Punta Rollers
-            </p>
-            <p className="text-gray-400 text-sm">
-              Escuela de patín en línea en Punta del Este.
-              Clases para niños y adultos, todos los niveles.
-            </p>
-            <p className="text-gray-500 text-xs">
-              Más que aprender, venís a vivir la experiencia PR.
-            </p>
-          </div>
         </section>
 
         {/* DÓNDE ESTAMOS */}
@@ -134,31 +139,18 @@ export default function Home() {
             <a href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_" target="_blank" className="glass p-4 rounded-xl text-center">
               <p className="text-white font-medium">📸 Clases</p>
               <p className="text-gray-400 text-xs">
-                Fotos después de cada clase
+                Se actualiza después de cada clase
               </p>
             </a>
 
             <a href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ" target="_blank" className="glass p-4 rounded-xl text-center">
-              <p className="text-white font-medium">🎉 Eventos</p>
+              <p className="text-white font-medium">🎉 Rolleadas</p>
               <p className="text-gray-400 text-xs">
-                Rolleadas y salidas
+                Fotos de eventos
               </p>
             </a>
 
           </div>
-        </section>
-
-        {/* PLATAFORMAS */}
-        <section className="space-y-4">
-          <p className="section-label">Plataformas</p>
-
-          <a href="https://puntarollerscard.com/" className="pr-banner">
-            <img src="/banner-prcard.png" />
-          </a>
-
-          <a href="https://rollermap.vercel.app/" className="pr-banner">
-            <img src="/banner-rollermap.png" />
-          </a>
         </section>
 
       </div>
