@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import PublicLayout from "../layouts/PublicLayout"
 
 export default function Home() {
@@ -17,7 +18,7 @@ export default function Home() {
     <PublicLayout>
       <div className="px-4 py-8 space-y-14">
 
-        {/* ───── HERO PRO ───── */}
+        {/* HERO */}
         <section className="text-center space-y-6 animate-fade-up">
           <h1 className="text-4xl font-bold leading-tight">
             No es solo patinar,
@@ -31,17 +32,17 @@ export default function Home() {
           </p>
 
           <div className="space-y-3 pt-2">
-            <a href="/login" className="btn-gold w-full">
+            <Link to="/login" className="btn-gold w-full">
               Entrar como alumno
-            </a>
+            </Link>
 
-            <a href="/admin" className="btn-ghost w-full">
+            <Link to="/admin" className="btn-ghost w-full">
               Acceso administrador
-            </a>
+            </Link>
           </div>
         </section>
 
-        {/* ───── QUIÉNES SOMOS ───── */}
+        {/* QUIÉNES SOMOS */}
         <section className="space-y-4 animate-fade-up stagger-1">
           <p className="section-label text-center">Quiénes somos</p>
 
@@ -62,7 +63,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ───── DÓNDE ESTAMOS ───── */}
+        {/* DÓNDE ESTAMOS */}
         <section className="space-y-4 animate-fade-up stagger-2">
           <p className="section-label">Dónde estamos</p>
 
@@ -79,7 +80,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ───── HORARIOS ───── */}
+        {/* HORARIOS */}
         <section className="space-y-4 animate-fade-up stagger-3">
           <p className="section-label">Horarios</p>
 
@@ -94,120 +95,84 @@ export default function Home() {
 
           {day === "miercoles" && (
             <div className="space-y-3">
-              <ScheduleCard
-                title="Principiantes"
-                time="19:00 - 20:00"
-                cupos="6 disponibles"
-              />
-              <ScheduleCard
-                title="Avanzado"
-                time="20:00 - 21:00"
-                cupos="3 disponibles"
-              />
+              <ScheduleCard title="Principiantes" time="19:00 - 20:00" cupos="6 disponibles" />
+              <ScheduleCard title="Avanzado" time="20:00 - 21:00" cupos="3 disponibles" />
             </div>
           )}
 
           {day === "sabado" && (
             <div className="space-y-3">
-              <ScheduleCard
-                title="PR Kids"
-                time="19:00 - 20:00"
-                cupos="5 disponibles"
-              />
-              <ScheduleCard
-                title="Adultos"
-                time="20:00 - 21:00"
-                cupos="4 disponibles"
-              />
+              <ScheduleCard title="PR Kids" time="19:00 - 20:00" cupos="5 disponibles" />
+              <ScheduleCard title="Adultos" time="20:00 - 21:00" cupos="4 disponibles" />
             </div>
           )}
         </section>
 
-        {/* ───── INSCRIPCIONES ───── */}
+        {/* INSCRIPCIONES */}
         <section id="inscripciones" className="space-y-4 animate-fade-up stagger-4">
           <p className="section-label">Inscripciones</p>
 
-          <a
-            href="https://form.jotform.com/Claudinio/inscripcioneskids"
-            className="pr-banner"
-          >
-            <img src="/banner-kids.png" />
+          <a href="https://form.jotform.com/Claudinio/inscripcioneskids">
+            <img src="/banner-kids.png" className="rounded-xl" />
           </a>
 
-          <a
-            href="https://form.jotform.com/Claudinio/Inscripciones2026"
-            className="pr-banner"
-          >
-            <img src="/banner-adultos.png" />
+          <a href="https://form.jotform.com/Claudinio/Inscripciones2026">
+            <img src="/banner-adultos.png" className="rounded-xl" />
           </a>
         </section>
 
-        {/* ───── EXPLORAR ───── */}
+        {/* EXPLORAR */}
         <section id="explorar" className="space-y-4 animate-fade-up stagger-5">
           <p className="section-label">Explorar Punta Rollers</p>
 
           <div className="grid grid-cols-2 gap-4">
-
             <Card link="/cuponeras" icon="🎟️" title="Cuponeras" subtitle="Cómo funcionan" />
             <Card link="/pasaporte-kids" icon="🧒" title="Pasaporte Kids" subtitle="Progreso infantil" />
             <Card link="/uniformes" icon="👕" title="Uniformes" subtitle="Remeras y buzos" />
             <Card link="/tracking" icon="🏷️" title="PR Tracking" subtitle="Identificación" />
 
-            <a href="/terminos" className="glass p-4 rounded-2xl text-center col-span-2">
+            <Link to="/terminos" className="glass p-4 rounded-2xl text-center col-span-2">
               <p className="text-white font-semibold">📜 Reglas y condiciones</p>
               <p className="text-gray-400 text-xs">Funcionamiento del club</p>
-            </a>
-
+            </Link>
           </div>
         </section>
 
-        {/* ───── GALERÍA ───── */}
+        {/* GALERÍA */}
         <section className="space-y-4 animate-fade-up stagger-6">
           <p className="section-label">Galería</p>
 
           <div className="grid grid-cols-2 gap-4">
-            <a
-              href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_"
-              target="_blank"
-              className="glass p-4 rounded-2xl text-center"
-            >
+            <a href="https://drive.google.com/..." target="_blank" className="glass p-4 rounded-2xl text-center">
               <p className="text-white font-semibold">📸 Clases</p>
-              <p className="text-gray-400 text-xs">
-                Se actualiza luego de cada clase
-              </p>
+              <p className="text-gray-400 text-xs">Se actualiza luego de cada clase</p>
             </a>
 
-            <a
-              href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ"
-              target="_blank"
-              className="glass p-4 rounded-2xl text-center"
-            >
+            <a href="https://drive.google.com/..." target="_blank" className="glass p-4 rounded-2xl text-center">
               <p className="text-white font-semibold">🎉 Rolleadas</p>
-              <p className="text-gray-400 text-xs">
-                Fotos de eventos y salidas
-              </p>
+              <p className="text-gray-400 text-xs">Eventos y salidas</p>
             </a>
           </div>
         </section>
 
-        {/* ───── PLATAFORMAS ───── */}
+        {/* PLATAFORMAS */}
         <section className="space-y-4 animate-fade-up">
           <p className="section-label">Plataformas PR</p>
 
-          <a href="https://puntarollerscard.com/" className="pr-banner">
-            <img src="/banner-prcard.png" />
+          <a href="https://puntarollerscard.com/">
+            <img src="/banner-prcard.png" className="rounded-xl" />
           </a>
 
-          <a href="https://rollermap.vercel.app/" className="pr-banner">
-            <img src="/banner-rollermap.png" />
+          <a href="https://rollermap.vercel.app/">
+            <img src="/banner-rollermap.png" className="rounded-xl" />
           </a>
         </section>
 
-        {/* ───── ALIANZA ───── */}
+        {/* ALIANZA */}
         <section className="space-y-4 animate-fade-up">
           <p className="section-label">Comunidad</p>
 
-          <a href="/alianza" className="glass p-4 rounded-2xl flex justify-between">
+          <Link to="/alianza" className="glass p-4 rounded-2xl flex justify-between">
             <div>
               <p className="text-white font-semibold">🛼 Alianza Rollers</p>
               <p className="text-gray-400 text-sm">
@@ -216,7 +181,7 @@ export default function Home() {
             </div>
 
             <span className="text-gray-500">→</span>
-          </a>
+          </Link>
         </section>
 
       </div>
@@ -254,10 +219,10 @@ function Tab({ active, children, onClick }) {
 
 function Card({ link, icon, title, subtitle }) {
   return (
-    <a href={link} className="glass p-4 rounded-2xl text-center">
+    <Link to={link} className="glass p-4 rounded-2xl text-center">
       <p className="text-xl">{icon}</p>
       <p className="text-white text-sm font-semibold">{title}</p>
       <p className="text-gray-400 text-xs">{subtitle}</p>
-    </a>
+    </Link>
   )
 }
