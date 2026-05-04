@@ -12,54 +12,88 @@ export default function Uniformes() {
           </h1>
 
           <p className="text-gray-400 text-sm">
-            Vestí la experiencia Punta Rollers.
+            Vestí Punta Rollers dentro y fuera de la pista
           </p>
         </section>
 
-        {/* IMAGEN PRINCIPAL */}
-        <section className="pr-banner">
-          <img src="/uniformes-pr.png" alt="Uniformes Punta Rollers" />
-        </section>
-
-        {/* DESCRIPCION */}
+        {/* INTRO */}
         <section className="glass p-5 rounded-xl space-y-3">
           <p className="text-white font-semibold">
-            Diseño exclusivo
+            Diseño oficial de la comunidad
           </p>
 
           <p className="text-gray-300 text-sm">
-            Nuestras remeras están diseñadas para patinar cómodo, con estilo y representar la comunidad PR.
+            Los uniformes de Punta Rollers están pensados para acompañarte en cada entrenamiento, con comodidad, estilo y identidad.
           </p>
 
           <p className="text-gray-400 text-sm">
-            Material liviano, respirable y pensado para entrenamiento.
+            Cada línea está adaptada según edad y uso, con diseños diferentes para niños y adultos.
           </p>
+        </section>
+
+        {/* LINEAS */}
+        <section className="space-y-3">
+          <p className="section-label">Líneas disponibles</p>
+
+          <div className="grid grid-cols-1 gap-3">
+
+            {/* KIDS */}
+            <div className="glass p-4 rounded-xl space-y-2">
+              <p className="text-white font-medium">
+                🧒 PR Kids
+              </p>
+
+              <p className="text-gray-300 text-sm">
+                Remeras diseñadas especialmente para niños.
+              </p>
+
+              <p className="text-gray-400 text-xs">
+                Diseño más dinámico, cómodo y adaptado al aprendizaje.
+              </p>
+            </div>
+
+            {/* ADULTOS */}
+            <div className="glass p-4 rounded-xl space-y-2">
+              <p className="text-white font-medium">
+                🧑 Adultos
+              </p>
+
+              <p className="text-gray-300 text-sm">
+                Remeras y buzos oficiales de entrenamiento.
+              </p>
+
+              <p className="text-gray-400 text-xs">
+                Diseño más sobrio y técnico, pensado para rendimiento y estilo.
+              </p>
+            </div>
+
+          </div>
         </section>
 
         {/* BENEFICIOS */}
         <section className="space-y-3">
-          <p className="section-label">¿Por qué tenerla?</p>
+          <p className="section-label">¿Por qué tenerlo?</p>
 
           <div className="grid grid-cols-1 gap-3">
 
             <div className="glass p-4 rounded-xl">
               <p className="text-white">🔥 Identidad</p>
               <p className="text-gray-400 text-xs">
-                Formás parte de Punta Rollers
+                Representás Punta Rollers
               </p>
             </div>
 
             <div className="glass p-4 rounded-xl">
               <p className="text-white">🛼 Comodidad</p>
               <p className="text-gray-400 text-xs">
-                Ideal para entrenar
+                Pensado para entrenar
               </p>
             </div>
 
             <div className="glass p-4 rounded-xl">
-              <p className="text-white">📸 Estética</p>
+              <p className="text-white">📸 Presencia</p>
               <p className="text-gray-400 text-xs">
-                Se ve increíble en fotos y eventos
+                Se luce en fotos, eventos y salidas
               </p>
             </div>
 
@@ -72,11 +106,11 @@ export default function Uniformes() {
             href="https://wa.me/598XXXXXXXX"
             className="btn-gold w-full"
           >
-            Pedir mi uniforme
+            Consultar talles y modelos
           </a>
 
           <p className="text-gray-500 text-xs">
-            Consultá talles y disponibilidad por WhatsApp
+            Disponibilidad según stock y temporada
           </p>
         </section>
 
