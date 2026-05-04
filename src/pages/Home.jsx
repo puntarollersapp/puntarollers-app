@@ -7,8 +7,7 @@ return (
 
 
 
-  {/* HERO */}
-  <div className="text-center space-y-2 animate-fade">
+  <div className="text-center space-y-2">
     <h1 className="text-2xl font-bold text-white">
       No es solo patinar, es pertenecer
     </h1>
@@ -20,18 +19,12 @@ return (
   {/* INSCRIPCIONES */}
   <div className="space-y-4">
 
-    <a
-      href="https://form.jotform.com/Claudinio/inscripcioneskids"
-      className="banner animate-fade"
-    >
-      <img src="/banner-kids.png" alt="Inscripciones Kids" />
+    <a href="https://form.jotform.com/Claudinio/inscripcioneskids">
+      <img src="/banner-kids.png" className="rounded-xl w-full" />
     </a>
 
-    <a
-      href="https://form.jotform.com/Claudinio/Inscripciones2026"
-      className="banner animate-fade delay-1"
-    >
-      <img src="/banner-adultos.png" alt="Inscripciones Adultos" />
+    <a href="https://form.jotform.com/Claudinio/Inscripciones2026">
+      <img src="/banner-adultos.png" className="rounded-xl w-full" />
     </a>
 
   </div>
@@ -39,18 +32,12 @@ return (
   {/* PLATAFORMAS */}
   <div className="space-y-4">
 
-    <a
-      href="https://puntarollerscard.com/"
-      className="banner animate-fade delay-2"
-    >
-      <img src="/banner-prcard.png" alt="PR Card" />
+    <a href="https://puntarollerscard.com/">
+      <img src="/banner-prcard.png" className="rounded-xl w-full" />
     </a>
 
-    <a
-      href="https://rollermap.vercel.app/"
-      className="banner animate-fade delay-3"
-    >
-      <img src="/banner-rollermap.png" alt="RollerMap" />
+    <a href="https://rollermap.vercel.app/">
+      <img src="/banner-rollermap.png" className="rounded-xl w-full" />
     </a>
 
   </div>
@@ -58,17 +45,11 @@ return (
   {/* ALIANZA */}
   <div className="space-y-4">
 
-    <a
-      href="https://chat.whatsapp.com/EmQnKWP0T6o62Pln03omq0"
-      className="banner animate-fade delay-4"
-    >
-      <img src="/banner-alianza.png" alt="Alianza Rollers" />
+    <a href="https://chat.whatsapp.com/EmQnKWP0T6o62Pln03omq0">
+      <img src="/banner-alianza.png" className="rounded-xl w-full" />
     </a>
 
-    <a
-      href="https://www.instagram.com/alianzaroller"
-      className="animate-fade delay-5"
-    >
+    <a href="https://www.instagram.com/alianzaroller">
       <div className="text-center text-sm text-gray-400 underline">
         Ver Instagram de Alianza
       </div>
@@ -82,4 +63,3 @@ return (
 
 )
 }
-
