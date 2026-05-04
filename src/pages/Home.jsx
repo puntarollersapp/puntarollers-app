@@ -2,12 +2,9 @@ import { horarios } from '../data/mockData'
 import { useState } from 'react'
 
 export default function Home() {
-  const [diaActivo, setDiaActivo] = useState('Lunes')
+  const [diaActivo, setDiaActivo] = useState('Miércoles')
 
-  const dias = Object.keys(
-    horarios.reduce((acc, h) => ({ ...acc, [h.dia]: true }), {})
-  )
-
+  const dias = horarios.map(h => h.dia)
   const clasesDelDia = horarios.find(h => h.dia === diaActivo)?.clases || []
 
   return (
@@ -62,7 +59,15 @@ export default function Home() {
           {clasesDelDia.map((clase, i) => (
             <div key={i} className="glass p-4 rounded-xl">
               <p className="font-medium">{clase.nombre}</p>
-              <p className="text-sm text-white/60">{clase.hora}</p>
+
+              <p className="text-sm text-white/60">
+                {clase.hora}
+              </p>
+
+              <p className="text-xs text-white/40">
+                {clase.lugar}
+              </p>
+
               <p className="text-xs text-green-400 mt-1">
                 {clase.cupos} cupos
               </p>
@@ -74,7 +79,6 @@ export default function Home() {
       {/* BANNERS */}
       <section className="space-y-4">
 
-        {/* PR CARD */}
         <a
           href="https://puntarollerscard.com/"
           target="_blank"
@@ -82,11 +86,10 @@ export default function Home() {
         >
           <h3 className="font-semibold">PR Card</h3>
           <p className="text-sm text-white/60">
-            Tu membresía digital. Beneficios, acceso y experiencia completa dentro del club.
+            Tu membresía digital con beneficios y acceso al club.
           </p>
         </a>
 
-        {/* ROLLERMAP */}
         <a
           href="https://rollermap.vercel.app/"
           target="_blank"
@@ -94,11 +97,10 @@ export default function Home() {
         >
           <h3 className="font-semibold">RollerMap</h3>
           <p className="text-sm text-white/60">
-            Encontrá escuelas y grupos de patín en todo Uruguay cerca tuyo.
+            Encontrá escuelas y grupos de patín en todo Uruguay.
           </p>
         </a>
 
-        {/* TRACK SYSTEM */}
         <a
           href="https://tracksystempr.netlify.app/"
           target="_blank"
@@ -106,20 +108,19 @@ export default function Home() {
         >
           <h3 className="font-semibold">Track System</h3>
           <p className="text-sm text-white/60">
-            Plataforma de seguimiento de progreso y actividad dentro del club.
+            Seguimiento de progreso dentro del club.
           </p>
         </a>
 
-        {/* ALIANZA */}
         <div className="glass p-4 rounded-xl space-y-3">
           <h3 className="font-semibold">Alianza Rollers</h3>
 
           <p className="text-sm text-white/60">
-            Rodamos juntos. Sumá tu energía e invitá a más rolleros a ser parte.
+            Rodamos juntos, sumá tu energía e invitá a más rolleros.
           </p>
 
           <p className="text-xs text-white/40">
-            Comunidad nacional que conecta equipos y organiza salidas en todo Uruguay.
+            Comunidad nacional que conecta patinadores y organiza salidas.
           </p>
 
           <div className="flex gap-2">
@@ -151,19 +152,19 @@ export default function Home() {
 
         <div className="grid grid-cols-1 gap-3">
 
-          <a className="glass p-4 rounded-xl">
+          <div className="glass p-4 rounded-xl">
             <h3 className="font-semibold">PR Kids</h3>
             <p className="text-sm text-white/60">
-              Clases para niños desde 4 años. Aprendizaje progresivo y divertido.
+              Desde 4 años. Aprendizaje progresivo y divertido.
             </p>
-          </a>
+          </div>
 
-          <a className="glass p-4 rounded-xl">
+          <div className="glass p-4 rounded-xl">
             <h3 className="font-semibold">Adultos</h3>
             <p className="text-sm text-white/60">
-              Todos los niveles. Técnica, velocidad y progreso real.
+              Todos los niveles. Técnica y progreso real.
             </p>
-          </a>
+          </div>
 
         </div>
       </section>
