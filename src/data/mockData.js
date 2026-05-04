@@ -96,3 +96,47 @@ export const mensajesGlobales = [
     visible: true,
   }
 ]
+
+// ─── Contenido / Galería ─────────────────────────────────
+export const contenido = [
+  {
+    id: 1,
+    titulo: 'Torneo Verano 2023',
+    tipo: 'galeria',
+    categoria: 'Eventos',
+    url: 'https://drive.google.com',
+    fecha: '2023-02-10'
+  },
+  {
+    id: 2,
+    titulo: 'Show de Navidad 2023',
+    tipo: 'video',
+    categoria: 'Eventos',
+    url: 'https://youtube.com',
+    fecha: '2023-12-20'
+  },
+  {
+    id: 3,
+    titulo: 'Speed Training Highlights',
+    tipo: 'video',
+    categoria: 'Entrenamiento',
+    url: 'https://youtube.com',
+    fecha: '2024-03-15'
+  },
+  {
+    id: 4,
+    titulo: 'Rodada Grupal Abril 2024',
+    tipo: 'galeria',
+    categoria: 'Rodadas',
+    url: 'https://drive.google.com',
+    fecha: '2024-04-20'
+  },
+  {
+    id: 5,
+    titulo: 'PR Kids Recital 2024',
+    tipo: 'galeria',
+    categoria: 'PR Kids',
+    url: 'https://drive.google.com',
+    fecha: '2024-07-05'
+  }
+]
