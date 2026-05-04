@@ -46,46 +46,59 @@ export default function Home() {
             </p>
 
             <p className="text-gray-400 text-sm">
-              Clases para niños y adultos, desde nivel inicial hasta avanzado.
+              Clases para niños y adultos, todos los niveles.
             </p>
 
             <p className="text-gray-500 text-xs">
-              🔥 Aprendés, progresás y formás parte de una comunidad real.
+              🔥 Comunidad · Progreso · Experiencia real
             </p>
           </div>
         </section>
 
         {/* INSCRIPCIONES */}
         <section className="space-y-4">
-          <p className="section-label">Inscripciones abiertas</p>
+          <p className="section-label">Inscripciones</p>
 
           <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="pr-banner">
-            <img src="/banner-kids.png" alt="PR Kids" />
+            <img src="/banner-kids.png" />
           </a>
 
           <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="pr-banner">
-            <img src="/banner-adultos.png" alt="Adultos" />
+            <img src="/banner-adultos.png" />
           </a>
         </section>
 
-        {/* DONDE ESTAMOS */}
+        {/* EXPLORAR (TODO LINKEADO) */}
         <section className="space-y-4">
-          <p className="section-label">Dónde estamos</p>
+          <p className="section-label">Explorar Punta Rollers</p>
 
-          <div className="grid grid-cols-1 gap-3">
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">📍 Parada 2</p>
-              <p className="text-gray-400 text-xs">
-                Punta del Este · Aire libre
-              </p>
-            </div>
+          <div className="grid grid-cols-2 gap-4">
 
-            <div className="glass p-4 rounded-xl">
-              <p className="text-white font-medium">🏟️ Pista cerrada</p>
-              <p className="text-gray-400 text-xs">
-                Maldonado · Clases indoor
-              </p>
-            </div>
+            <a href="/cuponeras" className="glass p-4 rounded-xl text-center">
+              <p className="text-white">🎟️ Cuponeras</p>
+              <p className="text-gray-400 text-xs">Clases flexibles</p>
+            </a>
+
+            <a href="/pasaporte-kids" className="glass p-4 rounded-xl text-center">
+              <p className="text-white">🧒 Pasaporte Kids</p>
+              <p className="text-gray-400 text-xs">Progreso infantil</p>
+            </a>
+
+            <a href="/uniformes" className="glass p-4 rounded-xl text-center">
+              <p className="text-white">👕 Uniformes</p>
+              <p className="text-gray-400 text-xs">Vestí PR</p>
+            </a>
+
+            <a href="/tracking" className="glass p-4 rounded-xl text-center">
+              <p className="text-white">📊 Tracking</p>
+              <p className="text-gray-400 text-xs">Seguimiento</p>
+            </a>
+
+            <a href="/terminos" className="glass p-4 rounded-xl text-center col-span-2">
+              <p className="text-white">📜 Reglas y condiciones</p>
+              <p className="text-gray-400 text-xs">Funcionamiento del club</p>
+            </a>
+
           </div>
         </section>
 
@@ -105,15 +118,15 @@ export default function Home() {
 
           {day === "miercoles" && (
             <div className="space-y-3">
-              <ScheduleCard title="Adultos Principiantes" time="19:00 - 20:00" place="Parada 2 · Aire libre" cupos="6 disponibles" />
-              <ScheduleCard title="Adultos Intermedio / Avanzado" time="20:00 - 21:00" place="Parada 2 · Aire libre" cupos="3 disponibles" />
+              <ScheduleCard title="Adultos Principiantes" time="19:00 - 20:00" place="Parada 2" cupos="6 disponibles" />
+              <ScheduleCard title="Intermedio / Avanzado" time="20:00 - 21:00" place="Parada 2" cupos="3 disponibles" />
             </div>
           )}
 
           {day === "sabado" && (
             <div className="space-y-3">
               <ScheduleCard title="PR Kids" time="19:00 - 20:00" place="Pista cerrada" cupos="5 disponibles" />
-              <ScheduleCard title="Adultos Mixto" time="20:00 - 21:00" place="Pista cerrada" cupos="4 disponibles" />
+              <ScheduleCard title="Adultos" time="20:00 - 21:00" place="Pista cerrada" cupos="4 disponibles" />
             </div>
           )}
         </section>
@@ -123,15 +136,15 @@ export default function Home() {
           <p className="section-label">Galería</p>
 
           <div className="grid grid-cols-2 gap-4">
+
             <a href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_" target="_blank" className="glass p-4 rounded-xl text-center">
               <p className="text-white">📸 Clases</p>
-              <p className="text-gray-400 text-xs">Se actualiza luego de cada clase</p>
             </a>
 
             <a href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ" target="_blank" className="glass p-4 rounded-xl text-center">
               <p className="text-white">🎉 Eventos</p>
-              <p className="text-gray-400 text-xs">Rolleadas y salidas</p>
             </a>
+
           </div>
         </section>
 
@@ -148,7 +161,7 @@ export default function Home() {
           </a>
         </section>
 
-        {/* ALIANZA MINI */}
+        {/* ALIANZA */}
         <section className="space-y-4">
           <p className="section-label">Comunidad</p>
 
