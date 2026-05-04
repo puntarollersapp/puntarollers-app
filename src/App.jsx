@@ -19,6 +19,7 @@ import Cuponeras from './pages/Cuponeras'
 import PasaporteKids from './pages/PasaporteKids'
 import Uniformes from './pages/Uniformes'
 import Tracking from './pages/Tracking'
+import Terminos from './pages/Terminos'
 
 // Guards
 function PrivateRoute({ children }) {
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/pasaporte-kids" element={<PasaporteKids />} />
       <Route path="/uniformes" element={<Uniformes />} />
       <Route path="/tracking" element={<Tracking />} />
+      <Route path="/terminos" element={<Terminos />} />
 
       {/* Private */}
       <Route path="/app/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
