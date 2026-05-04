@@ -1,10 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { loginConDocumento, getUsuario } from './supabase'
 
 // Crear contexto
 const AuthContext = createContext()
 
-// Hook para usar auth
+// Hook
 export function useAuth() {
   return useContext(AuthContext)
 }
@@ -14,7 +13,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // ─── Cargar sesión desde localStorage ───────────────────
+  // Cargar sesión
   useEffect(() => {
     const storedUser = localStorage.getItem('pr_user')
 
@@ -25,46 +24,33 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  // ─── Login ─────────────────────────────────────────────
+  // LOGIN FAKE (FUNCIONA SIEMPRE)
   async function login(documento, pin) {
-    const { data, error } = await loginConDocumento(documento, pin)
+    if (documento === '123' && pin === '1234') {
+      const fakeUser = {
+        id: '1',
+        nombre: 'Claudio',
+        documento: '123',
+        estado: 'Activo',
+      }
 
-    if (error) return { error }
+      setUser(fakeUser)
+      localStorage.setItem('pr_user', JSON.stringify(fakeUser))
 
-    setUser(data)
-    localStorage.setItem('pr_user', JSON.stringify(data))
+      return { data: fakeUser }
+    }
 
-    return { data }
+    return { error: 'Datos incorrectos' }
   }
 
-  // ─── Logout ────────────────────────────────────────────
+  // Logout
   function logout() {
     setUser(null)
     localStorage.removeItem('pr_user')
   }
 
-  // ─── Refrescar usuario ─────────────────────────────────
-  async function refreshUser() {
-    if (!user) return
-
-    const { data } = await getUsuario(user.id)
-
-    if (data) {
-      setUser(data)
-      localStorage.setItem('pr_user', JSON.stringify(data))
-    }
-  }
-
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        logout,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
