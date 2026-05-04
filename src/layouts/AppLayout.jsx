@@ -9,18 +9,14 @@ export default function AppLayout({ children }) {
   return (
     <div className="min-h-screen bg-[#050508] text-white flex flex-col">
 
-      {/* Header */}
       <Header />
 
-      {/* Contenido principal */}
       <main className="flex-1 px-4 pt-4 pb-24">
         {children}
       </main>
 
-      {/* Navegación inferior */}
       <BottomNav />
 
-      {/* Mensaje global */}
       <MessagePopup mensaje={mensaje} />
 
     </div>
