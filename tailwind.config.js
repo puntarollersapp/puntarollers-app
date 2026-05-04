@@ -37,27 +37,4 @@ export default {
     }
   },
   plugins: []
-}        'card':       '0 4px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)',
-        'card-hover': '0 8px 48px rgba(0,0,0,0.8), 0 0 20px rgba(201,168,76,0.1)',
-        'inner-gold': 'inset 0 1px 0 rgba(201,168,76,0.3)',
-      },
-      animation: {
-        'fade-in':       'fadeIn 0.6s ease forwards',
-        'fade-up':       'fadeUp 0.7s ease forwards',
-        'glow-pulse':    'glowPulse 3s ease-in-out infinite',
-        'shimmer':       'shimmer 2.5s linear infinite',
-        'slide-up':      'slideUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
-        'badge-pop':     'badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-      },
-      keyframes: {
-        fadeIn:    { from: { opacity: 0 }, to: { opacity: 1 } },
-        fadeUp:    { from: { opacity: 0, transform: 'translateY(20px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
-        glowPulse: { '0%,100%': { filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.4))' }, '50%': { filter: 'drop-shadow(0 0 24px rgba(201,168,76,0.8))' } },
-        shimmer:   { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
-        slideUp:   { from: { opacity: 0, transform: 'translateY(30px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
-        badgePop:  { from: { opacity: 0, transform: 'scale(0.5)' }, to: { opacity: 1, transform: 'scale(1)' } },
-      }
-    }
-  },
-  plugins: []
 }
