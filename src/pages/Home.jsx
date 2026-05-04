@@ -6,10 +6,10 @@ export default function Home() {
 
   return (
     <PublicLayout>
-      <div className="px-4 py-6 space-y-12">
+      <div className="px-4 py-6 space-y-12 animate-fade-in">
 
         {/* HERO */}
-        <section className="text-center space-y-4">
+        <section className="text-center space-y-4 animate-fade-up">
           <h1 className="text-3xl font-bold text-white leading-tight">
             No es solo patinar,
             <span className="block text-gold-gradient">
@@ -33,10 +33,10 @@ export default function Home() {
         </section>
 
         {/* QUIENES SOMOS */}
-        <section className="space-y-4 text-center">
+        <section className="space-y-4 text-center animate-fade-up stagger-1">
           <p className="section-label">Quiénes somos</p>
 
-          <div className="glass p-5 rounded-xl space-y-3">
+          <div className="glass p-5 rounded-xl hover:scale-[1.02] transition">
             <p className="text-white font-semibold text-lg">
               🛼 Punta Rollers
             </p>
@@ -50,125 +50,75 @@ export default function Home() {
             </p>
 
             <p className="text-gray-500 text-xs">
-              🔥 Comunidad · Progreso · Experiencia real
+              🔥 Comunidad · Progreso · Experiencia
             </p>
           </div>
         </section>
 
-        {/* INSCRIPCIONES */}
-        <section className="space-y-4">
-          <p className="section-label">Inscripciones</p>
-
-          <a href="https://form.jotform.com/Claudinio/inscripcioneskids" className="pr-banner">
-            <img src="/banner-kids.png" />
-          </a>
-
-          <a href="https://form.jotform.com/Claudinio/Inscripciones2026" className="pr-banner">
-            <img src="/banner-adultos.png" />
-          </a>
-        </section>
-
-        {/* EXPLORAR (TODO LINKEADO) */}
-        <section className="space-y-4">
-          <p className="section-label">Explorar Punta Rollers</p>
+        {/* EXPLORAR */}
+        <section className="space-y-4 animate-fade-up stagger-2">
+          <p className="section-label">Explorar</p>
 
           <div className="grid grid-cols-2 gap-4">
 
-            <a href="/cuponeras" className="glass p-4 rounded-xl text-center">
-              <p className="text-white">🎟️ Cuponeras</p>
-              <p className="text-gray-400 text-xs">Clases flexibles</p>
-            </a>
+            <Card link="/cuponeras" icon="🎟️" title="Cuponeras" subtitle="Flexibilidad" />
+            <Card link="/pasaporte-kids" icon="🧒" title="Kids" subtitle="Progreso" />
+            <Card link="/uniformes" icon="👕" title="Uniformes" subtitle="Vestí PR" />
+            <Card link="/tracking" icon="🏷️" title="Tracking" subtitle="Equipos" />
 
-            <a href="/pasaporte-kids" className="glass p-4 rounded-xl text-center">
-              <p className="text-white">🧒 Pasaporte Kids</p>
-              <p className="text-gray-400 text-xs">Progreso infantil</p>
-            </a>
-
-            <a href="/uniformes" className="glass p-4 rounded-xl text-center">
-              <p className="text-white">👕 Uniformes</p>
-              <p className="text-gray-400 text-xs">Vestí PR</p>
-            </a>
-
-            <a href="/tracking" className="glass p-4 rounded-xl text-center">
-              <p className="text-white">📊 Tracking</p>
-              <p className="text-gray-400 text-xs">Seguimiento</p>
-            </a>
-
-            <a href="/terminos" className="glass p-4 rounded-xl text-center col-span-2">
-              <p className="text-white">📜 Reglas y condiciones</p>
-              <p className="text-gray-400 text-xs">Funcionamiento del club</p>
+            <a href="/terminos" className="glass p-4 rounded-xl col-span-2 text-center hover:scale-[1.02] transition">
+              <p className="text-white">📜 Reglas</p>
+              <p className="text-gray-400 text-xs">Condiciones del club</p>
             </a>
 
           </div>
         </section>
 
         {/* HORARIOS */}
-        <section className="space-y-4">
+        <section className="space-y-4 animate-fade-up stagger-3">
           <p className="section-label">Horarios</p>
 
           <div className="flex gap-2 justify-center">
-            <button onClick={() => setDay("miercoles")} className={`px-4 py-2 rounded-full text-sm ${day === "miercoles" ? "bg-yellow-600 text-white" : "glass text-gray-400"}`}>
-              Miércoles
-            </button>
-
-            <button onClick={() => setDay("sabado")} className={`px-4 py-2 rounded-full text-sm ${day === "sabado" ? "bg-yellow-600 text-white" : "glass text-gray-400"}`}>
-              Sábado
-            </button>
+            <Tab active={day==="miercoles"} onClick={()=>setDay("miercoles")}>Miércoles</Tab>
+            <Tab active={day==="sabado"} onClick={()=>setDay("sabado")}>Sábado</Tab>
           </div>
 
           {day === "miercoles" && (
             <div className="space-y-3">
-              <ScheduleCard title="Adultos Principiantes" time="19:00 - 20:00" place="Parada 2" cupos="6 disponibles" />
-              <ScheduleCard title="Intermedio / Avanzado" time="20:00 - 21:00" place="Parada 2" cupos="3 disponibles" />
+              <ScheduleCard title="Principiantes" time="19:00" />
+              <ScheduleCard title="Avanzado" time="20:00" />
             </div>
           )}
 
           {day === "sabado" && (
             <div className="space-y-3">
-              <ScheduleCard title="PR Kids" time="19:00 - 20:00" place="Pista cerrada" cupos="5 disponibles" />
-              <ScheduleCard title="Adultos" time="20:00 - 21:00" place="Pista cerrada" cupos="4 disponibles" />
+              <ScheduleCard title="PR Kids" time="19:00" />
+              <ScheduleCard title="Adultos" time="20:00" />
             </div>
           )}
         </section>
 
-        {/* GALERIA */}
-        <section className="space-y-4">
-          <p className="section-label">Galería</p>
-
-          <div className="grid grid-cols-2 gap-4">
-
-            <a href="https://drive.google.com/drive/folders/1WQK9l2aoWgaKBAiibNu6of4yrhXaJoA_" target="_blank" className="glass p-4 rounded-xl text-center">
-              <p className="text-white">📸 Clases</p>
-            </a>
-
-            <a href="https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ" target="_blank" className="glass p-4 rounded-xl text-center">
-              <p className="text-white">🎉 Eventos</p>
-            </a>
-
-          </div>
-        </section>
-
         {/* PLATAFORMAS */}
-        <section className="space-y-4">
+        <section className="space-y-4 animate-fade-up stagger-4">
           <p className="section-label">Plataformas</p>
 
-          <a href="https://puntarollerscard.com/" className="pr-banner">
+          <a href="https://puntarollerscard.com/" className="pr-banner hover:scale-[1.02] transition">
             <img src="/banner-prcard.png" />
           </a>
 
-          <a href="https://rollermap.vercel.app/" className="pr-banner">
+          <a href="https://rollermap.vercel.app/" className="pr-banner hover:scale-[1.02] transition">
             <img src="/banner-rollermap.png" />
           </a>
         </section>
 
         {/* ALIANZA */}
-        <section className="space-y-4">
+        <section className="space-y-4 animate-fade-up stagger-5">
           <p className="section-label">Comunidad</p>
 
-          <a href="/alianza" className="glass p-4 rounded-xl flex justify-between items-center">
+          <a href="/alianza" className="glass p-4 rounded-xl flex justify-between items-center hover:scale-[1.02] transition">
             <div>
-              <p className="text-white font-semibold">🛼 Alianza Rollers</p>
-              <p className="text-gray-400 text-sm">Comunidad nacional</p>
+              <p className="text-white font-semibold">🛼 Alianza</p>
+              <p className="text-gray-400 text-sm">Uruguay</p>
             </div>
             <span className="text-gray-500">→</span>
           </a>
@@ -179,13 +129,32 @@ export default function Home() {
   )
 }
 
-function ScheduleCard({ title, time, place, cupos }) {
+function Card({link, icon, title, subtitle}) {
   return (
-    <div className="glass p-4 rounded-xl">
-      <p className="text-white font-medium">{title}</p>
+    <a href={link} className="glass p-4 rounded-xl text-center hover:scale-[1.05] transition">
+      <p className="text-xl">{icon}</p>
+      <p className="text-white text-sm">{title}</p>
+      <p className="text-gray-400 text-xs">{subtitle}</p>
+    </a>
+  )
+}
+
+function Tab({active, children, onClick}) {
+  return (
+    <button onClick={onClick}
+      className={`px-4 py-2 rounded-full text-sm ${
+        active ? "bg-yellow-600 text-white" : "glass text-gray-400"
+      }`}>
+      {children}
+    </button>
+  )
+}
+
+function ScheduleCard({title, time}) {
+  return (
+    <div className="glass p-4 rounded-xl hover:scale-[1.02] transition">
+      <p className="text-white">{title}</p>
       <p className="text-gray-400 text-sm">{time}</p>
-      <p className="text-gray-500 text-xs">{place}</p>
-      <p className="text-green-400 text-xs mt-1">● {cupos}</p>
     </div>
   )
 }
