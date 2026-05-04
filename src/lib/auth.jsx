@@ -1,19 +1,15 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
-// Crear contexto
 const AuthContext = createContext()
 
-// Hook
 export function useAuth() {
   return useContext(AuthContext)
 }
 
-// Provider
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Cargar sesión
   useEffect(() => {
     const storedUser = localStorage.getItem('pr_user')
 
@@ -24,7 +20,6 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  // LOGIN FAKE (FUNCIONA SIEMPRE)
   async function login(documento, pin) {
     if (documento === '123' && pin === '1234') {
       const fakeUser = {
@@ -43,7 +38,6 @@ export function AuthProvider({ children }) {
     return { error: 'Datos incorrectos' }
   }
 
-  // Logout
   function logout() {
     setUser(null)
     localStorage.removeItem('pr_user')
