@@ -5,76 +5,57 @@ export default function Tracking() {
     <PublicLayout>
       <div className="px-4 py-6 space-y-10">
 
-        {/* HEADER */}
         <section className="text-center space-y-3">
           <h1 className="text-2xl font-bold text-white">
-            📊 PR Tracking
+            🏷️ PR Tracking
           </h1>
 
           <p className="text-gray-400 text-sm">
-            Seguimiento real de tu progreso dentro del club.
+            Sistema de identificación y control de equipamiento
           </p>
         </section>
 
-        {/* IMAGEN */}
-        <section className="pr-banner">
-          <img src="/tracking-pr.png" alt="PR Tracking" />
-        </section>
-
-        {/* DESCRIPCION */}
         <section className="glass p-5 rounded-xl space-y-3">
           <p className="text-white font-semibold">
             ¿Qué es PR Tracking?
           </p>
 
           <p className="text-gray-300 text-sm">
-            Es el sistema interno de Punta Rollers que registra tu actividad dentro del club.
+            Es un sistema que permite identificar y recuperar equipamiento en caso de pérdida.
           </p>
 
           <p className="text-gray-400 text-sm">
-            Cada clase, progreso y participación queda registrado para que puedas ver tu evolución real.
+            Cada elemento puede estar vinculado a su dueño mediante un sistema de registro.
           </p>
         </section>
 
-        {/* FUNCIONES */}
         <section className="space-y-3">
-          <p className="section-label">¿Qué registra?</p>
+          <p className="section-label">¿Para qué sirve?</p>
 
           <div className="grid grid-cols-1 gap-3">
 
             <div className="glass p-4 rounded-xl">
-              <p className="text-white">🛼 Clases</p>
+              <p className="text-white">🔎 Identificación</p>
               <p className="text-gray-400 text-xs">
-                Asistencia y constancia
+                Saber a quién pertenece cada equipo
               </p>
             </div>
 
             <div className="glass p-4 rounded-xl">
-              <p className="text-white">📈 Progreso</p>
+              <p className="text-white">📦 Recuperación</p>
               <p className="text-gray-400 text-xs">
-                Evolución en habilidades
+                En caso de pérdida, facilita devolverlo
               </p>
             </div>
 
             <div className="glass p-4 rounded-xl">
-              <p className="text-white">🏆 Actividad</p>
+              <p className="text-white">🛡️ Seguridad</p>
               <p className="text-gray-400 text-xs">
-                Participación en eventos y comunidad
+                Más control dentro de la comunidad
               </p>
             </div>
 
           </div>
-        </section>
-
-        {/* CTA */}
-        <section className="text-center pt-4 space-y-3">
-          <a href="/login" className="btn-gold w-full">
-            Ver mi progreso
-          </a>
-
-          <p className="text-gray-500 text-xs">
-            Disponible para alumnos activos del club
-          </p>
         </section>
 
       </div>
