@@ -3,6 +3,7 @@ export const mockUser = {
   id: '1',
   nombre: 'Luciana Méndez',
   documento: '47839201',
+  pin: '1234',
   email: 'luci@email.com',
   foto_url: null,
   frase_personal: 'Cada clase suma. Cada rodada queda.',
