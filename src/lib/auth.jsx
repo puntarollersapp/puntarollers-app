@@ -1,46 +1,33 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { mockUser } from '../data/mockData'
 
-const AuthContext = createContext()
-
-export function useAuth() {
-  return useContext(AuthContext)
-}
+const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('pr_user')
-
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    const saved = localStorage.getItem('pr_user')
+    if (saved) {
+      try { setUser(JSON.parse(saved)) } catch {}
     }
-
     setLoading(false)
   }, [])
 
-  async function login(documento, pin) {
-    if (documento === '123' && pin === '1234') {
-      const fakeUser = {
-        id: '1',
-        nombre: 'Claudio',
-        documento: '123',
-        estado: 'Activo',
-      }
-
-      setUser(fakeUser)
-      localStorage.setItem('pr_user', JSON.stringify(fakeUser))
-
-      return { data: fakeUser }
+  const login = async (documento, pin) => {
+    if (pin === '1234' || documento === mockUser.documento) {
+      const userData = { ...mockUser, documento }
+      localStorage.setItem('pr_user', JSON.stringify(userData))
+      setUser(userData)
+      return { success: true }
     }
-
-    return { error: 'Datos incorrectos' }
+    return { error: 'Documento o PIN incorrecto' }
   }
 
-  function logout() {
-    setUser(null)
+  const logout = () => {
     localStorage.removeItem('pr_user')
+    setUser(null)
   }
 
   return (
@@ -48,4 +35,10 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
+}
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider')
+  return ctx
 }
