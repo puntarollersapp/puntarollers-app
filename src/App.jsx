@@ -3,19 +3,22 @@ import { useState } from 'react'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
 
-// Pages
-import Home          from './pages/Home'
-import Login         from './pages/Login'
-import Dashboard     from './pages/Dashboard'
-import Profile       from './pages/Profile'
-import PRCardPage    from './pages/PRCard'
-import ActivityPage  from './pages/Activity'
-import ServicesPage  from './pages/Services'
-import ContentPage   from './pages/Content'
-import StorePage     from './pages/Store'
-import Admin         from './pages/Admin'
+// Layout
+import PublicLayout from './layouts/PublicLayout'
 
-// ─── Auth Guard ───────────────────────────────────────────
+// Pages
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Profile from './pages/Profile'
+import PRCardPage from './pages/PRCard'
+import ActivityPage from './pages/Activity'
+import ServicesPage from './pages/Services'
+import ContentPage from './pages/Content'
+import StorePage from './pages/Store'
+import Admin from './pages/Admin'
+
+// ─── Auth Guard ─────────────────────────
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
   const location = useLocation()
@@ -35,7 +38,6 @@ function AdminRoute({ children }) {
 
   if (loading) return null
 
-  // TODO: meter validación real de admin
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
@@ -43,36 +45,41 @@ function AdminRoute({ children }) {
   return children
 }
 
-// ─── Routes ──────────────────────────────────────────────
+// ─── Routes ─────────────────────────
 function AppRoutes() {
   return (
     <Routes>
 
-      {/* Public */}
-      <Route path="/" element={<Home />} />
+      {/* PUBLIC */}
+      <Route path="/" element={
+        <PublicLayout>
+          <Home />
+        </PublicLayout>
+      } />
+
       <Route path="/login" element={<Login />} />
 
-      {/* Private */}
+      {/* PRIVATE */}
       <Route path="/app/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/app/perfil"    element={<PrivateRoute><Profile /></PrivateRoute>} />
-      <Route path="/app/prcard"    element={<PrivateRoute><PRCardPage /></PrivateRoute>} />
+      <Route path="/app/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
+      <Route path="/app/prcard" element={<PrivateRoute><PRCardPage /></PrivateRoute>} />
       <Route path="/app/actividad" element={<PrivateRoute><ActivityPage /></PrivateRoute>} />
       <Route path="/app/servicios" element={<PrivateRoute><ServicesPage /></PrivateRoute>} />
       <Route path="/app/contenido" element={<PrivateRoute><ContentPage /></PrivateRoute>} />
-      <Route path="/app/tienda"    element={<PrivateRoute><StorePage /></PrivateRoute>} />
+      <Route path="/app/tienda" element={<PrivateRoute><StorePage /></PrivateRoute>} />
 
-      {/* Admin */}
+      {/* ADMIN */}
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
-      {/* Redirects */}
+      {/* REDIRECT */}
       <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
-      <Route path="*"    element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
 
     </Routes>
   )
 }
 
-// ─── App Root ────────────────────────────────────────────
+// ─── APP ROOT ─────────────────────────
 export default function App() {
   const [loaded, setLoaded] = useState(false)
 
