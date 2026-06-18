@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase, uploadPublicImage } from '../lib/supabase'
@@ -25,16 +25,11 @@ function loadSavedUser() {
 }
 
 export default function Profile() {
+  const location = useLocation()
   const { user, logout, updateUser } = useAuth()
   const savedUser = loadSavedUser()
 
-  const baseProfile = {
-    ...mockUser,
-    ...savedUser,
-    ...user,
-    banner: '',
-  }
-
+  const baseProfile = { ...mockUser, ...savedUser, ...user, banner: '' }
   const profileId = baseProfile.id || 'alumno-001'
 
   const [open, setOpen] = useState('insignias')
@@ -58,6 +53,18 @@ export default function Profile() {
   })
 
   useEffect(() => {
+    if (location.hash === '#observaciones') {
+      setOpen('observaciones')
+      setTimeout(() => document.getElementById('observaciones')?.scrollIntoView({ behavior: 'smooth' }), 250)
+    }
+
+    if (location.hash === '#editar') {
+      setEditing(true)
+      setTimeout(() => document.getElementById('editar-perfil')?.scrollIntoView({ behavior: 'smooth' }), 250)
+    }
+  }, [location.hash])
+
+  useEffect(() => {
     async function loadProfileFromSupabase() {
       setLoadingProfile(true)
 
@@ -67,9 +74,7 @@ export default function Profile() {
         .eq('id', profileId)
         .maybeSingle()
 
-      if (error) {
-        setSavedMsg(`Error cargando perfil: ${error.message}`)
-      }
+      if (error) setSavedMsg(`Error cargando perfil: ${error.message}`)
 
       if (data) {
         const loaded = {
@@ -102,8 +107,10 @@ export default function Profile() {
   const earned = insignias.filter(i => i.desbloqueada)
   const nextBadges = insignias.filter(i => !i.desbloqueada).slice(0, 3)
   const lastBadge = earned[earned.length - 1]
-  const userObservations = observaciones.filter(o => o.alumnoId === 'alumno-001')
-  const userParticipations = participaciones.filter(p => p.alumnoId === 'alumno-001')
+
+  const userObservations = observaciones.filter(o => o.alumnoId === profileId)
+  const userParticipations = participaciones.filter(p => p.alumnoId === profileId)
+
   const unread = notificaciones.filter(n => !n.leida).length
 
   const professorById = useMemo(
@@ -113,6 +120,7 @@ export default function Profile() {
 
   function previewImage(file, field) {
     if (!file) return
+
     const localPreview = URL.createObjectURL(file)
 
     if (field === 'foto') setFotoFile(file)
@@ -306,7 +314,7 @@ export default function Profile() {
         )}
 
         {editing && (
-          <section className={`${panelBase} p-4 space-y-3`}>
+          <section id="editar-perfil" className={`${panelBase} p-4 space-y-3`}>
             <p className="section-label">Personalizar perfil</p>
 
             <EditInput label="Nombre" value={form.nombre} onChange={v => setForm({ ...form, nombre: v })} />
@@ -365,11 +373,20 @@ export default function Profile() {
           </div>
         </Accordion>
 
-        <Accordion title={`Observaciones de tus entrenadores (${userObservations.length})`} subtitle="Tu evolución" open={open === 'observaciones'} onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}>
-          <div className="space-y-3">
-            {userObservations.map(obs => <ObservationCard key={obs.id} obs={obs} professor={professorById[obs.profesorId]} />)}
-          </div>
-        </Accordion>
+        <section id="observaciones">
+          <Accordion title={`Observaciones de tus entrenadores (${userObservations.length})`} subtitle="Tu evolución" open={open === 'observaciones'} onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}>
+            <div className="space-y-3">
+              {userObservations.length > 0 ? (
+                userObservations.map(obs => <ObservationCard key={obs.id} obs={obs} professor={professorById[obs.profesorId]} />)
+              ) : (
+                <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
+                  <p className="text-white font-semibold">Todavía no hay observaciones</p>
+                  <p className="text-white/45 text-sm mt-1">Cuando un profesor te deje una nota, aparecerá acá.</p>
+                </div>
+              )}
+            </div>
+          </Accordion>
+        </section>
 
         <Accordion title="Contactos PR" open={open === 'contactos'} onClick={() => setOpen(open === 'contactos' ? '' : 'contactos')}>
           <div className="space-y-3">
