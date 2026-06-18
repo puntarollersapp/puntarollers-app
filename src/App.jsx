@@ -1,3 +1,3 @@
-import App from './main.jsx'
+import AppRoutes from './main.jsx'
 
-export default App
+export default AppRoutes
