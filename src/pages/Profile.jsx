@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
-import { uploadPublicImage } from '../lib/supabase'
+import { supabase, uploadPublicImage } from '../lib/supabase'
 import {
   mockUser,
   insignias,
@@ -14,16 +14,6 @@ import {
 } from '../data/mockData'
 
 const panelBase = 'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
-const STORAGE_KEY = 'pr_profile_custom'
-
-function loadSavedProfile() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? JSON.parse(saved) : {}
-  } catch {
-    return {}
-  }
-}
 
 function loadSavedUser() {
   try {
@@ -37,20 +27,15 @@ function loadSavedUser() {
 export default function Profile() {
   const { user, logout, updateUser } = useAuth()
 
-  const savedProfile = loadSavedProfile()
   const savedUser = loadSavedUser()
-
-  const baseProfile = {
-    ...mockUser,
-    ...savedUser,
-    ...user,
-    ...savedProfile,
-  }
+  const baseProfile = { ...mockUser, ...savedUser, ...user }
+  const profileId = baseProfile.id || 'alumno-001'
 
   const [open, setOpen] = useState('insignias')
   const [editing, setEditing] = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
@@ -66,6 +51,46 @@ export default function Profile() {
     foto: baseProfile.foto || '',
     banner: baseProfile.banner || '/banner-prcard.png',
   })
+
+  useEffect(() => {
+    async function loadProfileFromSupabase() {
+      setLoadingProfile(true)
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .maybeSingle()
+
+      if (!error && data) {
+        const loaded = {
+          nombre: data.nombre || baseProfile.nombre || '',
+          ciudad: data.ciudad || baseProfile.ciudad || '',
+          instagram: data.instagram || baseProfile.instagram || '',
+          email: data.email || baseProfile.email || '',
+          fechaNacimiento: data.fecha_nacimiento || baseProfile.fechaNacimiento || '',
+          sobreMi: data.sobre_mi || baseProfile.sobreMi || '',
+          pin: baseProfile.pin || '',
+          foto: data.foto || baseProfile.foto || '',
+          banner: data.banner || baseProfile.banner || '/banner-prcard.png',
+        }
+
+        setForm(loaded)
+
+        const updatedUser = {
+          ...baseProfile,
+          ...loaded,
+        }
+
+        localStorage.setItem('pr_user', JSON.stringify(updatedUser))
+        updateUser?.(updatedUser)
+      }
+
+      setLoadingProfile(false)
+    }
+
+    loadProfileFromSupabase()
+  }, [profileId])
 
   const profile = {
     ...baseProfile,
@@ -97,7 +122,7 @@ export default function Profile() {
       [field]: localPreview,
     }))
 
-    setSavedMsg('Imagen cargada. Tocá Guardar cambios para subirla a Supabase.')
+    setSavedMsg('Imagen cargada. Tocá Guardar cambios.')
   }
 
   async function saveProfile() {
@@ -109,18 +134,38 @@ export default function Profile() {
       let bannerUrl = form.banner
 
       if (fotoFile) {
-        const result = await uploadPublicImage('avatars', fotoFile, profile.id || 'alumno')
+        const result = await uploadPublicImage('avatars', fotoFile, profileId)
         if (result.error) throw new Error(result.error)
         fotoUrl = result.url
       }
 
       if (bannerFile) {
-        const result = await uploadPublicImage('banners', bannerFile, profile.id || 'alumno')
+        const result = await uploadPublicImage('banners', bannerFile, profileId)
         if (result.error) throw new Error(result.error)
         bannerUrl = result.url
       }
 
       const dataToSave = {
+        id: profileId,
+        nombre: form.nombre,
+        ciudad: form.ciudad,
+        instagram: form.instagram,
+        email: form.email,
+        fecha_nacimiento: form.fechaNacimiento,
+        sobre_mi: form.sobreMi,
+        foto: fotoUrl,
+        banner: bannerUrl,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(dataToSave, { onConflict: 'id' })
+
+      if (error) throw new Error(error.message)
+
+      const updatedUser = {
+        ...baseProfile,
         nombre: form.nombre,
         ciudad: form.ciudad,
         instagram: form.instagram,
@@ -130,15 +175,6 @@ export default function Profile() {
         pin: form.pin,
         foto: fotoUrl,
         banner: bannerUrl,
-      }
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
-
-      const currentUser = loadSavedUser()
-      const updatedUser = {
-        ...currentUser,
-        ...user,
-        ...dataToSave,
       }
 
       localStorage.setItem('pr_user', JSON.stringify(updatedUser))
@@ -153,7 +189,7 @@ export default function Profile() {
       setFotoFile(null)
       setBannerFile(null)
       setEditing(false)
-      setSavedMsg('Cambios guardados correctamente en Supabase.')
+      setSavedMsg('Cambios guardados en Supabase correctamente.')
     } catch (error) {
       console.error(error)
       setSavedMsg(`No se pudo guardar: ${error.message}`)
@@ -166,26 +202,23 @@ export default function Profile() {
     <AppLayout title="Mi Perfil">
       <div className="px-4 py-5 space-y-5 animate-page-enter">
 
+        {loadingProfile && (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white/50">
+            Cargando perfil...
+          </div>
+        )}
+
         <section className={`${panelBase} overflow-hidden relative`}>
           <div className="h-40 relative bg-gradient-to-br from-pr-gold/25 via-pr-navy to-black">
             {profile.banner && (
-              <img
-                src={profile.banner}
-                alt="Banner"
-                className="absolute inset-0 w-full h-full object-cover opacity-70"
-              />
+              <img src={profile.banner} alt="Banner" className="absolute inset-0 w-full h-full object-cover opacity-70" />
             )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-black/25 to-transparent" />
 
             <label className="absolute right-3 top-3 text-[10px] px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-white/70 cursor-pointer">
               Cambiar banner
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => previewImage(e.target.files?.[0], 'banner')}
-              />
+              <input type="file" accept="image/*" className="hidden" onChange={e => previewImage(e.target.files?.[0], 'banner')} />
             </label>
           </div>
 
@@ -194,35 +227,22 @@ export default function Profile() {
               <div className="flex items-end gap-3">
                 <label className="w-24 h-24 rounded-3xl border-2 border-pr-gold/60 bg-[#12121d] shadow-xl overflow-hidden flex items-center justify-center cursor-pointer relative">
                   {profile.foto ? (
-                    <img
-                      src={profile.foto}
-                      alt="Perfil"
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={profile.foto} alt="Perfil" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="font-display text-3xl text-pr-gold">
-                      {initials(profile.nombre)}
-                    </span>
+                    <span className="font-display text-3xl text-pr-gold">{initials(profile.nombre)}</span>
                   )}
 
                   <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-1">
                     Foto
                   </span>
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={e => previewImage(e.target.files?.[0], 'foto')}
-                  />
+                  <input type="file" accept="image/*" className="hidden" onChange={e => previewImage(e.target.files?.[0], 'foto')} />
                 </label>
 
                 <div className="pb-2">
                   <h1 className="font-display text-3xl leading-none text-white">
                     {profile.nombre}
-                    {profile.verificado && (
-                      <span className="text-sky-400 text-xl align-middle"> ✓</span>
-                    )}
+                    {profile.verificado && <span className="text-sky-400 text-xl align-middle"> ✓</span>}
                   </h1>
 
                   <p className="text-white/45 text-xs mt-1">
@@ -230,18 +250,12 @@ export default function Profile() {
                   </p>
 
                   {profile.instagram && (
-                    <p className="text-pr-gold/70 text-xs mt-1">
-                      {profile.instagram}
-                    </p>
+                    <p className="text-pr-gold/70 text-xs mt-1">{profile.instagram}</p>
                   )}
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setEditing(!editing)}
-                className="mb-2 px-3 py-2 rounded-xl bg-pr-gold text-black text-xs font-bold"
-              >
+              <button type="button" onClick={() => setEditing(!editing)} className="mb-2 px-3 py-2 rounded-xl bg-pr-gold text-black text-xs font-bold">
                 {editing ? 'Cerrar' : 'Editar'}
               </button>
             </div>
@@ -252,10 +266,7 @@ export default function Profile() {
 
             <div className="mt-4 flex flex-wrap gap-2">
               {(profile.grupos || []).map(g => (
-                <span
-                  key={g}
-                  className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70"
-                >
+                <span key={g} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
                   {g}
                 </span>
               ))}
@@ -297,32 +308,17 @@ export default function Profile() {
               />
             </label>
 
-            <button
-              type="button"
-              disabled={saving}
-              onClick={saveProfile}
-              className="w-full rounded-2xl bg-pr-gold text-black py-4 text-sm font-bold active:scale-[0.98] disabled:opacity-50"
-            >
+            <button type="button" disabled={saving} onClick={saveProfile} className="w-full rounded-2xl bg-pr-gold text-black py-4 text-sm font-bold active:scale-[0.98] disabled:opacity-50">
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>
-
-            <p className="text-white/35 text-xs">
-              Las imágenes se guardan en Supabase Storage para que se vean desde cualquier celular.
-            </p>
           </section>
         )}
 
         {unread > 0 && (
           <section className="rounded-2xl bg-pr-gold/10 border border-pr-gold/20 p-4">
-            <p className="text-pr-gold text-xs uppercase tracking-[0.18em] font-bold">
-              Novedades
-            </p>
-            <p className="text-white mt-1 font-semibold">
-              Tenés {unread} novedades
-            </p>
-            <p className="text-white/45 text-xs mt-1">
-              Se muestran agrupadas para evitar avisos superpuestos en móvil.
-            </p>
+            <p className="text-pr-gold text-xs uppercase tracking-[0.18em] font-bold">Novedades</p>
+            <p className="text-white mt-1 font-semibold">Tenés {unread} novedades</p>
+            <p className="text-white/45 text-xs mt-1">Se muestran agrupadas para evitar avisos superpuestos en móvil.</p>
           </section>
         )}
 
@@ -364,12 +360,7 @@ export default function Profile() {
           </div>
         </Accordion>
 
-        <Accordion
-          title={`Observaciones de tus entrenadores (${userObservations.length})`}
-          subtitle="Tu evolución"
-          open={open === 'observaciones'}
-          onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}
-        >
+        <Accordion title={`Observaciones de tus entrenadores (${userObservations.length})`} subtitle="Tu evolución" open={open === 'observaciones'} onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}>
           <div className="space-y-3">
             {userObservations.map(obs => (
               <ObservationCard key={obs.id} obs={obs} professor={professorById[obs.profesorId]} />
@@ -391,11 +382,7 @@ export default function Profile() {
           </div>
         </Accordion>
 
-        <button
-          type="button"
-          onClick={logout}
-          className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold"
-        >
+        <button type="button" onClick={logout} className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold">
           Cerrar sesión
         </button>
       </div>
@@ -444,9 +431,7 @@ function Accordion({ title, subtitle, open, onClick, children }) {
 function BadgeCard({ badge, professor }) {
   return (
     <div className="rounded-3xl bg-gradient-to-br from-pr-gold/20 to-black/20 border border-pr-gold/20 p-4 min-h-[150px]">
-      <div className="w-12 h-12 rounded-2xl bg-pr-gold/15 border border-pr-gold/20 flex items-center justify-center text-2xl">
-        {badge.emoji}
-      </div>
+      <div className="w-12 h-12 rounded-2xl bg-pr-gold/15 border border-pr-gold/20 flex items-center justify-center text-2xl">{badge.emoji}</div>
       <p className="text-white font-semibold mt-3 leading-tight">{badge.nombre}</p>
       <p className="text-white/40 text-[11px] mt-1">{badge.descripcion}</p>
       <p className="text-emerald-400 text-[10px] mt-3">Ganada · {badge.fecha}</p>
@@ -494,9 +479,7 @@ function ServiceState({ title, active, action, href }) {
           {active ? 'Activo' : 'Inactivo'}
         </p>
       </div>
-      <Link to={href} className="text-pr-gold text-xs">
-        {action}
-      </Link>
+      <Link to={href} className="text-pr-gold text-xs">{action}</Link>
     </div>
   )
 }
