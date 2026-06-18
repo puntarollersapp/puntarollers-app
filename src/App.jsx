@@ -46,6 +46,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+
       <Route path="/alianza" element={<Alianza />} />
       <Route path="/cuponeras" element={<Cuponeras />} />
       <Route path="/pasaporte-kids" element={<PasaporteKids />} />
@@ -56,6 +57,7 @@ function AppRoutes() {
       <Route path="/app/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/app/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/app/prcard" element={<PrivateRoute><PRCardPage /></PrivateRoute>} />
+      <Route path="/app/tracking" element={<PrivateRoute><Tracking /></PrivateRoute>} />
       <Route path="/app/actividad" element={<PrivateRoute><ActivityPage /></PrivateRoute>} />
       <Route path="/app/servicios" element={<PrivateRoute><ServicesPage /></PrivateRoute>} />
       <Route path="/app/contenido" element={<PrivateRoute><ContentPage /></PrivateRoute>} />
