@@ -1,3 +1,3 @@
-export default function App() {
-  return <h1>Punta Rollers</h1>
-}
+import App from './main.jsx'
+
+export default App
