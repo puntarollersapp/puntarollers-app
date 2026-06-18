@@ -1,21 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim()
+const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export async function uploadPublicImage(bucket, file, folder = 'uploads') {
   if (!file) return { url: null, error: 'No se seleccionó archivo' }
 
-  const extension = file.name?.split('.').pop() || 'jpg'
-  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
+  const extension = file.name?.split('.').pop()?.toLowerCase() || 'jpg'
+  const safeFolder = String(folder || 'uploads').replace(/[^a-zA-Z0-9-_]/g, '')
+  const fileName = `${safeFolder}/${crypto.randomUUID()}.${extension}`
 
   const { error: uploadError } = await supabase.storage
     .from(bucket)
     .upload(fileName, file, {
       cacheControl: '3600',
-      upsert: true,
+      upsert: false,
+      contentType: file.type || 'image/jpeg',
     })
 
   if (uploadError) {
