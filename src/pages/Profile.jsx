@@ -26,9 +26,15 @@ function loadSavedUser() {
 
 export default function Profile() {
   const { user, logout, updateUser } = useAuth()
-
   const savedUser = loadSavedUser()
-  const baseProfile = { ...mockUser, ...savedUser, ...user }
+
+  const baseProfile = {
+    ...mockUser,
+    ...savedUser,
+    ...user,
+    banner: '',
+  }
+
   const profileId = baseProfile.id || 'alumno-001'
 
   const [open, setOpen] = useState('insignias')
@@ -36,7 +42,6 @@ export default function Profile() {
   const [savedMsg, setSavedMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
-
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
 
@@ -49,7 +54,7 @@ export default function Profile() {
     sobreMi: baseProfile.sobreMi || '',
     pin: baseProfile.pin || '',
     foto: baseProfile.foto || '',
-    banner: baseProfile.banner || '/banner-prcard.png',
+    banner: '',
   })
 
   useEffect(() => {
@@ -62,7 +67,11 @@ export default function Profile() {
         .eq('id', profileId)
         .maybeSingle()
 
-      if (!error && data) {
+      if (error) {
+        setSavedMsg(`Error cargando perfil: ${error.message}`)
+      }
+
+      if (data) {
         const loaded = {
           nombre: data.nombre || baseProfile.nombre || '',
           ciudad: data.ciudad || baseProfile.ciudad || '',
@@ -71,17 +80,13 @@ export default function Profile() {
           fechaNacimiento: data.fecha_nacimiento || baseProfile.fechaNacimiento || '',
           sobreMi: data.sobre_mi || baseProfile.sobreMi || '',
           pin: baseProfile.pin || '',
-          foto: data.foto || baseProfile.foto || '',
-          banner: data.banner || baseProfile.banner || '/banner-prcard.png',
+          foto: data.foto || '',
+          banner: data.banner || '',
         }
 
         setForm(loaded)
 
-        const updatedUser = {
-          ...baseProfile,
-          ...loaded,
-        }
-
+        const updatedUser = { ...baseProfile, ...loaded }
         localStorage.setItem('pr_user', JSON.stringify(updatedUser))
         updateUser?.(updatedUser)
       }
@@ -92,10 +97,7 @@ export default function Profile() {
     loadProfileFromSupabase()
   }, [profileId])
 
-  const profile = {
-    ...baseProfile,
-    ...form,
-  }
+  const profile = { ...baseProfile, ...form }
 
   const earned = insignias.filter(i => i.desbloqueada)
   const nextBadges = insignias.filter(i => !i.desbloqueada).slice(0, 3)
@@ -111,17 +113,12 @@ export default function Profile() {
 
   function previewImage(file, field) {
     if (!file) return
-
     const localPreview = URL.createObjectURL(file)
 
     if (field === 'foto') setFotoFile(file)
     if (field === 'banner') setBannerFile(file)
 
-    setForm(prev => ({
-      ...prev,
-      [field]: localPreview,
-    }))
-
+    setForm(prev => ({ ...prev, [field]: localPreview }))
     setSavedMsg('Imagen cargada. Tocá Guardar cambios.')
   }
 
@@ -158,11 +155,30 @@ export default function Profile() {
         updated_at: new Date().toISOString(),
       }
 
-      const { error } = await supabase
+      const { data: existing } = await supabase
         .from('profiles')
-        .upsert(dataToSave, { onConflict: 'id' })
+        .select('id')
+        .eq('id', profileId)
+        .maybeSingle()
 
-      if (error) throw new Error(error.message)
+      let saveError = null
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(dataToSave)
+          .eq('id', profileId)
+
+        saveError = error
+      } else {
+        const { error } = await supabase
+          .from('profiles')
+          .insert(dataToSave)
+
+        saveError = error
+      }
+
+      if (saveError) throw new Error(saveError.message)
 
       const updatedUser = {
         ...baseProfile,
@@ -180,18 +196,12 @@ export default function Profile() {
       localStorage.setItem('pr_user', JSON.stringify(updatedUser))
       updateUser?.(updatedUser)
 
-      setForm(prev => ({
-        ...prev,
-        foto: fotoUrl,
-        banner: bannerUrl,
-      }))
-
+      setForm(prev => ({ ...prev, foto: fotoUrl, banner: bannerUrl }))
       setFotoFile(null)
       setBannerFile(null)
       setEditing(false)
       setSavedMsg('Cambios guardados en Supabase correctamente.')
     } catch (error) {
-      console.error(error)
       setSavedMsg(`No se pudo guardar: ${error.message}`)
     } finally {
       setSaving(false)
@@ -209,12 +219,18 @@ export default function Profile() {
         )}
 
         <section className={`${panelBase} overflow-hidden relative`}>
-          <div className="h-40 relative bg-gradient-to-br from-pr-gold/25 via-pr-navy to-black">
-            {profile.banner && (
+          <div className="h-40 relative bg-gradient-to-br from-[#19140b] via-[#090910] to-black">
+            {profile.banner ? (
               <img src={profile.banner} alt="Banner" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                <div className="text-3xl mb-2">🛼</div>
+                <p className="text-pr-gold font-semibold text-sm">Personalizá tu banner</p>
+                <p className="text-white/35 text-xs mt-1">Subí una imagen que represente tu historia sobre ruedas.</p>
+              </div>
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-black/25 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-black/20 to-transparent" />
 
             <label className="absolute right-3 top-3 text-[10px] px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-white/70 cursor-pointer">
               Cambiar banner
@@ -229,7 +245,10 @@ export default function Profile() {
                   {profile.foto ? (
                     <img src={profile.foto} alt="Perfil" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="font-display text-3xl text-pr-gold">{initials(profile.nombre)}</span>
+                    <div className="text-center px-2">
+                      <div className="text-2xl mb-1">📸</div>
+                      <p className="text-[9px] text-pr-gold leading-tight">Poné tu foto</p>
+                    </div>
                   )}
 
                   <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-1">
@@ -336,21 +355,7 @@ export default function Profile() {
 
         <Accordion title={`Insignias (${earned.length})`} open={open === 'insignias'} onClick={() => setOpen(open === 'insignias' ? '' : 'insignias')}>
           <div className="grid grid-cols-2 gap-3">
-            {earned.map(badge => (
-              <BadgeCard key={badge.id} badge={badge} professor={professorById[badge.otorgadaPor]} />
-            ))}
-          </div>
-
-          <div className="mt-5">
-            <p className="section-label mb-3">Próximas por desbloquear</p>
-            <div className="space-y-2">
-              {nextBadges.map(b => (
-                <div key={b.id} className="rounded-2xl bg-black/25 border border-white/5 p-3 opacity-70">
-                  <p className="text-white/65 text-sm">🔒 {b.nombre}</p>
-                  <p className="text-white/35 text-xs mt-1">{b.descripcion}</p>
-                </div>
-              ))}
-            </div>
+            {earned.map(badge => <BadgeCard key={badge.id} badge={badge} professor={professorById[badge.otorgadaPor]} />)}
           </div>
         </Accordion>
 
@@ -362,9 +367,7 @@ export default function Profile() {
 
         <Accordion title={`Observaciones de tus entrenadores (${userObservations.length})`} subtitle="Tu evolución" open={open === 'observaciones'} onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}>
           <div className="space-y-3">
-            {userObservations.map(obs => (
-              <ObservationCard key={obs.id} obs={obs} professor={professorById[obs.profesorId]} />
-            ))}
+            {userObservations.map(obs => <ObservationCard key={obs.id} obs={obs} professor={professorById[obs.profesorId]} />)}
           </div>
         </Accordion>
 
@@ -475,9 +478,7 @@ function ServiceState({ title, active, action, href }) {
     <div className="rounded-2xl bg-black/25 border border-white/5 p-4 flex items-center justify-between">
       <div>
         <p className="text-white font-semibold">{title}</p>
-        <p className={active ? 'text-emerald-400 text-xs' : 'text-red-300 text-xs'}>
-          {active ? 'Activo' : 'Inactivo'}
-        </p>
+        <p className={active ? 'text-emerald-400 text-xs' : 'text-red-300 text-xs'}>{active ? 'Activo' : 'Inactivo'}</p>
       </div>
       <Link to={href} className="text-pr-gold text-xs">{action}</Link>
     </div>
