@@ -7,6 +7,8 @@ import AppLayout from '../layouts/AppLayout'
 
 const quickAccess = [
   { icon: '💳', label: 'Mi PRCard', to: '/app/prcard', accent: '#C9A84C' },
+  { icon: '📝', label: 'Notas del profe', to: '/app/perfil#observaciones', accent: '#818cf8' },
+  { icon: '✏️', label: 'Editar perfil', to: '/app/perfil#editar', accent: '#C9A84C' },
   { icon: '📊', label: 'Actividad', to: '/app/actividad', accent: '#4ecb8b' },
   { icon: '📍', label: 'Tracking', to: '/app/tracking', accent: '#C9A84C' },
   { icon: '🎬', label: 'Contenido', to: '/app/contenido', accent: '#f97316' },
@@ -201,27 +203,41 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <Link
-              to="/app/perfil"
-              className="mt-4 block text-center rounded-2xl py-3 text-sm font-semibold"
-              style={{
-                color: '#0b0b12',
-                background: '#C9A84C',
-              }}
-            >
-              Ver perfil completo
-            </Link>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <Link
+                to="/app/perfil"
+                className="block text-center rounded-2xl py-3 text-sm font-semibold"
+                style={{ color: '#0b0b12', background: '#C9A84C' }}
+              >
+                Ver perfil
+              </Link>
+
+              <Link
+                to="/app/perfil#editar"
+                className="block text-center rounded-2xl py-3 text-sm font-semibold"
+                style={{
+                  color: 'rgba(216,216,232,0.85)',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                Editar perfil
+              </Link>
+            </div>
           </div>
         </section>
 
         <div className="animate-fade-up stagger-2">
           <p className="section-label mb-3">Accesos rápidos</p>
+
           <div className="grid grid-cols-2 gap-2.5">
-            {quickAccess.map((item) => (
+            {quickAccess.map((item, index) => (
               <Link
                 key={item.label}
                 to={item.to}
-                className="rounded-xl p-4 flex items-center gap-3 transition-all active:scale-95"
+                className={`rounded-xl p-4 flex items-center gap-3 transition-all active:scale-95 ${
+                  index === quickAccess.length - 1 ? 'col-span-2' : ''
+                }`}
                 style={{
                   background: 'rgba(255,255,255,0.03)',
                   border: '1px solid rgba(255,255,255,0.07)',
@@ -233,6 +249,7 @@ export default function Dashboard() {
                 >
                   {item.icon}
                 </div>
+
                 <span className="text-sm font-body font-medium leading-tight" style={{ color: 'rgba(216,216,232,0.75)' }}>
                   {item.label}
                 </span>
@@ -273,6 +290,7 @@ export default function Dashboard() {
                     <p className="text-sm font-body font-semibold truncate" style={{ color: 'rgba(216,216,232,0.82)' }}>
                       {a.nombre}
                     </p>
+
                     <p className="text-xs font-body mt-0.5" style={{ color: 'rgba(216,216,232,0.28)' }}>
                       {a.fecha}{a.hora !== '—' ? ` · ${a.hora}hs` : ''}
                     </p>
