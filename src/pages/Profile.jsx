@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
+import { uploadPublicImage } from '../lib/supabase'
 import {
   mockUser,
   insignias,
@@ -49,6 +50,10 @@ export default function Profile() {
   const [open, setOpen] = useState('insignias')
   const [editing, setEditing] = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const [fotoFile, setFotoFile] = useState(null)
+  const [bannerFile, setBannerFile] = useState(null)
 
   const [form, setForm] = useState({
     nombre: baseProfile.nombre || '',
@@ -79,25 +84,42 @@ export default function Profile() {
     []
   )
 
-  function readImage(file, field) {
+  function previewImage(file, field) {
     if (!file) return
 
-    const reader = new FileReader()
+    const localPreview = URL.createObjectURL(file)
 
-    reader.onload = () => {
-      setForm(prev => ({
-        ...prev,
-        [field]: reader.result,
-      }))
+    if (field === 'foto') setFotoFile(file)
+    if (field === 'banner') setBannerFile(file)
 
-      setSavedMsg('Imagen cargada. Tocá Guardar cambios.')
-    }
+    setForm(prev => ({
+      ...prev,
+      [field]: localPreview,
+    }))
 
-    reader.readAsDataURL(file)
+    setSavedMsg('Imagen cargada. Tocá Guardar cambios para subirla a Supabase.')
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     try {
+      setSaving(true)
+      setSavedMsg('Guardando cambios...')
+
+      let fotoUrl = form.foto
+      let bannerUrl = form.banner
+
+      if (fotoFile) {
+        const result = await uploadPublicImage('avatars', fotoFile, profile.id || 'alumno')
+        if (result.error) throw new Error(result.error)
+        fotoUrl = result.url
+      }
+
+      if (bannerFile) {
+        const result = await uploadPublicImage('banners', bannerFile, profile.id || 'alumno')
+        if (result.error) throw new Error(result.error)
+        bannerUrl = result.url
+      }
+
       const dataToSave = {
         nombre: form.nombre,
         ciudad: form.ciudad,
@@ -106,8 +128,8 @@ export default function Profile() {
         fechaNacimiento: form.fechaNacimiento,
         sobreMi: form.sobreMi,
         pin: form.pin,
-        foto: form.foto,
-        banner: form.banner,
+        foto: fotoUrl,
+        banner: bannerUrl,
       }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
@@ -122,15 +144,21 @@ export default function Profile() {
       localStorage.setItem('pr_user', JSON.stringify(updatedUser))
       updateUser?.(updatedUser)
 
-      setSavedMsg('Cambios guardados correctamente.')
-      setEditing(false)
+      setForm(prev => ({
+        ...prev,
+        foto: fotoUrl,
+        banner: bannerUrl,
+      }))
 
-      setTimeout(() => {
-        window.location.reload()
-      }, 700)
+      setFotoFile(null)
+      setBannerFile(null)
+      setEditing(false)
+      setSavedMsg('Cambios guardados correctamente en Supabase.')
     } catch (error) {
       console.error(error)
-      setSavedMsg('No se pudo guardar. Probá con una imagen más liviana.')
+      setSavedMsg(`No se pudo guardar: ${error.message}`)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -156,7 +184,7 @@ export default function Profile() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={e => readImage(e.target.files?.[0], 'banner')}
+                onChange={e => previewImage(e.target.files?.[0], 'banner')}
               />
             </label>
           </div>
@@ -185,7 +213,7 @@ export default function Profile() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={e => readImage(e.target.files?.[0], 'foto')}
+                    onChange={e => previewImage(e.target.files?.[0], 'foto')}
                   />
                 </label>
 
@@ -271,14 +299,15 @@ export default function Profile() {
 
             <button
               type="button"
+              disabled={saving}
               onClick={saveProfile}
-              className="w-full rounded-2xl bg-pr-gold text-black py-4 text-sm font-bold active:scale-[0.98]"
+              className="w-full rounded-2xl bg-pr-gold text-black py-4 text-sm font-bold active:scale-[0.98] disabled:opacity-50"
             >
-              Guardar cambios
+              {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>
 
             <p className="text-white/35 text-xs">
-              Después de guardar, la pantalla se recarga para confirmar que la foto y el banner quedaron guardados.
+              Las imágenes se guardan en Supabase Storage para que se vean desde cualquier celular.
             </p>
           </section>
         )}
