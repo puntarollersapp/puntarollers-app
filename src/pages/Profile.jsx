@@ -24,10 +24,27 @@ function loadSavedProfile() {
   }
 }
 
+function loadSavedUser() {
+  try {
+    const saved = localStorage.getItem('pr_user')
+    return saved ? JSON.parse(saved) : {}
+  } catch {
+    return {}
+  }
+}
+
 export default function Profile() {
-  const { user, logout } = useAuth()
-  const saved = loadSavedProfile()
-  const baseProfile = { ...mockUser, ...user, ...saved }
+  const { user, logout, updateUser } = useAuth()
+
+  const savedProfile = loadSavedProfile()
+  const savedUser = loadSavedUser()
+
+  const baseProfile = {
+    ...mockUser,
+    ...savedUser,
+    ...user,
+    ...savedProfile,
+  }
 
   const [open, setOpen] = useState('insignias')
   const [editing, setEditing] = useState(false)
@@ -45,7 +62,10 @@ export default function Profile() {
     banner: baseProfile.banner || '/banner-prcard.png',
   })
 
-  const profile = { ...baseProfile, ...form }
+  const profile = {
+    ...baseProfile,
+    ...form,
+  }
 
   const earned = insignias.filter(i => i.desbloqueada)
   const nextBadges = insignias.filter(i => !i.desbloqueada).slice(0, 3)
@@ -69,6 +89,7 @@ export default function Profile() {
         ...prev,
         [field]: reader.result,
       }))
+
       setSavedMsg('Imagen cargada. Tocá Guardar cambios.')
     }
 
@@ -90,6 +111,16 @@ export default function Profile() {
       }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
+
+      const currentUser = loadSavedUser()
+      const updatedUser = {
+        ...currentUser,
+        ...user,
+        ...dataToSave,
+      }
+
+      localStorage.setItem('pr_user', JSON.stringify(updatedUser))
+      updateUser?.(updatedUser)
 
       setSavedMsg('Cambios guardados correctamente.')
       setEditing(false)
