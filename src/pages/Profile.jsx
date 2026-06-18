@@ -1,113 +1,172 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuth } from '../lib/auth'
-import { mockUser, insignias, experiencias, actividad } from '../data/mockData'
+import {
+  mockUser,
+  contactosPR,
+  insignias,
+  notificaciones,
+  observaciones,
+  participaciones,
+  profesores,
+} from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
 
-const MEMBER_STATES = {
-  Nuevo:      { label: 'Nuevo',     dot: '#888',    ring: 'rgba(136,136,136,0.3)',  desc: 'Empezando el camino' },
-  Activo:     { label: 'Activo',    dot: '#4ecb8b', ring: 'rgba(26,107,74,0.35)',   desc: 'Entrenando con constancia' },
-  Frecuente:  { label: 'Frecuente', dot: '#C9A84C', ring: 'rgba(201,168,76,0.35)',  desc: 'Presencia regular en el club' },
-  Destacado:  { label: 'Destacado', dot: '#E0C060', ring: 'rgba(224,192,96,0.4)',   desc: 'Referente de la comunidad' },
-  Destacada:  { label: 'Destacada', dot: '#E0C060', ring: 'rgba(224,192,96,0.4)',   desc: 'Referente de la comunidad' },
+const fmtDate = (date) => {
+  if (!date) return 'Sin fecha'
+  return new Date(date).toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function MemberStatusBadge({ estado }) {
-  const cfg = MEMBER_STATES[estado] || MEMBER_STATES.Activo
+function getInitials(name = '') {
+  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+}
+
+function findProfesor(id) {
+  return profesores.find(p => p.id === id) || profesores[0]
+}
+
+function VerifiedBadge() {
+  return (
+    <span
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-xs font-bold align-middle"
+      style={{ background: 'linear-gradient(135deg,#1d9bf0,#5ab8ff)', boxShadow: '0 0 0 2px rgba(29,155,240,.18)' }}
+      title="Miembro verificado por Punta Rollers"
+    >
+      ✓
+    </span>
+  )
+}
+
+function Avatar({ name, src, size = 'md', subtle = false }) {
+  const sizes = {
+    sm: 'w-9 h-9 text-xs rounded-full',
+    md: 'w-14 h-14 text-lg rounded-full',
+    lg: 'w-24 h-24 text-2xl rounded-full',
+  }
   return (
     <div
-      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-body font-semibold tracking-wide"
+      className={`${sizes[size]} shrink-0 overflow-hidden flex items-center justify-center font-display font-bold`}
       style={{
-        background: `radial-gradient(ellipse at left, ${cfg.ring} 0%, transparent 70%)`,
-        border: `1px solid ${cfg.ring}`,
-        color: cfg.dot,
+        background: subtle ? 'rgba(255,255,255,.05)' : 'linear-gradient(135deg,rgba(201,168,76,.26),rgba(255,255,255,.06))',
+        border: '1px solid rgba(201,168,76,.28)',
+        color: '#E7D38A',
       }}
     >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.dot }} />
-      Miembro {cfg.label}
+      {src ? <img src={src} alt="" className="w-full h-full object-cover" /> : getInitials(name)}
     </div>
   )
 }
 
-function InsigniaItem({ b }) {
+function StatusPill({ active, labelActive, labelInactive }) {
   return (
-    <div className={`insignia-card p-4 ${b.desbloqueada ? 'earned' : 'locked'}`}>
-      {b.desbloqueada && (
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at top right, rgba(201,168,76,0.2), transparent 70%)' }}
-        />
-      )}
-      <div className="flex items-start justify-between mb-3 relative z-10">
-        <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
-          style={{
-            background: b.desbloqueada
-              ? 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(184,134,12,0.08))'
-              : 'rgba(255,255,255,0.04)',
-            border: b.desbloqueada ? '1px solid rgba(201,168,76,0.2)' : '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          {b.emoji}
-        </div>
-        {b.desbloqueada
-          ? <span className="text-xs text-pr-green font-body font-semibold">Ganada</span>
-          : <span className="text-xs text-white/20 font-body">Bloqueada</span>
-        }
-      </div>
-      <div className="relative z-10">
-        <p className="font-body font-semibold text-sm leading-tight" style={{ color: b.desbloqueada ? '#d8d8e8' : 'rgba(216,216,232,0.3)' }}>
-          {b.nombre}
-        </p>
-        <p className="text-xs font-body mt-1 leading-snug" style={{ color: b.desbloqueada ? 'rgba(216,216,232,0.4)' : 'rgba(216,216,232,0.15)' }}>
-          {b.descripcion}
-        </p>
-        {b.desbloqueada && b.fecha && (
-          <p className="text-[10px] font-body mt-2 font-medium" style={{ color: 'rgba(201,168,76,0.5)' }}>{b.fecha}</p>
-        )}
-      </div>
-    </div>
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+      style={{
+        background: active ? 'rgba(78,203,139,.12)' : 'rgba(255,255,255,.05)',
+        border: `1px solid ${active ? 'rgba(78,203,139,.28)' : 'rgba(255,255,255,.08)'}`,
+        color: active ? '#76e0ad' : 'rgba(216,216,232,.48)',
+      }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: active ? '#76e0ad' : 'rgba(216,216,232,.35)' }} />
+      {active ? labelActive : labelInactive}
+    </span>
   )
 }
 
-function ExpItem({ e }) {
+function SectionCard({ children, className = '' }) {
   return (
-    <div className={`exp-card p-4 ${e.desbloqueada ? 'earned' : 'locked'}`}>
-      {e.desbloqueada && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: `radial-gradient(ellipse at top left, ${e.color}18 0%, transparent 65%)` }}
-        />
-      )}
-      <div className="flex items-center gap-3.5 relative z-10">
-        <div
-          className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center"
-          style={{
-            background: e.desbloqueada ? `${e.color}18` : 'rgba(255,255,255,0.03)',
-            border: e.desbloqueada ? `1px solid ${e.color}30` : '1px solid rgba(255,255,255,0.05)',
-          }}
-        >
-          <span className="text-xl">{e.desbloqueada ? '⭐' : '🔒'}</span>
+    <div className={`glass rounded-2xl p-4 ${className}`}>{children}</div>
+  )
+}
+
+function Accordion({ title, count, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <SectionCard>
+      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center justify-between gap-3 text-left">
+        <div>
+          <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
+          {typeof count !== 'undefined' && <p className="section-label mt-1">{count}</p>}
         </div>
+        <span className="text-pr-gold text-xl">{open ? '−' : '+'}</span>
+      </button>
+      {open && <div className="mt-4 space-y-3 animate-fade-in">{children}</div>}
+    </SectionCard>
+  )
+}
+
+function ObservationCard({ obs, onReact }) {
+  const profe = findProfesor(obs.autor_id)
+  return (
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.07)' }}>
+      <div className="flex gap-3">
+        <Avatar name={profe.nombre} src={profe.foto_url} size="sm" subtle />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-body font-semibold text-sm leading-tight truncate" style={{ color: e.desbloqueada ? '#d8d8e8' : 'rgba(216,216,232,0.25)' }}>
-              {e.nombre}
-            </p>
-            <span
-              className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-body font-medium tracking-wide"
-              style={{
-                background: e.desbloqueada ? `${e.color}18` : 'rgba(255,255,255,0.04)',
-                color: e.desbloqueada ? e.color : 'rgba(216,216,232,0.2)',
-                border: `1px solid ${e.desbloqueada ? e.color + '30' : 'rgba(255,255,255,0.06)'}`,
-              }}
-            >
-              {e.categoria}
-            </span>
+            <div>
+              <p className="text-sm font-semibold text-white">{profe.nombre}</p>
+              <p className="text-[11px] text-white/35">{fmtDate(obs.fecha)} · {obs.tipo}</p>
+            </div>
+            {obs.reaccion && (
+              <span className="text-[11px] px-2 py-1 rounded-full bg-white/5 text-white/45">
+                {obs.reaccion === 'motivo' ? '❤️ Me motivó' : '👍 Recibido'}
+              </span>
+            )}
           </div>
-          <p className="text-xs font-body mt-0.5 leading-snug" style={{ color: e.desbloqueada ? 'rgba(216,216,232,0.38)' : 'rgba(216,216,232,0.14)' }}>
-            {e.descripcion}
-          </p>
+          <h4 className="mt-3 font-body font-semibold text-pr-gold">{obs.titulo}</h4>
+          <p className="mt-1 text-sm leading-relaxed text-white/60 whitespace-pre-line">{obs.descripcion}</p>
+          {obs.imagen_url && (
+            <img src={obs.imagen_url} alt="Adjunto" className="mt-3 mx-auto max-h-44 rounded-xl object-cover border border-white/10" />
+          )}
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => onReact(obs.id, 'recibido')} className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 text-white/60 border border-white/10">👍 Recibido</button>
+            <button onClick={() => onReact(obs.id, 'motivo')} className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 text-white/60 border border-white/10">❤️ Me motivó</button>
+          </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function InsigniaCard({ badge, locked = false }) {
+  const profe = badge.otorgada_por_id ? findProfesor(badge.otorgada_por_id) : null
+  const official = badge.tipo === 'oficial'
+  return (
+    <div
+      className="rounded-2xl p-3 overflow-hidden relative"
+      style={{
+        background: locked
+          ? 'rgba(255,255,255,.025)'
+          : official
+            ? 'linear-gradient(150deg,rgba(201,168,76,.16),rgba(255,255,255,.035))'
+            : 'linear-gradient(150deg,rgba(88,166,255,.13),rgba(196,88,255,.08))',
+        border: locked ? '1px dashed rgba(255,255,255,.10)' : '1px solid rgba(201,168,76,.16)',
+        opacity: locked ? 0.72 : 1,
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: locked ? 'rgba(255,255,255,.04)' : (official ? 'rgba(201,168,76,.15)' : 'rgba(88,166,255,.14)'), border: '1px solid rgba(255,255,255,.08)' }}>
+          {badge.imagen_url ? <img src={badge.imagen_url} alt="" className="w-10 h-10 object-contain" /> : <span className="text-xl">{locked ? '🔒' : '🏅'}</span>}
+        </div>
+        <div className="min-w-0">
+          <p className="font-semibold text-sm text-white leading-tight">{badge.nombre}</p>
+          <p className="text-xs text-white/45 leading-snug mt-1">{badge.descripcion}</p>
+          {!locked && profe && (
+            <p className="text-[11px] text-white/32 mt-2">Otorgada por {profe.nombre} · {fmtDate(badge.fecha)}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NotificationItem({ n }) {
+  return (
+    <div className="flex gap-3 rounded-xl p-3" style={{ background: n.leida ? 'rgba(255,255,255,.025)' : 'rgba(201,168,76,.07)', border: '1px solid rgba(255,255,255,.06)' }}>
+      <span className="mt-0.5">{n.tipo === 'insignia' ? '🏅' : n.tipo === 'observacion' ? '📝' : n.tipo === 'participacion' ? '🎉' : n.tipo === 'aviso' ? '📢' : '🔔'}</span>
+      <div>
+        <p className="text-sm font-semibold text-white">{n.titulo}</p>
+        <p className="text-xs text-white/50 mt-0.5 leading-relaxed">{n.descripcion}</p>
+        <p className="text-[11px] text-white/28 mt-1">{fmtDate(n.fecha)}</p>
       </div>
     </div>
   )
@@ -116,227 +175,147 @@ function ExpItem({ e }) {
 export default function Profile() {
   const { user, logout } = useAuth()
   const u = user || mockUser
-  const [editFrase, setEditFrase] = useState(false)
-  const [frase, setFrase] = useState(u.frase_personal || 'Tu historia sobre ruedas empieza acá.')
-  const [activeTab, setActiveTab] = useState('insignias')
+  const [obsList, setObsList] = useState(observaciones)
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('pr_onboarding_seen'))
 
-  const miembroDesde = new Date(u.miembro_desde || '2022-03-15')
-  const meses = Math.floor((new Date() - miembroDesde) / (1000 * 60 * 60 * 24 * 30))
-  const initials = u.nombre?.split(' ').map(n => n[0]).join('').slice(0, 2)
-  const ultimaActividad = actividad[0]
-  const estadoCfg = MEMBER_STATES[u.estado] || MEMBER_STATES.Activo
+  const unlocked = insignias.filter(i => i.desbloqueada)
+  const lockedPreview = insignias.filter(i => !i.desbloqueada).slice(0, 3)
+  const latestObs = obsList[0]
+  const latestBadge = unlocked[unlocked.length - 1]
+  const unread = notificaciones.filter(n => !n.leida).length
+  const groups = u.grupos || ['Parada 2']
+
+  const reactToObs = (id, reaction) => {
+    setObsList(list => list.map(obs => obs.id === id ? { ...obs, reaccion: reaction } : obs))
+  }
+
+  const closeOnboarding = () => {
+    localStorage.setItem('pr_onboarding_seen', '1')
+    setShowOnboarding(false)
+  }
 
   return (
     <AppLayout title="Mi Perfil" showBack>
-      <div className="px-4 pt-5 pb-8 space-y-5">
-
-        <div className="animate-fade-up">
-          <div
-            className="rounded-2xl p-6 relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(160deg, rgba(18,13,2,0.96) 0%, rgba(9,9,20,0.98) 100%)',
-              border: '1px solid rgba(201,168,76,0.16)',
-            }}
-          >
-            <div
-              className="absolute top-0 left-0 w-48 h-24 pointer-events-none"
-              style={{ background: `radial-gradient(ellipse at top left, ${estadoCfg.ring} 0%, transparent 70%)`, opacity: 0.4 }}
-            />
-
-            <div className="flex items-start gap-4 relative z-10">
-              <div className="relative flex-shrink-0">
-                <div
-                  className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: `1.5px solid ${estadoCfg.ring}` }}
-                >
-                  {u.foto_url ? (
-                    <img src={u.foto_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="font-display text-2xl font-bold text-gold-gradient-subtle">{initials}</span>
-                  )}
-                </div>
-                <button className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg glass-gold flex items-center justify-center">
-                  <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="rgba(201,168,76,0.8)" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
+      <div className="px-4 pt-4 pb-8 space-y-4">
+        {showOnboarding && (
+          <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-3xl p-5" style={{ background: 'linear-gradient(160deg,#121212,#08080d)', border: '1px solid rgba(201,168,76,.18)' }}>
+              <p className="section-label">Bienvenido a Punta Rollers</p>
+              <h2 className="font-display text-2xl text-white mt-2">No es solo patinar, es pertenecer.</h2>
+              <p className="text-sm text-white/55 leading-relaxed mt-3">
+                Este es tu espacio PR: acá vas a ver observaciones de tus entrenadores, insignias, eventos en los que participaste, contactos y novedades importantes.
+              </p>
+              <div className="mt-4 rounded-2xl p-3 bg-white/5 border border-white/10 text-sm text-white/55">
+                Te recomendamos completar tu foto, banner e Instagram para que tu perfil se sienta más tuyo.
               </div>
-
-              <div className="flex-1 pt-0.5">
-                <h2 className="font-display text-xl font-semibold text-white leading-tight">{u.nombre}</h2>
-                <p className="text-xs font-body mt-0.5 mb-2" style={{ color: 'rgba(216,216,232,0.35)' }}>
-                  {meses} meses · desde {miembroDesde.toLocaleDateString('es-UY', { month: 'short', year: 'numeric' })}
-                </p>
-                <MemberStatusBadge estado={u.estado} />
-              </div>
-            </div>
-
-            <p className="mt-3 text-xs font-body relative z-10" style={{ color: 'rgba(216,216,232,0.32)' }}>
-              {estadoCfg.desc}
-            </p>
-
-            <div className="divider-subtle my-4" />
-
-            {ultimaActividad && (
-              <div className="flex items-center gap-2 relative z-10">
-                <div className="w-1.5 h-1.5 rounded-full bg-pr-green" />
-                <p className="text-xs font-body" style={{ color: 'rgba(216,216,232,0.35)' }}>
-                  Última actividad: <span style={{ color: 'rgba(216,216,232,0.6)' }}>{ultimaActividad.nombre}</span>
-                  <span className="ml-1.5" style={{ color: 'rgba(216,216,232,0.25)' }}>{ultimaActividad.fecha}</span>
-                </p>
-              </div>
-            )}
-
-            <div
-              className="mt-3 relative z-10 rounded-xl px-4 py-3 cursor-pointer group"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-              onClick={() => !editFrase && setEditFrase(true)}
-            >
-              {editFrase ? (
-                <div className="space-y-2">
-                  <input className="input-pr text-sm" value={frase} onChange={e => setFrase(e.target.value)} autoFocus />
-                  <button onClick={() => setEditFrase(false)} className="btn-gold py-2 px-5 text-xs">Guardar</button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-xs font-body italic flex-1 leading-relaxed" style={{ color: 'rgba(216,216,232,0.45)' }}>
-                    "{frase}"
-                  </p>
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="rgba(201,168,76,0.3)" strokeWidth="2" className="flex-shrink-0 group-hover:stroke-pr-gold transition-colors">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </div>
-              )}
+              <button onClick={closeOnboarding} className="btn-gold w-full mt-5">Entendido</button>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="animate-fade-up stagger-1 grid grid-cols-3 gap-2.5">
-          {[
-            { label: 'Clases',  value: u.clases_asistidas || 84, color: '#4ecb8b' },
-            { label: 'Eventos', value: u.eventos || 12,           color: '#C9A84C' },
-            { label: 'Exp. PR', value: u.experiencias_desbloqueadas || 7, color: '#a78bfa' },
-          ].map(s => (
-            <div
-              key={s.label}
-              className="rounded-xl p-4 text-center"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <p className="font-display text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-              <p className="section-label mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="animate-fade-up stagger-2 flex rounded-xl p-1 gap-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          {[
-            { id: 'insignias',    label: 'Insignias' },
-            { id: 'experiencias', label: 'Exp. PR' },
-            { id: 'actividad',    label: 'Actividad' },
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-body font-semibold transition-all duration-200 ${
-                activeTab === t.id ? 'bg-pr-gold text-pr-black' : 'text-white/35 hover:text-white/60'
-              }`}
-            >
-              {t.label}
+        <section className="relative overflow-hidden rounded-3xl border border-white/10" style={{ background: 'rgba(255,255,255,.03)' }}>
+          <div className="h-36 relative" style={{ background: u.banner_url ? undefined : 'linear-gradient(135deg,rgba(201,168,76,.20),rgba(26,107,74,.16),rgba(5,5,8,1))' }}>
+            {u.banner_url && <img src={u.banner_url} alt="Banner" className="w-full h-full object-cover" />}
+            <button className="absolute right-3 top-3 px-3 py-1.5 rounded-full text-xs font-semibold bg-black/35 border border-white/10 text-white/70">Cambiar banner</button>
+          </div>
+          <div className="px-5 pb-5 -mt-12 relative z-10">
+            <button className="block relative">
+              <Avatar name={u.nombre} src={u.foto_url} size="lg" />
+              <span className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-pr-gold text-pr-black flex items-center justify-center text-xs font-bold border-2 border-pr-black">✎</span>
             </button>
+            <div className="mt-3 flex items-center gap-2">
+              <h1 className="font-display text-2xl font-semibold text-white leading-tight">{u.nombre}</h1>
+              {u.verificado && <VerifiedBadge />}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="px-3 py-1 rounded-full bg-white/5 text-white/55 border border-white/10 text-xs">Miembro desde {fmtDate(u.miembro_desde)}</span>
+              {groups.map(g => <span key={g} className="px-3 py-1 rounded-full bg-pr-gold/10 text-pr-gold border border-pr-gold/20 text-xs">{g}</span>)}
+            </div>
+            <div className="mt-3 space-y-1 text-sm text-white/55">
+              {u.instagram && <p>Instagram: <span className="text-white/75">{u.instagram}</span></p>}
+              {u.ciudad && <p>Ciudad: <span className="text-white/75">{u.ciudad}</span></p>}
+              {u.sobre_mi && <p className="leading-relaxed">{u.sobre_mi}</p>}
+            </div>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-3 gap-2.5">
+          <SectionCard className="text-center"><p className="font-display text-2xl text-pr-gold font-bold">{unlocked.length}</p><p className="section-label mt-1">Insignias</p></SectionCard>
+          <SectionCard className="text-center"><p className="font-display text-2xl text-pr-green font-bold">{participaciones.length}</p><p className="section-label mt-1">Eventos</p></SectionCard>
+          <SectionCard className="text-center"><p className="font-display text-2xl text-white font-bold">{obsList.length}</p><p className="section-label mt-1">Observ.</p></SectionCard>
+        </div>
+
+        <SectionCard>
+          <p className="section-label">Últimas novedades</p>
+          <div className="mt-3 grid gap-3">
+            {latestBadge && <div className="rounded-xl p-3 bg-pr-gold/8 border border-pr-gold/15"><p className="text-xs text-white/40">Última insignia</p><p className="text-sm font-semibold text-white">{latestBadge.nombre}</p></div>}
+            {latestObs && <div className="rounded-xl p-3 bg-white/5 border border-white/10"><p className="text-xs text-white/40">Última observación</p><p className="text-sm font-semibold text-white">{latestObs.titulo}</p><p className="text-xs text-white/45 mt-1 line-clamp-2">{latestObs.descripcion}</p></div>}
+            <div className="rounded-xl p-3 bg-white/5 border border-white/10"><p className="text-sm font-semibold text-white">🔔 {unread ? `Tenés ${unread} novedades` : 'Sin novedades pendientes'}</p></div>
+          </div>
+        </SectionCard>
+
+        <Accordion title="Insignias" count={`${unlocked.length} obtenidas`} defaultOpen>
+          <div className="space-y-3">
+            {unlocked.map(b => <InsigniaCard key={b.id} badge={b} />)}
+          </div>
+          {lockedPreview.length > 0 && (
+            <div className="pt-2">
+              <p className="section-label mb-2">Próximas por desbloquear</p>
+              <div className="space-y-3">{lockedPreview.map(b => <InsigniaCard key={b.id} badge={b} locked />)}</div>
+            </div>
+          )}
+        </Accordion>
+
+        <Accordion title="Eventos en los que participaste" count={`${participaciones.length} registrados`}>
+          {participaciones.map(p => (
+            <div key={p.id} className="rounded-2xl p-4 bg-white/5 border border-white/10">
+              <p className="font-semibold text-white">{p.nombre}</p>
+              <p className="text-xs text-white/35 mt-1">{fmtDate(p.fecha)}</p>
+              <p className="text-sm text-white/52 mt-2 leading-relaxed">{p.descripcion}</p>
+            </div>
           ))}
-        </div>
+        </Accordion>
 
-        {activeTab === 'insignias' && (
-          <div className="animate-fade-up space-y-4">
-            <div>
-              <p className="section-label mb-2.5">Obtenidas ({insignias.filter(b => b.desbloqueada).length})</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {insignias.filter(b => b.desbloqueada).map(b => <InsigniaItem key={b.id} b={b} />)}
+        <Accordion title="Observaciones de tus entrenadores" count="Tu evolución">
+          {obsList.slice(0, 10).map(obs => <ObservationCard key={obs.id} obs={obs} onReact={reactToObs} />)}
+          {obsList.length > 10 && <button className="btn-gold w-full">Ver más</button>}
+        </Accordion>
+
+        <Accordion title="Notificaciones" count={`${notificaciones.length > 50 ? 50 : notificaciones.length} recientes`}>
+          {notificaciones.slice(0, 50).map(n => <NotificationItem key={n.id} n={n} />)}
+        </Accordion>
+
+        <Accordion title="Contactos PR" count="Profes y grupo correspondiente">
+          {contactosPR.map(c => (
+            <a key={c.id} href={c.url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl p-3 bg-white/5 border border-white/10">
+              <div>
+                <p className="text-sm font-semibold text-white">{c.titulo}</p>
+                <p className="text-xs text-white/35">{c.tipo} · {c.valor}</p>
               </div>
-            </div>
-            <div>
-              <p className="section-label mb-2.5">Por desbloquear ({insignias.filter(b => !b.desbloqueada).length})</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {insignias.filter(b => !b.desbloqueada).map(b => <InsigniaItem key={b.id} b={b} />)}
-              </div>
-            </div>
+              <span className="text-pr-gold text-sm">Abrir</span>
+            </a>
+          ))}
+        </Accordion>
+
+        <Accordion title="Mis Servicios" count="PR Card y PR Tracking">
+          <div className="flex items-center justify-between rounded-xl p-3 bg-white/5 border border-white/10">
+            <div><p className="font-semibold text-white">PR Card</p><p className="text-xs text-white/40">Acceso a beneficios</p></div>
+            <StatusPill active={u.prcard_activa} labelActive="Activa" labelInactive="Inactiva" />
           </div>
-        )}
-
-        {activeTab === 'experiencias' && (
-          <div className="animate-fade-up space-y-4">
-            <div>
-              <p className="section-label mb-2.5">Colección desbloqueada ({experiencias.filter(e => e.desbloqueada).length})</p>
-              <div className="space-y-2.5">
-                {experiencias.filter(e => e.desbloqueada).map(e => <ExpItem key={e.id} e={e} />)}
-              </div>
-            </div>
-            <div className="divider-subtle" />
-            <div>
-              <p className="section-label mb-2.5">Próximas experiencias ({experiencias.filter(e => !e.desbloqueada).length})</p>
-              <div className="space-y-2.5">
-                {experiencias.filter(e => !e.desbloqueada).map(e => <ExpItem key={e.id} e={e} />)}
-              </div>
-            </div>
+          <div className="flex items-center justify-between rounded-xl p-3 bg-white/5 border border-white/10">
+            <div><p className="font-semibold text-white">PR Tracking</p><p className="text-xs text-white/40">Protección de equipamiento</p></div>
+            <StatusPill active={u.prtracking_activo} labelActive="Activo" labelInactive="Inactivo" />
           </div>
-        )}
+        </Accordion>
 
-        {activeTab === 'actividad' && (
-          <div className="animate-fade-up space-y-2">
-            {actividad.map(a => {
-              const type = a.tipo?.toLowerCase()
-              return (
-                <div key={a.id} className="flex items-start gap-3">
-                  <div className={`timeline-dot ${type}`}>
-                    {a.tipo === 'Clase' ? '🛼' : a.tipo === 'Insignia' ? '🏅' : '🎯'}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <p className="text-sm font-body font-semibold text-white/80 truncate">{a.nombre}</p>
-                    <p className="text-xs font-body mt-0.5" style={{ color: 'rgba(216,216,232,0.3)' }}>
-                      {a.fecha}{a.hora !== '—' ? ` · ${a.hora}hs` : ''}
-                    </p>
-                  </div>
-                  <div className="pt-1 flex flex-col items-end gap-1">
-                    <span className="section-label capitalize">{a.tipo}</span>
-                    {a.origen === 'NFC' && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded font-body" style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.18)' }}>NFC</span>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+        <Accordion title="Configuración" count="Datos editables por el alumno">
+          <div className="grid gap-2 text-sm text-white/55">
+            <button className="text-left rounded-xl p-3 bg-white/5 border border-white/10">Editar nombre visible</button>
+            <button className="text-left rounded-xl p-3 bg-white/5 border border-white/10">Editar Instagram, ciudad, email y cumpleaños</button>
+            <button className="text-left rounded-xl p-3 bg-white/5 border border-white/10">Cambiar PIN de ingreso</button>
+            <button onClick={logout} className="text-left rounded-xl p-3 bg-red-500/10 border border-red-500/20 text-red-200">Cerrar sesión</button>
           </div>
-        )}
-
-        <div className="animate-fade-up stagger-3">
-          <p className="section-label mb-3">Equipamiento NFC</p>
-          <div
-            className="rounded-xl p-4 flex items-center gap-4"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            <div className="nfc-pulse w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)' }}>
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="rgba(201,168,76,0.7)" strokeWidth="1.7">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-body font-semibold text-white/80">Patines PRCard Elite</p>
-              <p className="text-xs font-body mt-0.5" style={{ color: 'rgba(216,216,232,0.3)' }}>NFC activo · última sync 28/04/2025</p>
-            </div>
-            <span className="badge-activo text-[10px] px-2.5 py-1 rounded-full font-body font-medium">Activo</span>
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <button
-            onClick={logout}
-            className="w-full py-3.5 rounded-xl text-sm font-body font-medium tracking-wide transition-all"
-            style={{ background: 'rgba(220,60,60,0.05)', border: '1px solid rgba(220,60,60,0.12)', color: 'rgba(220,100,100,0.6)' }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-
+        </Accordion>
       </div>
     </AppLayout>
   )
