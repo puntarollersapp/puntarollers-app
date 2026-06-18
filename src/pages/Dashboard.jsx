@@ -1,18 +1,9 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 import { mockUser, actividad } from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
-
-const STORAGE_KEY = 'pr_profile_custom'
-
-function loadSavedProfile() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? JSON.parse(saved) : {}
-  } catch {
-    return {}
-  }
-}
 
 const quickAccess = [
   { icon: '💳', label: 'Mi PRCard', to: '/app/prcard', accent: '#C9A84C' },
@@ -40,11 +31,56 @@ const PHRASES = [
   'Cada clase suma. Cada rodada queda.',
 ]
 
+function loadSavedUser() {
+  try {
+    const saved = localStorage.getItem('pr_user')
+    return saved ? JSON.parse(saved) : {}
+  } catch {
+    return {}
+  }
+}
+
 export default function Dashboard() {
-  const { user } = useAuth()
-  const savedProfile = loadSavedProfile()
-  const u = { ...mockUser, ...user, ...savedProfile }
+  const { user, updateUser } = useAuth()
+  const savedUser = loadSavedUser()
+
+  const [u, setU] = useState({ ...mockUser, ...savedUser, ...user })
   const phrase = PHRASES[new Date().getDay() % PHRASES.length]
+
+  useEffect(() => {
+    async function loadProfile() {
+      const base = { ...mockUser, ...loadSavedUser(), ...user }
+      const profileId = base.id || 'alumno-001'
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .maybeSingle()
+
+      if (!error && data) {
+        const updated = {
+          ...base,
+          nombre: data.nombre || base.nombre,
+          ciudad: data.ciudad || base.ciudad,
+          instagram: data.instagram || base.instagram,
+          email: data.email || base.email,
+          fechaNacimiento: data.fecha_nacimiento || base.fechaNacimiento,
+          sobreMi: data.sobre_mi || base.sobreMi,
+          foto: data.foto || '',
+          banner: data.banner || '',
+        }
+
+        setU(updated)
+        localStorage.setItem('pr_user', JSON.stringify(updated))
+        updateUser?.(updated)
+      } else {
+        setU(base)
+      }
+    }
+
+    loadProfile()
+  }, [user?.id])
 
   const stats = [
     { label: 'Clases', value: u.estadisticas?.clases || 84, color: '#4ecb8b' },
@@ -72,14 +108,23 @@ export default function Dashboard() {
             boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
           }}
         >
-          <div
-            className="h-32 relative"
-            style={{
-              backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.05), rgba(10,10,20,0.8)), url(${u.banner || '/banner-prcard.png'})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+          <div className="h-32 relative bg-gradient-to-br from-[#19140b] via-[#090910] to-black overflow-hidden">
+            {u.banner ? (
+              <img
+                src={u.banner}
+                alt="Banner"
+                className="absolute inset-0 w-full h-full object-cover opacity-70"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                <div className="text-3xl mb-1">🛼</div>
+                <p className="text-pr-gold text-sm font-semibold">Personalizá tu banner</p>
+                <p className="text-white/35 text-xs mt-1">Subí tu imagen desde Perfil.</p>
+              </div>
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-[#0a0a14]/90" />
+          </div>
 
           <div className="px-5 pb-5 relative">
             <div
@@ -92,9 +137,10 @@ export default function Dashboard() {
               {u.foto ? (
                 <img src={u.foto} alt={u.nombre} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-3xl font-bold text-white">
-                  {u.nombre?.charAt(0)}
-                </span>
+                <div className="text-center px-2">
+                  <div className="text-2xl mb-1">📸</div>
+                  <p className="text-[9px] text-pr-gold leading-tight">Poné tu foto</p>
+                </div>
               )}
             </div>
 
