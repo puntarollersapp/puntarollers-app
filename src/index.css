@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── BASE ───────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: #050508;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #050508;
+  color: #d8d8e8;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── SCROLL ───────────────── */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201,168,76,0.2);
+}
+
+/* ─── GLASS ───────────────── */
+.glass {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.glass-dark {
+  background: rgba(5,5,8,0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ─── GOLD TEXT ───────────────── */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #C4962E, #E8D48E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── BOTONES ───────────────── */
+.btn-gold {
+  background: linear-gradient(135deg, #B8860C, #D4AA45);
+  color: #0a0800;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 14px;
+  transition: all 0.25s ease;
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* ─── LABEL ───────────────── */
+.section-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(216,216,232,0.3);
+}
+
+/* ─── BANNER ───────────────── */
+.pr-banner img {
+  border-radius: 14px;
+  width: 100%;
+}
+
+/* ─── ANIMACIONES BASE ───────────────── */
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── PAGE TRANSITION ───────────────── */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: pageEnter 0.45s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ─── UTILIDADES ANIMADAS ───────────────── */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.5s ease forwards;
+}
+
+/* ─── STAGGER ───────────────── */
+.stagger-1 { animation-delay: 0.08s; }
+.stagger-2 { animation-delay: 0.16s; }
+.stagger-3 { animation-delay: 0.24s; }
+.stagger-4 { animation-delay: 0.32s; }
+.stagger-5 { animation-delay: 0.40s; }
+.stagger-6 { animation-delay: 0.48s; }
+
+/* ─── INTERACCION ───────────────── */
+a:active {
+  transform: scale(0.96);
+}
+
+/* ─── NAV GLOW ───────────────── */
+.nav-active {
+  color: #C9A84C;
+  filter: drop-shadow(0 0 6px rgba(201,168,76,0.6));
+}
+
+/* ─── SUAVIDAD GLOBAL ───────────────── */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,0.04);
+  color: rgba(216,216,232,0.78);
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-pr {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 13px 14px;
+  color: #fff;
+  outline: none;
+}
+
+.input-pr:focus {
+  border-color: rgba(201,168,76,0.55);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+.divider-subtle {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+
+.badge-activo { background: rgba(34,163,112,0.12); color: #6ee7b7; border: 1px solid rgba(34,163,112,0.20); }
+.badge-frecuente { background: rgba(129,140,248,0.12); color: #c4b5fd; border: 1px solid rgba(129,140,248,0.20); }
+.badge-destacado { background: rgba(201,168,76,0.14); color: #E8D48E; border: 1px solid rgba(201,168,76,0.25); }
+.status-active { background: rgba(34,163,112,0.12); color: #6ee7b7; border: 1px solid rgba(34,163,112,0.2); }
+.shimmer-gold { animation: shimmerMove 3s linear infinite; }
+.nfc-pulse { animation: pulseGlow 2s ease-in-out infinite; }
+.logo-reveal { animation: badgePop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.tagline-reveal { animation: fadeUp 0.7s ease 0.8s forwards; }
+
+@keyframes shimmerMove { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes pulseGlow { 0%,100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.06); opacity: 1; } }
