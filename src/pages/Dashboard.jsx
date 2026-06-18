@@ -3,6 +3,17 @@ import { useAuth } from '../lib/auth'
 import { mockUser, actividad } from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
 
+const STORAGE_KEY = 'pr_profile_custom'
+
+function loadSavedProfile() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : {}
+  } catch {
+    return {}
+  }
+}
+
 const quickAccess = [
   { icon: '💳', label: 'Mi PRCard', to: '/app/prcard', accent: '#C9A84C' },
   { icon: '📊', label: 'Actividad', to: '/app/actividad', accent: '#4ecb8b' },
@@ -12,10 +23,9 @@ const quickAccess = [
 ]
 
 const ACTIVITY_CFG = {
-  Clase: { icon: '🛼', color: '#4ecb8b', bg: 'rgba(26,107,74,0.14)', border: 'rgba(26,107,74,0.2)' },
-  Evento: { icon: '🎯', color: '#818cf8', bg: 'rgba(59,74,176,0.14)', border: 'rgba(59,74,176,0.2)' },
-  Insignia: { icon: '🏅', color: '#C9A84C', bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.2)' },
-  Tracking: { icon: '📍', color: '#C9A84C', bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.2)' },
+  Clase: { icon: '🛼', bg: 'rgba(26,107,74,0.14)', border: 'rgba(26,107,74,0.2)' },
+  Evento: { icon: '🎯', bg: 'rgba(59,74,176,0.14)', border: 'rgba(59,74,176,0.2)' },
+  Insignia: { icon: '🏅', bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.2)' },
 }
 
 function greeting(nombre) {
@@ -32,19 +42,19 @@ const PHRASES = [
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const u = user || mockUser
+  const savedProfile = loadSavedProfile()
+  const u = { ...mockUser, ...user, ...savedProfile }
   const phrase = PHRASES[new Date().getDay() % PHRASES.length]
 
   const stats = [
-    { label: 'Clases', value: u.clases_asistidas || u.estadisticas?.clases || 84, color: '#4ecb8b' },
-    { label: 'Eventos', value: u.eventos || u.estadisticas?.eventos || 12, color: '#818cf8' },
-    { label: 'Exp. PR', value: u.experiencias_desbloqueadas || u.estadisticas?.exp || 7, color: '#C9A84C' },
+    { label: 'Clases', value: u.estadisticas?.clases || 84, color: '#4ecb8b' },
+    { label: 'Eventos', value: u.estadisticas?.eventos || 12, color: '#818cf8' },
+    { label: 'Exp. PR', value: u.estadisticas?.exp || 7, color: '#C9A84C' },
   ]
 
   return (
     <AppLayout>
       <div className="px-4 pt-6 pb-8 space-y-7">
-
         <div className="animate-fade-up">
           <h1 className="font-display text-2xl font-semibold text-white">
             {greeting(u.nombre)}
@@ -90,16 +100,9 @@ export default function Dashboard() {
 
             <div className="pt-14 flex items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold text-white leading-tight">
-                    {u.nombre}
-                  </h2>
-                  {u.verificado && (
-                    <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
-                      ✓
-                    </span>
-                  )}
-                </div>
+                <h2 className="text-xl font-semibold text-white leading-tight">
+                  {u.nombre} {u.verificado && <span className="text-sky-400">✓</span>}
+                </h2>
 
                 <p className="text-xs mt-1" style={{ color: 'rgba(216,216,232,0.45)' }}>
                   {u.ciudad || 'Punta del Este'} · Miembro desde {u.miembroDesde || '2026'}
@@ -112,31 +115,27 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <span
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-body font-semibold badge-activo"
-              >
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold badge-activo">
                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 {u.estado || 'Activo'}
               </span>
             </div>
 
-            {u.grupos?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {u.grupos.map((grupo) => (
-                  <span
-                    key={grupo}
-                    className="text-[11px] px-3 py-1 rounded-full"
-                    style={{
-                      color: 'rgba(216,216,232,0.72)',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    {grupo}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {(u.grupos || []).map((grupo) => (
+                <span
+                  key={grupo}
+                  className="text-[11px] px-3 py-1 rounded-full"
+                  style={{
+                    color: 'rgba(216,216,232,0.72)',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {grupo}
+                </span>
+              ))}
+            </div>
 
             <div className="grid grid-cols-3 gap-3 text-center mt-5">
               {stats.map((s) => (
@@ -155,6 +154,17 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+
+            <Link
+              to="/app/perfil"
+              className="mt-4 block text-center rounded-2xl py-3 text-sm font-semibold"
+              style={{
+                color: '#0b0b12',
+                background: '#C9A84C',
+              }}
+            >
+              Ver perfil completo
+            </Link>
           </div>
         </section>
 
@@ -221,25 +231,11 @@ export default function Dashboard() {
                       {a.fecha}{a.hora !== '—' ? ` · ${a.hora}hs` : ''}
                     </p>
                   </div>
-
-                  {a.origen === 'Tracking' && (
-                    <span
-                      className="text-[10px] font-body px-2 py-0.5 rounded"
-                      style={{
-                        background: 'rgba(201,168,76,0.08)',
-                        color: 'rgba(201,168,76,0.65)',
-                        border: '1px solid rgba(201,168,76,0.15)',
-                      }}
-                    >
-                      Tracking
-                    </span>
-                  )}
                 </div>
               )
             })}
           </div>
         </div>
-
       </div>
     </AppLayout>
   )
