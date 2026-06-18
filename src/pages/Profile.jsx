@@ -15,33 +15,37 @@ import {
 const panelBase = 'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
 const STORAGE_KEY = 'pr_profile_custom'
 
-function getSavedProfile() {
+function loadSavedProfile() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : {}
   } catch {
     return {}
   }
 }
 
 export default function Profile() {
-  const { user, logout, updateUser } = useAuth()
-  const savedProfile = getSavedProfile()
-  const profile = { ...mockUser, ...user, ...savedProfile }
+  const { user, logout } = useAuth()
+  const saved = loadSavedProfile()
+  const baseProfile = { ...mockUser, ...user, ...saved }
 
   const [open, setOpen] = useState('insignias')
   const [editing, setEditing] = useState(false)
+  const [savedMsg, setSavedMsg] = useState('')
 
   const [form, setForm] = useState({
-    nombre: profile.nombre || '',
-    ciudad: profile.ciudad || '',
-    instagram: profile.instagram || '',
-    email: profile.email || '',
-    fechaNacimiento: profile.fechaNacimiento || '',
-    sobreMi: profile.sobreMi || '',
-    pin: profile.pin || '',
-    foto: profile.foto || '',
-    banner: profile.banner || '/banner-prcard.png',
+    nombre: baseProfile.nombre || '',
+    ciudad: baseProfile.ciudad || '',
+    instagram: baseProfile.instagram || '',
+    email: baseProfile.email || '',
+    fechaNacimiento: baseProfile.fechaNacimiento || '',
+    sobreMi: baseProfile.sobreMi || '',
+    pin: baseProfile.pin || '',
+    foto: baseProfile.foto || '',
+    banner: baseProfile.banner || '/banner-prcard.png',
   })
+
+  const profile = { ...baseProfile, ...form }
 
   const earned = insignias.filter(i => i.desbloqueada)
   const nextBadges = insignias.filter(i => !i.desbloqueada).slice(0, 3)
@@ -55,8 +59,6 @@ export default function Profile() {
     []
   )
 
-  const currentProfile = { ...profile, ...form }
-
   function readImage(file, field) {
     if (!file) return
 
@@ -67,27 +69,38 @@ export default function Profile() {
         ...prev,
         [field]: reader.result,
       }))
+      setSavedMsg('Imagen cargada. Tocá Guardar cambios.')
     }
 
     reader.readAsDataURL(file)
   }
 
   function saveProfile() {
-    const safeData = {
-      nombre: form.nombre,
-      ciudad: form.ciudad,
-      instagram: form.instagram,
-      email: form.email,
-      fechaNacimiento: form.fechaNacimiento,
-      sobreMi: form.sobreMi,
-      pin: form.pin,
-      foto: form.foto,
-      banner: form.banner,
-    }
+    try {
+      const dataToSave = {
+        nombre: form.nombre,
+        ciudad: form.ciudad,
+        instagram: form.instagram,
+        email: form.email,
+        fechaNacimiento: form.fechaNacimiento,
+        sobreMi: form.sobreMi,
+        pin: form.pin,
+        foto: form.foto,
+        banner: form.banner,
+      }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData))
-    updateUser?.(safeData)
-    setEditing(false)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
+
+      setSavedMsg('Cambios guardados correctamente.')
+      setEditing(false)
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 700)
+    } catch (error) {
+      console.error(error)
+      setSavedMsg('No se pudo guardar. Probá con una imagen más liviana.')
+    }
   }
 
   return (
@@ -96,9 +109,9 @@ export default function Profile() {
 
         <section className={`${panelBase} overflow-hidden relative`}>
           <div className="h-40 relative bg-gradient-to-br from-pr-gold/25 via-pr-navy to-black">
-            {currentProfile.banner && (
+            {profile.banner && (
               <img
-                src={currentProfile.banner}
+                src={profile.banner}
                 alt="Banner"
                 className="absolute inset-0 w-full h-full object-cover opacity-70"
               />
@@ -121,15 +134,15 @@ export default function Profile() {
             <div className="flex items-end justify-between gap-4">
               <div className="flex items-end gap-3">
                 <label className="w-24 h-24 rounded-3xl border-2 border-pr-gold/60 bg-[#12121d] shadow-xl overflow-hidden flex items-center justify-center cursor-pointer relative">
-                  {currentProfile.foto ? (
+                  {profile.foto ? (
                     <img
-                      src={currentProfile.foto}
+                      src={profile.foto}
                       alt="Perfil"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="font-display text-3xl text-pr-gold">
-                      {initials(currentProfile.nombre)}
+                      {initials(profile.nombre)}
                     </span>
                   )}
 
@@ -147,25 +160,26 @@ export default function Profile() {
 
                 <div className="pb-2">
                   <h1 className="font-display text-3xl leading-none text-white">
-                    {currentProfile.nombre}
-                    {currentProfile.verificado && (
+                    {profile.nombre}
+                    {profile.verificado && (
                       <span className="text-sky-400 text-xl align-middle"> ✓</span>
                     )}
                   </h1>
 
                   <p className="text-white/45 text-xs mt-1">
-                    Miembro desde {currentProfile.miembroDesde || '2026'}
+                    Miembro desde {profile.miembroDesde || '2026'}
                   </p>
 
-                  {currentProfile.instagram && (
+                  {profile.instagram && (
                     <p className="text-pr-gold/70 text-xs mt-1">
-                      {currentProfile.instagram}
+                      {profile.instagram}
                     </p>
                   )}
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => setEditing(!editing)}
                 className="mb-2 px-3 py-2 rounded-xl bg-pr-gold text-black text-xs font-bold"
               >
@@ -174,11 +188,11 @@ export default function Profile() {
             </div>
 
             <p className="text-white/50 text-sm mt-4">
-              {currentProfile.sobreMi || 'Mi espacio personal dentro de Punta Rollers.'}
+              {profile.sobreMi || 'Mi espacio personal dentro de Punta Rollers.'}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {(currentProfile.grupos || []).map(g => (
+              {(profile.grupos || []).map(g => (
                 <span
                   key={g}
                   className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70"
@@ -189,12 +203,18 @@ export default function Profile() {
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-3">
-              <MiniStat value={currentProfile.estadisticas?.clases || 0} label="Clases" />
-              <MiniStat value={currentProfile.estadisticas?.eventos || 0} label="Eventos" />
-              <MiniStat value={currentProfile.estadisticas?.exp || 0} label="Exp. PR" />
+              <MiniStat value={profile.estadisticas?.clases || 0} label="Clases" />
+              <MiniStat value={profile.estadisticas?.eventos || 0} label="Eventos" />
+              <MiniStat value={profile.estadisticas?.exp || 0} label="Exp. PR" />
             </div>
           </div>
         </section>
+
+        {savedMsg && (
+          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-sm text-pr-gold">
+            {savedMsg}
+          </div>
+        )}
 
         {editing && (
           <section className={`${panelBase} p-4 space-y-3`}>
@@ -218,12 +238,16 @@ export default function Profile() {
               />
             </label>
 
-            <button onClick={saveProfile} className="btn-gold w-full">
+            <button
+              type="button"
+              onClick={saveProfile}
+              className="w-full rounded-2xl bg-pr-gold text-black py-4 text-sm font-bold active:scale-[0.98]"
+            >
               Guardar cambios
             </button>
 
             <p className="text-white/35 text-xs">
-              Editar estos datos no elimina insignias, observaciones, participaciones ni servicios asignados por los profes.
+              Después de guardar, la pantalla se recarga para confirmar que la foto y el banner quedaron guardados.
             </p>
           </section>
         )}
@@ -249,19 +273,8 @@ export default function Profile() {
 
         <Accordion title="Mis servicios PR" open={open === 'servicios'} onClick={() => setOpen(open === 'servicios' ? '' : 'servicios')}>
           <div className="grid grid-cols-1 gap-3">
-            <ServiceState
-              title="PR Card"
-              active={currentProfile.prcard?.activa}
-              action="Abrir plataforma"
-              href={currentProfile.prcard?.link}
-            />
-
-            <ServiceState
-              title="PR Tracking"
-              active={currentProfile.tracking?.activo}
-              action="Ver información"
-              href="/app/tracking"
-            />
+            <ServiceState title="PR Card" active={profile.prcard?.activa} action="Abrir plataforma" href={profile.prcard?.link} />
+            <ServiceState title="PR Tracking" active={profile.tracking?.activo} action="Ver información" href="/app/tracking" />
           </div>
         </Accordion>
 
@@ -287,9 +300,7 @@ export default function Profile() {
 
         <Accordion title={`Eventos en los que participaste (${userParticipations.length})`} open={open === 'participaciones'} onClick={() => setOpen(open === 'participaciones' ? '' : 'participaciones')}>
           <div className="space-y-3">
-            {userParticipations.map(p => (
-              <EventCard key={p.id} item={p} />
-            ))}
+            {userParticipations.map(p => <EventCard key={p.id} item={p} />)}
           </div>
         </Accordion>
 
@@ -309,11 +320,7 @@ export default function Profile() {
         <Accordion title="Contactos PR" open={open === 'contactos'} onClick={() => setOpen(open === 'contactos' ? '' : 'contactos')}>
           <div className="space-y-3">
             {contactosPR.map(c => (
-              <a
-                key={c.id}
-                href={c.link}
-                className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4"
-              >
+              <a key={c.id} href={c.link} className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4">
                 <div>
                   <p className="text-white font-semibold">{c.nombre}</p>
                   <p className="text-white/40 text-xs">{c.detalle}</p>
@@ -325,6 +332,7 @@ export default function Profile() {
         </Accordion>
 
         <button
+          type="button"
           onClick={logout}
           className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold"
         >
@@ -361,7 +369,7 @@ function SummaryCard({ icon, title, main, detail }) {
 function Accordion({ title, subtitle, open, onClick, children }) {
   return (
     <section className={panelBase}>
-      <button onClick={onClick} className="w-full flex items-center justify-between p-4 text-left">
+      <button type="button" onClick={onClick} className="w-full flex items-center justify-between p-4 text-left">
         <div>
           <p className="text-white font-semibold">{title}</p>
           {subtitle && <p className="text-white/35 text-xs mt-0.5">{subtitle}</p>}
@@ -382,11 +390,7 @@ function BadgeCard({ badge, professor }) {
       <p className="text-white font-semibold mt-3 leading-tight">{badge.nombre}</p>
       <p className="text-white/40 text-[11px] mt-1">{badge.descripcion}</p>
       <p className="text-emerald-400 text-[10px] mt-3">Ganada · {badge.fecha}</p>
-      {professor && (
-        <p className="text-white/30 text-[10px] mt-1">
-          Otorgada por {professor.nombre}
-        </p>
-      )}
+      {professor && <p className="text-white/30 text-[10px] mt-1">Otorgada por {professor.nombre}</p>}
     </div>
   )
 }
@@ -411,27 +415,10 @@ function ObservationCard({ obs, professor }) {
         <div className="w-10 h-10 rounded-2xl bg-pr-gold/10 border border-pr-gold/20 flex items-center justify-center text-pr-gold text-xs font-bold">
           {professor?.iniciales || 'PR'}
         </div>
-
         <div className="flex-1">
           <p className="text-white font-semibold">{obs.titulo}</p>
-          <p className="text-white/35 text-xs">
-            {professor?.nombre} · {obs.tipo} · {obs.fecha}
-          </p>
-
+          <p className="text-white/35 text-xs">{professor?.nombre} · {obs.tipo} · {obs.fecha}</p>
           <p className="text-white/55 text-sm mt-3">{obs.descripcion}</p>
-
-          {obs.imagen && (
-            <img src={obs.imagen} className="mt-3 rounded-2xl max-h-44 mx-auto" />
-          )}
-
-          <div className="flex gap-2 mt-3">
-            <button className="px-3 py-1.5 rounded-full bg-white/5 text-white/50 text-xs">
-              👍 Recibido
-            </button>
-            <button className="px-3 py-1.5 rounded-full bg-white/5 text-white/50 text-xs">
-              ❤️ Me motivó
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -447,7 +434,6 @@ function ServiceState({ title, active, action, href }) {
           {active ? 'Activo' : 'Inactivo'}
         </p>
       </div>
-
       <Link to={href} className="text-pr-gold text-xs">
         {action}
       </Link>
