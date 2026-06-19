@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { mockUser, actividad } from '../data/mockData'
+import { actividad } from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
 
 const quickAccess = [
@@ -21,17 +21,17 @@ const ACTIVITY_CFG = {
   Insignia: { icon: '🏅', bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.2)' },
 }
 
-function greeting(nombre) {
-  const h = new Date().getHours()
-  const time = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
-  return `${time}, ${nombre?.split(' ')[0]}.`
-}
-
 const PHRASES = [
   'Hoy también es un buen día para rodar.',
   'Tu historia sobre ruedas continúa acá.',
   'Cada clase suma. Cada rodada queda.',
 ]
+
+function greeting(nombre) {
+  const h = new Date().getHours()
+  const time = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
+  return `${time}, ${nombre?.split(' ')[0] || 'Alumno'}.`
+}
 
 function loadSavedUser() {
   try {
@@ -42,17 +42,35 @@ function loadSavedUser() {
   }
 }
 
+const emptyUser = {
+  nombre: 'Alumno',
+  ciudad: '',
+  instagram: '',
+  miembroDesde: '2026',
+  estado: 'Activo',
+  verificado: false,
+  foto: '',
+  banner: '',
+  gruposInfo: [],
+  estadisticas: { eventos: 0, insignias: 0, notas: 0 },
+}
+
 export default function Dashboard() {
   const { user, updateUser } = useAuth()
   const savedUser = loadSavedUser()
 
-  const [u, setU] = useState({ ...mockUser, ...savedUser, ...user })
+  const [u, setU] = useState({ ...emptyUser, ...savedUser, ...user })
   const phrase = PHRASES[new Date().getDay() % PHRASES.length]
 
   useEffect(() => {
     async function loadProfile() {
-      const base = { ...mockUser, ...loadSavedUser(), ...user }
-      const profileId = base.id || 'alumno-001'
+      const base = { ...emptyUser, ...loadSavedUser(), ...user }
+      const profileId = base.id
+
+      if (!profileId) {
+        setU(base)
+        return
+      }
 
       const { data, error } = await supabase
         .from('profiles')
@@ -71,6 +89,13 @@ export default function Dashboard() {
           sobreMi: data.sobre_mi || base.sobreMi,
           foto: data.foto || '',
           banner: data.banner || '',
+          miembroDesde: data.miembro_desde || '2026',
+          estado: data.estado || 'Activo',
+          verificado: Boolean(data.verificado),
+          prcardActiva: Boolean(data.prcard_activa),
+          trackingActivo: Boolean(data.tracking_activo),
+          gruposInfo: Array.isArray(data.grupos_info) ? data.grupos_info : [],
+          estadisticas: data.estadisticas || { eventos: 0, insignias: 0, notas: 0 },
         }
 
         setU(updated)
@@ -85,9 +110,9 @@ export default function Dashboard() {
   }, [user?.id])
 
   const stats = [
-    { label: 'Clases', value: u.estadisticas?.clases || 84, color: '#4ecb8b' },
-    { label: 'Eventos', value: u.estadisticas?.eventos || 12, color: '#818cf8' },
-    { label: 'Exp. PR', value: u.estadisticas?.exp || 7, color: '#C9A84C' },
+    { label: 'Eventos', value: u.estadisticas?.eventos || 0, color: '#818cf8' },
+    { label: 'Insignias', value: u.estadisticas?.insignias || 0, color: '#C9A84C' },
+    { label: 'Notas', value: u.estadisticas?.notas || 0, color: '#4ecb8b' },
   ]
 
   return (
@@ -112,11 +137,7 @@ export default function Dashboard() {
         >
           <div className="h-32 relative bg-gradient-to-br from-[#19140b] via-[#090910] to-black overflow-hidden">
             {u.banner ? (
-              <img
-                src={u.banner}
-                alt="Banner"
-                className="absolute inset-0 w-full h-full object-cover opacity-70"
-              />
+              <img src={u.banner} alt="Banner" className="absolute inset-0 w-full h-full object-cover opacity-70" />
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
                 <div className="text-3xl mb-1">🛼</div>
@@ -153,7 +174,7 @@ export default function Dashboard() {
                 </h2>
 
                 <p className="text-xs mt-1" style={{ color: 'rgba(216,216,232,0.45)' }}>
-                  {u.ciudad || 'Punta del Este'} · Miembro desde {u.miembroDesde || '2026'}
+                  {u.ciudad || 'Sin ciudad'} · Miembro desde {u.miembroDesde || '2026'}
                 </p>
 
                 {u.instagram && (
@@ -169,21 +190,23 @@ export default function Dashboard() {
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-2 mt-4">
-              {(u.grupos || []).map((grupo) => (
-                <span
-                  key={grupo}
-                  className="text-[11px] px-3 py-1 rounded-full"
-                  style={{
-                    color: 'rgba(216,216,232,0.72)',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
-                  {grupo}
-                </span>
-              ))}
-            </div>
+            {u.gruposInfo?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {u.gruposInfo.map((grupo, index) => (
+                  <span
+                    key={`${grupo.titulo}-${index}`}
+                    className="text-[11px] px-3 py-1 rounded-full"
+                    style={{
+                      color: 'rgba(216,216,232,0.72)',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                    }}
+                  >
+                    {grupo.titulo}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-3 text-center mt-5">
               {stats.map((s) => (
@@ -204,11 +227,7 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-4">
-              <Link
-                to="/app/perfil"
-                className="block text-center rounded-2xl py-3 text-sm font-semibold"
-                style={{ color: '#0b0b12', background: '#C9A84C' }}
-              >
+              <Link to="/app/perfil" className="block text-center rounded-2xl py-3 text-sm font-semibold" style={{ color: '#0b0b12', background: '#C9A84C' }}>
                 Ver perfil
               </Link>
 
@@ -243,10 +262,7 @@ export default function Dashboard() {
                   border: '1px solid rgba(255,255,255,0.07)',
                 }}
               >
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: `${item.accent}12` }}
-                >
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: `${item.accent}12` }}>
                   {item.icon}
                 </div>
 
@@ -271,18 +287,8 @@ export default function Dashboard() {
               const cfg = ACTIVITY_CFG[a.tipo] || ACTIVITY_CFG.Clase
 
               return (
-                <div
-                  key={a.id}
-                  className="rounded-xl px-4 py-3 flex items-center gap-3"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                    style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
-                  >
+                <div key={a.id} className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
                     {cfg.icon}
                   </div>
 
