@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { mockUser, alumnos, professores } from '../data/mockData'
+import { supabase } from './supabase'
+import { mockUser, professores } from '../data/mockData'
 
 const AuthContext = createContext(null)
 
@@ -35,21 +36,29 @@ const profeUser = {
   banner: '',
 }
 
-function makeAlumnoId(documento) {
-  return `alumno-${String(documento || '').trim()}`
-}
-
-function normalizeAlumno(alumno, documentoFallback = '') {
-  const documento = String(alumno?.documento || documentoFallback || '').trim()
-
+function normalizeProfile(profile) {
   return {
     ...mockUser,
-    ...alumno,
-    id: alumno?.id || makeAlumnoId(documento),
-    documento,
-    role: 'alumno',
-    foto: alumno?.foto || '',
-    banner: alumno?.banner || '',
+    id: profile.id,
+    nombre: profile.nombre || '',
+    apellido: profile.apellido || '',
+    documento: profile.documento || '',
+    pin: profile.pin || '',
+    role: profile.role || 'alumno',
+    ciudad: profile.ciudad || '',
+    instagram: profile.instagram || '',
+    email: profile.email || '',
+    fechaNacimiento: profile.fecha_nacimiento || '',
+    miembroDesde: profile.miembro_desde || '2026',
+    estado: profile.estado || 'Activo',
+    verificado: Boolean(profile.verificado),
+    foto: profile.foto || '',
+    banner: profile.banner || '',
+    sobreMi: profile.sobre_mi || '',
+    grupos: profile.grupos || [],
+    prcard: { activa: Boolean(profile.prcard_activa), link: 'https://puntarollerscard.com/' },
+    tracking: { activo: Boolean(profile.tracking_activo) },
+    estadisticas: profile.estadisticas || { clases: 0, eventos: 0, exp: 0 },
   }
 }
 
@@ -66,7 +75,6 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('pr_user')
       }
     }
-
     setLoading(false)
   }, [])
 
@@ -81,15 +89,15 @@ export function AuthProvider({ children }) {
     } else if (cleanDoc === profeUser.documento && cleanPin === profeUser.pin) {
       userData = profeUser
     } else {
-      const alumnoEncontrado = alumnos.find(
-        a => String(a.documento).trim() === cleanDoc
-      )
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('documento', cleanDoc)
+        .eq('pin', cleanPin)
+        .maybeSingle()
 
-      if (
-        alumnoEncontrado &&
-        cleanPin === String(alumnoEncontrado.pin || mockUser.pin || '1234')
-      ) {
-        userData = normalizeAlumno(alumnoEncontrado, cleanDoc)
+      if (!error && data) {
+        userData = normalizeProfile(data)
       }
     }
 
@@ -116,9 +124,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, login, logout, updateUser, professores }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser, professores }}>
       {children}
     </AuthContext.Provider>
   )
@@ -126,10 +132,6 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext)
-
-  if (!ctx) {
-    throw new Error('useAuth must be inside AuthProvider')
-  }
-
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider')
   return ctx
 }
