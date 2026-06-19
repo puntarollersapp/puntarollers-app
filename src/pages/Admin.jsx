@@ -26,7 +26,7 @@ function normalizeAlumno(p) {
     trackingActivo: Boolean(p.tracking_activo),
     gruposInfo: Array.isArray(p.grupos_info) ? p.grupos_info : [],
     estadisticas: p.estadisticas || { eventos: 0, insignias: 0, notas: 0 },
-    ultimoIngreso: p.ultimo_ingreso || 'Nunca ingresó',
+    ultimoIngreso: p.ultimo_ingreso || '',
     foto: p.foto || '',
     banner: p.banner || '',
     sobreMi: p.sobre_mi || '',
@@ -56,6 +56,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [adminActivity, setAdminActivity] = useState([])
+  const [actionType, setActionType] = useState('Nota')
 
   const canFullAdmin = user?.role === 'admin'
   const canManageContent = user?.role === 'admin' || user?.role === 'profesor'
@@ -111,8 +112,13 @@ export default function Admin() {
       .includes(query.toLowerCase())
   )
 
-  const active7 = alumnos.filter(a => !String(a.ultimoIngreso).includes('Nunca')).length
-  const never = alumnos.filter(a => String(a.ultimoIngreso).includes('Nunca'))
+  const active7 = alumnos.filter(a => {
+    if (!a.ultimoIngreso) return false
+    const date = new Date(a.ultimoIngreso)
+    if (Number.isNaN(date.getTime())) return false
+    const diff = Date.now() - date.getTime()
+    return diff <= 7 * 24 * 60 * 60 * 1000
+  }).length
 
   const saveCuposLocal = () => {
     saveCupos(cupos)
@@ -156,7 +162,7 @@ export default function Admin() {
         <div className="grid grid-cols-2 gap-3">
           <Stat label="Alumnos" value={alumnos.length} />
           <Stat label="Activos 7 días" value={active7} />
-          <Stat label="Nunca ingresaron" value={never.length} alert />
+          <Stat label="Registros" value={adminActivity.length} />
           <Stat label="Cumpleaños mes" value="—" />
         </div>
 
@@ -181,10 +187,10 @@ export default function Admin() {
         {!loading && section === 'dashboard' && (
           <DashboardPanel
             setSection={setSection}
-            never={never}
             adminActivity={adminActivity}
             canFullAdmin={canFullAdmin}
             canManageContent={canManageContent}
+            setActionType={setActionType}
           />
         )}
 
@@ -209,6 +215,8 @@ export default function Admin() {
             alumnos={alumnos}
             reload={reloadAll}
             setMsg={setMsg}
+            actionType={actionType}
+            setActionType={setActionType}
           />
         )}
 
@@ -222,7 +230,12 @@ export default function Admin() {
   )
 }
 
-function DashboardPanel({ setSection, never, adminActivity, canFullAdmin, canManageContent }) {
+function DashboardPanel({ setSection, adminActivity, canFullAdmin, canManageContent, setActionType }) {
+  function goAction(type) {
+    setActionType(type)
+    setSection('acciones')
+  }
+
   return (
     <div className="space-y-4">
       <section className={`${panel} p-4`}>
@@ -235,9 +248,9 @@ function DashboardPanel({ setSection, never, adminActivity, canFullAdmin, canMan
 
           {canManageContent && (
             <>
-              <ActionButton icon="📝" label="Observación" onClick={() => setSection('acciones')} />
-              <ActionButton icon="🏅" label="Insignia" onClick={() => setSection('acciones')} />
-              <ActionButton icon="🎉" label="Participación" onClick={() => setSection('acciones')} />
+              <ActionButton icon="📝" label="Observación" onClick={() => goAction('Nota')} />
+              <ActionButton icon="🏅" label="Insignia" onClick={() => goAction('Insignia')} />
+              <ActionButton icon="🎉" label="Participación" onClick={() => goAction('Evento')} />
             </>
           )}
         </div>
@@ -263,13 +276,6 @@ function DashboardPanel({ setSection, never, adminActivity, canFullAdmin, canMan
           )}
         </div>
       </section>
-
-      {never.length > 0 && (
-        <section className="rounded-3xl bg-red-500/10 border border-red-500/20 p-4">
-          <p className="text-red-200 font-semibold">Usuarios que nunca ingresaron</p>
-          <p className="text-red-100/50 text-xs mt-1">{never.map(n => n.nombre).join(', ')}</p>
-        </section>
-      )}
     </div>
   )
 }
@@ -327,7 +333,7 @@ function StudentsPanel({ query, setQuery, alumnos, selected, setSelectedId, canF
               >
                 <p className="font-semibold text-sm">{a.nombre} {a.verificado ? '✓' : ''}</p>
                 <p className={`text-xs ${selected?.id === a.id ? 'text-black/60' : 'text-white/35'}`}>
-                  {a.estado} · {a.ultimoIngreso}
+                  {a.estado} · {a.ultimoIngreso ? formatDate(a.ultimoIngreso) : 'Sin ingreso registrado'}
                 </p>
               </button>
             ))}
@@ -409,7 +415,7 @@ function CreateAlumnoForm({ reload, setMsg }) {
         foto: '',
         banner: '',
         sobre_mi: 'Mi espacio personal dentro de Punta Rollers.',
-        ultimo_ingreso: 'Nunca ingresó',
+        ultimo_ingreso: null,
         updated_at: new Date().toISOString(),
       }
 
@@ -459,7 +465,7 @@ function InfoTab({ alumno, canFullAdmin }) {
       <Field label="Instagram" value={alumno.instagram || 'Sin cargar'} />
       <Field label="Ciudad" value={alumno.ciudad || 'Sin cargar'} />
       <Field label="Grupos WhatsApp" value={alumno.gruposInfo?.length ? alumno.gruposInfo.map(g => g.titulo).join(' · ') : 'Sin grupos'} />
-      <Field label="Último ingreso" value={alumno.ultimoIngreso} />
+      <Field label="Último ingreso" value={alumno.ultimoIngreso ? formatDate(alumno.ultimoIngreso) : 'Sin ingreso registrado'} />
     </div>
   )
 }
@@ -763,9 +769,7 @@ function AlumnoActivityList({ alumnoId, tipo }) {
         .eq('alumno_id', alumnoId)
         .order('fecha', { ascending: false })
 
-      if (tipo) {
-        query = query.eq('tipo', tipo)
-      }
+      if (tipo) query = query.eq('tipo', tipo)
 
       const { data, error } = await query
       if (!error) setItems(data || [])
@@ -825,52 +829,43 @@ function ActivityTab({ alumno }) {
   return <AlumnoActivityList alumnoId={alumno.id} tipo="" />
 }
 
-function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg }) {
+function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg, actionType, setActionType }) {
   const [selectedStudents, setSelectedStudents] = useState(selected?.id ? [selected.id] : [])
-
-  return (
-    <div className="space-y-4">
-      <section className={`${panel} p-4`}>
-        <p className="section-label">Acciones masivas</p>
-        <p className="text-white font-semibold mt-1">Seleccionar alumnos</p>
-
-        <div className="grid grid-cols-1 gap-2 mt-3">
-          {alumnos.map(a => (
-            <label key={a.id} className="flex items-center gap-3 rounded-2xl bg-black/25 border border-white/5 p-3">
-              <input
-                type="checkbox"
-                checked={selectedStudents.includes(a.id)}
-                onChange={e => setSelectedStudents(e.target.checked ? [...selectedStudents, a.id] : selectedStudents.filter(id => id !== a.id))}
-              />
-              <span className="text-white text-sm">{a.nombre}</span>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <MassCreate tipo="Insignia" selectedStudents={selectedStudents} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />
-      <MassCreate tipo="Evento" selectedStudents={selectedStudents} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />
-      <MassCreate tipo="Nota" selectedStudents={selectedStudents} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />
-    </div>
-  )
-}
-
-function MassCreate({ tipo, selectedStudents, canManageContent, reload, setMsg }) {
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [saving, setSaving] = useState(false)
 
-  async function saveMass() {
+  const allSelected = alumnos.length > 0 && selectedStudents.length === alumnos.length
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelectedStudents([])
+    } else {
+      setSelectedStudents(alumnos.map(a => a.id))
+    }
+  }
+
+  function toggleStudent(id, checked) {
+    if (checked) {
+      setSelectedStudents([...new Set([...selectedStudents, id])])
+    } else {
+      setSelectedStudents(selectedStudents.filter(studentId => studentId !== id))
+    }
+  }
+
+  async function saveAction() {
     if (!canManageContent) return
 
     try {
       setSaving(true)
+      setMsg('Guardando acción...')
+
       if (!titulo.trim()) throw new Error('Falta el título.')
       if (selectedStudents.length === 0) throw new Error('Seleccioná al menos un alumno.')
 
       const rows = selectedStudents.map(id => ({
         alumno_id: id,
-        tipo,
+        tipo: actionType,
         titulo: titulo.trim(),
         descripcion: descripcion.trim(),
         fecha: new Date().toISOString(),
@@ -879,7 +874,7 @@ function MassCreate({ tipo, selectedStudents, canManageContent, reload, setMsg }
       const { error } = await supabase.from('actividad_pr').insert(rows)
       if (error) throw new Error(error.message)
 
-      const key = tipo === 'Nota' ? 'notas' : tipo === 'Insignia' ? 'insignias' : 'eventos'
+      const key = actionType === 'Nota' ? 'notas' : actionType === 'Insignia' ? 'insignias' : 'eventos'
 
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
@@ -906,7 +901,7 @@ function MassCreate({ tipo, selectedStudents, canManageContent, reload, setMsg }
 
       setTitulo('')
       setDescripcion('')
-      setMsg(`${tipo} cargada para ${selectedStudents.length} alumno/s.`)
+      setMsg(`${actionType} guardada para ${selectedStudents.length} alumno/s.`)
       await reload()
     } catch (error) {
       setMsg(`No se pudo guardar: ${error.message}`)
@@ -916,14 +911,72 @@ function MassCreate({ tipo, selectedStudents, canManageContent, reload, setMsg }
   }
 
   return (
-    <section className={`${panel} p-4 space-y-3`}>
-      <p className="section-label">Carga masiva · {tipo}</p>
-      <AdminInput label="Título" value={titulo} onChange={setTitulo} />
-      <AdminInput label="Descripción" value={descripcion} onChange={setDescripcion} />
-      <button disabled={saving || !canManageContent} onClick={saveMass} className="btn-gold w-full disabled:opacity-50">
-        {saving ? 'Guardando...' : `Guardar ${tipo}`}
+    <div className="space-y-4">
+      <section className={`${panel} p-4 space-y-3`}>
+        <p className="section-label">Acción grupal o individual</p>
+
+        <label className="block">
+          <span className="text-white/40 text-xs">Tipo de acción</span>
+          <select
+            value={actionType}
+            onChange={e => setActionType(e.target.value)}
+            className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+          >
+            <option value="Nota">Observación / Nota</option>
+            <option value="Insignia">Insignia</option>
+            <option value="Evento">Participación / Evento</option>
+          </select>
+        </label>
+
+        <AdminInput label="Título" value={titulo} onChange={setTitulo} />
+
+        <label className="block">
+          <span className="text-white/40 text-xs">Descripción</span>
+          <textarea
+            value={descripcion}
+            onChange={e => setDescripcion(e.target.value)}
+            className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+            rows="4"
+          />
+        </label>
+      </section>
+
+      <section className={`${panel} p-4`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="section-label">Alumnos</p>
+            <p className="text-white/40 text-xs mt-1">
+              Seleccionados: {selectedStudents.length}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 text-xs"
+          >
+            {allSelected ? 'Quitar todos' : 'Seleccionar todos'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 mt-3">
+          {alumnos.map(a => (
+            <label key={a.id} className="flex items-center gap-3 rounded-2xl bg-black/25 border border-white/5 p-3">
+              <input
+                type="checkbox"
+                checked={selectedStudents.includes(a.id)}
+                onChange={e => toggleStudent(a.id, e.target.checked)}
+              />
+              <span className="text-white text-sm">{a.nombre}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <button disabled={saving || !canManageContent} onClick={saveAction} className="btn-gold w-full disabled:opacity-50">
+        {saving ? 'Guardando...' : `Guardar ${actionType}`}
       </button>
-    </section>
+    </div>
   )
 }
 
@@ -1049,7 +1102,10 @@ function AdminInput({ label, value, onChange, placeholder = '' }) {
 function formatDate(value) {
   if (!value) return 'Sin fecha'
   try {
-    return new Date(value).toLocaleString('es-UY', {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+
+    return date.toLocaleString('es-UY', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -1059,4 +1115,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-              }
+        }
