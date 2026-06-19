@@ -119,6 +119,14 @@ export default function Admin() {
     setMsg('Cupos actualizados correctamente.')
   }
 
+  const quickItems = [
+    { id: 'dashboard', icon: '📊', label: 'Inicio', show: true },
+    { id: 'alumnos', icon: '👥', label: 'Alumnos', show: true },
+    { id: 'acciones', icon: '⚡', label: 'Acciones', show: canManageContent },
+    { id: 'cupos', icon: '🟢', label: 'Cupos', show: canFullAdmin },
+    { id: 'config', icon: '⚙️', label: 'Config', show: canFullAdmin },
+  ].filter(item => item.show)
+
   return (
     <AppLayout title="Panel Admin">
       <div className="px-4 py-5 space-y-5 animate-page-enter">
@@ -130,7 +138,9 @@ export default function Admin() {
                 Hola, {user?.nombre || 'Admin'}
               </h1>
               <p className="text-white/40 text-xs mt-1">
-                Gestión real de alumnos, servicios, grupos, notas, insignias y actividad.
+                {canFullAdmin
+                  ? 'Gestión completa de alumnos, servicios, grupos, notas, insignias y actividad.'
+                  : 'Panel de profesor para seguimiento de alumnos, observaciones, insignias y participaciones.'}
               </p>
             </div>
             <button onClick={logout} className="text-white/35 text-xs">Salir</button>
@@ -150,12 +160,16 @@ export default function Admin() {
           <Stat label="Cumpleaños mes" value="—" />
         </div>
 
-        <section className="grid grid-cols-5 gap-2 overflow-x-auto pb-1">
-          <Quick active={section === 'dashboard'} onClick={() => setSection('dashboard')} icon="📊" label="Inicio" />
-          <Quick active={section === 'alumnos'} onClick={() => setSection('alumnos')} icon="👥" label="Alumnos" />
-          <Quick active={section === 'acciones'} onClick={() => setSection('acciones')} icon="⚡" label="Acciones" />
-          <Quick active={section === 'cupos'} onClick={() => setSection('cupos')} icon="🟢" label="Cupos" disabled={!canFullAdmin} />
-          <Quick active={section === 'config'} onClick={() => setSection('config')} icon="⚙️" label="Config" disabled={!canFullAdmin} />
+        <section className="flex gap-2 overflow-x-auto pb-1">
+          {quickItems.map(item => (
+            <Quick
+              key={item.id}
+              active={section === item.id}
+              onClick={() => setSection(item.id)}
+              icon={item.icon}
+              label={item.label}
+            />
+          ))}
         </section>
 
         {loading && (
@@ -165,7 +179,13 @@ export default function Admin() {
         )}
 
         {!loading && section === 'dashboard' && (
-          <DashboardPanel setSection={setSection} never={never} adminActivity={adminActivity} />
+          <DashboardPanel
+            setSection={setSection}
+            never={never}
+            adminActivity={adminActivity}
+            canFullAdmin={canFullAdmin}
+            canManageContent={canManageContent}
+          />
         )}
 
         {!loading && section === 'alumnos' && (
@@ -182,30 +202,44 @@ export default function Admin() {
           />
         )}
 
-        {!loading && section === 'acciones' && (
-          <ActionsPanel canManageContent={canManageContent} selected={selected} alumnos={alumnos} reload={reloadAll} setMsg={setMsg} />
+        {!loading && section === 'acciones' && canManageContent && (
+          <ActionsPanel
+            canManageContent={canManageContent}
+            selected={selected}
+            alumnos={alumnos}
+            reload={reloadAll}
+            setMsg={setMsg}
+          />
         )}
 
         {section === 'cupos' && canFullAdmin && (
           <CuposPanel cupos={cupos} setCupos={setCupos} onSave={saveCuposLocal} />
         )}
 
-        {section === 'config' && canFullAdmin && <ConfigPanel setMsg={setMsg} />}
+        {section === 'config' && canFullAdmin && <ConfigPanel />}
       </div>
     </AppLayout>
   )
 }
 
-function DashboardPanel({ setSection, never, adminActivity }) {
+function DashboardPanel({ setSection, never, adminActivity, canFullAdmin, canManageContent }) {
   return (
     <div className="space-y-4">
       <section className={`${panel} p-4`}>
         <p className="section-label">Acciones rápidas</p>
+
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <ActionButton icon="➕" label="Crear alumno" onClick={() => setSection('alumnos')} />
-          <ActionButton icon="📝" label="Observación" onClick={() => setSection('acciones')} />
-          <ActionButton icon="🏅" label="Insignia" onClick={() => setSection('acciones')} />
-          <ActionButton icon="🎉" label="Participación" onClick={() => setSection('acciones')} />
+          {canFullAdmin && (
+            <ActionButton icon="➕" label="Crear alumno" onClick={() => setSection('alumnos')} />
+          )}
+
+          {canManageContent && (
+            <>
+              <ActionButton icon="📝" label="Observación" onClick={() => setSection('acciones')} />
+              <ActionButton icon="🏅" label="Insignia" onClick={() => setSection('acciones')} />
+              <ActionButton icon="🎉" label="Participación" onClick={() => setSection('acciones')} />
+            </>
+          )}
         </div>
       </section>
 
@@ -243,6 +277,21 @@ function DashboardPanel({ setSection, never, adminActivity }) {
 function StudentsPanel({ query, setQuery, alumnos, selected, setSelectedId, canFullAdmin, canManageContent, reload, setMsg }) {
   const [tab, setTab] = useState('info')
 
+  const tabs = [
+    { id: 'info', label: 'info', show: true },
+    { id: 'editar', label: 'editar', show: canFullAdmin },
+    { id: 'grupos', label: 'grupos', show: canFullAdmin },
+    { id: 'observaciones', label: 'observaciones', show: canManageContent },
+    { id: 'insignias', label: 'insignias', show: canManageContent },
+    { id: 'participaciones', label: 'participaciones', show: canManageContent },
+    { id: 'servicios', label: 'servicios', show: canFullAdmin },
+    { id: 'actividad', label: 'actividad', show: true },
+  ].filter(t => t.show)
+
+  useEffect(() => {
+    if (!tabs.some(t => t.id === tab)) setTab('info')
+  }, [canFullAdmin, canManageContent])
+
   return (
     <div className="space-y-4">
       {canFullAdmin && <CreateAlumnoForm reload={reload} setMsg={setMsg} />}
@@ -257,7 +306,11 @@ function StudentsPanel({ query, setQuery, alumnos, selected, setSelectedId, canF
       {alumnos.length === 0 && (
         <section className={`${panel} p-4`}>
           <p className="text-white font-semibold">Todavía no hay alumnos creados</p>
-          <p className="text-white/40 text-sm mt-1">Creá el primer alumno desde el formulario de arriba.</p>
+          <p className="text-white/40 text-sm mt-1">
+            {canFullAdmin
+              ? 'Creá el primer alumno desde el formulario de arriba.'
+              : 'Todavía no hay alumnos disponibles.'}
+          </p>
         </section>
       )}
 
@@ -290,27 +343,27 @@ function StudentsPanel({ query, setQuery, alumnos, selected, setSelectedId, canF
             </div>
 
             <div className="flex overflow-x-auto border-b border-white/5">
-              {['info', 'editar', 'grupos', 'observaciones', 'insignias', 'participaciones', 'servicios', 'actividad'].map(t => (
+              {tabs.map(t => (
                 <button
-                  key={t}
-                  onClick={() => setTab(t)}
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
                   className={`px-4 py-3 text-xs uppercase tracking-wider ${
-                    tab === t ? 'text-pr-gold border-b border-pr-gold' : 'text-white/35'
+                    tab === t.id ? 'text-pr-gold border-b border-pr-gold' : 'text-white/35'
                   }`}
                 >
-                  {t}
+                  {t.label}
                 </button>
               ))}
             </div>
 
             <div className="p-4">
-              {tab === 'info' && <InfoTab alumno={selected} />}
-              {tab === 'editar' && <EditAlumnoTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
-              {tab === 'grupos' && <GroupsTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
-              {tab === 'observaciones' && <ObservationTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
-              {tab === 'insignias' && <BadgeTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
-              {tab === 'participaciones' && <ParticipationTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
-              {tab === 'servicios' && <ServicesTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
+              {tab === 'info' && <InfoTab alumno={selected} canFullAdmin={canFullAdmin} />}
+              {tab === 'editar' && canFullAdmin && <EditAlumnoTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
+              {tab === 'grupos' && canFullAdmin && <GroupsTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
+              {tab === 'observaciones' && canManageContent && <ObservationTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
+              {tab === 'insignias' && canManageContent && <BadgeTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
+              {tab === 'participaciones' && canManageContent && <ParticipationTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
+              {tab === 'servicios' && canFullAdmin && <ServicesTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
               {tab === 'actividad' && <ActivityTab alumno={selected} />}
             </div>
           </section>
@@ -396,12 +449,12 @@ function CreateAlumnoForm({ reload, setMsg }) {
   )
 }
 
-function InfoTab({ alumno }) {
+function InfoTab({ alumno, canFullAdmin }) {
   return (
     <div className="space-y-3">
       <Field label="Nombre" value={`${alumno.nombre} ${alumno.apellido || ''}`} />
       <Field label="Documento" value={alumno.documento} />
-      <Field label="PIN actual" value={alumno.pin || 'Sin PIN'} />
+      {canFullAdmin && <Field label="PIN actual" value={alumno.pin || 'Sin PIN'} />}
       <Field label="Email" value={alumno.email || 'Sin cargar'} />
       <Field label="Instagram" value={alumno.instagram || 'Sin cargar'} />
       <Field label="Ciudad" value={alumno.ciudad || 'Sin cargar'} />
@@ -493,9 +546,7 @@ function EditAlumnoTab({ alumno, canFullAdmin, reload, setMsg }) {
     }
   }
 
-  if (!canFullAdmin) {
-    return <EmptyState title="Sin permisos" text="Solo el administrador puede editar datos, PIN o eliminar alumnos." />
-  }
+  if (!canFullAdmin) return null
 
   return (
     <div className="space-y-3">
@@ -582,9 +633,7 @@ function GroupsTab({ alumno, canFullAdmin, reload, setMsg }) {
     }
   }
 
-  if (!canFullAdmin) {
-    return <EmptyState title="Sin permisos" text="Solo el administrador puede asignar grupos de WhatsApp." />
-  }
+  if (!canFullAdmin) return null
 
   return (
     <div className="space-y-3">
@@ -677,9 +726,7 @@ function ActivityCreateTab({ alumno, tipo, title, label, canManageContent, reloa
     }
   }
 
-  if (!canManageContent) {
-    return <EmptyState title="Sin permisos" text="No tenés permisos para cargar esta información." />
-  }
+  if (!canManageContent) return null
 
   return (
     <div className="space-y-3">
@@ -710,13 +757,17 @@ function AlumnoActivityList({ alumnoId, tipo }) {
 
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabase
+      let query = supabase
         .from('actividad_pr')
         .select('*')
         .eq('alumno_id', alumnoId)
-        .eq('tipo', tipo)
         .order('fecha', { ascending: false })
 
+      if (tipo) {
+        query = query.eq('tipo', tipo)
+      }
+
+      const { data, error } = await query
       if (!error) setItems(data || [])
     }
 
@@ -726,7 +777,7 @@ function AlumnoActivityList({ alumnoId, tipo }) {
   return (
     <div className="space-y-2 pt-2">
       <p className="section-label">Registros actuales</p>
-      <List items={items.map(i => ({ title: i.titulo, desc: `${formatDate(i.fecha)} · ${i.descripcion || ''}` }))} />
+      <List items={items.map(i => ({ title: i.titulo, desc: `${i.tipo} · ${formatDate(i.fecha)} · ${i.descripcion || ''}` }))} />
     </div>
   )
 }
@@ -754,6 +805,8 @@ function ServicesTab({ alumno, canFullAdmin, reload, setMsg }) {
       setMsg(`No se pudo actualizar: ${error.message}`)
     }
   }
+
+  if (!canFullAdmin) return null
 
   return (
     <div className="space-y-3">
@@ -825,6 +878,31 @@ function MassCreate({ tipo, selectedStudents, canManageContent, reload, setMsg }
 
       const { error } = await supabase.from('actividad_pr').insert(rows)
       if (error) throw new Error(error.message)
+
+      const key = tipo === 'Nota' ? 'notas' : tipo === 'Insignia' ? 'insignias' : 'eventos'
+
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, estadisticas')
+        .in('id', selectedStudents)
+
+      if (profileError) throw new Error(profileError.message)
+
+      for (const profile of profiles || []) {
+        const currentStats = profile.estadisticas || { eventos: 0, insignias: 0, notas: 0 }
+        const newStats = {
+          ...currentStats,
+          [key]: Number(currentStats[key] || 0) + 1,
+        }
+
+        await supabase
+          .from('profiles')
+          .update({
+            estadisticas: newStats,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', profile.id)
+      }
 
       setTitulo('')
       setDescripcion('')
@@ -909,15 +987,6 @@ function Field({ label, value }) {
   )
 }
 
-function EmptyState({ title, text }) {
-  return (
-    <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
-      <p className="text-white font-semibold">{title}</p>
-      <p className="text-white/45 text-sm mt-1">{text}</p>
-    </div>
-  )
-}
-
 function List({ items }) {
   return (
     <div className="space-y-2">
@@ -990,4 +1059,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-        }
+              }
