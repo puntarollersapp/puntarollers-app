@@ -25,7 +25,11 @@ export default function Login() {
         return
       }
 
-      const destination = result?.user?.role === 'admin' || result?.user?.role === 'profesor' ? '/admin' : from
+      const destination =
+        result?.user?.role === "admin" || result?.user?.role === "profesor"
+          ? "/admin"
+          : from
+
       navigate(destination, { replace: true })
     } catch {
       setError("No pudimos iniciar sesión. Revisá tus datos.")
@@ -65,20 +69,12 @@ export default function Login() {
             />
           </div>
 
-          {error && (
-            <p className="text-red-400 text-xs text-center">{error}</p>
-          )}
+          {error && <p className="text-red-400 text-xs text-center">{error}</p>}
 
           <button type="submit" className="btn-gold w-full">
             Entrar
           </button>
         </form>
-
-        <div className="glass rounded-2xl p-4 text-xs text-gray-400 space-y-1">
-          <p><b className="text-white/70">Demo alumno:</b> documento 123 / PIN 1234</p>
-          <p><b className="text-white/70">Admin Claudio:</b> documento 999 / PIN 4321</p>
-          <p><b className="text-white/70">Profe David:</b> documento 888 / PIN 4321</p>
-        </div>
 
         <a href="/" className="block text-center text-xs text-gray-500 underline">
           Volver al inicio
