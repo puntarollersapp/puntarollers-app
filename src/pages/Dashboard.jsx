@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { actividad } from '../data/mockData'
 import AppLayout from '../layouts/AppLayout'
 
 const quickAccess = [
@@ -15,16 +14,10 @@ const quickAccess = [
   { icon: '🛒', label: 'Tienda', to: '/app/tienda', accent: '#4ecb8b' },
 ]
 
-const ACTIVITY_CFG = {
-  Clase: { icon: '🛼', bg: 'rgba(26,107,74,0.14)', border: 'rgba(26,107,74,0.2)' },
-  Evento: { icon: '🎯', bg: 'rgba(59,74,176,0.14)', border: 'rgba(59,74,176,0.2)' },
-  Insignia: { icon: '🏅', bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.2)' },
-}
-
 const PHRASES = [
   'Hoy también es un buen día para rodar.',
   'Tu historia sobre ruedas continúa acá.',
-  'Cada clase suma. Cada rodada queda.',
+  'Cada rodada queda.',
 ]
 
 function greeting(nombre) {
@@ -57,9 +50,7 @@ const emptyUser = {
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth()
-  const savedUser = loadSavedUser()
-
-  const [u, setU] = useState({ ...emptyUser, ...savedUser, ...user })
+  const [u, setU] = useState({ ...emptyUser, ...loadSavedUser(), ...user })
   const phrase = PHRASES[new Date().getDay() % PHRASES.length]
 
   useEffect(() => {
@@ -282,28 +273,17 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="space-y-2">
-            {actividad.slice(0, 3).map((a) => {
-              const cfg = ACTIVITY_CFG[a.tipo] || ACTIVITY_CFG.Clase
-
-              return (
-                <div key={a.id} className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                    {cfg.icon}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-body font-semibold truncate" style={{ color: 'rgba(216,216,232,0.82)' }}>
-                      {a.nombre}
-                    </p>
-
-                    <p className="text-xs font-body mt-0.5" style={{ color: 'rgba(216,216,232,0.28)' }}>
-                      {a.fecha}{a.hora !== '—' ? ` · ${a.hora}hs` : ''}
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
+          <div
+            className="rounded-2xl p-4"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <p className="text-white font-semibold text-sm">Sin actividad reciente</p>
+            <p className="text-white/40 text-xs mt-1">
+              Cuando el equipo PR agregue eventos, notas o insignias, aparecerán acá.
+            </p>
           </div>
         </div>
       </div>
