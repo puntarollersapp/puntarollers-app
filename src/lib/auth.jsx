@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from './supabase'
-import { mockUser, professores } from '../data/mockData'
+import { professores } from '../data/mockData'
 
 const AuthContext = createContext(null)
 
@@ -38,7 +38,6 @@ const profeUser = {
 
 function normalizeProfile(profile) {
   return {
-    ...mockUser,
     id: profile.id,
     nombre: profile.nombre || '',
     apellido: profile.apellido || '',
@@ -55,10 +54,23 @@ function normalizeProfile(profile) {
     foto: profile.foto || '',
     banner: profile.banner || '',
     sobreMi: profile.sobre_mi || '',
-    grupos: profile.grupos || [],
-    prcard: { activa: Boolean(profile.prcard_activa), link: 'https://puntarollerscard.com/' },
-    tracking: { activo: Boolean(profile.tracking_activo) },
-    estadisticas: profile.estadisticas || { clases: 0, eventos: 0, exp: 0 },
+    gruposInfo: Array.isArray(profile.grupos_info)
+      ? profile.grupos_info
+      : [],
+    prcardActiva: Boolean(profile.prcard_activa),
+    trackingActivo: Boolean(profile.tracking_activo),
+    prcard: {
+      activa: Boolean(profile.prcard_activa),
+      link: 'https://puntarollerscard.com/',
+    },
+    tracking: {
+      activo: Boolean(profile.tracking_activo),
+    },
+    estadisticas: profile.estadisticas || {
+      eventos: 0,
+      insignias: 0,
+      notas: 0,
+    },
   }
 }
 
@@ -68,6 +80,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('pr_user')
+
     if (saved) {
       try {
         setUser(JSON.parse(saved))
@@ -75,6 +88,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('pr_user')
       }
     }
+
     setLoading(false)
   }, [])
 
@@ -84,9 +98,15 @@ export function AuthProvider({ children }) {
 
     let userData = null
 
-    if (cleanDoc === adminUser.documento && cleanPin === adminUser.pin) {
+    if (
+      cleanDoc === adminUser.documento &&
+      cleanPin === adminUser.pin
+    ) {
       userData = adminUser
-    } else if (cleanDoc === profeUser.documento && cleanPin === profeUser.pin) {
+    } else if (
+      cleanDoc === profeUser.documento &&
+      cleanPin === profeUser.pin
+    ) {
       userData = profeUser
     } else {
       const { data, error } = await supabase
@@ -102,13 +122,22 @@ export function AuthProvider({ children }) {
     }
 
     if (!userData) {
-      return { error: 'Documento o PIN incorrecto' }
+      return {
+        error: 'Documento o PIN incorrecto',
+      }
     }
 
-    localStorage.setItem('pr_user', JSON.stringify(userData))
+    localStorage.setItem(
+      'pr_user',
+      JSON.stringify(userData)
+    )
+
     setUser(userData)
 
-    return { success: true, user: userData }
+    return {
+      success: true,
+      user: userData,
+    }
   }
 
   const logout = () => {
@@ -117,14 +146,32 @@ export function AuthProvider({ children }) {
   }
 
   const updateUser = (updates) => {
-    const next = { ...user, ...updates }
-    localStorage.setItem('pr_user', JSON.stringify(next))
+    const next = {
+      ...user,
+      ...updates,
+    }
+
+    localStorage.setItem(
+      'pr_user',
+      JSON.stringify(next)
+    )
+
     setUser(next)
+
     return next
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateUser, professores }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        updateUser,
+        professores,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
@@ -132,6 +179,12 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be inside AuthProvider')
+
+  if (!ctx) {
+    throw new Error(
+      'useAuth must be inside AuthProvider'
+    )
+  }
+
   return ctx
 }
