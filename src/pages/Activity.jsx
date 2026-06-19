@@ -1,136 +1,107 @@
-import { actividad } from '../data/mockData'
+import { useEffect, useState } from 'react'
+import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
 
 const TYPE_CONFIG = {
-  Clase: {
-    dot: 'clase',
-    icon: '🛼',
-    label: 'Clase',
-    color: '#4ecb8b',
-    bg: 'rgba(26,107,74,0.12)',
-    border: 'rgba(26,107,74,0.2)',
-  },
-  Evento: {
-    dot: 'evento',
-    icon: '🎯',
-    label: 'Evento',
-    color: '#818cf8',
-    bg: 'rgba(59,74,176,0.12)',
-    border: 'rgba(59,74,176,0.2)',
-  },
-  Insignia: {
-    dot: 'insignia',
-    icon: '🏅',
-    label: 'Insignia',
-    color: '#C9A84C',
-    bg: 'rgba(201,168,76,0.1)',
-    border: 'rgba(201,168,76,0.18)',
-  },
+  Evento: { icon: '🎯', label: 'Evento', color: '#818cf8' },
+  Insignia: { icon: '🏅', label: 'Insignia', color: '#C9A84C' },
+  Nota: { icon: '📝', label: 'Nota', color: '#4ecb8b' },
 }
 
-function ActivityRow({ a, isLast }) {
-  const cfg = TYPE_CONFIG[a.tipo] || TYPE_CONFIG.Clase
-
-  return (
-    <div className="flex items-start gap-3.5 relative">
-      {!isLast && (
-        <div
-          className="absolute left-[19px] top-[42px] bottom-[-8px] w-px"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
-        />
-      )}
-      <div className={`timeline-dot ${cfg.dot} flex-shrink-0 relative z-10`}>
-        {cfg.icon}
-      </div>
-      <div
-        className="flex-1 rounded-xl px-4 py-3 mb-2"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <p className="text-sm font-body font-semibold" style={{ color: 'rgba(216,216,232,0.85)' }}>
-              {a.nombre}
-            </p>
-            <p className="text-xs font-body mt-0.5" style={{ color: 'rgba(216,216,232,0.28)' }}>
-              {a.fecha}{a.hora !== '—' ? ` · ${a.hora}hs` : ''}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <span
-              className="text-[10px] px-2 py-0.5 rounded-full font-body font-medium"
-              style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
-            >
-              {cfg.label}
-            </span>
-            {a.origen === 'NFC' && (
-              <span
-                className="text-[10px] px-2 py-0.5 rounded font-body"
-                style={{ background: 'rgba(201,168,76,0.08)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.15)' }}
-              >
-                NFC
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+function loadSavedUser() {
+  try {
+    const saved = localStorage.getItem('pr_user')
+    return saved ? JSON.parse(saved) : {}
+  } catch {
+    return {}
+  }
 }
 
 export default function ActivityPage() {
-  const grupos = actividad.reduce((acc, a) => {
-    const mes = new Date(a.fecha).toLocaleDateString('es-UY', { month: 'long', year: 'numeric' })
-    if (!acc[mes]) acc[mes] = []
-    acc[mes].push(a)
-    return acc
-  }, {})
+  const { user } = useAuth()
+  const savedUser = loadSavedUser()
+  const profileId = user?.id || savedUser?.id
 
-  const totalClases = actividad.filter(a => a.tipo === 'Clase').length
+  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState([])
+  const [stats, setStats] = useState({ eventos: 0, insignias: 0, notas: 0 })
+
+  useEffect(() => {
+    async function loadActivity() {
+      setLoading(true)
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('estadisticas')
+        .eq('id', profileId)
+        .maybeSingle()
+
+      setStats(profile?.estadisticas || { eventos: 0, insignias: 0, notas: 0 })
+
+      const { data, error } = await supabase
+        .from('actividad_pr')
+        .select('*')
+        .eq('alumno_id', profileId)
+        .order('fecha', { ascending: false })
+
+      if (!error) setItems(data || [])
+
+      setLoading(false)
+    }
+
+    if (profileId) loadActivity()
+  }, [profileId])
 
   return (
     <AppLayout title="Actividad" showBack>
       <div className="px-4 pt-5 pb-8 space-y-6">
 
-        <div className="animate-fade-up grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           {[
-            { label: 'Clases',   value: 84,         color: '#4ecb8b' },
-            { label: 'Eventos',  value: 12,          color: '#818cf8' },
-            { label: 'Este mes', value: totalClases, color: '#C9A84C' },
+            { label: 'Eventos', value: stats.eventos || 0, color: '#818cf8' },
+            { label: 'Insignias', value: stats.insignias || 0, color: '#C9A84C' },
+            { label: 'Notas', value: stats.notas || 0, color: '#4ecb8b' },
           ].map(s => (
-            <div
-              key={s.label}
-              className="rounded-xl p-4 text-center"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
+            <div key={s.label} className="rounded-xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <p className="font-display text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
               <p className="section-label mt-1">{s.label}</p>
             </div>
           ))}
         </div>
 
-        <div className="animate-fade-up stagger-1 flex gap-3">
-          {Object.values(TYPE_CONFIG).map(t => (
-            <div key={t.label} className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ background: t.color }} />
-              <span className="section-label" style={{ color: t.color, opacity: 0.7 }}>{t.label}</span>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 text-white/45">
+            Cargando actividad...
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-3xl bg-white/[0.035] border border-white/10 p-5">
+            <p className="text-white font-semibold">Todavía no hay actividad</p>
+            <p className="text-white/45 text-sm mt-2">
+              Cuando el equipo PR cargue eventos, insignias o notas, aparecerán acá.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {items.map(item => {
+              const cfg = TYPE_CONFIG[item.tipo] || TYPE_CONFIG.Evento
 
-        <div className="animate-fade-up stagger-2 space-y-1">
-          {Object.entries(grupos).map(([mes, items]) => (
-            <div key={mes} className="mb-5">
-              <div className="flex items-center gap-3 mb-3">
-                <p className="section-label capitalize" style={{ color: 'rgba(216,216,232,0.35)' }}>{mes}</p>
-                <div className="flex-1 divider-subtle" />
-                <span className="section-label">{items.length} reg.</span>
-              </div>
-              {items.map((a, idx) => (
-                <ActivityRow key={a.id} a={a} isLast={idx === items.length - 1} />
-              ))}
-            </div>
-          ))}
-        </div>
+              return (
+                <div key={item.id} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="text-xl">{cfg.icon}</div>
+                  <div className="flex-1">
+                    <p className="text-white font-semibold text-sm">{item.titulo}</p>
+                    <p className="text-white/35 text-xs mt-1">{item.fecha || ''}</p>
+                    {item.descripcion && <p className="text-white/45 text-xs mt-1">{item.descripcion}</p>}
+                  </div>
+                  <span className="text-[10px] px-2 py-1 rounded-full" style={{ color: cfg.color, border: `1px solid ${cfg.color}55` }}>
+                    {cfg.label}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
       </div>
     </AppLayout>
