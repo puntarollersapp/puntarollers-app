@@ -5,7 +5,7 @@ import { getCupos } from "../data/cupos"
 
 export default function Home() {
   const [day, setDay] = useState("miercoles")
-  const [cupos, setCupos] = useState(getCupos())
+  const [cupos] = useState(getCupos())
 
   useEffect(() => {
     if (window.location.hash) {
@@ -35,11 +35,7 @@ export default function Home() {
 
           <div className="space-y-3 pt-2">
             <Link to="/login" className="btn-gold w-full">
-              Entrar como alumno
-            </Link>
-
-            <Link to="/admin" className="btn-ghost w-full">
-              Acceso administrador
+              Ingresar
             </Link>
           </div>
         </section>
@@ -115,11 +111,11 @@ export default function Home() {
           <p className="section-label">Inscripciones</p>
 
           <a href="https://form.jotform.com/Claudinio/inscripcioneskids">
-            <img src="/banner-kids.png" className="rounded-xl" />
+            <img src="/banner-kids.png" className="rounded-xl" alt="Inscripciones Kids" />
           </a>
 
           <a href="https://form.jotform.com/Claudinio/Inscripciones2026">
-            <img src="/banner-adultos.png" className="rounded-xl" />
+            <img src="/banner-adultos.png" className="rounded-xl" alt="Inscripciones Adultos" />
           </a>
         </section>
 
@@ -145,12 +141,12 @@ export default function Home() {
           <p className="section-label">Galería</p>
 
           <div className="grid grid-cols-2 gap-4">
-            <a href="https://drive.google.com/..." target="_blank" className="glass p-4 rounded-2xl text-center">
+            <a href="https://drive.google.com/..." target="_blank" rel="noreferrer" className="glass p-4 rounded-2xl text-center">
               <p className="text-white font-semibold">📸 Clases</p>
               <p className="text-gray-400 text-xs">Se actualiza luego de cada clase</p>
             </a>
 
-            <a href="https://drive.google.com/..." target="_blank" className="glass p-4 rounded-2xl text-center">
+            <a href="https://drive.google.com/..." target="_blank" rel="noreferrer" className="glass p-4 rounded-2xl text-center">
               <p className="text-white font-semibold">🎉 Rolleadas</p>
               <p className="text-gray-400 text-xs">Eventos y salidas</p>
             </a>
@@ -162,11 +158,11 @@ export default function Home() {
           <p className="section-label">Plataformas PR</p>
 
           <a href="https://puntarollerscard.com/">
-            <img src="/banner-prcard.png" className="rounded-xl" />
+            <img src="/banner-prcard.png" className="rounded-xl" alt="PRCard" />
           </a>
 
           <a href="https://rollermap.vercel.app/">
-            <img src="/banner-rollermap.png" className="rounded-xl" />
+            <img src="/banner-rollermap.png" className="rounded-xl" alt="RollerMap" />
           </a>
         </section>
 
