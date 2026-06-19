@@ -37,6 +37,18 @@ function formatDate(value) {
   }
 }
 
+function calculateStats(activityItems) {
+  return activityItems.reduce(
+    (acc, item) => {
+      if (item.tipo === 'Evento') acc.eventos += 1
+      if (item.tipo === 'Insignia') acc.insignias += 1
+      if (item.tipo === 'Nota') acc.notas += 1
+      return acc
+    },
+    { eventos: 0, insignias: 0, notas: 0 }
+  )
+}
+
 export default function ActivityPage() {
   const { user } = useAuth()
   const savedUser = loadSavedUser()
@@ -50,21 +62,17 @@ export default function ActivityPage() {
     async function loadActivity() {
       setLoading(true)
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('estadisticas')
-        .eq('id', profileId)
-        .maybeSingle()
-
-      setStats(profile?.estadisticas || { eventos: 0, insignias: 0, notas: 0 })
-
       const { data, error } = await supabase
         .from('actividad_pr')
         .select('*')
         .eq('alumno_id', profileId)
         .order('fecha', { ascending: false })
 
-      if (!error) setItems(data || [])
+      if (!error) {
+        const activityItems = data || []
+        setItems(activityItems)
+        setStats(calculateStats(activityItems))
+      }
 
       setLoading(false)
     }
@@ -82,9 +90,9 @@ export default function ActivityPage() {
 
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { label: 'Eventos', value: stats.eventos || 0, color: '#818cf8' },
-            { label: 'Insignias', value: stats.insignias || 0, color: '#C9A84C' },
-            { label: 'Notas', value: stats.notas || 0, color: '#4ecb8b' },
+            { label: 'Eventos', value: stats.eventos, color: '#818cf8' },
+            { label: 'Insignias', value: stats.insignias, color: '#C9A84C' },
+            { label: 'Notas', value: stats.notas, color: '#4ecb8b' },
           ].map(s => (
             <div
               key={s.label}
