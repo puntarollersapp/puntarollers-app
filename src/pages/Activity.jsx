@@ -65,6 +65,7 @@ export default function ActivityPage() {
         .order('fecha', { ascending: false })
 
       if (!error) setItems(data || [])
+
       setLoading(false)
     }
 
@@ -78,17 +79,6 @@ export default function ActivityPage() {
   return (
     <AppLayout title="Actividad" showBack>
       <div className="px-4 pt-5 pb-8 space-y-6">
-
-        <div
-          className="rounded-2xl p-3 text-xs"
-          style={{
-            background: 'rgba(255,0,0,0.08)',
-            border: '1px solid rgba(255,0,0,0.25)',
-            color: '#ff8a8a',
-          }}
-        >
-          PROFILE ID: {profileId || 'SIN ID'}
-        </div>
 
         <div className="grid grid-cols-3 gap-2.5">
           {[
@@ -140,7 +130,9 @@ export default function ActivityPage() {
                   <div className="text-xl">{cfg.icon}</div>
 
                   <div className="flex-1">
-                    <p className="text-white font-semibold text-sm">{item.titulo}</p>
+                    <p className="text-white font-semibold text-sm">
+                      {item.titulo}
+                    </p>
 
                     <p className="text-white/35 text-xs mt-1">
                       {formatDate(item.fecha)}
