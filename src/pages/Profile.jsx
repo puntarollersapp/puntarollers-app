@@ -1,17 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase, uploadPublicImage } from '../lib/supabase'
-import {
-  mockUser,
-  insignias,
-  observaciones,
-  participaciones,
-  notificaciones,
-  contactosPR,
-  professores,
-} from '../data/mockData'
+import { mockUser, contactosPR } from '../data/mockData'
 
 const panelBase = 'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
 
@@ -32,7 +24,7 @@ export default function Profile() {
   const baseProfile = { ...mockUser, ...savedUser, ...user, banner: '' }
   const profileId = baseProfile.id || 'alumno-001'
 
-  const [open, setOpen] = useState('insignias')
+  const [open, setOpen] = useState('servicios')
   const [editing, setEditing] = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
   const [saving, setSaving] = useState(false)
@@ -50,6 +42,12 @@ export default function Profile() {
     pin: baseProfile.pin || '',
     foto: baseProfile.foto || '',
     banner: '',
+    miembroDesde: baseProfile.miembroDesde || '2026',
+    verificado: false,
+    prcardActiva: false,
+    trackingActivo: false,
+    gruposInfo: [],
+    estadisticas: { clases: 0, eventos: 0, exp: 0 },
   })
 
   useEffect(() => {
@@ -84,9 +82,15 @@ export default function Profile() {
           email: data.email || baseProfile.email || '',
           fechaNacimiento: data.fecha_nacimiento || baseProfile.fechaNacimiento || '',
           sobreMi: data.sobre_mi || baseProfile.sobreMi || '',
-          pin: baseProfile.pin || '',
+          pin: data.pin || baseProfile.pin || '',
           foto: data.foto || '',
           banner: data.banner || '',
+          miembroDesde: data.miembro_desde || '2026',
+          verificado: Boolean(data.verificado),
+          prcardActiva: Boolean(data.prcard_activa),
+          trackingActivo: Boolean(data.tracking_activo),
+          gruposInfo: Array.isArray(data.grupos_info) ? data.grupos_info : [],
+          estadisticas: data.estadisticas || { clases: 0, eventos: 0, exp: 0 },
         }
 
         setForm(loaded)
@@ -104,19 +108,9 @@ export default function Profile() {
 
   const profile = { ...baseProfile, ...form }
 
-  const earned = insignias.filter(i => i.desbloqueada)
-  const nextBadges = insignias.filter(i => !i.desbloqueada).slice(0, 3)
-  const lastBadge = earned[earned.length - 1]
-
-  const userObservations = observaciones.filter(o => o.alumnoId === profileId)
-  const userParticipations = participaciones.filter(p => p.alumnoId === profileId)
-
-  const unread = notificaciones.filter(n => !n.leida).length
-
-  const professorById = useMemo(
-    () => Object.fromEntries(professores.map(p => [p.id, p])),
-    []
-  )
+  const userBadges = []
+  const userObservations = []
+  const userParticipations = []
 
   function previewImage(file, field) {
     if (!file) return
@@ -196,7 +190,6 @@ export default function Profile() {
         email: form.email,
         fechaNacimiento: form.fechaNacimiento,
         sobreMi: form.sobreMi,
-        pin: form.pin,
         foto: fotoUrl,
         banner: bannerUrl,
       }
@@ -208,7 +201,7 @@ export default function Profile() {
       setFotoFile(null)
       setBannerFile(null)
       setEditing(false)
-      setSavedMsg('Cambios guardados en Supabase correctamente.')
+      setSavedMsg('Cambios guardados correctamente.')
     } catch (error) {
       setSavedMsg(`No se pudo guardar: ${error.message}`)
     } finally {
@@ -291,14 +284,6 @@ export default function Profile() {
               {profile.sobreMi || 'Mi espacio personal dentro de Punta Rollers.'}
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(profile.grupos || []).map(g => (
-                <span key={g} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70">
-                  {g}
-                </span>
-              ))}
-            </div>
-
             <div className="mt-4 grid grid-cols-3 gap-3">
               <MiniStat value={profile.estadisticas?.clases || 0} label="Clases" />
               <MiniStat value={profile.estadisticas?.eventos || 0} label="Eventos" />
@@ -322,7 +307,6 @@ export default function Profile() {
             <EditInput label="Ciudad" value={form.ciudad} onChange={v => setForm({ ...form, ciudad: v })} />
             <EditInput label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
             <EditInput label="Cumpleaños" type="date" value={form.fechaNacimiento} onChange={v => setForm({ ...form, fechaNacimiento: v })} />
-            <EditInput label="PIN de ingreso" value={form.pin} onChange={v => setForm({ ...form, pin: v })} />
 
             <label className="block">
               <span className="text-white/35 text-xs">Sobre mí</span>
@@ -341,50 +325,55 @@ export default function Profile() {
           </section>
         )}
 
-        {unread > 0 && (
-          <section className="rounded-2xl bg-pr-gold/10 border border-pr-gold/20 p-4">
-            <p className="text-pr-gold text-xs uppercase tracking-[0.18em] font-bold">Novedades</p>
-            <p className="text-white mt-1 font-semibold">Tenés {unread} novedades</p>
-            <p className="text-white/45 text-xs mt-1">Se muestran agrupadas para evitar avisos superpuestos en móvil.</p>
-          </section>
-        )}
+        <section className={`${panelBase} p-4`}>
+          <p className="section-label">Tus grupos</p>
 
-        <section className="grid grid-cols-1 gap-3">
-          <SummaryCard title="Última insignia" icon="🏅" main={lastBadge?.nombre} detail={lastBadge?.descripcion} />
-          <SummaryCard title="Última observación" icon="📝" main={userObservations[0]?.titulo} detail={userObservations[0]?.descripcion} />
+          {profile.gruposInfo?.length > 0 ? (
+            <div className="space-y-2 mt-3">
+              {profile.gruposInfo.map((grupo, index) => (
+                <a
+                  key={`${grupo.titulo}-${index}`}
+                  href={grupo.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4"
+                >
+                  <div>
+                    <p className="text-white font-semibold">{grupo.titulo}</p>
+                    <p className="text-white/35 text-xs mt-1">Grupo asignado por Punta Rollers</p>
+                  </div>
+                  <span className="text-pr-gold text-xs">Abrir</span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-black/25 border border-white/5 p-4 mt-3">
+              <p className="text-white font-semibold">Todavía no tenés grupos asignados</p>
+              <p className="text-white/45 text-sm mt-1">
+                Cuando el equipo PR te agregue a un grupo, aparecerá acá.
+              </p>
+            </div>
+          )}
         </section>
 
         <Accordion title="Mis servicios PR" open={open === 'servicios'} onClick={() => setOpen(open === 'servicios' ? '' : 'servicios')}>
           <div className="grid grid-cols-1 gap-3">
-            <ServiceState title="PR Card" active={profile.prcard?.activa} action="Abrir plataforma" href={profile.prcard?.link} />
-            <ServiceState title="PR Tracking" active={profile.tracking?.activo} action="Ver información" href="/app/tracking" />
+            <ServiceState title="PR Card" active={profile.prcardActiva} action="Abrir plataforma" href="https://puntarollerscard.com/" />
+            <ServiceState title="PR Tracking" active={profile.trackingActivo} action="Ver información" href="/app/tracking" />
           </div>
         </Accordion>
 
-        <Accordion title={`Insignias (${earned.length})`} open={open === 'insignias'} onClick={() => setOpen(open === 'insignias' ? '' : 'insignias')}>
-          <div className="grid grid-cols-2 gap-3">
-            {earned.map(badge => <BadgeCard key={badge.id} badge={badge} professor={professorById[badge.otorgadaPor]} />)}
-          </div>
+        <Accordion title={`Insignias (${userBadges.length})`} open={open === 'insignias'} onClick={() => setOpen(open === 'insignias' ? '' : 'insignias')}>
+          <EmptyState title="Todavía no tenés insignias" text="Cuando un profesor te otorgue una insignia, aparecerá acá." />
         </Accordion>
 
         <Accordion title={`Eventos en los que participaste (${userParticipations.length})`} open={open === 'participaciones'} onClick={() => setOpen(open === 'participaciones' ? '' : 'participaciones')}>
-          <div className="space-y-3">
-            {userParticipations.map(p => <EventCard key={p.id} item={p} />)}
-          </div>
+          <EmptyState title="Todavía no hay participaciones" text="Cuando participes en eventos PR, aparecerán en esta sección." />
         </Accordion>
 
         <section id="observaciones">
           <Accordion title={`Observaciones de tus entrenadores (${userObservations.length})`} subtitle="Tu evolución" open={open === 'observaciones'} onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}>
-            <div className="space-y-3">
-              {userObservations.length > 0 ? (
-                userObservations.map(obs => <ObservationCard key={obs.id} obs={obs} professor={professorById[obs.profesorId]} />)
-              ) : (
-                <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
-                  <p className="text-white font-semibold">Todavía no hay observaciones</p>
-                  <p className="text-white/45 text-sm mt-1">Cuando un profesor te deje una nota, aparecerá acá.</p>
-                </div>
-              )}
-            </div>
+            <EmptyState title="Todavía no hay observaciones" text="Cuando un profesor te deje una nota, aparecerá acá." />
           </Accordion>
         </section>
 
@@ -410,10 +399,6 @@ export default function Profile() {
   )
 }
 
-function initials(name = 'PR') {
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-}
-
 function MiniStat({ value, label }) {
   return (
     <div className="rounded-2xl bg-black/25 border border-white/5 p-3 text-center">
@@ -423,12 +408,11 @@ function MiniStat({ value, label }) {
   )
 }
 
-function SummaryCard({ icon, title, main, detail }) {
+function EmptyState({ title, text }) {
   return (
-    <div className={`${panelBase} p-4`}>
-      <p className="section-label">{icon} {title}</p>
-      <p className="text-white font-semibold mt-2">{main || 'Sin registros todavía'}</p>
-      <p className="text-white/45 text-xs mt-1 line-clamp-2">{detail || 'Cuando se agregue información, aparecerá acá.'}</p>
+    <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
+      <p className="text-white font-semibold">{title}</p>
+      <p className="text-white/45 text-sm mt-1">{text}</p>
     </div>
   )
 }
@@ -448,56 +432,21 @@ function Accordion({ title, subtitle, open, onClick, children }) {
   )
 }
 
-function BadgeCard({ badge, professor }) {
-  return (
-    <div className="rounded-3xl bg-gradient-to-br from-pr-gold/20 to-black/20 border border-pr-gold/20 p-4 min-h-[150px]">
-      <div className="w-12 h-12 rounded-2xl bg-pr-gold/15 border border-pr-gold/20 flex items-center justify-center text-2xl">{badge.emoji}</div>
-      <p className="text-white font-semibold mt-3 leading-tight">{badge.nombre}</p>
-      <p className="text-white/40 text-[11px] mt-1">{badge.descripcion}</p>
-      <p className="text-emerald-400 text-[10px] mt-3">Ganada · {badge.fecha}</p>
-      {professor && <p className="text-white/30 text-[10px] mt-1">Otorgada por {professor.nombre}</p>}
-    </div>
-  )
-}
-
-function EventCard({ item }) {
-  return (
-    <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
-      <div className="flex justify-between gap-3">
-        <p className="text-white font-semibold">{item.nombre}</p>
-        <span className="text-pr-gold text-[10px] uppercase">{item.tipo}</span>
-      </div>
-      <p className="text-white/35 text-xs mt-1">{item.fecha}</p>
-      <p className="text-white/50 text-sm mt-2">{item.descripcion}</p>
-    </div>
-  )
-}
-
-function ObservationCard({ obs, professor }) {
-  return (
-    <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
-      <div className="flex gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-pr-gold/10 border border-pr-gold/20 flex items-center justify-center text-pr-gold text-xs font-bold">
-          {professor?.iniciales || 'PR'}
-        </div>
-        <div className="flex-1">
-          <p className="text-white font-semibold">{obs.titulo}</p>
-          <p className="text-white/35 text-xs">{professor?.nombre} · {obs.tipo} · {obs.fecha}</p>
-          <p className="text-white/55 text-sm mt-3">{obs.descripcion}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ServiceState({ title, active, action, href }) {
   return (
     <div className="rounded-2xl bg-black/25 border border-white/5 p-4 flex items-center justify-between">
       <div>
         <p className="text-white font-semibold">{title}</p>
-        <p className={active ? 'text-emerald-400 text-xs' : 'text-red-300 text-xs'}>{active ? 'Activo' : 'Inactivo'}</p>
+        <p className={active ? 'text-emerald-400 text-xs' : 'text-red-300 text-xs'}>
+          {active ? 'Activo' : 'Inactivo'}
+        </p>
       </div>
-      <Link to={href} className="text-pr-gold text-xs">{action}</Link>
+
+      {active ? (
+        <Link to={href} className="text-pr-gold text-xs">{action}</Link>
+      ) : (
+        <span className="text-white/25 text-xs">No disponible</span>
+      )}
     </div>
   )
 }
