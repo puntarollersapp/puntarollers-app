@@ -40,6 +40,7 @@ export default function Profile() {
     email: baseProfile.email || '',
     fechaNacimiento: baseProfile.fechaNacimiento || '',
     sobreMi: baseProfile.sobreMi || '',
+    pin: baseProfile.pin || '',
     foto: baseProfile.foto || '',
     banner: '',
     miembroDesde: baseProfile.miembroDesde || '2026',
@@ -82,6 +83,7 @@ export default function Profile() {
           email: data.email || baseProfile.email || '',
           fechaNacimiento: data.fecha_nacimiento || baseProfile.fechaNacimiento || '',
           sobreMi: data.sobre_mi || baseProfile.sobreMi || '',
+          pin: data.pin || baseProfile.pin || '',
           foto: data.foto || '',
           banner: data.banner || '',
           miembroDesde: data.miembro_desde || '2026',
@@ -162,6 +164,7 @@ export default function Profile() {
         email: form.email,
         fecha_nacimiento: form.fechaNacimiento,
         sobre_mi: form.sobreMi,
+        pin: form.pin,
         foto: fotoUrl,
         banner: bannerUrl,
         updated_at: new Date().toISOString(),
@@ -200,6 +203,7 @@ export default function Profile() {
         email: form.email,
         fechaNacimiento: form.fechaNacimiento,
         sobreMi: form.sobreMi,
+        pin: form.pin,
         foto: fotoUrl,
         banner: bannerUrl,
       }
@@ -317,6 +321,7 @@ export default function Profile() {
             <EditInput label="Ciudad" value={form.ciudad} onChange={v => setForm({ ...form, ciudad: v })} />
             <EditInput label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
             <EditInput label="Cumpleaños" type="date" value={form.fechaNacimiento} onChange={v => setForm({ ...form, fechaNacimiento: v })} />
+            <EditInput label="PIN de ingreso" value={form.pin} onChange={v => setForm({ ...form, pin: v })} />
 
             <label className="block">
               <span className="text-white/35 text-xs">Sobre mí</span>
@@ -477,4 +482,4 @@ function EditInput({ label, value, onChange, type = 'text' }) {
       />
     </label>
   )
-                                                                                                          }
+}
