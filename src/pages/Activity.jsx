@@ -18,6 +18,25 @@ function loadSavedUser() {
   }
 }
 
+function formatDate(value) {
+  if (!value) return ''
+
+  try {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+
+    return date.toLocaleString('es-UY', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return value
+  }
+}
+
 export default function ActivityPage() {
   const { user } = useAuth()
   const savedUser = loadSavedUser()
@@ -46,16 +65,30 @@ export default function ActivityPage() {
         .order('fecha', { ascending: false })
 
       if (!error) setItems(data || [])
-
       setLoading(false)
     }
 
-    if (profileId) loadActivity()
+    if (profileId) {
+      loadActivity()
+    } else {
+      setLoading(false)
+    }
   }, [profileId])
 
   return (
     <AppLayout title="Actividad" showBack>
       <div className="px-4 pt-5 pb-8 space-y-6">
+
+        <div
+          className="rounded-2xl p-3 text-xs"
+          style={{
+            background: 'rgba(255,0,0,0.08)',
+            border: '1px solid rgba(255,0,0,0.25)',
+            color: '#ff8a8a',
+          }}
+        >
+          PROFILE ID: {profileId || 'SIN ID'}
+        </div>
 
         <div className="grid grid-cols-3 gap-2.5">
           {[
@@ -63,8 +96,17 @@ export default function ActivityPage() {
             { label: 'Insignias', value: stats.insignias || 0, color: '#C9A84C' },
             { label: 'Notas', value: stats.notas || 0, color: '#4ecb8b' },
           ].map(s => (
-            <div key={s.label} className="rounded-xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="font-display text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            <div
+              key={s.label}
+              className="rounded-xl p-4 text-center"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+              }}
+            >
+              <p className="font-display text-2xl font-bold" style={{ color: s.color }}>
+                {s.value}
+              </p>
               <p className="section-label mt-1">{s.label}</p>
             </div>
           ))}
@@ -87,14 +129,37 @@ export default function ActivityPage() {
               const cfg = TYPE_CONFIG[item.tipo] || TYPE_CONFIG.Evento
 
               return (
-                <div key={item.id} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div
+                  key={item.id}
+                  className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
                   <div className="text-xl">{cfg.icon}</div>
+
                   <div className="flex-1">
                     <p className="text-white font-semibold text-sm">{item.titulo}</p>
-                    <p className="text-white/35 text-xs mt-1">{item.fecha || ''}</p>
-                    {item.descripcion && <p className="text-white/45 text-xs mt-1">{item.descripcion}</p>}
+
+                    <p className="text-white/35 text-xs mt-1">
+                      {formatDate(item.fecha)}
+                    </p>
+
+                    {item.descripcion && (
+                      <p className="text-white/45 text-xs mt-1">
+                        {item.descripcion}
+                      </p>
+                    )}
                   </div>
-                  <span className="text-[10px] px-2 py-1 rounded-full" style={{ color: cfg.color, border: `1px solid ${cfg.color}55` }}>
+
+                  <span
+                    className="text-[10px] px-2 py-1 rounded-full"
+                    style={{
+                      color: cfg.color,
+                      border: `1px solid ${cfg.color}55`,
+                    }}
+                  >
                     {cfg.label}
                   </span>
                 </div>
