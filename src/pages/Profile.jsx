@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase, uploadPublicImage } from '../lib/supabase'
-import { mockUser, contactosPR } from '../data/mockData'
+import { mockUser } from '../data/mockData'
 
 const panelBase = 'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
 
@@ -31,6 +31,7 @@ export default function Profile() {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
+  const [contactos, setContactos] = useState([])
 
   const [form, setForm] = useState({
     nombre: baseProfile.nombre || '',
@@ -39,7 +40,6 @@ export default function Profile() {
     email: baseProfile.email || '',
     fechaNacimiento: baseProfile.fechaNacimiento || '',
     sobreMi: baseProfile.sobreMi || '',
-    pin: baseProfile.pin || '',
     foto: baseProfile.foto || '',
     banner: '',
     miembroDesde: baseProfile.miembroDesde || '2026',
@@ -47,7 +47,7 @@ export default function Profile() {
     prcardActiva: false,
     trackingActivo: false,
     gruposInfo: [],
-    estadisticas: { clases: 0, eventos: 0, exp: 0 },
+    estadisticas: { eventos: 0, insignias: 0, notas: 0 },
   })
 
   useEffect(() => {
@@ -82,7 +82,6 @@ export default function Profile() {
           email: data.email || baseProfile.email || '',
           fechaNacimiento: data.fecha_nacimiento || baseProfile.fechaNacimiento || '',
           sobreMi: data.sobre_mi || baseProfile.sobreMi || '',
-          pin: data.pin || baseProfile.pin || '',
           foto: data.foto || '',
           banner: data.banner || '',
           miembroDesde: data.miembro_desde || '2026',
@@ -90,7 +89,7 @@ export default function Profile() {
           prcardActiva: Boolean(data.prcard_activa),
           trackingActivo: Boolean(data.tracking_activo),
           gruposInfo: Array.isArray(data.grupos_info) ? data.grupos_info : [],
-          estadisticas: data.estadisticas || { clases: 0, eventos: 0, exp: 0 },
+          estadisticas: data.estadisticas || { eventos: 0, insignias: 0, notas: 0 },
         }
 
         setForm(loaded)
@@ -103,7 +102,18 @@ export default function Profile() {
       setLoadingProfile(false)
     }
 
+    async function loadContactos() {
+      const { data, error } = await supabase
+        .from('contactos_pr')
+        .select('*')
+        .eq('activo', true)
+        .order('orden', { ascending: true })
+
+      if (!error) setContactos(data || [])
+    }
+
     loadProfileFromSupabase()
+    loadContactos()
   }, [profileId])
 
   const profile = { ...baseProfile, ...form }
@@ -285,9 +295,9 @@ export default function Profile() {
             </p>
 
             <div className="mt-4 grid grid-cols-3 gap-3">
-              <MiniStat value={profile.estadisticas?.clases || 0} label="Clases" />
               <MiniStat value={profile.estadisticas?.eventos || 0} label="Eventos" />
-              <MiniStat value={profile.estadisticas?.exp || 0} label="Exp. PR" />
+              <MiniStat value={profile.estadisticas?.insignias || 0} label="Insignias" />
+              <MiniStat value={profile.estadisticas?.notas || 0} label="Notas" />
             </div>
           </div>
         </section>
@@ -379,15 +389,19 @@ export default function Profile() {
 
         <Accordion title="Contactos PR" open={open === 'contactos'} onClick={() => setOpen(open === 'contactos' ? '' : 'contactos')}>
           <div className="space-y-3">
-            {contactosPR.map(c => (
-              <a key={c.id} href={c.link} className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4">
-                <div>
-                  <p className="text-white font-semibold">{c.nombre}</p>
-                  <p className="text-white/40 text-xs">{c.detalle}</p>
-                </div>
-                <span className="text-pr-gold text-xs">Abrir</span>
-              </a>
-            ))}
+            {contactos.length > 0 ? (
+              contactos.map(c => (
+                <a key={c.id} href={c.link || '#'} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4">
+                  <div>
+                    <p className="text-white font-semibold">{c.nombre}</p>
+                    {c.detalle && <p className="text-white/40 text-xs">{c.detalle}</p>}
+                  </div>
+                  <span className="text-pr-gold text-xs">Abrir</span>
+                </a>
+              ))
+            ) : (
+              <EmptyState title="Sin contactos cargados" text="Cuando el administrador cargue contactos PR, aparecerán acá." />
+            )}
           </div>
         </Accordion>
 
@@ -463,4 +477,4 @@ function EditInput({ label, value, onChange, type = 'text' }) {
       />
     </label>
   )
-}
+                                                                                                          }
