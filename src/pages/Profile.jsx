@@ -1,163 +1,288 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
-import { supabase, uploadPublicImage } from '../lib/supabase'
+import {
+  supabase,
+  uploadPublicImage,
+} from '../lib/supabase'
 import { mockUser } from '../data/mockData'
-
-const panelBase = 'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
 
 function loadSavedUser() {
   try {
-    const saved = localStorage.getItem('pr_user')
-    return saved ? JSON.parse(saved) : {}
+    return JSON.parse(
+      localStorage.getItem('pr_user') || '{}'
+    )
   } catch {
     return {}
   }
 }
 
+function formatDate(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleDateString('es-UY', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 export default function Profile() {
   const location = useLocation()
   const { user, logout, updateUser } = useAuth()
-  const savedUser = loadSavedUser()
 
-  const baseProfile = { ...mockUser, ...savedUser, ...user, banner: '' }
-  const profileId = baseProfile.id || 'alumno-001'
+  const base = {
+    ...mockUser,
+    ...loadSavedUser(),
+    ...user,
+  }
+
+  const profileId = base.id || 'alumno-001'
 
   const [open, setOpen] = useState('servicios')
   const [editing, setEditing] = useState(false)
-  const [savedMsg, setSavedMsg] = useState('')
+  const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
-  const [loadingProfile, setLoadingProfile] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [contactos, setContactos] = useState([])
+  const [activity, setActivity] = useState([])
 
   const [form, setForm] = useState({
-    nombre: baseProfile.nombre || '',
-    ciudad: baseProfile.ciudad || '',
-    instagram: baseProfile.instagram || '',
-    email: baseProfile.email || '',
-    fechaNacimiento: baseProfile.fechaNacimiento || '',
-    sobreMi: baseProfile.sobreMi || '',
-    pin: baseProfile.pin || '',
-    foto: baseProfile.foto || '',
-    banner: '',
-    miembroDesde: baseProfile.miembroDesde || '2026',
+    nombre: base.nombre || '',
+    ciudad: base.ciudad || '',
+    instagram: base.instagram || '',
+    email: base.email || '',
+    fechaNacimiento: base.fechaNacimiento || '',
+    sobreMi: base.sobreMi || '',
+    pin: base.pin || '',
+    foto: base.foto || '',
+    banner: base.banner || '',
+    miembroDesde: base.miembroDesde || '2026',
     verificado: false,
     prcardActiva: false,
     trackingActivo: false,
     gruposInfo: [],
-    estadisticas: { eventos: 0, insignias: 0, notas: 0 },
   })
 
   useEffect(() => {
     if (location.hash === '#observaciones') {
       setOpen('observaciones')
-      setTimeout(() => document.getElementById('observaciones')?.scrollIntoView({ behavior: 'smooth' }), 250)
+
+      setTimeout(() => {
+        document
+          .getElementById('observaciones')
+          ?.scrollIntoView({
+            behavior: 'smooth',
+          })
+      }, 250)
     }
 
     if (location.hash === '#editar') {
       setEditing(true)
-      setTimeout(() => document.getElementById('editar-perfil')?.scrollIntoView({ behavior: 'smooth' }), 250)
+
+      setTimeout(() => {
+        document
+          .getElementById('editar-perfil')
+          ?.scrollIntoView({
+            behavior: 'smooth',
+          })
+      }, 250)
     }
   }, [location.hash])
 
   useEffect(() => {
-    async function loadProfileFromSupabase() {
-      setLoadingProfile(true)
+    async function loadAll() {
+      setLoading(true)
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', profileId)
-        .maybeSingle()
+      const [
+        profileResponse,
+        contactsResponse,
+        activityResponse,
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', profileId)
+          .maybeSingle(),
 
-      if (error) setSavedMsg(`Error cargando perfil: ${error.message}`)
+        supabase
+          .from('contactos_pr')
+          .select('*')
+          .eq('activo', true)
+          .order('orden', {
+            ascending: true,
+          }),
 
-      if (data) {
-        const loaded = {
-          nombre: data.nombre || baseProfile.nombre || '',
-          ciudad: data.ciudad || baseProfile.ciudad || '',
-          instagram: data.instagram || baseProfile.instagram || '',
-          email: data.email || baseProfile.email || '',
-          fechaNacimiento: data.fecha_nacimiento || baseProfile.fechaNacimiento || '',
-          sobreMi: data.sobre_mi || baseProfile.sobreMi || '',
-          pin: data.pin || baseProfile.pin || '',
-          foto: data.foto || '',
-          banner: data.banner || '',
-          miembroDesde: data.miembro_desde || '2026',
-          verificado: Boolean(data.verificado),
-          prcardActiva: Boolean(data.prcard_activa),
-          trackingActivo: Boolean(data.tracking_activo),
-          gruposInfo: Array.isArray(data.grupos_info) ? data.grupos_info : [],
-          estadisticas: data.estadisticas || { eventos: 0, insignias: 0, notas: 0 },
-        }
+        supabase
+          .from('actividad_pr')
+          .select('*')
+          .eq('alumno_id', profileId)
+          .order('fecha', {
+            ascending: false,
+          }),
+      ])
 
-        setForm(loaded)
-
-        const updatedUser = { ...baseProfile, ...loaded }
-        localStorage.setItem('pr_user', JSON.stringify(updatedUser))
-        updateUser?.(updatedUser)
+      if (profileResponse.error) {
+        setMessage(
+          `Error cargando perfil: ${profileResponse.error.message}`
+        )
       }
 
-      setLoadingProfile(false)
+      if (profileResponse.data) {
+        const data = profileResponse.data
+
+        const loadedProfile = {
+          nombre: data.nombre || base.nombre || '',
+          ciudad: data.ciudad || '',
+          instagram: data.instagram || '',
+          email: data.email || '',
+          fechaNacimiento:
+            data.fecha_nacimiento || '',
+          sobreMi: data.sobre_mi || '',
+          pin: data.pin || '',
+          foto: data.foto || '',
+          banner: data.banner || '',
+          miembroDesde:
+            data.miembro_desde || '2026',
+          verificado: Boolean(data.verificado),
+          prcardActiva: Boolean(
+            data.prcard_activa
+          ),
+          trackingActivo: Boolean(
+            data.tracking_activo
+          ),
+          gruposInfo: Array.isArray(
+            data.grupos_info
+          )
+            ? data.grupos_info
+            : [],
+        }
+
+        setForm(loadedProfile)
+
+        const nextUser = {
+          ...base,
+          ...loadedProfile,
+        }
+
+        localStorage.setItem(
+          'pr_user',
+          JSON.stringify(nextUser)
+        )
+
+        updateUser?.(nextUser)
+      }
+
+      if (!contactsResponse.error) {
+        setContactos(contactsResponse.data || [])
+      }
+
+      if (!activityResponse.error) {
+        setActivity(activityResponse.data || [])
+      }
+
+      setLoading(false)
     }
 
-    async function loadContactos() {
-      const { data, error } = await supabase
-        .from('contactos_pr')
-        .select('*')
-        .eq('activo', true)
-        .order('orden', { ascending: true })
-
-      if (!error) setContactos(data || [])
-    }
-
-    loadProfileFromSupabase()
-    loadContactos()
+    loadAll()
   }, [profileId])
 
-  const profile = { ...baseProfile, ...form }
+  const profile = {
+    ...base,
+    ...form,
+  }
 
-  const userBadges = []
-  const userObservations = []
-  const userParticipations = []
+  const badges = useMemo(
+    () =>
+      activity.filter(
+        (item) => item.tipo === 'Insignia'
+      ),
+    [activity]
+  )
+
+  const events = useMemo(
+    () =>
+      activity.filter(
+        (item) => item.tipo === 'Evento'
+      ),
+    [activity]
+  )
+
+  const notes = useMemo(
+    () =>
+      activity.filter(
+        (item) => item.tipo === 'Nota'
+      ),
+    [activity]
+  )
 
   function previewImage(file, field) {
     if (!file) return
 
-    const localPreview = URL.createObjectURL(file)
+    const preview = URL.createObjectURL(file)
 
-    if (field === 'foto') setFotoFile(file)
-    if (field === 'banner') setBannerFile(file)
+    if (field === 'foto') {
+      setFotoFile(file)
+    } else {
+      setBannerFile(file)
+    }
 
-    setForm(prev => ({ ...prev, [field]: localPreview }))
-    setSavedMsg('Imagen cargada. Tocá Guardar cambios.')
+    setForm((previous) => ({
+      ...previous,
+      [field]: preview,
+    }))
+
+    setMessage(
+      'Imagen lista. Tocá Guardar cambios para publicarla.'
+    )
   }
 
   async function saveProfile() {
     try {
       setSaving(true)
-      setSavedMsg('Guardando cambios...')
+      setMessage('Guardando cambios…')
 
-      let fotoUrl = form.foto
-      let bannerUrl = form.banner
+      let foto = form.foto
+      let banner = form.banner
 
       if (fotoFile) {
-        const result = await uploadPublicImage('avatars', fotoFile, profileId)
-        if (result.error) throw new Error(result.error)
-        fotoUrl = result.url
+        const result = await uploadPublicImage(
+          'avatars',
+          fotoFile,
+          profileId
+        )
+
+        if (result.error) {
+          throw new Error(result.error)
+        }
+
+        foto = result.url
       }
 
       if (bannerFile) {
-        const result = await uploadPublicImage('banners', bannerFile, profileId)
-        if (result.error) throw new Error(result.error)
-        bannerUrl = result.url
+        const result = await uploadPublicImage(
+          'banners',
+          bannerFile,
+          profileId
+        )
+
+        if (result.error) {
+          throw new Error(result.error)
+        }
+
+        banner = result.url
       }
 
-      const dataToSave = {
-        id: profileId,
+      const payload = {
         nombre: form.nombre,
         ciudad: form.ciudad,
         instagram: form.instagram,
@@ -165,252 +290,494 @@ export default function Profile() {
         fecha_nacimiento: form.fechaNacimiento,
         sobre_mi: form.sobreMi,
         pin: form.pin,
-        foto: fotoUrl,
-        banner: bannerUrl,
+        foto,
+        banner,
         updated_at: new Date().toISOString(),
       }
 
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .select('id')
+        .update(payload)
         .eq('id', profileId)
-        .maybeSingle()
 
-      let saveError = null
-
-      if (existing?.id) {
-        const { error } = await supabase
-          .from('profiles')
-          .update(dataToSave)
-          .eq('id', profileId)
-
-        saveError = error
-      } else {
-        const { error } = await supabase
-          .from('profiles')
-          .insert(dataToSave)
-
-        saveError = error
+      if (error) {
+        throw new Error(error.message)
       }
 
-      if (saveError) throw new Error(saveError.message)
-
-      const updatedUser = {
-        ...baseProfile,
-        nombre: form.nombre,
-        ciudad: form.ciudad,
-        instagram: form.instagram,
-        email: form.email,
-        fechaNacimiento: form.fechaNacimiento,
-        sobreMi: form.sobreMi,
-        pin: form.pin,
-        foto: fotoUrl,
-        banner: bannerUrl,
+      const nextUser = {
+        ...base,
+        ...form,
+        foto,
+        banner,
       }
 
-      localStorage.setItem('pr_user', JSON.stringify(updatedUser))
-      updateUser?.(updatedUser)
+      localStorage.setItem(
+        'pr_user',
+        JSON.stringify(nextUser)
+      )
 
-      setForm(prev => ({ ...prev, foto: fotoUrl, banner: bannerUrl }))
+      updateUser?.(nextUser)
+
+      setForm((previous) => ({
+        ...previous,
+        foto,
+        banner,
+      }))
+
       setFotoFile(null)
       setBannerFile(null)
       setEditing(false)
-      setSavedMsg('Cambios guardados correctamente.')
+      setMessage('Cambios guardados correctamente.')
     } catch (error) {
-      setSavedMsg(`No se pudo guardar: ${error.message}`)
+      setMessage(
+        `No se pudo guardar: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <AppLayout title="Mi Perfil">
-      <div className="px-4 py-5 space-y-5 animate-page-enter">
-
-        {loadingProfile && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white/50">
-            Cargando perfil...
+    <AppLayout title="Mi perfil">
+      <div className="pr-page space-y-5 animate-page-enter">
+        {loading && (
+          <div className="pr-card p-4 text-white/40 text-sm">
+            Cargando tu perfil…
           </div>
         )}
 
-        <section className={`${panelBase} overflow-hidden relative`}>
-          <div className="h-40 relative bg-gradient-to-br from-[#19140b] via-[#090910] to-black">
+        <section className="pr-panel overflow-hidden">
+          <div className="h-[180px] relative bg-gradient-to-br from-[#211a0d] via-[#111119] to-[#08080d] overflow-hidden">
             {profile.banner ? (
-              <img src={profile.banner} alt="Banner" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+              <img
+                src={profile.banner}
+                alt="Banner"
+                className="absolute inset-0 w-full h-full object-cover opacity-75"
+              />
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                <div className="text-3xl mb-2">🛼</div>
-                <p className="text-pr-gold font-semibold text-sm">Personalizá tu banner</p>
-                <p className="text-white/35 text-xs mt-1">Subí una imagen que represente tu historia sobre ruedas.</p>
+              <div className="absolute inset-0 grid place-items-center text-center px-8">
+                <div>
+                  <div className="text-4xl">🛼</div>
+
+                  <p className="text-pr-gold text-sm font-semibold mt-2">
+                    Tu historia sobre ruedas
+                  </p>
+
+                  <p className="text-white/30 text-xs mt-1">
+                    Elegí una imagen que te represente.
+                  </p>
+                </div>
               </div>
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d13] via-black/5 to-black/15" />
 
-            <label className="absolute right-3 top-3 text-[10px] px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-white/70 cursor-pointer">
+            <label className="absolute top-4 right-4 px-3 py-2 rounded-full bg-black/55 border border-white/10 text-white/65 text-[10px] font-semibold cursor-pointer">
               Cambiar banner
-              <input type="file" accept="image/*" className="hidden" onChange={e => previewImage(e.target.files?.[0], 'banner')} />
+
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) =>
+                  previewImage(
+                    event.target.files?.[0],
+                    'banner'
+                  )
+                }
+              />
             </label>
           </div>
 
-          <div className="px-5 pb-5 -mt-12 relative">
-            <div className="flex items-end justify-between gap-4">
-              <div className="flex items-end gap-3">
-                <label className="w-24 h-24 rounded-3xl border-2 border-pr-gold/60 bg-[#12121d] shadow-xl overflow-hidden flex items-center justify-center cursor-pointer relative">
-                  {profile.foto ? (
-                    <img src={profile.foto} alt="Perfil" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-center px-2">
-                      <div className="text-2xl mb-1">📸</div>
-                      <p className="text-[9px] text-pr-gold leading-tight">Poné tu foto</p>
-                    </div>
-                  )}
+          <div className="px-5 pb-5 relative">
+            <label className="absolute -top-14 left-5 w-28 h-28 rounded-[32px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center shadow-2xl cursor-pointer">
+              {profile.foto ? (
+                <img
+                  src={profile.foto}
+                  alt={profile.nombre}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center">
+                  <div className="text-3xl">📷</div>
 
-                  <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-1">
-                    Foto
-                  </span>
-
-                  <input type="file" accept="image/*" className="hidden" onChange={e => previewImage(e.target.files?.[0], 'foto')} />
-                </label>
-
-                <div className="pb-2">
-                  <h1 className="font-display text-3xl leading-none text-white">
-                    {profile.nombre}
-                    {profile.verificado && <span className="text-sky-400 text-xl align-middle"> ✓</span>}
-                  </h1>
-
-                  <p className="text-white/45 text-xs mt-1">
-                    Miembro desde {profile.miembroDesde || '2026'}
+                  <p className="text-pr-gold text-[9px] mt-1">
+                    Subir foto
                   </p>
-
-                  {profile.instagram && (
-                    <p className="text-pr-gold/70 text-xs mt-1">{profile.instagram}</p>
-                  )}
                 </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) =>
+                  previewImage(
+                    event.target.files?.[0],
+                    'foto'
+                  )
+                }
+              />
+            </label>
+
+            <div className="pt-16 flex items-start justify-between gap-4">
+              <div>
+                <h1 className="font-display text-[34px] leading-none text-white">
+                  {profile.nombre}
+
+                  {profile.verificado && (
+                    <span className="text-sky-400 text-xl ml-1">
+                      ✓
+                    </span>
+                  )}
+                </h1>
+
+                <p className="text-white/38 text-xs mt-2">
+                  {profile.ciudad || 'Sin ciudad'} ·
+                  Miembro desde {profile.miembroDesde}
+                </p>
+
+                {profile.instagram && (
+                  <p className="text-pr-gold/75 text-xs mt-1">
+                    {profile.instagram}
+                  </p>
+                )}
               </div>
 
-              <button type="button" onClick={() => setEditing(!editing)} className="mb-2 px-3 py-2 rounded-xl bg-pr-gold text-black text-xs font-bold">
+              <button
+                type="button"
+                onClick={() =>
+                  setEditing((value) => !value)
+                }
+                className="px-4 py-2.5 rounded-[14px] bg-pr-gold text-black text-xs font-bold"
+              >
                 {editing ? 'Cerrar' : 'Editar'}
               </button>
             </div>
 
-            <p className="text-white/50 text-sm mt-4">
-              {profile.sobreMi || 'Mi espacio personal dentro de Punta Rollers.'}
+            <p className="text-white/50 text-sm leading-relaxed mt-5">
+              {profile.sobreMi ||
+                'Mi espacio personal dentro de Punta Rollers.'}
             </p>
 
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <MiniStat value={profile.estadisticas?.eventos || 0} label="Eventos" />
-              <MiniStat value={profile.estadisticas?.insignias || 0} label="Insignias" />
-              <MiniStat value={profile.estadisticas?.notas || 0} label="Notas" />
+            <div className="grid grid-cols-3 gap-2.5 mt-5">
+              <MiniStat
+                value={events.length}
+                label="Eventos"
+              />
+
+              <MiniStat
+                value={badges.length}
+                label="Insignias"
+              />
+
+              <MiniStat
+                value={notes.length}
+                label="Notas"
+              />
             </div>
           </div>
         </section>
 
-        {savedMsg && (
-          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-sm text-pr-gold">
-            {savedMsg}
+        {message && (
+          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-pr-gold text-sm">
+            {message}
           </div>
         )}
 
         {editing && (
-          <section id="editar-perfil" className={`${panelBase} p-4 space-y-3`}>
-            <p className="section-label">Personalizar perfil</p>
+          <section
+            id="editar-perfil"
+            className="pr-panel p-5 space-y-4"
+          >
+            <div>
+              <p className="section-label">
+                Personalización
+              </p>
 
-            <EditInput label="Nombre" value={form.nombre} onChange={v => setForm({ ...form, nombre: v })} />
-            <EditInput label="Instagram" value={form.instagram} onChange={v => setForm({ ...form, instagram: v })} />
-            <EditInput label="Ciudad" value={form.ciudad} onChange={v => setForm({ ...form, ciudad: v })} />
-            <EditInput label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
-            <EditInput label="Cumpleaños" type="date" value={form.fechaNacimiento} onChange={v => setForm({ ...form, fechaNacimiento: v })} />
-            <EditInput label="PIN de ingreso" value={form.pin} onChange={v => setForm({ ...form, pin: v })} />
+              <h2 className="font-display text-2xl text-white mt-1">
+                Editá tu información
+              </h2>
+            </div>
+
+            <EditInput
+              label="Nombre"
+              value={form.nombre}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  nombre: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Instagram"
+              value={form.instagram}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  instagram: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Ciudad"
+              value={form.ciudad}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  ciudad: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Email"
+              value={form.email}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  email: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Cumpleaños"
+              type="date"
+              value={form.fechaNacimiento}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  fechaNacimiento: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="PIN de ingreso"
+              value={form.pin}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  pin: value,
+                })
+              }
+            />
 
             <label className="block">
-              <span className="text-white/35 text-xs">Sobre mí</span>
+              <span className="section-label">
+                Sobre mí
+              </span>
+
               <textarea
-                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
-                rows="3"
+                rows="4"
                 value={form.sobreMi}
-                onChange={e => setForm({ ...form, sobreMi: e.target.value })}
-                placeholder="Contá algo sobre tu camino sobre ruedas"
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    sobreMi: event.target.value,
+                  })
+                }
+                className="input-pr mt-2 resize-none"
               />
             </label>
 
-            <button type="button" disabled={saving} onClick={saveProfile} className="w-full rounded-2xl bg-pr-gold text-black py-4 text-sm font-bold active:scale-[0.98] disabled:opacity-50">
-              {saving ? 'Guardando...' : 'Guardar cambios'}
+            <button
+              type="button"
+              disabled={saving}
+              onClick={saveProfile}
+              className="btn-gold w-full disabled:opacity-50"
+            >
+              {saving
+                ? 'Guardando…'
+                : 'Guardar cambios'}
             </button>
           </section>
         )}
 
-        <section className={`${panelBase} p-4`}>
-          <p className="section-label">Tus grupos</p>
+        <section className="pr-panel p-5">
+          <div>
+            <p className="section-label">
+              Comunidad
+            </p>
 
-          {profile.gruposInfo?.length > 0 ? (
-            <div className="space-y-2 mt-3">
-              {profile.gruposInfo.map((grupo, index) => (
+            <h2 className="font-display text-2xl text-white mt-1">
+              Tus grupos
+            </h2>
+          </div>
+
+          {profile.gruposInfo?.length ? (
+            <div className="space-y-2 mt-4">
+              {profile.gruposInfo.map(
+                (group, index) => (
+                  <a
+                    key={`${group.titulo}-${index}`}
+                    href={group.link || '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="pr-card p-4 flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="text-white font-semibold text-sm">
+                        {group.titulo}
+                      </p>
+
+                      <p className="text-white/32 text-[11px] mt-1">
+                        Grupo asignado por Punta Rollers
+                      </p>
+                    </div>
+
+                    <span className="text-pr-gold text-xs">
+                      Abrir →
+                    </span>
+                  </a>
+                )
+              )}
+            </div>
+          ) : (
+            <Empty
+              title="Todavía no tenés grupos asignados"
+              text="Cuando el equipo PR te agregue a un grupo, aparecerá acá."
+            />
+          )}
+        </section>
+
+        <Accordion
+          title="Mis servicios PR"
+          subtitle="Accesos activos"
+          open={open === 'servicios'}
+          onClick={() =>
+            setOpen(
+              open === 'servicios' ? '' : 'servicios'
+            )
+          }
+        >
+          <Service
+            title="PR Card"
+            active={profile.prcardActiva}
+            href="https://puntarollerscard.com/"
+            action="Abrir plataforma"
+          />
+
+          <Service
+            title="PR Tracking"
+            active={profile.trackingActivo}
+            href="/app/tracking"
+            action="Ver información"
+          />
+        </Accordion>
+
+        <Accordion
+          title={`Insignias (${badges.length})`}
+          subtitle="Reconocimientos"
+          open={open === 'insignias'}
+          onClick={() =>
+            setOpen(
+              open === 'insignias' ? '' : 'insignias'
+            )
+          }
+        >
+          <ActivityList
+            items={badges}
+            empty="Todavía no tenés insignias"
+            icon="🏅"
+          />
+        </Accordion>
+
+        <Accordion
+          title={`Eventos (${events.length})`}
+          subtitle="Tu participación"
+          open={open === 'participaciones'}
+          onClick={() =>
+            setOpen(
+              open === 'participaciones'
+                ? ''
+                : 'participaciones'
+            )
+          }
+        >
+          <ActivityList
+            items={events}
+            empty="Todavía no hay participaciones"
+            icon="🎯"
+          />
+        </Accordion>
+
+        <section id="observaciones">
+          <Accordion
+            title={`Observaciones (${notes.length})`}
+            subtitle="Tu evolución"
+            open={open === 'observaciones'}
+            onClick={() =>
+              setOpen(
+                open === 'observaciones'
+                  ? ''
+                  : 'observaciones'
+              )
+            }
+          >
+            <ActivityList
+              items={notes}
+              empty="Todavía no hay observaciones"
+              icon="📝"
+            />
+          </Accordion>
+        </section>
+
+        <Accordion
+          title="Contactos PR"
+          subtitle="Estamos para ayudarte"
+          open={open === 'contactos'}
+          onClick={() =>
+            setOpen(
+              open === 'contactos' ? '' : 'contactos'
+            )
+          }
+        >
+          {contactos.length ? (
+            <div className="space-y-2">
+              {contactos.map((contact) => (
                 <a
-                  key={`${grupo.titulo}-${index}`}
-                  href={grupo.link}
+                  key={contact.id}
+                  href={contact.link || '#'}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4"
+                  className="pr-card p-4 flex justify-between"
                 >
                   <div>
-                    <p className="text-white font-semibold">{grupo.titulo}</p>
-                    <p className="text-white/35 text-xs mt-1">Grupo asignado por Punta Rollers</p>
+                    <p className="text-white font-semibold text-sm">
+                      {contact.nombre}
+                    </p>
+
+                    {contact.detalle && (
+                      <p className="text-white/35 text-xs mt-1">
+                        {contact.detalle}
+                      </p>
+                    )}
                   </div>
-                  <span className="text-pr-gold text-xs">Abrir</span>
+
+                  <span className="text-pr-gold text-xs">
+                    Abrir →
+                  </span>
                 </a>
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl bg-black/25 border border-white/5 p-4 mt-3">
-              <p className="text-white font-semibold">Todavía no tenés grupos asignados</p>
-              <p className="text-white/45 text-sm mt-1">
-                Cuando el equipo PR te agregue a un grupo, aparecerá acá.
-              </p>
-            </div>
+            <Empty
+              title="Sin contactos cargados"
+              text="Los contactos del equipo aparecerán acá."
+            />
           )}
-        </section>
-
-        <Accordion title="Mis servicios PR" open={open === 'servicios'} onClick={() => setOpen(open === 'servicios' ? '' : 'servicios')}>
-          <div className="grid grid-cols-1 gap-3">
-            <ServiceState title="PR Card" active={profile.prcardActiva} action="Abrir plataforma" href="https://puntarollerscard.com/" />
-            <ServiceState title="PR Tracking" active={profile.trackingActivo} action="Ver información" href="/app/tracking" />
-          </div>
         </Accordion>
 
-        <Accordion title={`Insignias (${userBadges.length})`} open={open === 'insignias'} onClick={() => setOpen(open === 'insignias' ? '' : 'insignias')}>
-          <EmptyState title="Todavía no tenés insignias" text="Cuando un profesor te otorgue una insignia, aparecerá acá." />
-        </Accordion>
-
-        <Accordion title={`Eventos en los que participaste (${userParticipations.length})`} open={open === 'participaciones'} onClick={() => setOpen(open === 'participaciones' ? '' : 'participaciones')}>
-          <EmptyState title="Todavía no hay participaciones" text="Cuando participes en eventos PR, aparecerán en esta sección." />
-        </Accordion>
-
-        <section id="observaciones">
-          <Accordion title={`Observaciones de tus entrenadores (${userObservations.length})`} subtitle="Tu evolución" open={open === 'observaciones'} onClick={() => setOpen(open === 'observaciones' ? '' : 'observaciones')}>
-            <EmptyState title="Todavía no hay observaciones" text="Cuando un profesor te deje una nota, aparecerá acá." />
-          </Accordion>
-        </section>
-
-        <Accordion title="Contactos PR" open={open === 'contactos'} onClick={() => setOpen(open === 'contactos' ? '' : 'contactos')}>
-          <div className="space-y-3">
-            {contactos.length > 0 ? (
-              contactos.map(c => (
-                <a key={c.id} href={c.link || '#'} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4">
-                  <div>
-                    <p className="text-white font-semibold">{c.nombre}</p>
-                    {c.detalle && <p className="text-white/40 text-xs">{c.detalle}</p>}
-                  </div>
-                  <span className="text-pr-gold text-xs">Abrir</span>
-                </a>
-              ))
-            ) : (
-              <EmptyState title="Sin contactos cargados" text="Cuando el administrador cargue contactos PR, aparecerán acá." />
-            )}
-          </div>
-        </Accordion>
-
-        <button type="button" onClick={logout} className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold">
+        <button
+          type="button"
+          onClick={logout}
+          className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold"
+        >
           Cerrar sesión
         </button>
       </div>
@@ -420,66 +787,182 @@ export default function Profile() {
 
 function MiniStat({ value, label }) {
   return (
-    <div className="rounded-2xl bg-black/25 border border-white/5 p-3 text-center">
-      <p className="text-pr-gold text-xl font-display font-bold">{value}</p>
-      <p className="text-white/35 text-[10px] uppercase tracking-[0.18em]">{label}</p>
+    <div className="pr-card p-3 text-center">
+      <p className="font-display text-[26px] text-pr-gold font-bold">
+        {value}
+      </p>
+
+      <p className="section-label mt-1">
+        {label}
+      </p>
     </div>
   )
 }
 
-function EmptyState({ title, text }) {
+function Empty({ title, text }) {
   return (
-    <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
-      <p className="text-white font-semibold">{title}</p>
-      <p className="text-white/45 text-sm mt-1">{text}</p>
+    <div className="pr-card p-4 mt-4">
+      <p className="text-white font-semibold text-sm">
+        {title}
+      </p>
+
+      <p className="text-white/38 text-sm mt-1">
+        {text}
+      </p>
     </div>
   )
 }
 
-function Accordion({ title, subtitle, open, onClick, children }) {
+function Accordion({
+  title,
+  subtitle,
+  open,
+  onClick,
+  children,
+}) {
   return (
-    <section className={panelBase}>
-      <button type="button" onClick={onClick} className="w-full flex items-center justify-between p-4 text-left">
+    <section className="pr-panel overflow-hidden">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full p-5 flex items-center justify-between text-left"
+      >
         <div>
-          <p className="text-white font-semibold">{title}</p>
-          {subtitle && <p className="text-white/35 text-xs mt-0.5">{subtitle}</p>}
+          <p className="font-display text-[22px] text-white font-bold">
+            {title}
+          </p>
+
+          {subtitle && (
+            <p className="text-white/30 text-[11px] mt-1">
+              {subtitle}
+            </p>
+          )}
         </div>
-        <span className="text-pr-gold">{open ? '▲' : '▼'}</span>
+
+        <span className="w-8 h-8 rounded-full grid place-items-center bg-pr-gold/10 text-pr-gold text-xs">
+          {open ? '−' : '+'}
+        </span>
       </button>
-      {open && <div className="px-4 pb-4 animate-fade-in">{children}</div>}
+
+      {open && (
+        <div className="px-5 pb-5 animate-fade-in">
+          {children}
+        </div>
+      )}
     </section>
   )
 }
 
-function ServiceState({ title, active, action, href }) {
+function Service({
+  title,
+  active,
+  action,
+  href,
+}) {
   return (
-    <div className="rounded-2xl bg-black/25 border border-white/5 p-4 flex items-center justify-between">
+    <div className="pr-card p-4 flex items-center justify-between mb-2">
       <div>
-        <p className="text-white font-semibold">{title}</p>
-        <p className={active ? 'text-emerald-400 text-xs' : 'text-red-300 text-xs'}>
+        <p className="text-white font-semibold text-sm">
+          {title}
+        </p>
+
+        <p
+          className={`text-xs mt-1 ${
+            active
+              ? 'text-emerald-400'
+              : 'text-red-300'
+          }`}
+        >
           {active ? 'Activo' : 'Inactivo'}
         </p>
       </div>
 
       {active ? (
-        <Link to={href} className="text-pr-gold text-xs">{action}</Link>
+        <Link
+          to={href}
+          className="text-pr-gold text-xs"
+        >
+          {action} →
+        </Link>
       ) : (
-        <span className="text-white/25 text-xs">No disponible</span>
+        <span className="text-white/20 text-xs">
+          No disponible
+        </span>
       )}
     </div>
   )
 }
 
-function EditInput({ label, value, onChange, type = 'text' }) {
+function ActivityList({
+  items,
+  empty,
+  icon,
+}) {
+  if (!items.length) {
+    return (
+      <Empty
+        title={empty}
+        text="Cuando el equipo PR cargue información, aparecerá acá."
+      />
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="pr-card p-4 flex gap-3"
+        >
+          <div className="text-xl">
+            {icon}
+          </div>
+
+          <div>
+            <p className="text-white font-semibold text-sm">
+              {item.titulo}
+            </p>
+
+            {item.descripcion && (
+              <p className="text-white/42 text-xs mt-1 leading-relaxed">
+                {item.descripcion}
+              </p>
+            )}
+
+            <p className="text-white/25 text-[10px] mt-2">
+              {formatDate(item.fecha)}
+
+              {item.creado_por_nombre
+                ? ` · ${item.creado_por_nombre}`
+                : ''}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function EditInput({
+  label,
+  value,
+  onChange,
+  type = 'text',
+}) {
   return (
     <label className="block">
-      <span className="text-white/35 text-xs">{label}</span>
+      <span className="section-label">
+        {label}
+      </span>
+
       <input
         type={type}
         value={value}
-        onChange={e => onChange(e.target.value)}
-        className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        className="input-pr mt-2"
       />
     </label>
   )
-}
+          }
