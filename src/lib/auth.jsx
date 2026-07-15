@@ -1,77 +1,194 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 import { supabase } from './supabase'
 import { professores } from '../data/mockData'
 
 const AuthContext = createContext(null)
 
-const adminUser = {
-  id: 'admin-claudio',
-  nombre: 'Claudio',
-  apellido: 'Facelli',
-  documento: '48036677',
-  pin: '1043',
-  role: 'admin',
-  profesorId: 'claudio',
-  ciudad: 'Punta del Este',
-  instagram: '@claudinio',
-  email: 'admin@puntarollers.app',
-  verificado: true,
-  foto: '',
-  banner: '',
+const STORAGE_KEY = 'pr_user'
+
+function parseJsonArray(value) {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  if (typeof value !== 'string' || !value.trim()) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(value)
+
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
 }
 
-const profeUser = {
-  id: 'profe-david',
-  nombre: 'David',
-  apellido: 'PR',
-  documento: '56301733',
-  pin: '02211',
-  role: 'profesor',
-  profesorId: 'david',
-  ciudad: 'Maldonado',
-  instagram: '',
-  email: 'david@puntarollers.app',
-  verificado: true,
-  foto: '',
-  banner: '',
+function parseStatistics(value) {
+  const fallback = {
+    eventos: 0,
+    insignias: 0,
+    notas: 0,
+  }
+
+  if (
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value)
+  ) {
+    return {
+      ...fallback,
+      ...value,
+    }
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        !Array.isArray(parsed)
+      ) {
+        return {
+          ...fallback,
+          ...parsed,
+        }
+      }
+    } catch {
+      return fallback
+    }
+  }
+
+  return fallback
+}
+
+function normalizeRole(role) {
+  const normalized = String(role || '')
+    .trim()
+    .toLowerCase()
+
+  if (
+    normalized === 'admin' ||
+    normalized === 'profesor' ||
+    normalized === 'alumno'
+  ) {
+    return normalized
+  }
+
+  return 'alumno'
+}
+
+function normalizeStatus(status) {
+  const normalized = String(status || 'Activo')
+    .trim()
+    .toLowerCase()
+
+  if (normalized === 'inactivo') {
+    return 'Inactivo'
+  }
+
+  if (normalized === 'vencido') {
+    return 'Vencido'
+  }
+
+  if (normalized === 'bloqueado') {
+    return 'Bloqueado'
+  }
+
+  return 'Activo'
+}
+
+function calculateAccess(profile) {
+  const status = normalizeStatus(profile.estado)
+
+  if (typeof profile.acceso_habilitado === 'boolean') {
+    return profile.acceso_habilitado
+  }
+
+  return status === 'Activo'
 }
 
 function normalizeProfile(profile) {
+  const role = normalizeRole(profile.role)
+  const estado = normalizeStatus(profile.estado)
+  const accesoHabilitado = calculateAccess(profile)
+
   return {
     id: profile.id,
     nombre: profile.nombre || '',
     apellido: profile.apellido || '',
     documento: profile.documento || '',
-    pin: profile.pin || '',
-    role: profile.role || 'alumno',
+    role,
+    profesorId:
+      profile.profesor_id ||
+      (role === 'profesor'
+        ? profile.id
+        : role === 'admin'
+          ? profile.id
+          : ''),
     ciudad: profile.ciudad || '',
     instagram: profile.instagram || '',
     email: profile.email || '',
-    fechaNacimiento: profile.fecha_nacimiento || '',
-    miembroDesde: profile.miembro_desde || '2026',
-    estado: profile.estado || 'Activo',
+    fechaNacimiento:
+      profile.fecha_nacimiento || '',
+    miembroDesde:
+      profile.miembro_desde || '2026',
+    estado,
+    accesoHabilitado,
+    mensualidadHasta:
+      profile.mensualidad_hasta || '',
     verificado: Boolean(profile.verificado),
     foto: profile.foto || '',
     banner: profile.banner || '',
     sobreMi: profile.sobre_mi || '',
-    gruposInfo: Array.isArray(profile.grupos_info)
-      ? profile.grupos_info
-      : [],
-    prcardActiva: Boolean(profile.prcard_activa),
-    trackingActivo: Boolean(profile.tracking_activo),
+    gruposInfo: parseJsonArray(
+      profile.grupos_info
+    ),
+    prcardActiva: Boolean(
+      profile.prcard_activa
+    ),
+    trackingActivo: Boolean(
+      profile.tracking_activo
+    ),
+    origenUsuario:
+      profile.origen_usuario || '',
+    prcardMemberId:
+      profile.prcard_member_id || '',
+    ultimoIngreso:
+      profile.ultimo_ingreso || '',
     prcard: {
-      activa: Boolean(profile.prcard_activa),
+      activa: Boolean(
+        profile.prcard_activa
+      ),
       link: 'https://puntarollerscard.com/',
     },
     tracking: {
-      activo: Boolean(profile.tracking_activo),
+      activo: Boolean(
+        profile.tracking_activo
+      ),
     },
-    estadisticas: profile.estadisticas || {
-      eventos: 0,
-      insignias: 0,
-      notas: 0,
-    },
+    estadisticas: parseStatistics(
+      profile.estadisticas
+    ),
   }
+}
+
+function saveLocalUser(userData) {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(userData)
+  )
+}
+
+function clearLocalUser() {
+  localStorage.removeItem(STORAGE_KEY)
 }
 
 export function AuthProvider({ children }) {
@@ -79,86 +196,205 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const saved = localStorage.getItem('pr_user')
+    let active = true
 
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved))
-      } catch {
-        localStorage.removeItem('pr_user')
+    async function restoreSession() {
+      const saved = localStorage.getItem(
+        STORAGE_KEY
+      )
+
+      if (!saved) {
+        if (active) {
+          setLoading(false)
+        }
+
+        return
       }
-    }
 
-    setLoading(false)
-  }, [])
+      let savedUser
 
-  const login = async (documento, pin) => {
-    const cleanDoc = String(documento || '').trim()
-    const cleanPin = String(pin || '').trim()
+      try {
+        savedUser = JSON.parse(saved)
+      } catch {
+        clearLocalUser()
 
-    let userData = null
+        if (active) {
+          setUser(null)
+          setLoading(false)
+        }
 
-    if (
-      cleanDoc === adminUser.documento &&
-      cleanPin === adminUser.pin
-    ) {
-      userData = adminUser
-    } else if (
-      cleanDoc === profeUser.documento &&
-      cleanPin === profeUser.pin
-    ) {
-      userData = profeUser
-    } else {
+        return
+      }
+
+      if (!savedUser?.id) {
+        clearLocalUser()
+
+        if (active) {
+          setUser(null)
+          setLoading(false)
+        }
+
+        return
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('documento', cleanDoc)
-        .eq('pin', cleanPin)
+        .eq('id', savedUser.id)
         .maybeSingle()
 
-      if (!error && data) {
-        userData = normalizeProfile(data)
+      if (!active) {
+        return
       }
+
+      if (error || !data) {
+        clearLocalUser()
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
+      const refreshedUser =
+        normalizeProfile(data)
+
+      saveLocalUser(refreshedUser)
+      setUser(refreshedUser)
+      setLoading(false)
     }
 
-    if (!userData) {
+    restoreSession()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  async function login(documento, pin) {
+    const cleanDoc = String(
+      documento || ''
+    ).replace(/\D/g, '')
+
+    const cleanPin = String(pin || '').trim()
+
+    if (!cleanDoc || !cleanPin) {
       return {
-        error: 'Documento o PIN incorrecto',
+        error:
+          'Ingresá tu documento y tu PIN.',
       }
     }
 
-    localStorage.setItem(
-      'pr_user',
-      JSON.stringify(userData)
-    )
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('documento', cleanDoc)
+      .eq('pin', cleanPin)
+      .maybeSingle()
 
+    if (error) {
+      console.error(
+        'Error consultando el perfil:',
+        error
+      )
+
+      return {
+        error:
+          'No pudimos verificar tus datos. Intentá nuevamente.',
+      }
+    }
+
+    if (!data) {
+      return {
+        error:
+          'Documento o PIN incorrecto.',
+      }
+    }
+
+    const loginDate =
+      new Date().toISOString()
+
+    const { error: updateError } =
+      await supabase
+        .from('profiles')
+        .update({
+          ultimo_ingreso: loginDate,
+        })
+        .eq('id', data.id)
+
+    if (updateError) {
+      console.warn(
+        'No se pudo registrar el último ingreso:',
+        updateError
+      )
+    }
+
+    const userData = normalizeProfile({
+      ...data,
+      ultimo_ingreso: loginDate,
+    })
+
+    saveLocalUser(userData)
     setUser(userData)
 
     return {
       success: true,
       user: userData,
+      accessBlocked:
+        !userData.accesoHabilitado,
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem('pr_user')
+  function logout() {
+    clearLocalUser()
     setUser(null)
   }
 
-  const updateUser = (updates) => {
-    const next = {
-      ...user,
-      ...updates,
+  function updateUser(updates) {
+    setUser((currentUser) => {
+      if (!currentUser) {
+        return currentUser
+      }
+
+      const nextUser = {
+        ...currentUser,
+        ...updates,
+      }
+
+      saveLocalUser(nextUser)
+
+      return nextUser
+    })
+  }
+
+  async function refreshUser() {
+    if (!user?.id) {
+      return {
+        error: 'No hay una sesión activa.',
+      }
     }
 
-    localStorage.setItem(
-      'pr_user',
-      JSON.stringify(next)
-    )
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
 
-    setUser(next)
+    if (error || !data) {
+      return {
+        error:
+          'No pudimos actualizar el perfil.',
+      }
+    }
 
-    return next
+    const refreshedUser =
+      normalizeProfile(data)
+
+    saveLocalUser(refreshedUser)
+    setUser(refreshedUser)
+
+    return {
+      success: true,
+      user: refreshedUser,
+    }
   }
 
   return (
@@ -169,6 +405,13 @@ export function AuthProvider({ children }) {
         login,
         logout,
         updateUser,
+        refreshUser,
+        isAuthenticated: Boolean(user),
+        isAdmin: user?.role === 'admin',
+        isProfessor:
+          user?.role === 'profesor',
+        hasPrivateAccess:
+          Boolean(user?.accesoHabilitado),
         professores,
       }}
     >
@@ -177,14 +420,14 @@ export function AuthProvider({ children }) {
   )
 }
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext)
+export function useAuth() {
+  const context = useContext(AuthContext)
 
-  if (!ctx) {
+  if (!context) {
     throw new Error(
-      'useAuth must be inside AuthProvider'
+      'useAuth debe utilizarse dentro de AuthProvider'
     )
   }
 
-  return ctx
+  return context
 }
