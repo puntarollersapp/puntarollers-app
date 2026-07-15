@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import BottomNav from '../components/BottomNav'
 import MessagePopup from '../components/MessagePopup'
+import InstallPrompt from '../components/InstallPrompt'
 
 export default function AppLayout({
   children,
@@ -22,6 +23,7 @@ export default function AppLayout({
 
       <BottomNav />
       <MessagePopup />
+      <InstallPrompt />
     </div>
   )
 }
