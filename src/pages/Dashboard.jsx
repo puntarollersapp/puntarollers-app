@@ -5,9 +5,18 @@ import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
 
 const TYPE = {
-  Evento: { icon: '🎯', color: '#818cf8' },
-  Insignia: { icon: '🏅', color: '#C9A84C' },
-  Nota: { icon: '📝', color: '#4ecb8b' },
+  Evento: {
+    icon: '🎯',
+    color: '#818cf8',
+  },
+  Insignia: {
+    icon: '🏅',
+    color: '#C9A84C',
+  },
+  Nota: {
+    icon: '📝',
+    color: '#4ecb8b',
+  },
 }
 
 const quickAccess = [
@@ -43,32 +52,56 @@ const quickAccess = [
   },
 ]
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 function QIcon({ type }) {
   const paths = {
     card: (
       <>
-        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <rect
+          x="3"
+          y="5"
+          width="18"
+          height="14"
+          rx="3"
+        />
+
         <path d="M3 10h18M7 15h3" />
       </>
     ),
+
     note: (
       <>
         <path d="M6 3h9l3 3v15H6z" />
         <path d="M15 3v4h4M9 12h6M9 16h5" />
       </>
     ),
+
     pin: (
       <>
         <path d="M12 22s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z" />
-        <circle cx="12" cy="10" r="2.4" />
+        <circle
+          cx="12"
+          cy="10"
+          r="2.4"
+        />
       </>
     ),
+
     play: (
       <>
-        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <rect
+          x="3"
+          y="5"
+          width="18"
+          height="14"
+          rx="3"
+        />
+
         <path d="m10 9 5 3-5 3Z" />
       </>
     ),
+
     bag: (
       <>
         <path d="M5 8h14l-1 13H6L5 8Z" />
@@ -103,19 +136,41 @@ function greeting(nombre) {
         ? 'Buenas tardes'
         : 'Buenas noches'
 
-  return `${time}, ${nombre?.split(' ')[0] || 'Alumno'}`
+  return `${time}, ${
+    nombre?.split(' ')[0] || 'Alumno'
+  }`
 }
 
 function loadSavedUser() {
   try {
-    return JSON.parse(localStorage.getItem('pr_user') || '{}')
+    return JSON.parse(
+      localStorage.getItem('pr_user') || '{}'
+    )
   } catch {
     return {}
   }
 }
 
+function parseDate(value) {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(
+    `${String(value).slice(0, 10)}T23:59:59`
+  )
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return date
+}
+
 function formatDate(value) {
-  if (!value) return ''
+  if (!value) {
+    return ''
+  }
 
   const date = new Date(value)
 
@@ -129,6 +184,151 @@ function formatDate(value) {
   })
 }
 
+function formatFullDate(value) {
+  const date = parseDate(value)
+
+  if (!date) {
+    return 'Sin fecha registrada'
+  }
+
+  return date.toLocaleDateString('es-UY', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function getPaymentStatus(
+  expirationValue,
+  accessEnabled
+) {
+  if (!expirationValue) {
+    return {
+      key: 'sin_pago',
+      title: 'Sin pago registrado',
+      description:
+        'Todavía no hay una vigencia cargada para tu mensualidad.',
+      detail:
+        'Consultá con Tesorería si considerás que esto es un error.',
+      icon: '💳',
+      containerClass:
+        'border-white/[0.08] bg-white/[0.025]',
+      badgeClass:
+        'border-white/10 bg-white/[0.05] text-white/50',
+      badge: 'Sin registrar',
+    }
+  }
+
+  const expiration = parseDate(
+    expirationValue
+  )
+
+  if (!expiration) {
+    return {
+      key: 'sin_pago',
+      title: 'Información no disponible',
+      description:
+        'No pudimos interpretar la fecha de tu mensualidad.',
+      detail:
+        'Comunicate con Tesorería para revisarla.',
+      icon: '💳',
+      containerClass:
+        'border-white/[0.08] bg-white/[0.025]',
+      badgeClass:
+        'border-white/10 bg-white/[0.05] text-white/50',
+      badge: 'Revisar',
+    }
+  }
+
+  const difference =
+    expiration.getTime() - Date.now()
+
+  const remainingDays = Math.ceil(
+    difference / DAY_MS
+  )
+
+  if (
+    remainingDays < 0 ||
+    accessEnabled === false
+  ) {
+    const expiredDays = Math.max(
+      1,
+      Math.abs(remainingDays)
+    )
+
+    return {
+      key: 'vencido',
+      title: 'Mensualidad vencida',
+      description: `Venció el ${formatFullDate(
+        expirationValue
+      )}.`,
+      detail: `Vencida hace ${expiredDays} día${
+        expiredDays === 1 ? '' : 's'
+      }.`,
+      icon: '⚠️',
+      containerClass:
+        'border-red-400/20 bg-gradient-to-br from-red-500/10 to-white/[0.02]',
+      badgeClass:
+        'border-red-400/20 bg-red-400/10 text-red-200',
+      badge: 'Vencida',
+    }
+  }
+
+  if (remainingDays === 0) {
+    return {
+      key: 'por_vencer',
+      title: 'Tu mensualidad vence hoy',
+      description: `Vigente hasta el ${formatFullDate(
+        expirationValue
+      )}.`,
+      detail:
+        'Regularizala para mantener todos tus accesos.',
+      icon: '⏳',
+      containerClass:
+        'border-amber-400/20 bg-gradient-to-br from-amber-400/10 to-white/[0.02]',
+      badgeClass:
+        'border-amber-400/20 bg-amber-400/10 text-amber-200',
+      badge: 'Vence hoy',
+    }
+  }
+
+  if (remainingDays <= 7) {
+    return {
+      key: 'por_vencer',
+      title: 'Tu mensualidad vence pronto',
+      description: `Vigente hasta el ${formatFullDate(
+        expirationValue
+      )}.`,
+      detail: `Te quedan ${remainingDays} día${
+        remainingDays === 1 ? '' : 's'
+      }.`,
+      icon: '⏳',
+      containerClass:
+        'border-amber-400/20 bg-gradient-to-br from-amber-400/10 to-white/[0.02]',
+      badgeClass:
+        'border-amber-400/20 bg-amber-400/10 text-amber-200',
+      badge: `${remainingDays} día${
+        remainingDays === 1 ? '' : 's'
+      }`,
+    }
+  }
+
+  return {
+    key: 'vigente',
+    title: 'Mensualidad vigente',
+    description: `Vigente hasta el ${formatFullDate(
+      expirationValue
+    )}.`,
+    detail: `Te quedan ${remainingDays} días.`,
+    icon: '✓',
+    containerClass:
+      'border-emerald-400/15 bg-gradient-to-br from-emerald-400/[0.08] to-white/[0.02]',
+    badgeClass:
+      'border-emerald-400/20 bg-emerald-400/10 text-emerald-300',
+    badge: `${remainingDays} días`,
+  }
+}
+
 const emptyUser = {
   nombre: 'Alumno',
   ciudad: '',
@@ -139,6 +339,9 @@ const emptyUser = {
   foto: '',
   banner: '',
   gruposInfo: [],
+  ultimoPago: '',
+  mensualidadHasta: '',
+  accesoHabilitado: true,
 }
 
 export default function Dashboard() {
@@ -150,9 +353,14 @@ export default function Dashboard() {
     ...user,
   })
 
-  const [activity, setActivity] = useState([])
-  const [allActivity, setAllActivity] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [activity, setActivity] =
+    useState([])
+
+  const [allActivity, setAllActivity] =
+    useState([])
+
+  const [loading, setLoading] =
+    useState(true)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -185,7 +393,9 @@ export default function Dashboard() {
           .from('actividad_pr')
           .select('*')
           .eq('alumno_id', base.id)
-          .order('fecha', { ascending: false })
+          .order('fecha', {
+            ascending: false,
+          })
           .limit(3),
 
         supabase
@@ -197,25 +407,53 @@ export default function Dashboard() {
       if (profileData) {
         const updatedProfile = {
           ...base,
-          nombre: profileData.nombre || base.nombre,
-          ciudad: profileData.ciudad || '',
-          instagram: profileData.instagram || '',
-          email: profileData.email || '',
+          nombre:
+            profileData.nombre ||
+            base.nombre,
+          apellido:
+            profileData.apellido ||
+            base.apellido ||
+            '',
+          ciudad:
+            profileData.ciudad || '',
+          instagram:
+            profileData.instagram || '',
+          email:
+            profileData.email || '',
           fechaNacimiento:
-            profileData.fecha_nacimiento || '',
-          sobreMi: profileData.sobre_mi || '',
-          foto: profileData.foto || '',
-          banner: profileData.banner || '',
+            profileData.fecha_nacimiento ||
+            '',
+          sobreMi:
+            profileData.sobre_mi || '',
+          foto:
+            profileData.foto || '',
+          banner:
+            profileData.banner || '',
           miembroDesde:
-            profileData.miembro_desde || '2026',
-          estado: profileData.estado || 'Activo',
-          verificado: Boolean(profileData.verificado),
+            profileData.miembro_desde ||
+            '2026',
+          estado:
+            profileData.estado ||
+            'Activo',
+          verificado: Boolean(
+            profileData.verificado
+          ),
           prcardActiva: Boolean(
             profileData.prcard_activa
           ),
           trackingActivo: Boolean(
             profileData.tracking_activo
           ),
+          ultimoPago:
+            profileData.ultimo_pago || '',
+          mensualidadHasta:
+            profileData.mensualidad_hasta ||
+            '',
+          accesoHabilitado:
+            typeof profileData.acceso_habilitado ===
+            'boolean'
+              ? profileData.acceso_habilitado
+              : true,
           gruposInfo: Array.isArray(
             profileData.grupos_info
           )
@@ -224,10 +462,12 @@ export default function Dashboard() {
         }
 
         setProfile(updatedProfile)
+
         localStorage.setItem(
           'pr_user',
           JSON.stringify(updatedProfile)
         )
+
         updateUser?.(updatedProfile)
       }
 
@@ -262,6 +502,12 @@ export default function Dashboard() {
     }
   )
 
+  const paymentStatus =
+    getPaymentStatus(
+      profile.mensualidadHasta,
+      profile.accesoHabilitado
+    )
+
   return (
     <AppLayout>
       <div className="pr-page space-y-7 animate-page-enter">
@@ -275,7 +521,8 @@ export default function Dashboard() {
           </h1>
 
           <p className="text-white/38 text-sm mt-2">
-            Cada rodada suma una parte de tu historia.
+            Cada rodada suma una parte de
+            tu historia.
           </p>
         </section>
 
@@ -290,14 +537,17 @@ export default function Dashboard() {
             ) : (
               <div className="absolute inset-0 grid place-items-center text-center px-8">
                 <div>
-                  <div className="text-3xl">🛼</div>
+                  <div className="text-3xl">
+                    🛼
+                  </div>
 
                   <p className="text-pr-gold font-semibold text-sm mt-2">
                     Hacé tuyo este espacio
                   </p>
 
                   <p className="text-white/30 text-xs mt-1">
-                    Subí un banner desde tu perfil.
+                    Subí un banner desde
+                    tu perfil.
                   </p>
                 </div>
               </div>
@@ -306,9 +556,20 @@ export default function Dashboard() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d13] via-transparent to-black/10" />
 
             <span className="absolute top-4 right-4 pr-chip">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  paymentStatus.key ===
+                  'vencido'
+                    ? 'bg-red-400'
+                    : 'bg-emerald-400'
+                }`}
+              />
 
-              {profile.estado || 'Activo'}
+              {paymentStatus.key ===
+              'vencido'
+                ? 'Vencido'
+                : profile.estado ||
+                  'Activo'}
             </span>
           </div>
 
@@ -321,7 +582,9 @@ export default function Dashboard() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-3xl">📷</span>
+                <span className="text-3xl">
+                  📷
+                </span>
               )}
             </div>
 
@@ -338,8 +601,10 @@ export default function Dashboard() {
                 </h2>
 
                 <p className="text-white/38 text-xs mt-2">
-                  {profile.ciudad || 'Sin ciudad'} ·
-                  Miembro desde {profile.miembroDesde}
+                  {profile.ciudad ||
+                    'Sin ciudad'}{' '}
+                  · Miembro desde{' '}
+                  {profile.miembroDesde}
                 </p>
               </div>
 
@@ -351,7 +616,8 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            {profile.gruposInfo?.length > 0 && (
+            {profile.gruposInfo?.length >
+              0 && (
               <div className="flex gap-2 overflow-x-auto mt-4 pb-1">
                 {profile.gruposInfo.map(
                   (group, index) => (
@@ -378,25 +644,80 @@ export default function Dashboard() {
                   counts.insignias,
                   '#C9A84C',
                 ],
-                ['Notas', counts.notas, '#4ecb8b'],
-              ].map(([label, value, color]) => (
-                <Link
-                  to="/app/actividad"
-                  key={label}
-                  className="pr-card p-3 text-center"
-                >
-                  <p
-                    className="font-display text-2xl font-bold"
-                    style={{ color }}
+                [
+                  'Notas',
+                  counts.notas,
+                  '#4ecb8b',
+                ],
+              ].map(
+                ([label, value, color]) => (
+                  <Link
+                    to="/app/actividad"
+                    key={label}
+                    className="pr-card p-3 text-center"
                   >
-                    {loading ? '—' : value}
+                    <p
+                      className="font-display text-2xl font-bold"
+                      style={{ color }}
+                    >
+                      {loading
+                        ? '—'
+                        : value}
+                    </p>
+
+                    <p className="section-label mt-1">
+                      {label}
+                    </p>
+                  </Link>
+                )
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl grid place-items-center shrink-0 bg-black/25 border border-white/[0.06] text-xl">
+              {paymentStatus.icon}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="section-label">
+                    Mensualidad PR
                   </p>
 
-                  <p className="section-label mt-1">
-                    {label}
-                  </p>
-                </Link>
-              ))}
+                  <h2 className="font-display text-xl text-white mt-1">
+                    {paymentStatus.title}
+                  </h2>
+                </div>
+
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${paymentStatus.badgeClass}`}
+                >
+                  {paymentStatus.badge}
+                </span>
+              </div>
+
+              <p className="text-white/55 text-sm mt-3 leading-relaxed">
+                {paymentStatus.description}
+              </p>
+
+              <p className="text-white/30 text-xs mt-1">
+                {paymentStatus.detail}
+              </p>
+
+              {profile.ultimoPago && (
+                <p className="text-white/25 text-[10px] mt-3">
+                  Último pago registrado:{' '}
+                  {formatFullDate(
+                    profile.ultimoPago
+                  )}
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -415,31 +736,36 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {quickAccess.map((item, index) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={`pr-card p-4 flex flex-col gap-4 min-h-[128px] ${
-                  index === quickAccess.length - 1
-                    ? 'col-span-2 min-h-0 flex-row items-center'
-                    : ''
-                }`}
-              >
-                <div className="pr-icon-box">
-                  <QIcon type={item.icon} />
-                </div>
+            {quickAccess.map(
+              (item, index) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={`pr-card p-4 flex flex-col gap-4 min-h-[128px] ${
+                    index ===
+                    quickAccess.length - 1
+                      ? 'col-span-2 min-h-0 flex-row items-center'
+                      : ''
+                  }`}
+                >
+                  <div className="pr-icon-box">
+                    <QIcon
+                      type={item.icon}
+                    />
+                  </div>
 
-                <div>
-                  <p className="text-white text-sm font-semibold">
-                    {item.label}
-                  </p>
+                  <div>
+                    <p className="text-white text-sm font-semibold">
+                      {item.label}
+                    </p>
 
-                  <p className="text-white/32 text-[11px] mt-1">
-                    {item.desc}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                    <p className="text-white/32 text-[11px] mt-1">
+                      {item.desc}
+                    </p>
+                  </div>
+                </Link>
+              )
+            )}
           </div>
         </section>
 
@@ -473,7 +799,8 @@ export default function Dashboard() {
             <div className="space-y-3">
               {activity.map((item) => {
                 const config =
-                  TYPE[item.tipo] || TYPE.Evento
+                  TYPE[item.tipo] ||
+                  TYPE.Evento
 
                 return (
                   <Link
@@ -498,7 +825,9 @@ export default function Dashboard() {
 
                       <p className="text-white/32 text-[11px] mt-1">
                         {item.tipo} ·{' '}
-                        {formatDate(item.fecha)}
+                        {formatDate(
+                          item.fecha
+                        )}
                       </p>
                     </div>
 
@@ -516,7 +845,8 @@ export default function Dashboard() {
               </p>
 
               <p className="text-white/35 text-xs mt-1">
-                Cuando el equipo PR cargue algo nuevo,
+                Cuando el equipo PR
+                cargue algo nuevo,
                 aparecerá acá.
               </p>
             </div>
@@ -525,4 +855,4 @@ export default function Dashboard() {
       </div>
     </AppLayout>
   )
-      }
+}
