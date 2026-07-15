@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
-export default function Header({ title, showBack = false, onBack }) {
+export default function Header({
+  title,
+  showBack = false,
+  onBack,
+}) {
   const { user } = useAuth()
 
   const initials =
@@ -40,9 +44,9 @@ export default function Header({ title, showBack = false, onBack }) {
           </button>
         ) : (
           <Link
-            to="/app/dashboard"
-            className="w-10 h-10 grid place-items-center"
-            aria-label="Ir al inicio"
+            to="/"
+            className="w-10 h-10 grid place-items-center active:scale-95"
+            aria-label="Ir a la página pública de Punta Rollers"
           >
             <img
               src="/logo.png"
