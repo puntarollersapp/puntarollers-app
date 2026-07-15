@@ -4,38 +4,68 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
 
-const panel = 'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
+const panel =
+  'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
 
-function makeAlumnoId(documento) {
-  return `alumno-${String(documento || '').trim()}`
+const EMPTY_STATS = {
+  eventos: 0,
+  insignias: 0,
+  notas: 0,
 }
 
-function normalizeAlumno(p) {
+function cleanDocument(value) {
+  return String(value || '').replace(/\D/g, '')
+}
+
+function makeProfileId(role, documento) {
+  const document = cleanDocument(documento)
+
+  if (role === 'admin') {
+    return `admin-${document}`
+  }
+
+  if (role === 'profesor') {
+    return `profe-${document}`
+  }
+
+  return `alumno-${document}`
+}
+
+function normalizeProfile(profile) {
   return {
-    id: p.id,
-    nombre: p.nombre || '',
-    apellido: p.apellido || '',
-    documento: p.documento || '',
-    pin: p.pin || '',
-    email: p.email || '',
-    ciudad: p.ciudad || '',
-    instagram: p.instagram || '',
-    estado: p.estado || 'Activo',
-    verificado: Boolean(p.verificado),
-    prcardActiva: Boolean(p.prcard_activa),
-    trackingActivo: Boolean(p.tracking_activo),
-    gruposInfo: Array.isArray(p.grupos_info) ? p.grupos_info : [],
-    estadisticas: p.estadisticas || { eventos: 0, insignias: 0, notas: 0 },
-    ultimoIngreso: p.ultimo_ingreso || '',
-    foto: p.foto || '',
-    banner: p.banner || '',
-    sobreMi: p.sobre_mi || '',
-    miembroDesde: p.miembro_desde || '2026',
+    id: profile.id,
+    role: profile.role || 'alumno',
+    nombre: profile.nombre || '',
+    apellido: profile.apellido || '',
+    documento: profile.documento || '',
+    pin: profile.pin || '',
+    email: profile.email || '',
+    ciudad: profile.ciudad || '',
+    instagram: profile.instagram || '',
+    estado: profile.estado || 'Activo',
+    verificado: Boolean(profile.verificado),
+    prcardActiva: Boolean(profile.prcard_activa),
+    trackingActivo: Boolean(profile.tracking_activo),
+    gruposInfo: Array.isArray(profile.grupos_info)
+      ? profile.grupos_info
+      : [],
+    estadisticas:
+      profile.estadisticas &&
+      typeof profile.estadisticas === 'object'
+        ? profile.estadisticas
+        : EMPTY_STATS,
+    ultimoIngreso: profile.ultimo_ingreso || '',
+    foto: profile.foto || '',
+    banner: profile.banner || '',
+    sobreMi: profile.sobre_mi || '',
+    miembroDesde: profile.miembro_desde || '2026',
+    fechaNacimiento: profile.fecha_nacimiento || '',
   }
 }
 
-function emptyAlumnoForm() {
+function emptyUserForm() {
   return {
+    role: 'alumno',
     nombre: '',
     apellido: '',
     documento: '',
@@ -43,13 +73,38 @@ function emptyAlumnoForm() {
     email: '',
     ciudad: '',
     instagram: '',
+    fechaNacimiento: '',
+    miembroDesde: String(new Date().getFullYear()),
+    estado: 'Activo',
+    verificado: false,
+    prcardActiva: false,
+    trackingActivo: false,
   }
+}
+
+function getRoleLabel(role) {
+  if (role === 'admin') return 'Administrador'
+  if (role === 'profesor') return 'Profesor'
+  return 'Alumno'
+}
+
+function getRoleColor(role) {
+  if (role === 'admin') {
+    return 'text-pr-gold border-pr-gold/25 bg-pr-gold/10'
+  }
+
+  if (role === 'profesor') {
+    return 'text-sky-300 border-sky-400/20 bg-sky-400/10'
+  }
+
+  return 'text-white/55 border-white/10 bg-white/[0.04]'
 }
 
 export default function Admin() {
   const { user, logout } = useAuth()
+
   const [section, setSection] = useState('dashboard')
-  const [alumnos, setAlumnos] = useState([])
+  const [profiles, setProfiles] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [query, setQuery] = useState('')
   const [cupos, setCupos] = useState(getCupos())
@@ -59,28 +114,57 @@ export default function Admin() {
   const [actionType, setActionType] = useState('Nota')
 
   const canFullAdmin = user?.role === 'admin'
-  const canManageContent = user?.role === 'admin' || user?.role === 'profesor'
 
-  async function loadAlumnos() {
+  const canManageContent =
+    user?.role === 'admin' ||
+    user?.role === 'profesor'
+
+  const isClaudio =
+    user?.documento === '48036677'
+
+  async function loadProfiles() {
     setLoading(true)
 
-    const { data, error } = await supabase
+    let request = supabase
       .from('profiles')
       .select('*')
-      .eq('role', 'alumno')
-      .order('nombre', { ascending: true })
+      .order('nombre', {
+        ascending: true,
+      })
+
+    if (!canFullAdmin) {
+      request = request.eq('role', 'alumno')
+    }
+
+    const { data, error } = await request
 
     if (error) {
-      setMsg(`Error cargando alumnos: ${error.message}`)
+      setMsg(
+        `Error cargando usuarios: ${error.message}`
+      )
       setLoading(false)
       return
     }
 
-    const list = (data || []).map(normalizeAlumno)
-    setAlumnos(list)
+    const list = (data || []).map(
+      normalizeProfile
+    )
 
-    if (!selectedId && list[0]?.id) setSelectedId(list[0].id)
-    if (selectedId && !list.some(a => a.id === selectedId)) setSelectedId(list[0]?.id || '')
+    setProfiles(list)
+
+    if (!selectedId && list[0]?.id) {
+      setSelectedId(list[0].id)
+    }
+
+    if (
+      selectedId &&
+      !list.some(
+        (profile) =>
+          profile.id === selectedId
+      )
+    ) {
+      setSelectedId(list[0]?.id || '')
+    }
 
     setLoading(false)
   }
@@ -89,89 +173,189 @@ export default function Admin() {
     const { data, error } = await supabase
       .from('actividad_pr')
       .select('*')
-      .order('fecha', { ascending: false })
+      .order('fecha', {
+        ascending: false,
+      })
       .limit(8)
 
-    if (!error) setAdminActivity(data || [])
+    if (!error) {
+      setAdminActivity(data || [])
+    }
   }
 
   async function reloadAll() {
-    await loadAlumnos()
-    await loadAdminActivity()
+    await Promise.all([
+      loadProfiles(),
+      loadAdminActivity(),
+    ])
   }
 
   useEffect(() => {
     reloadAll()
-  }, [])
+  }, [canFullAdmin])
 
-  const selected = alumnos.find(a => a.id === selectedId) || alumnos[0]
+  const selected =
+    profiles.find(
+      (profile) =>
+        profile.id === selectedId
+    ) || profiles[0]
 
-  const filtered = alumnos.filter(a =>
-    `${a.nombre} ${a.apellido} ${a.documento} ${JSON.stringify(a.gruposInfo)}`
-      .toLowerCase()
-      .includes(query.toLowerCase())
+  const filtered = profiles.filter(
+    (profile) =>
+      `${profile.nombre} ${
+        profile.apellido
+      } ${profile.documento} ${
+        profile.role
+      } ${JSON.stringify(
+        profile.gruposInfo
+      )}`
+        .toLowerCase()
+        .includes(query.toLowerCase())
   )
 
-  const active7 = alumnos.filter(a => {
-    if (!a.ultimoIngreso) return false
-    const date = new Date(a.ultimoIngreso)
-    if (Number.isNaN(date.getTime())) return false
-    const diff = Date.now() - date.getTime()
-    return diff <= 7 * 24 * 60 * 60 * 1000
-  }).length
+  const alumnos = profiles.filter(
+    (profile) =>
+      profile.role === 'alumno'
+  )
 
-  const saveCuposLocal = () => {
+  const active7 = profiles.filter(
+    (profile) => {
+      if (!profile.ultimoIngreso) {
+        return false
+      }
+
+      const date = new Date(
+        profile.ultimoIngreso
+      )
+
+      if (Number.isNaN(date.getTime())) {
+        return false
+      }
+
+      const difference =
+        Date.now() - date.getTime()
+
+      return (
+        difference <=
+        7 * 24 * 60 * 60 * 1000
+      )
+    }
+  ).length
+
+  function saveCuposLocal() {
     saveCupos(cupos)
-    setMsg('Cupos actualizados correctamente.')
+    setMsg(
+      'Cupos actualizados correctamente.'
+    )
   }
 
   const quickItems = [
-    { id: 'dashboard', icon: '📊', label: 'Inicio', show: true },
-    { id: 'alumnos', icon: '👥', label: 'Alumnos', show: true },
-    { id: 'acciones', icon: '⚡', label: 'Acciones', show: canManageContent },
-    { id: 'cupos', icon: '🟢', label: 'Cupos', show: canFullAdmin },
-    { id: 'config', icon: '⚙️', label: 'Config', show: canFullAdmin },
-  ].filter(item => item.show)
+    {
+      id: 'dashboard',
+      icon: '📊',
+      label: 'Inicio',
+      show: true,
+    },
+    {
+      id: 'usuarios',
+      icon: '👥',
+      label: canFullAdmin
+        ? 'Usuarios'
+        : 'Alumnos',
+      show: true,
+    },
+    {
+      id: 'acciones',
+      icon: '⚡',
+      label: 'Acciones',
+      show: canManageContent,
+    },
+    {
+      id: 'cupos',
+      icon: '🟢',
+      label: 'Cupos',
+      show: canFullAdmin,
+    },
+    {
+      id: 'config',
+      icon: '⚙️',
+      label: 'Config',
+      show: canFullAdmin,
+    },
+  ].filter((item) => item.show)
 
   return (
     <AppLayout title="Panel Admin">
       <div className="px-4 py-5 space-y-5 animate-page-enter">
-        <section className={`${panel} p-5 bg-gradient-to-br from-pr-gold/10 to-white/[0.025]`}>
+        <section
+          className={`${panel} p-5 bg-gradient-to-br from-pr-gold/10 to-white/[0.025]`}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="section-label">PuntaRollers.app</p>
+              <p className="section-label">
+                PuntaRollers.app
+              </p>
+
               <h1 className="font-display text-3xl text-white mt-1">
-                Hola, {user?.nombre || 'Admin'}
+                Hola,{' '}
+                {user?.nombre || 'Admin'}
               </h1>
+
               <p className="text-white/40 text-xs mt-1">
                 {canFullAdmin
-                  ? 'Gestión completa de alumnos, servicios, grupos, notas, insignias y actividad.'
-                  : 'Panel de profesor para seguimiento de alumnos, observaciones, insignias y participaciones.'}
+                  ? 'Gestión de usuarios, grupos, servicios y actividad.'
+                  : 'Seguimiento de alumnos, observaciones, insignias y participaciones.'}
               </p>
             </div>
-            <button onClick={logout} className="text-white/35 text-xs">Salir</button>
+
+            <button
+              type="button"
+              onClick={logout}
+              className="text-white/35 text-xs"
+            >
+              Salir
+            </button>
           </div>
         </section>
 
         {msg && (
-          <div className="rounded-2xl bg-pr-gold/10 border border-pr-gold/20 p-3 text-pr-gold text-sm">
+          <div className="rounded-2xl bg-pr-gold/10 border border-pr-gold/20 p-3 text-pr-gold text-sm break-words">
             {msg}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <Stat label="Alumnos" value={alumnos.length} />
-          <Stat label="Activos 7 días" value={active7} />
-          <Stat label="Registros" value={adminActivity.length} />
-          <Stat label="Cumpleaños mes" value="—" />
+          <Stat
+            label="Alumnos"
+            value={alumnos.length}
+          />
+
+          <Stat
+            label="Usuarios"
+            value={profiles.length}
+          />
+
+          <Stat
+            label="Activos 7 días"
+            value={active7}
+          />
+
+          <Stat
+            label="Registros"
+            value={adminActivity.length}
+          />
         </div>
 
         <section className="flex gap-2 overflow-x-auto pb-1">
-          {quickItems.map(item => (
+          {quickItems.map((item) => (
             <Quick
               key={item.id}
-              active={section === item.id}
-              onClick={() => setSection(item.id)}
+              active={
+                section === item.id
+              }
+              onClick={() =>
+                setSection(item.id)
+              }
               icon={item.icon}
               label={item.label}
             />
@@ -179,58 +363,99 @@ export default function Admin() {
         </section>
 
         {loading && (
-          <div className={`${panel} p-4 text-white/45 text-sm`}>
-            Cargando alumnos...
+          <div
+            className={`${panel} p-4 text-white/45 text-sm`}
+          >
+            Cargando usuarios...
           </div>
         )}
 
-        {!loading && section === 'dashboard' && (
-          <DashboardPanel
-            setSection={setSection}
-            adminActivity={adminActivity}
-            canFullAdmin={canFullAdmin}
-            canManageContent={canManageContent}
-            setActionType={setActionType}
-          />
-        )}
+        {!loading &&
+          section === 'dashboard' && (
+            <DashboardPanel
+              setSection={setSection}
+              adminActivity={
+                adminActivity
+              }
+              canFullAdmin={
+                canFullAdmin
+              }
+              canManageContent={
+                canManageContent
+              }
+              setActionType={
+                setActionType
+              }
+            />
+          )}
 
-        {!loading && section === 'alumnos' && (
-          <StudentsPanel
-            query={query}
-            setQuery={setQuery}
-            alumnos={filtered}
-            selected={selected}
-            setSelectedId={setSelectedId}
-            canFullAdmin={canFullAdmin}
-            canManageContent={canManageContent}
-            reload={reloadAll}
-            setMsg={setMsg}
-          />
-        )}
+        {!loading &&
+          section === 'usuarios' && (
+            <UsersPanel
+              currentUser={user}
+              query={query}
+              setQuery={setQuery}
+              profiles={filtered}
+              selected={selected}
+              setSelectedId={
+                setSelectedId
+              }
+              canFullAdmin={
+                canFullAdmin
+              }
+              canManageContent={
+                canManageContent
+              }
+              canCreateAdmin={isClaudio}
+              reload={reloadAll}
+              setMsg={setMsg}
+            />
+          )}
 
-        {!loading && section === 'acciones' && canManageContent && (
-          <ActionsPanel
-            canManageContent={canManageContent}
-            selected={selected}
-            alumnos={alumnos}
-            reload={reloadAll}
-            setMsg={setMsg}
-            actionType={actionType}
-            setActionType={setActionType}
-          />
-        )}
+        {!loading &&
+          section === 'acciones' &&
+          canManageContent && (
+            <ActionsPanel
+              creator={user}
+              canManageContent={
+                canManageContent
+              }
+              selected={selected}
+              alumnos={alumnos}
+              reload={reloadAll}
+              setMsg={setMsg}
+              actionType={actionType}
+              setActionType={
+                setActionType
+              }
+            />
+          )}
 
-        {section === 'cupos' && canFullAdmin && (
-          <CuposPanel cupos={cupos} setCupos={setCupos} onSave={saveCuposLocal} />
-        )}
+        {section === 'cupos' &&
+          canFullAdmin && (
+            <CuposPanel
+              cupos={cupos}
+              setCupos={setCupos}
+              onSave={saveCuposLocal}
+            />
+          )}
 
-        {section === 'config' && canFullAdmin && <ConfigPanel />}
+        {section === 'config' &&
+          canFullAdmin && (
+            <ConfigPanel />
+          )}
       </div>
     </AppLayout>
   )
 }
 
-function DashboardPanel({ setSection, adminActivity, canFullAdmin, canManageContent, setActionType }) {
+function DashboardPanel({
+  setSection,
+  adminActivity,
+  canFullAdmin,
+  canManageContent,
+  setActionType,
+}) {
   function goAction(type) {
     setActionType(type)
     setSection('acciones')
@@ -239,39 +464,88 @@ function DashboardPanel({ setSection, adminActivity, canFullAdmin, canManageCont
   return (
     <div className="space-y-4">
       <section className={`${panel} p-4`}>
-        <p className="section-label">Acciones rápidas</p>
+        <p className="section-label">
+          Acciones rápidas
+        </p>
 
         <div className="grid grid-cols-2 gap-3 mt-3">
           {canFullAdmin && (
-            <ActionButton icon="➕" label="Crear alumno" onClick={() => setSection('alumnos')} />
+            <ActionButton
+              icon="➕"
+              label="Crear usuario"
+              onClick={() =>
+                setSection('usuarios')
+              }
+            />
           )}
 
           {canManageContent && (
             <>
-              <ActionButton icon="📝" label="Observación" onClick={() => goAction('Nota')} />
-              <ActionButton icon="🏅" label="Insignia" onClick={() => goAction('Insignia')} />
-              <ActionButton icon="🎉" label="Participación" onClick={() => goAction('Evento')} />
+              <ActionButton
+                icon="📝"
+                label="Observación"
+                onClick={() =>
+                  goAction('Nota')
+                }
+              />
+
+              <ActionButton
+                icon="🏅"
+                label="Insignia"
+                onClick={() =>
+                  goAction('Insignia')
+                }
+              />
+
+              <ActionButton
+                icon="🎉"
+                label="Participación"
+                onClick={() =>
+                  goAction('Evento')
+                }
+              />
             </>
           )}
         </div>
       </section>
 
       <section className={`${panel} p-4`}>
-        <p className="section-label">Actividad reciente</p>
+        <p className="section-label">
+          Actividad reciente
+        </p>
 
         <div className="space-y-3 mt-3">
           {adminActivity.length > 0 ? (
-            adminActivity.map(item => (
-              <div key={item.id} className="rounded-2xl bg-black/25 border border-white/5 p-3">
-                <p className="text-white text-sm font-semibold">{item.titulo}</p>
-                <p className="text-white/35 text-xs">
-                  {item.tipo} · {formatDate(item.fecha)}
+            adminActivity.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-2xl bg-black/25 border border-white/5 p-3"
+              >
+                <p className="text-white text-sm font-semibold">
+                  {item.titulo}
                 </p>
+
+                <p className="text-white/35 text-xs">
+                  {item.tipo} ·{' '}
+                  {formatDate(item.fecha)}
+                </p>
+
+                {item.creado_por_nombre && (
+                  <p className="text-white/25 text-[10px] mt-1">
+                    Por{' '}
+                    {
+                      item.creado_por_nombre
+                    }
+                  </p>
+                )}
               </div>
             ))
           ) : (
             <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
-              <p className="text-white/45 text-sm">Todavía no hay actividad real cargada.</p>
+              <p className="text-white/45 text-sm">
+                Todavía no hay actividad
+                real cargada.
+              </p>
             </div>
           )}
         </div>
@@ -280,332 +554,1307 @@ function DashboardPanel({ setSection, adminActivity, canFullAdmin, canManageCont
   )
 }
 
-function StudentsPanel({ query, setQuery, alumnos, selected, setSelectedId, canFullAdmin, canManageContent, reload, setMsg }) {
-  const [tab, setTab] = useState('info')
+function UsersPanel({
+  currentUser,
+  query,
+  setQuery,
+  profiles,
+  selected,
+  setSelectedId,
+  canFullAdmin,
+  canManageContent,
+  canCreateAdmin,
+  reload,
+  setMsg,
+}) {
+  const [tab, setTab] =
+    useState('info')
 
   const tabs = [
-    { id: 'info', label: 'info', show: true },
-    { id: 'editar', label: 'editar', show: canFullAdmin },
-    { id: 'grupos', label: 'grupos', show: canFullAdmin },
-    { id: 'observaciones', label: 'observaciones', show: canManageContent },
-    { id: 'insignias', label: 'insignias', show: canManageContent },
-    { id: 'participaciones', label: 'participaciones', show: canManageContent },
-    { id: 'servicios', label: 'servicios', show: canFullAdmin },
-    { id: 'actividad', label: 'actividad', show: true },
-  ].filter(t => t.show)
+    {
+      id: 'info',
+      label: 'info',
+      show: true,
+    },
+    {
+      id: 'editar',
+      label: 'editar',
+      show: canFullAdmin,
+    },
+    {
+      id: 'grupos',
+      label: 'grupos',
+      show:
+        canFullAdmin &&
+        selected?.role === 'alumno',
+    },
+    {
+      id: 'observaciones',
+      label: 'observaciones',
+      show:
+        canManageContent &&
+        selected?.role === 'alumno',
+    },
+    {
+      id: 'insignias',
+      label: 'insignias',
+      show:
+        canManageContent &&
+        selected?.role === 'alumno',
+    },
+    {
+      id: 'participaciones',
+      label: 'participaciones',
+      show:
+        canManageContent &&
+        selected?.role === 'alumno',
+    },
+    {
+      id: 'servicios',
+      label: 'servicios',
+      show:
+        canFullAdmin &&
+        selected?.role === 'alumno',
+    },
+    {
+      id: 'actividad',
+      label: 'actividad',
+      show:
+        selected?.role === 'alumno',
+    },
+  ].filter((item) => item.show)
 
   useEffect(() => {
-    if (!tabs.some(t => t.id === tab)) setTab('info')
-  }, [canFullAdmin, canManageContent])
+    if (
+      !tabs.some(
+        (item) => item.id === tab
+      )
+    ) {
+      setTab('info')
+    }
+  }, [
+    canFullAdmin,
+    canManageContent,
+    selected?.id,
+  ])
 
   return (
     <div className="space-y-4">
-      {canFullAdmin && <CreateAlumnoForm reload={reload} setMsg={setMsg} />}
+      {canFullAdmin && (
+        <CreateUserForm
+          currentUser={currentUser}
+          canCreateAdmin={
+            canCreateAdmin
+          }
+          reload={reload}
+          setMsg={setMsg}
+        />
+      )}
 
       <input
         value={query}
-        onChange={e => setQuery(e.target.value)}
-        placeholder="Buscar alumno por nombre, cédula o grupo..."
+        onChange={(event) =>
+          setQuery(event.target.value)
+        }
+        placeholder="Buscar por nombre, cédula, rol o grupo..."
         className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm outline-none text-white"
       />
 
-      {alumnos.length === 0 && (
+      {profiles.length === 0 && (
         <section className={`${panel} p-4`}>
-          <p className="text-white font-semibold">Todavía no hay alumnos creados</p>
+          <p className="text-white font-semibold">
+            No encontramos usuarios
+          </p>
+
           <p className="text-white/40 text-sm mt-1">
-            {canFullAdmin
-              ? 'Creá el primer alumno desde el formulario de arriba.'
-              : 'Todavía no hay alumnos disponibles.'}
+            Probá con otra búsqueda.
           </p>
         </section>
       )}
 
-      {alumnos.length > 0 && selected && (
-        <>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {alumnos.map(a => (
-              <button
-                key={a.id}
-                onClick={() => setSelectedId(a.id)}
-                className={`shrink-0 px-4 py-3 rounded-2xl border text-left min-w-[190px] ${
-                  selected?.id === a.id ? 'bg-pr-gold text-black border-pr-gold' : 'bg-white/[0.035] border-white/10 text-white'
-                }`}
-              >
-                <p className="font-semibold text-sm">{a.nombre} {a.verificado ? '✓' : ''}</p>
-                <p className={`text-xs ${selected?.id === a.id ? 'text-black/60' : 'text-white/35'}`}>
-                  {a.estado} · {a.ultimoIngreso ? formatDate(a.ultimoIngreso) : 'Sin ingreso registrado'}
+      {profiles.length > 0 &&
+        selected && (
+          <>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {profiles.map(
+                (profile) => (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedId(
+                        profile.id
+                      )
+                    }
+                    className={`shrink-0 px-4 py-3 rounded-2xl border text-left min-w-[200px] ${
+                      selected?.id ===
+                      profile.id
+                        ? 'bg-pr-gold text-black border-pr-gold'
+                        : 'bg-white/[0.035] border-white/10 text-white'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">
+                      {profile.nombre}{' '}
+                      {profile.apellido}
+                      {profile.verificado
+                        ? ' ✓'
+                        : ''}
+                    </p>
+
+                    <p
+                      className={`text-xs ${
+                        selected?.id ===
+                        profile.id
+                          ? 'text-black/60'
+                          : 'text-white/35'
+                      }`}
+                    >
+                      {getRoleLabel(
+                        profile.role
+                      )}{' '}
+                      · {profile.estado}
+                    </p>
+                  </button>
+                )
+              )}
+            </div>
+
+            <section
+              className={`${panel} overflow-hidden`}
+            >
+              <div className="p-4 border-b border-white/5">
+                <div className="flex items-start gap-3">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 bg-black/30 grid place-items-center shrink-0">
+                    {selected.foto ? (
+                      <img
+                        src={selected.foto}
+                        alt={selected.nombre}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xl">
+                        👤
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="section-label">
+                      Perfil administrativo
+                    </p>
+
+                    <h2 className="font-display text-2xl text-white mt-1">
+                      {selected.nombre}{' '}
+                      {selected.apellido}
+                    </h2>
+
+                    <span
+                      className={`inline-flex mt-2 px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-wider ${getRoleColor(
+                        selected.role
+                      )}`}
+                    >
+                      {getRoleLabel(
+                        selected.role
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-white/35 text-xs mt-3">
+                  CI {selected.documento} ·{' '}
+                  {selected.estado}
                 </p>
-              </button>
-            ))}
-          </div>
+              </div>
 
-          <section className={`${panel} overflow-hidden`}>
-            <div className="p-4 border-b border-white/5">
-              <p className="section-label">Perfil administrativo</p>
-              <h2 className="font-display text-2xl text-white mt-1">
-                {selected.nombre} {selected.verificado && <span className="text-sky-400">✓</span>}
-              </h2>
-              <p className="text-white/35 text-xs">CI {selected.documento} · {selected.estado}</p>
-            </div>
+              <div className="flex overflow-x-auto border-b border-white/5">
+                {tabs.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() =>
+                      setTab(item.id)
+                    }
+                    className={`px-4 py-3 text-xs uppercase tracking-wider ${
+                      tab === item.id
+                        ? 'text-pr-gold border-b border-pr-gold'
+                        : 'text-white/35'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
 
-            <div className="flex overflow-x-auto border-b border-white/5">
-              {tabs.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`px-4 py-3 text-xs uppercase tracking-wider ${
-                    tab === t.id ? 'text-pr-gold border-b border-pr-gold' : 'text-white/35'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+              <div className="p-4">
+                {tab === 'info' && (
+                  <InfoTab
+                    profile={selected}
+                    canFullAdmin={
+                      canFullAdmin
+                    }
+                  />
+                )}
 
-            <div className="p-4">
-              {tab === 'info' && <InfoTab alumno={selected} canFullAdmin={canFullAdmin} />}
-              {tab === 'editar' && canFullAdmin && <EditAlumnoTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
-              {tab === 'grupos' && canFullAdmin && <GroupsTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
-              {tab === 'observaciones' && canManageContent && <ObservationTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
-              {tab === 'insignias' && canManageContent && <BadgeTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
-              {tab === 'participaciones' && canManageContent && <ParticipationTab alumno={selected} canManageContent={canManageContent} reload={reload} setMsg={setMsg} />}
-              {tab === 'servicios' && canFullAdmin && <ServicesTab alumno={selected} canFullAdmin={canFullAdmin} reload={reload} setMsg={setMsg} />}
-              {tab === 'actividad' && <ActivityTab alumno={selected} />}
-            </div>
-          </section>
-        </>
-      )}
+                {tab === 'editar' &&
+                  canFullAdmin && (
+                    <EditUserTab
+                      currentUser={
+                        currentUser
+                      }
+                      profile={selected}
+                      canCreateAdmin={
+                        canCreateAdmin
+                      }
+                      reload={reload}
+                      setMsg={setMsg}
+                    />
+                  )}
+
+                {tab === 'grupos' &&
+                  canFullAdmin && (
+                    <GroupsTab
+                      profile={selected}
+                      reload={reload}
+                      setMsg={setMsg}
+                    />
+                  )}
+
+                {tab ===
+                  'observaciones' &&
+                  canManageContent && (
+                    <ObservationTab
+                      creator={
+                        currentUser
+                      }
+                      profile={selected}
+                      reload={reload}
+                      setMsg={setMsg}
+                    />
+                  )}
+
+                {tab === 'insignias' &&
+                  canManageContent && (
+                    <BadgeTab
+                      creator={
+                        currentUser
+                      }
+                      profile={selected}
+                      reload={reload}
+                      setMsg={setMsg}
+                    />
+                  )}
+
+                {tab ===
+                  'participaciones' &&
+                  canManageContent && (
+                    <ParticipationTab
+                      creator={
+                        currentUser
+                      }
+                      profile={selected}
+                      reload={reload}
+                      setMsg={setMsg}
+                    />
+                  )}
+
+                {tab === 'servicios' &&
+                  canFullAdmin && (
+                    <ServicesTab
+                      profile={selected}
+                      reload={reload}
+                      setMsg={setMsg}
+                    />
+                  )}
+
+                {tab === 'actividad' && (
+                  <ActivityTab
+                    profile={selected}
+                  />
+                )}
+              </div>
+            </section>
+          </>
+        )}
     </div>
   )
 }
 
-function CreateAlumnoForm({ reload, setMsg }) {
-  const [form, setForm] = useState(emptyAlumnoForm())
-  const [saving, setSaving] = useState(false)
+function CreateUserForm({
+  canCreateAdmin,
+  reload,
+  setMsg,
+}) {
+  const [open, setOpen] =
+    useState(false)
 
-  async function createAlumno() {
+  const [form, setForm] = useState(
+    emptyUserForm()
+  )
+
+  const [saving, setSaving] =
+    useState(false)
+
+  async function createUser() {
     try {
       setSaving(true)
-      setMsg('Creando alumno...')
+      setMsg('Creando usuario...')
 
-      const documento = String(form.documento || '').trim()
-      const pin = String(form.pin || '').trim()
+      const documento = cleanDocument(
+        form.documento
+      )
 
-      if (!form.nombre.trim()) throw new Error('Falta el nombre.')
-      if (!documento) throw new Error('Falta el documento.')
-      if (!pin) throw new Error('Falta el PIN.')
+      const pin = String(
+        form.pin || ''
+      ).trim()
+
+      if (!form.nombre.trim()) {
+        throw new Error(
+          'Falta el nombre.'
+        )
+      }
+
+      if (!documento) {
+        throw new Error(
+          'Falta el documento.'
+        )
+      }
+
+      if (documento.length < 6) {
+        throw new Error(
+          'El documento parece incompleto.'
+        )
+      }
+
+      if (!pin) {
+        throw new Error('Falta el PIN.')
+      }
+
+      if (pin.length < 4) {
+        throw new Error(
+          'El PIN debe tener al menos 4 dígitos.'
+        )
+      }
+
+      if (
+        form.role === 'admin' &&
+        !canCreateAdmin
+      ) {
+        throw new Error(
+          'Solo Claudio puede crear administradores.'
+        )
+      }
+
+      const {
+        data: existingProfile,
+        error: existingError,
+      } = await supabase
+        .from('profiles')
+        .select('id, nombre, documento')
+        .eq('documento', documento)
+        .maybeSingle()
+
+      if (existingError) {
+        throw new Error(
+          existingError.message
+        )
+      }
+
+      if (existingProfile) {
+        throw new Error(
+          `Ya existe un usuario con ese documento: ${existingProfile.nombre}.`
+        )
+      }
 
       const payload = {
-        id: makeAlumnoId(documento),
-        role: 'alumno',
+        id: makeProfileId(
+          form.role,
+          documento
+        ),
+        role: form.role,
         nombre: form.nombre.trim(),
-        apellido: form.apellido.trim(),
+        apellido:
+          form.apellido.trim(),
         documento,
         pin,
         email: form.email.trim(),
         ciudad: form.ciudad.trim(),
-        instagram: form.instagram.trim(),
-        estado: 'Activo',
-        verificado: false,
-        prcard_activa: false,
-        tracking_activo: false,
-        miembro_desde: '2026',
+        instagram:
+          form.instagram.trim(),
+        fecha_nacimiento:
+          form.fechaNacimiento || null,
+        estado: form.estado,
+        verificado:
+          Boolean(form.verificado),
+        prcard_activa:
+          form.role === 'alumno'
+            ? Boolean(
+                form.prcardActiva
+              )
+            : false,
+        tracking_activo:
+          form.role === 'alumno'
+            ? Boolean(
+                form.trackingActivo
+              )
+            : false,
+        miembro_desde:
+          form.miembroDesde ||
+          String(
+            new Date().getFullYear()
+          ),
         grupos_info: [],
-        estadisticas: { eventos: 0, insignias: 0, notas: 0 },
+        estadisticas: EMPTY_STATS,
         foto: '',
         banner: '',
-        sobre_mi: 'Mi espacio personal dentro de Punta Rollers.',
+        sobre_mi:
+          form.role === 'alumno'
+            ? 'Mi espacio personal dentro de Punta Rollers.'
+            : '',
         ultimo_ingreso: null,
-        updated_at: new Date().toISOString(),
+        updated_at:
+          new Date().toISOString(),
       }
 
-      const { error } = await supabase.from('profiles').insert(payload)
-      if (error) throw new Error(error.message)
+      const { error } = await supabase
+        .from('profiles')
+        .insert(payload)
 
-      setForm(emptyAlumnoForm())
-      setMsg('Alumno creado correctamente.')
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      setForm(emptyUserForm())
+      setOpen(false)
+
+      setMsg(
+        `${getRoleLabel(
+          payload.role
+        )} creado correctamente. Ya puede iniciar sesión.`
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo crear: ${error.message}`)
+      setMsg(
+        `No se pudo crear: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <section className={`${panel} p-4 space-y-3`}>
-      <p className="section-label">Crear alumno</p>
+    <section
+      className={`${panel} overflow-hidden`}
+    >
+      <button
+        type="button"
+        onClick={() =>
+          setOpen((value) => !value)
+        }
+        className="w-full p-4 flex items-center justify-between text-left"
+      >
+        <div>
+          <p className="section-label">
+            Administración
+          </p>
 
-      <AdminInput label="Nombre" value={form.nombre} onChange={v => setForm({ ...form, nombre: v })} />
-      <AdminInput label="Apellido" value={form.apellido} onChange={v => setForm({ ...form, apellido: v })} />
-      <AdminInput label="Documento / CI" value={form.documento} onChange={v => setForm({ ...form, documento: v })} />
-      <AdminInput label="PIN" value={form.pin} onChange={v => setForm({ ...form, pin: v })} />
-      <AdminInput label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
-      <AdminInput label="Ciudad" value={form.ciudad} onChange={v => setForm({ ...form, ciudad: v })} />
-      <AdminInput label="Instagram" value={form.instagram} onChange={v => setForm({ ...form, instagram: v })} />
+          <h2 className="font-display text-2xl text-white mt-1">
+            Crear usuario
+          </h2>
 
-      <button type="button" disabled={saving} onClick={createAlumno} className="btn-gold w-full disabled:opacity-50">
-        {saving ? 'Creando...' : 'Crear alumno'}
+          <p className="text-white/35 text-xs mt-1">
+            Alumno, profesor o usuario
+            de prueba.
+          </p>
+        </div>
+
+        <span className="w-9 h-9 rounded-full bg-pr-gold/10 text-pr-gold grid place-items-center">
+          {open ? '−' : '+'}
+        </span>
       </button>
 
-      <p className="text-white/30 text-xs">
-        PRCard y Tracking quedan inactivos por defecto. Los grupos se asignan después desde la pestaña Grupos.
-      </p>
+      {open && (
+        <div className="px-4 pb-4 space-y-3 animate-fade-in">
+          <label className="block">
+            <span className="text-white/40 text-xs">
+              Tipo de usuario
+            </span>
+
+            <select
+              value={form.role}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  role:
+                    event.target.value,
+                })
+              }
+              className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+            >
+              <option value="alumno">
+                Alumno
+              </option>
+
+              <option value="profesor">
+                Profesor
+              </option>
+
+              {canCreateAdmin && (
+                <option value="admin">
+                  Administrador
+                </option>
+              )}
+            </select>
+          </label>
+
+          <AdminInput
+            label="Nombre"
+            value={form.nombre}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                nombre: value,
+              })
+            }
+          />
+
+          <AdminInput
+            label="Apellido"
+            value={form.apellido}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                apellido: value,
+              })
+            }
+          />
+
+          <AdminInput
+            label="Documento / CI"
+            value={form.documento}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                documento: value,
+              })
+            }
+            inputMode="numeric"
+          />
+
+          <AdminInput
+            label="PIN"
+            value={form.pin}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                pin: value,
+              })
+            }
+            inputMode="numeric"
+          />
+
+          <AdminInput
+            label="Email"
+            value={form.email}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                email: value,
+              })
+            }
+            type="email"
+          />
+
+          <AdminInput
+            label="Ciudad"
+            value={form.ciudad}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                ciudad: value,
+              })
+            }
+          />
+
+          <AdminInput
+            label="Instagram"
+            value={form.instagram}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                instagram: value,
+              })
+            }
+          />
+
+          <AdminInput
+            label="Fecha de nacimiento"
+            value={
+              form.fechaNacimiento
+            }
+            onChange={(value) =>
+              setForm({
+                ...form,
+                fechaNacimiento:
+                  value,
+              })
+            }
+            type="date"
+          />
+
+          <AdminInput
+            label="Miembro desde"
+            value={form.miembroDesde}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                miembroDesde: value,
+              })
+            }
+            inputMode="numeric"
+          />
+
+          <label className="block">
+            <span className="text-white/40 text-xs">
+              Estado inicial
+            </span>
+
+            <select
+              value={form.estado}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  estado:
+                    event.target.value,
+                })
+              }
+              className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+            >
+              <option value="Activo">
+                Activo
+              </option>
+
+              <option value="Inactivo">
+                Inactivo
+              </option>
+            </select>
+          </label>
+
+          {form.role === 'alumno' && (
+            <div className="space-y-2">
+              <CheckRow
+                label="PRCard activa"
+                checked={
+                  form.prcardActiva
+                }
+                onChange={(checked) =>
+                  setForm({
+                    ...form,
+                    prcardActiva:
+                      checked,
+                  })
+                }
+              />
+
+              <CheckRow
+                label="PR Tracking activo"
+                checked={
+                  form.trackingActivo
+                }
+                onChange={(checked) =>
+                  setForm({
+                    ...form,
+                    trackingActivo:
+                      checked,
+                  })
+                }
+              />
+
+              <CheckRow
+                label="Perfil verificado"
+                checked={
+                  form.verificado
+                }
+                onChange={(checked) =>
+                  setForm({
+                    ...form,
+                    verificado:
+                      checked,
+                  })
+                }
+              />
+            </div>
+          )}
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={createUser}
+            className="btn-gold w-full disabled:opacity-50"
+          >
+            {saving
+              ? 'Creando...'
+              : 'Crear usuario'}
+          </button>
+
+          <p className="text-white/30 text-xs">
+            El usuario podrá iniciar
+            sesión inmediatamente con su
+            documento y PIN.
+          </p>
+        </div>
+      )}
     </section>
   )
 }
 
-function InfoTab({ alumno, canFullAdmin }) {
+function InfoTab({
+  profile,
+  canFullAdmin,
+}) {
   return (
     <div className="space-y-3">
-      <Field label="Nombre" value={`${alumno.nombre} ${alumno.apellido || ''}`} />
-      <Field label="Documento" value={alumno.documento} />
-      {canFullAdmin && <Field label="PIN actual" value={alumno.pin || 'Sin PIN'} />}
-      <Field label="Email" value={alumno.email || 'Sin cargar'} />
-      <Field label="Instagram" value={alumno.instagram || 'Sin cargar'} />
-      <Field label="Ciudad" value={alumno.ciudad || 'Sin cargar'} />
-      <Field label="Grupos WhatsApp" value={alumno.gruposInfo?.length ? alumno.gruposInfo.map(g => g.titulo).join(' · ') : 'Sin grupos'} />
-      <Field label="Último ingreso" value={alumno.ultimoIngreso ? formatDate(alumno.ultimoIngreso) : 'Sin ingreso registrado'} />
+      <Field
+        label="Nombre"
+        value={`${profile.nombre} ${
+          profile.apellido || ''
+        }`}
+      />
+
+      <Field
+        label="Rol"
+        value={getRoleLabel(
+          profile.role
+        )}
+      />
+
+      <Field
+        label="Documento"
+        value={profile.documento}
+      />
+
+      {canFullAdmin && (
+        <Field
+          label="PIN actual"
+          value={
+            profile.pin || 'Sin PIN'
+          }
+        />
+      )}
+
+      <Field
+        label="Estado"
+        value={profile.estado}
+      />
+
+      <Field
+        label="Email"
+        value={
+          profile.email ||
+          'Sin cargar'
+        }
+      />
+
+      <Field
+        label="Instagram"
+        value={
+          profile.instagram ||
+          'Sin cargar'
+        }
+      />
+
+      <Field
+        label="Ciudad"
+        value={
+          profile.ciudad ||
+          'Sin cargar'
+        }
+      />
+
+      {profile.role === 'alumno' && (
+        <Field
+          label="Grupos WhatsApp"
+          value={
+            profile.gruposInfo
+              ?.length
+              ? profile.gruposInfo
+                  .map(
+                    (group) =>
+                      group.titulo
+                  )
+                  .join(' · ')
+              : 'Sin grupos'
+          }
+        />
+      )}
+
+      <Field
+        label="Último ingreso"
+        value={
+          profile.ultimoIngreso
+            ? formatDate(
+                profile.ultimoIngreso
+              )
+            : 'Sin ingreso registrado'
+        }
+      />
     </div>
   )
 }
 
-function EditAlumnoTab({ alumno, canFullAdmin, reload, setMsg }) {
-  const [form, setForm] = useState({
-    nombre: alumno.nombre || '',
-    apellido: alumno.apellido || '',
-    documento: alumno.documento || '',
-    pin: alumno.pin || '',
-    email: alumno.email || '',
-    ciudad: alumno.ciudad || '',
-    instagram: alumno.instagram || '',
-    estado: alumno.estado || 'Activo',
-  })
+function EditUserTab({
+  currentUser,
+  profile,
+  canCreateAdmin,
+  reload,
+  setMsg,
+}) {
+  const [form, setForm] =
+    useState({
+      role: profile.role,
+      nombre: profile.nombre || '',
+      apellido:
+        profile.apellido || '',
+      documento:
+        profile.documento || '',
+      pin: profile.pin || '',
+      email: profile.email || '',
+      ciudad: profile.ciudad || '',
+      instagram:
+        profile.instagram || '',
+      estado:
+        profile.estado || 'Activo',
+      fechaNacimiento:
+        profile.fechaNacimiento ||
+        '',
+      miembroDesde:
+        profile.miembroDesde ||
+        '2026',
+    })
 
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] =
+    useState(false)
 
   useEffect(() => {
     setForm({
-      nombre: alumno.nombre || '',
-      apellido: alumno.apellido || '',
-      documento: alumno.documento || '',
-      pin: alumno.pin || '',
-      email: alumno.email || '',
-      ciudad: alumno.ciudad || '',
-      instagram: alumno.instagram || '',
-      estado: alumno.estado || 'Activo',
+      role: profile.role,
+      nombre: profile.nombre || '',
+      apellido:
+        profile.apellido || '',
+      documento:
+        profile.documento || '',
+      pin: profile.pin || '',
+      email: profile.email || '',
+      ciudad: profile.ciudad || '',
+      instagram:
+        profile.instagram || '',
+      estado:
+        profile.estado || 'Activo',
+      fechaNacimiento:
+        profile.fechaNacimiento ||
+        '',
+      miembroDesde:
+        profile.miembroDesde ||
+        '2026',
     })
-  }, [alumno.id])
+  }, [profile.id])
 
-  async function saveAlumno() {
+  async function saveUser() {
     try {
       setSaving(true)
-      setMsg('Guardando alumno...')
+      setMsg('Guardando usuario...')
+
+      const document =
+        cleanDocument(
+          form.documento
+        )
+
+      if (!form.nombre.trim()) {
+        throw new Error(
+          'Falta el nombre.'
+        )
+      }
+
+      if (!document) {
+        throw new Error(
+          'Falta el documento.'
+        )
+      }
+
+      if (!form.pin.trim()) {
+        throw new Error(
+          'Falta el PIN.'
+        )
+      }
+
+      if (
+        form.role === 'admin' &&
+        !canCreateAdmin &&
+        profile.role !== 'admin'
+      ) {
+        throw new Error(
+          'Solo Claudio puede asignar el rol administrador.'
+        )
+      }
+
+      const {
+        data: duplicated,
+        error: duplicateError,
+      } = await supabase
+        .from('profiles')
+        .select('id, nombre')
+        .eq('documento', document)
+        .neq('id', profile.id)
+        .maybeSingle()
+
+      if (duplicateError) {
+        throw new Error(
+          duplicateError.message
+        )
+      }
+
+      if (duplicated) {
+        throw new Error(
+          `Ese documento pertenece a ${duplicated.nombre}.`
+        )
+      }
 
       const { error } = await supabase
         .from('profiles')
         .update({
-          nombre: form.nombre,
-          apellido: form.apellido,
-          documento: form.documento,
-          pin: form.pin,
-          email: form.email,
-          ciudad: form.ciudad,
-          instagram: form.instagram,
+          role: form.role,
+          nombre: form.nombre.trim(),
+          apellido:
+            form.apellido.trim(),
+          documento: document,
+          pin: form.pin.trim(),
+          email: form.email.trim(),
+          ciudad:
+            form.ciudad.trim(),
+          instagram:
+            form.instagram.trim(),
           estado: form.estado,
-          updated_at: new Date().toISOString(),
+          fecha_nacimiento:
+            form.fechaNacimiento ||
+            null,
+          miembro_desde:
+            form.miembroDesde ||
+            '2026',
+          updated_at:
+            new Date().toISOString(),
         })
-        .eq('id', alumno.id)
+        .eq('id', profile.id)
 
-      if (error) throw new Error(error.message)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      setMsg('Alumno actualizado correctamente.')
+      setMsg(
+        'Usuario actualizado correctamente.'
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo actualizar: ${error.message}`)
+      setMsg(
+        `No se pudo actualizar: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
   }
 
-  async function deleteAlumno() {
-    if (!canFullAdmin) return
-    const ok = window.confirm(`¿Eliminar definitivamente a ${alumno.nombre}?`)
-    if (!ok) return
+  async function deleteUser() {
+    if (
+      profile.id === currentUser?.id
+    ) {
+      setMsg(
+        'No podés eliminar tu propia cuenta mientras estás conectado.'
+      )
+      return
+    }
+
+    const confirmed = window.confirm(
+      `¿Eliminar definitivamente a ${profile.nombre}? Esta acción también eliminará su actividad.`
+    )
+
+    if (!confirmed) return
 
     try {
-      setMsg('Eliminando alumno...')
+      setMsg('Eliminando usuario...')
 
-      await supabase.from('actividad_pr').delete().eq('alumno_id', alumno.id)
+      await supabase
+        .from('actividad_pr')
+        .delete()
+        .eq('alumno_id', profile.id)
 
       const { error } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', alumno.id)
+        .eq('id', profile.id)
 
-      if (error) throw new Error(error.message)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      setMsg('Alumno eliminado correctamente.')
+      setMsg(
+        'Usuario eliminado correctamente.'
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo eliminar: ${error.message}`)
+      setMsg(
+        `No se pudo eliminar: ${error.message}`
+      )
     }
   }
 
-  if (!canFullAdmin) return null
-
   return (
     <div className="space-y-3">
-      <AdminInput label="Nombre" value={form.nombre} onChange={v => setForm({ ...form, nombre: v })} />
-      <AdminInput label="Apellido" value={form.apellido} onChange={v => setForm({ ...form, apellido: v })} />
-      <AdminInput label="Documento" value={form.documento} onChange={v => setForm({ ...form, documento: v })} />
-      <AdminInput label="PIN de ingreso" value={form.pin} onChange={v => setForm({ ...form, pin: v })} />
-      <AdminInput label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
-      <AdminInput label="Ciudad" value={form.ciudad} onChange={v => setForm({ ...form, ciudad: v })} />
-      <AdminInput label="Instagram" value={form.instagram} onChange={v => setForm({ ...form, instagram: v })} />
-
       <label className="block">
-        <span className="text-white/40 text-xs">Estado</span>
+        <span className="text-white/40 text-xs">
+          Rol
+        </span>
+
         <select
-          value={form.estado}
-          onChange={e => setForm({ ...form, estado: e.target.value })}
+          value={form.role}
+          onChange={(event) =>
+            setForm({
+              ...form,
+              role: event.target.value,
+            })
+          }
           className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
         >
-          <option value="Activo">Activo</option>
-          <option value="Pausado">Pausado</option>
-          <option value="Inactivo">Inactivo</option>
+          <option value="alumno">
+            Alumno
+          </option>
+
+          <option value="profesor">
+            Profesor
+          </option>
+
+          {(canCreateAdmin ||
+            profile.role ===
+              'admin') && (
+            <option value="admin">
+              Administrador
+            </option>
+          )}
         </select>
       </label>
 
-      <button disabled={saving} onClick={saveAlumno} className="btn-gold w-full disabled:opacity-50">
-        {saving ? 'Guardando...' : 'Guardar cambios'}
+      <AdminInput
+        label="Nombre"
+        value={form.nombre}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            nombre: value,
+          })
+        }
+      />
+
+      <AdminInput
+        label="Apellido"
+        value={form.apellido}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            apellido: value,
+          })
+        }
+      />
+
+      <AdminInput
+        label="Documento"
+        value={form.documento}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            documento: value,
+          })
+        }
+        inputMode="numeric"
+      />
+
+      <AdminInput
+        label="PIN de ingreso"
+        value={form.pin}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            pin: value,
+          })
+        }
+        inputMode="numeric"
+      />
+
+      <AdminInput
+        label="Email"
+        value={form.email}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            email: value,
+          })
+        }
+        type="email"
+      />
+
+      <AdminInput
+        label="Ciudad"
+        value={form.ciudad}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            ciudad: value,
+          })
+        }
+      />
+
+      <AdminInput
+        label="Instagram"
+        value={form.instagram}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            instagram: value,
+          })
+        }
+      />
+
+      <AdminInput
+        label="Fecha de nacimiento"
+        value={form.fechaNacimiento}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            fechaNacimiento: value,
+          })
+        }
+        type="date"
+      />
+
+      <AdminInput
+        label="Miembro desde"
+        value={form.miembroDesde}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            miembroDesde: value,
+          })
+        }
+        inputMode="numeric"
+      />
+
+      <label className="block">
+        <span className="text-white/40 text-xs">
+          Estado
+        </span>
+
+        <select
+          value={form.estado}
+          onChange={(event) =>
+            setForm({
+              ...form,
+              estado: event.target.value,
+            })
+          }
+          className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+        >
+          <option value="Activo">
+            Activo
+          </option>
+
+          <option value="Pausado">
+            Pausado
+          </option>
+
+          <option value="Inactivo">
+            Inactivo
+          </option>
+        </select>
+      </label>
+
+      <button
+        type="button"
+        disabled={saving}
+        onClick={saveUser}
+        className="btn-gold w-full disabled:opacity-50"
+      >
+        {saving
+          ? 'Guardando...'
+          : 'Guardar cambios'}
       </button>
 
-      <button onClick={deleteAlumno} className="w-full rounded-2xl border border-red-500/25 bg-red-500/10 py-4 text-red-200 text-sm font-bold">
-        Eliminar alumno
+      <button
+        type="button"
+        onClick={deleteUser}
+        className="w-full rounded-2xl border border-red-500/25 bg-red-500/10 py-4 text-red-200 text-sm font-bold"
+      >
+        Eliminar usuario
       </button>
     </div>
   )
 }
 
-function GroupsTab({ alumno, canFullAdmin, reload, setMsg }) {
-  const [groups, setGroups] = useState(alumno.gruposInfo?.length ? alumno.gruposInfo : [])
-  const [saving, setSaving] = useState(false)
+function GroupsTab({
+  profile,
+  reload,
+  setMsg,
+}) {
+  const [groups, setGroups] =
+    useState(
+      profile.gruposInfo?.length
+        ? profile.gruposInfo
+        : []
+    )
+
+  const [saving, setSaving] =
+    useState(false)
 
   useEffect(() => {
-    setGroups(alumno.gruposInfo?.length ? alumno.gruposInfo : [])
-  }, [alumno.id])
+    setGroups(
+      profile.gruposInfo?.length
+        ? profile.gruposInfo
+        : []
+    )
+  }, [profile.id])
 
   function addGroup() {
-    setGroups([...groups, { titulo: '', link: '' }])
+    setGroups([
+      ...groups,
+      {
+        titulo: '',
+        link: '',
+      },
+    ])
   }
 
-  function updateGroup(index, field, value) {
-    setGroups(groups.map((g, i) => i === index ? { ...g, [field]: value } : g))
+  function updateGroup(
+    index,
+    field,
+    value
+  ) {
+    setGroups(
+      groups.map((group, position) =>
+        position === index
+          ? {
+              ...group,
+              [field]: value,
+            }
+          : group
+      )
+    )
   }
 
   function removeGroup(index) {
-    setGroups(groups.filter((_, i) => i !== index))
+    setGroups(
+      groups.filter(
+        (_, position) =>
+          position !== index
+      )
+    )
   }
 
   async function saveGroups() {
@@ -614,242 +1863,518 @@ function GroupsTab({ alumno, canFullAdmin, reload, setMsg }) {
       setMsg('Guardando grupos...')
 
       const cleanGroups = groups
-        .map(g => ({
-          titulo: String(g.titulo || '').trim(),
-          link: String(g.link || '').trim(),
+        .map((group) => ({
+          titulo: String(
+            group.titulo || ''
+          ).trim(),
+          link: String(
+            group.link || ''
+          ).trim(),
         }))
-        .filter(g => g.titulo)
+        .filter(
+          (group) => group.titulo
+        )
 
       const { error } = await supabase
         .from('profiles')
         .update({
           grupos_info: cleanGroups,
-          updated_at: new Date().toISOString(),
+          updated_at:
+            new Date().toISOString(),
         })
-        .eq('id', alumno.id)
+        .eq('id', profile.id)
 
-      if (error) throw new Error(error.message)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      setMsg('Grupos actualizados correctamente.')
+      setMsg(
+        'Grupos actualizados correctamente.'
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudieron guardar los grupos: ${error.message}`)
+      setMsg(
+        `No se pudieron guardar los grupos: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
   }
 
-  if (!canFullAdmin) return null
-
   return (
     <div className="space-y-3">
       <p className="text-white/45 text-sm">
-        Cargá uno o más grupos. El alumno verá el título y el botón para abrir WhatsApp.
+        Cargá uno o más grupos con su
+        enlace de WhatsApp.
       </p>
 
-      {groups.map((group, index) => (
-        <div key={index} className="rounded-2xl bg-black/25 border border-white/5 p-3 space-y-2">
-          <AdminInput label="Título del grupo" value={group.titulo} onChange={v => updateGroup(index, 'titulo', v)} placeholder="Ej: Miércoles principiantes" />
-          <AdminInput label="Link de WhatsApp" value={group.link} onChange={v => updateGroup(index, 'link', v)} placeholder="https://chat.whatsapp.com/..." />
-          <button onClick={() => removeGroup(index)} className="text-red-300 text-xs">Eliminar grupo</button>
-        </div>
-      ))}
+      {groups.map(
+        (group, index) => (
+          <div
+            key={index}
+            className="rounded-2xl bg-black/25 border border-white/5 p-3 space-y-2"
+          >
+            <AdminInput
+              label="Título del grupo"
+              value={group.titulo}
+              onChange={(value) =>
+                updateGroup(
+                  index,
+                  'titulo',
+                  value
+                )
+              }
+              placeholder="Ej: Miércoles principiantes"
+            />
 
-      <button onClick={addGroup} className="w-full rounded-2xl bg-white/5 border border-white/10 py-3 text-white text-sm">
+            <AdminInput
+              label="Link de WhatsApp"
+              value={group.link}
+              onChange={(value) =>
+                updateGroup(
+                  index,
+                  'link',
+                  value
+                )
+              }
+              placeholder="https://chat.whatsapp.com/..."
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                removeGroup(index)
+              }
+              className="text-red-300 text-xs"
+            >
+              Eliminar grupo
+            </button>
+          </div>
+        )
+      )}
+
+      <button
+        type="button"
+        onClick={addGroup}
+        className="w-full rounded-2xl bg-white/5 border border-white/10 py-3 text-white text-sm"
+      >
         + Agregar grupo
       </button>
 
-      <button disabled={saving} onClick={saveGroups} className="btn-gold w-full disabled:opacity-50">
-        {saving ? 'Guardando...' : 'Guardar grupos'}
+      <button
+        type="button"
+        disabled={saving}
+        onClick={saveGroups}
+        className="btn-gold w-full disabled:opacity-50"
+      >
+        {saving
+          ? 'Guardando...'
+          : 'Guardar grupos'}
       </button>
     </div>
   )
 }
 
-function ObservationTab({ alumno, canManageContent, reload, setMsg }) {
-  return <ActivityCreateTab alumno={alumno} tipo="Nota" title="Nueva observación" label="Guardar observación" canManageContent={canManageContent} reload={reload} setMsg={setMsg} />
+function ObservationTab({
+  creator,
+  profile,
+  reload,
+  setMsg,
+}) {
+  return (
+    <ActivityCreateTab
+      creator={creator}
+      profile={profile}
+      tipo="Nota"
+      title="Nueva observación"
+      label="Guardar observación"
+      reload={reload}
+      setMsg={setMsg}
+    />
+  )
 }
 
-function BadgeTab({ alumno, canManageContent, reload, setMsg }) {
-  return <ActivityCreateTab alumno={alumno} tipo="Insignia" title="Otorgar insignia" label="Otorgar insignia" canManageContent={canManageContent} reload={reload} setMsg={setMsg} />
+function BadgeTab({
+  creator,
+  profile,
+  reload,
+  setMsg,
+}) {
+  return (
+    <ActivityCreateTab
+      creator={creator}
+      profile={profile}
+      tipo="Insignia"
+      title="Otorgar insignia"
+      label="Otorgar insignia"
+      reload={reload}
+      setMsg={setMsg}
+    />
+  )
 }
 
-function ParticipationTab({ alumno, canManageContent, reload, setMsg }) {
-  return <ActivityCreateTab alumno={alumno} tipo="Evento" title="Registrar participación" label="Registrar participación" canManageContent={canManageContent} reload={reload} setMsg={setMsg} />
+function ParticipationTab({
+  creator,
+  profile,
+  reload,
+  setMsg,
+}) {
+  return (
+    <ActivityCreateTab
+      creator={creator}
+      profile={profile}
+      tipo="Evento"
+      title="Registrar participación"
+      label="Registrar participación"
+      reload={reload}
+      setMsg={setMsg}
+    />
+  )
 }
 
-function ActivityCreateTab({ alumno, tipo, title, label, canManageContent, reload, setMsg }) {
-  const [titulo, setTitulo] = useState('')
-  const [descripcion, setDescripcion] = useState('')
-  const [saving, setSaving] = useState(false)
+function ActivityCreateTab({
+  creator,
+  profile,
+  tipo,
+  title,
+  label,
+  reload,
+  setMsg,
+}) {
+  const [titulo, setTitulo] =
+    useState('')
+
+  const [
+    descripcion,
+    setDescripcion,
+  ] = useState('')
+
+  const [saving, setSaving] =
+    useState(false)
 
   async function saveItem() {
-    if (!canManageContent) return
-
     try {
       setSaving(true)
-      setMsg('Guardando actividad...')
+      setMsg(
+        'Guardando actividad...'
+      )
 
-      if (!titulo.trim()) throw new Error('Falta el título.')
+      if (!titulo.trim()) {
+        throw new Error(
+          'Falta el título.'
+        )
+      }
 
       const { error } = await supabase
         .from('actividad_pr')
         .insert({
-          alumno_id: alumno.id,
+          alumno_id: profile.id,
           tipo,
           titulo: titulo.trim(),
-          descripcion: descripcion.trim(),
-          fecha: new Date().toISOString(),
+          descripcion:
+            descripcion.trim(),
+          fecha:
+            new Date().toISOString(),
+          creado_por_id:
+            creator?.id || '',
+          creado_por_nombre:
+            `${creator?.nombre || ''} ${
+              creator?.apellido || ''
+            }`.trim() ||
+            'Equipo Punta Rollers',
+          creado_por_role:
+            creator?.role || '',
+          creado_por_foto:
+            creator?.foto || '',
         })
 
-      if (error) throw new Error(error.message)
-
-      const key = tipo === 'Nota' ? 'notas' : tipo === 'Insignia' ? 'insignias' : 'eventos'
-      const currentStats = alumno.estadisticas || { eventos: 0, insignias: 0, notas: 0 }
-      const newStats = {
-        ...currentStats,
-        [key]: Number(currentStats[key] || 0) + 1,
+      if (error) {
+        throw new Error(error.message)
       }
-
-      const { error: statsError } = await supabase
-        .from('profiles')
-        .update({
-          estadisticas: newStats,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', alumno.id)
-
-      if (statsError) throw new Error(statsError.message)
 
       setTitulo('')
       setDescripcion('')
-      setMsg(`${tipo} guardada correctamente.`)
+
+      setMsg(
+        `${tipo} guardada correctamente.`
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo guardar: ${error.message}`)
+      setMsg(
+        `No se pudo guardar: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
   }
 
-  if (!canManageContent) return null
-
   return (
     <div className="space-y-3">
-      <p className="section-label">{title}</p>
+      <p className="section-label">
+        {title}
+      </p>
 
-      <AdminInput label="Título" value={titulo} onChange={setTitulo} />
+      <AdminInput
+        label="Título"
+        value={titulo}
+        onChange={setTitulo}
+      />
+
       <label className="block">
-        <span className="text-white/40 text-xs">Descripción</span>
+        <span className="text-white/40 text-xs">
+          Descripción
+        </span>
+
         <textarea
           value={descripcion}
-          onChange={e => setDescripcion(e.target.value)}
+          onChange={(event) =>
+            setDescripcion(
+              event.target.value
+            )
+          }
           className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
           rows="4"
         />
       </label>
 
-      <button disabled={saving} onClick={saveItem} className="btn-gold w-full disabled:opacity-50">
-        {saving ? 'Guardando...' : label}
+      <button
+        type="button"
+        disabled={saving}
+        onClick={saveItem}
+        className="btn-gold w-full disabled:opacity-50"
+      >
+        {saving
+          ? 'Guardando...'
+          : label}
       </button>
 
-      <AlumnoActivityList alumnoId={alumno.id} tipo={tipo} />
+      <ProfileActivityList
+        profileId={profile.id}
+        tipo={tipo}
+      />
     </div>
   )
 }
 
-function AlumnoActivityList({ alumnoId, tipo }) {
-  const [items, setItems] = useState([])
+function ProfileActivityList({
+  profileId,
+  tipo,
+}) {
+  const [items, setItems] =
+    useState([])
 
   useEffect(() => {
     async function load() {
-      let query = supabase
+      let request = supabase
         .from('actividad_pr')
         .select('*')
-        .eq('alumno_id', alumnoId)
-        .order('fecha', { ascending: false })
+        .eq(
+          'alumno_id',
+          profileId
+        )
+        .order('fecha', {
+          ascending: false,
+        })
 
-      if (tipo) query = query.eq('tipo', tipo)
+      if (tipo) {
+        request = request.eq(
+          'tipo',
+          tipo
+        )
+      }
 
-      const { data, error } = await query
-      if (!error) setItems(data || [])
+      const { data, error } =
+        await request
+
+      if (!error) {
+        setItems(data || [])
+      }
     }
 
     load()
-  }, [alumnoId, tipo])
+  }, [profileId, tipo])
 
   return (
     <div className="space-y-2 pt-2">
-      <p className="section-label">Registros actuales</p>
-      <List items={items.map(i => ({ title: i.titulo, desc: `${i.tipo} · ${formatDate(i.fecha)} · ${i.descripcion || ''}` }))} />
+      <p className="section-label">
+        Registros actuales
+      </p>
+
+      <List
+        items={items.map((item) => ({
+          title: item.titulo,
+          desc: `${item.tipo} · ${formatDate(
+            item.fecha
+          )} · ${
+            item.descripcion || ''
+          }${
+            item.creado_por_nombre
+              ? ` · ${item.creado_por_nombre}`
+              : ''
+          }`,
+        }))}
+      />
     </div>
   )
 }
 
-function ServicesTab({ alumno, canFullAdmin, reload, setMsg }) {
-  async function toggleField(field, value) {
-    if (!canFullAdmin) return
-
+function ServicesTab({
+  profile,
+  reload,
+  setMsg,
+}) {
+  async function toggleField(
+    field,
+    value
+  ) {
     try {
-      setMsg('Actualizando servicio...')
+      setMsg(
+        'Actualizando servicio...'
+      )
 
       const { error } = await supabase
         .from('profiles')
         .update({
           [field]: value,
-          updated_at: new Date().toISOString(),
+          updated_at:
+            new Date().toISOString(),
         })
-        .eq('id', alumno.id)
+        .eq('id', profile.id)
 
-      if (error) throw new Error(error.message)
+      if (error) {
+        throw new Error(error.message)
+      }
 
       setMsg('Servicio actualizado.')
       await reload()
     } catch (error) {
-      setMsg(`No se pudo actualizar: ${error.message}`)
+      setMsg(
+        `No se pudo actualizar: ${error.message}`
+      )
     }
   }
 
-  if (!canFullAdmin) return null
-
   return (
     <div className="space-y-3">
-      <ToggleRow label="PR Card" active={alumno.prcardActiva} disabled={!canFullAdmin} onClick={() => toggleField('prcard_activa', !alumno.prcardActiva)} />
-      <ToggleRow label="PR Tracking" active={alumno.trackingActivo} disabled={!canFullAdmin} onClick={() => toggleField('tracking_activo', !alumno.trackingActivo)} />
-      <ToggleRow label="Perfil verificado" active={alumno.verificado} disabled={!canFullAdmin} onClick={() => toggleField('verificado', !alumno.verificado)} />
+      <ToggleRow
+        label="PR Card"
+        active={profile.prcardActiva}
+        onClick={() =>
+          toggleField(
+            'prcard_activa',
+            !profile.prcardActiva
+          )
+        }
+      />
+
+      <ToggleRow
+        label="PR Tracking"
+        active={
+          profile.trackingActivo
+        }
+        onClick={() =>
+          toggleField(
+            'tracking_activo',
+            !profile.trackingActivo
+          )
+        }
+      />
+
+      <ToggleRow
+        label="Perfil verificado"
+        active={profile.verificado}
+        onClick={() =>
+          toggleField(
+            'verificado',
+            !profile.verificado
+          )
+        }
+      />
 
       <p className="text-white/30 text-xs">
-        Estos cambios se reflejan en Perfil, Home, PRCard y servicios del alumno.
+        Los cambios se reflejan en el
+        perfil y los servicios del alumno.
       </p>
     </div>
   )
 }
 
-function ActivityTab({ alumno }) {
-  return <AlumnoActivityList alumnoId={alumno.id} tipo="" />
+function ActivityTab({ profile }) {
+  return (
+    <ProfileActivityList
+      profileId={profile.id}
+      tipo=""
+    />
+  )
 }
 
-function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg, actionType, setActionType }) {
-  const [selectedStudents, setSelectedStudents] = useState(selected?.id ? [selected.id] : [])
-  const [titulo, setTitulo] = useState('')
-  const [descripcion, setDescripcion] = useState('')
-  const [saving, setSaving] = useState(false)
+function ActionsPanel({
+  creator,
+  canManageContent,
+  selected,
+  alumnos,
+  reload,
+  setMsg,
+  actionType,
+  setActionType,
+}) {
+  const [
+    selectedStudents,
+    setSelectedStudents,
+  ] = useState(
+    selected?.role === 'alumno'
+      ? [selected.id]
+      : []
+  )
 
-  const allSelected = alumnos.length > 0 && selectedStudents.length === alumnos.length
+  const [titulo, setTitulo] =
+    useState('')
+
+  const [
+    descripcion,
+    setDescripcion,
+  ] = useState('')
+
+  const [saving, setSaving] =
+    useState(false)
+
+  const allSelected =
+    alumnos.length > 0 &&
+    selectedStudents.length ===
+      alumnos.length
 
   function toggleAll() {
     if (allSelected) {
       setSelectedStudents([])
     } else {
-      setSelectedStudents(alumnos.map(a => a.id))
+      setSelectedStudents(
+        alumnos.map(
+          (alumno) => alumno.id
+        )
+      )
     }
   }
 
-  function toggleStudent(id, checked) {
+  function toggleStudent(
+    id,
+    checked
+  ) {
     if (checked) {
-      setSelectedStudents([...new Set([...selectedStudents, id])])
+      setSelectedStudents([
+        ...new Set([
+          ...selectedStudents,
+          id,
+        ]),
+      ])
     } else {
-      setSelectedStudents(selectedStudents.filter(studentId => studentId !== id))
+      setSelectedStudents(
+        selectedStudents.filter(
+          (studentId) =>
+            studentId !== id
+        )
+      )
     }
   }
 
@@ -860,51 +2385,67 @@ function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg, act
       setSaving(true)
       setMsg('Guardando acción...')
 
-      if (!titulo.trim()) throw new Error('Falta el título.')
-      if (selectedStudents.length === 0) throw new Error('Seleccioná al menos un alumno.')
+      if (!titulo.trim()) {
+        throw new Error(
+          'Falta el título.'
+        )
+      }
 
-      const rows = selectedStudents.map(id => ({
-        alumno_id: id,
-        tipo: actionType,
-        titulo: titulo.trim(),
-        descripcion: descripcion.trim(),
-        fecha: new Date().toISOString(),
-      }))
+      if (
+        selectedStudents.length === 0
+      ) {
+        throw new Error(
+          'Seleccioná al menos un alumno.'
+        )
+      }
 
-      const { error } = await supabase.from('actividad_pr').insert(rows)
-      if (error) throw new Error(error.message)
+      const creatorName =
+        `${creator?.nombre || ''} ${
+          creator?.apellido || ''
+        }`.trim() ||
+        'Equipo Punta Rollers'
 
-      const key = actionType === 'Nota' ? 'notas' : actionType === 'Insignia' ? 'insignias' : 'eventos'
+      const date =
+        new Date().toISOString()
 
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, estadisticas')
-        .in('id', selectedStudents)
+      const rows =
+        selectedStudents.map((id) => ({
+          alumno_id: id,
+          tipo: actionType,
+          titulo: titulo.trim(),
+          descripcion:
+            descripcion.trim(),
+          fecha: date,
+          creado_por_id:
+            creator?.id || '',
+          creado_por_nombre:
+            creatorName,
+          creado_por_role:
+            creator?.role || '',
+          creado_por_foto:
+            creator?.foto || '',
+        }))
 
-      if (profileError) throw new Error(profileError.message)
+      const { error } = await supabase
+        .from('actividad_pr')
+        .insert(rows)
 
-      for (const profile of profiles || []) {
-        const currentStats = profile.estadisticas || { eventos: 0, insignias: 0, notas: 0 }
-        const newStats = {
-          ...currentStats,
-          [key]: Number(currentStats[key] || 0) + 1,
-        }
-
-        await supabase
-          .from('profiles')
-          .update({
-            estadisticas: newStats,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', profile.id)
+      if (error) {
+        throw new Error(error.message)
       }
 
       setTitulo('')
       setDescripcion('')
-      setMsg(`${actionType} guardada para ${selectedStudents.length} alumno/s.`)
+
+      setMsg(
+        `${actionType} guardada para ${selectedStudents.length} alumno/s.`
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo guardar: ${error.message}`)
+      setMsg(
+        `No se pudo guardar: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
@@ -912,29 +2453,59 @@ function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg, act
 
   return (
     <div className="space-y-4">
-      <section className={`${panel} p-4 space-y-3`}>
-        <p className="section-label">Acción grupal o individual</p>
+      <section
+        className={`${panel} p-4 space-y-3`}
+      >
+        <p className="section-label">
+          Acción grupal o individual
+        </p>
 
         <label className="block">
-          <span className="text-white/40 text-xs">Tipo de acción</span>
+          <span className="text-white/40 text-xs">
+            Tipo de acción
+          </span>
+
           <select
             value={actionType}
-            onChange={e => setActionType(e.target.value)}
+            onChange={(event) =>
+              setActionType(
+                event.target.value
+              )
+            }
             className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
           >
-            <option value="Nota">Observación / Nota</option>
-            <option value="Insignia">Insignia</option>
-            <option value="Evento">Participación / Evento</option>
+            <option value="Nota">
+              Observación / Nota
+            </option>
+
+            <option value="Insignia">
+              Insignia
+            </option>
+
+            <option value="Evento">
+              Participación / Evento
+            </option>
           </select>
         </label>
 
-        <AdminInput label="Título" value={titulo} onChange={setTitulo} />
+        <AdminInput
+          label="Título"
+          value={titulo}
+          onChange={setTitulo}
+        />
 
         <label className="block">
-          <span className="text-white/40 text-xs">Descripción</span>
+          <span className="text-white/40 text-xs">
+            Descripción
+          </span>
+
           <textarea
             value={descripcion}
-            onChange={e => setDescripcion(e.target.value)}
+            onChange={(event) =>
+              setDescripcion(
+                event.target.value
+              )
+            }
             className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
             rows="4"
           />
@@ -944,9 +2515,13 @@ function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg, act
       <section className={`${panel} p-4`}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="section-label">Alumnos</p>
+            <p className="section-label">
+              Alumnos
+            </p>
+
             <p className="text-white/40 text-xs mt-1">
-              Seleccionados: {selectedStudents.length}
+              Seleccionados:{' '}
+              {selectedStudents.length}
             </p>
           </div>
 
@@ -955,40 +2530,146 @@ function ActionsPanel({ canManageContent, selected, alumnos, reload, setMsg, act
             onClick={toggleAll}
             className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 text-xs"
           >
-            {allSelected ? 'Quitar todos' : 'Seleccionar todos'}
+            {allSelected
+              ? 'Quitar todos'
+              : 'Seleccionar todos'}
           </button>
         </div>
 
         <div className="grid grid-cols-1 gap-2 mt-3">
-          {alumnos.map(a => (
-            <label key={a.id} className="flex items-center gap-3 rounded-2xl bg-black/25 border border-white/5 p-3">
-              <input
-                type="checkbox"
-                checked={selectedStudents.includes(a.id)}
-                onChange={e => toggleStudent(a.id, e.target.checked)}
-              />
-              <span className="text-white text-sm">{a.nombre}</span>
-            </label>
-          ))}
+          {alumnos.map(
+            (alumno) => (
+              <label
+                key={alumno.id}
+                className="flex items-center gap-3 rounded-2xl bg-black/25 border border-white/5 p-3"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedStudents.includes(
+                    alumno.id
+                  )}
+                  onChange={(
+                    event
+                  ) =>
+                    toggleStudent(
+                      alumno.id,
+                      event.target
+                        .checked
+                    )
+                  }
+                />
+
+                <span className="text-white text-sm">
+                  {alumno.nombre}{' '}
+                  {alumno.apellido}
+                </span>
+              </label>
+            )
+          )}
         </div>
       </section>
 
-      <button disabled={saving || !canManageContent} onClick={saveAction} className="btn-gold w-full disabled:opacity-50">
-        {saving ? 'Guardando...' : `Guardar ${actionType}`}
+      <button
+        type="button"
+        disabled={
+          saving ||
+          !canManageContent
+        }
+        onClick={saveAction}
+        className="btn-gold w-full disabled:opacity-50"
+      >
+        {saving
+          ? 'Guardando...'
+          : `Guardar ${actionType}`}
       </button>
     </div>
   )
 }
 
-function CuposPanel({ cupos, setCupos, onSave }) {
+function CuposPanel({
+  cupos,
+  setCupos,
+  onSave,
+}) {
   return (
-    <section className={`${panel} p-4 space-y-3`}>
-      <p className="section-label">Cupos manuales de la Home</p>
-      <CupoInput label="Miércoles · Principiantes" value={cupos.miercoles.principiantes} onChange={v => setCupos({ ...cupos, miercoles: { ...cupos.miercoles, principiantes: v } })} />
-      <CupoInput label="Miércoles · Avanzado" value={cupos.miercoles.avanzado} onChange={v => setCupos({ ...cupos, miercoles: { ...cupos.miercoles, avanzado: v } })} />
-      <CupoInput label="Sábado · Kids" value={cupos.sabado.kids} onChange={v => setCupos({ ...cupos, sabado: { ...cupos.sabado, kids: v } })} />
-      <CupoInput label="Sábado · Adultos" value={cupos.sabado.adultos} onChange={v => setCupos({ ...cupos, sabado: { ...cupos.sabado, adultos: v } })} />
-      <button onClick={onSave} className="btn-gold w-full">Guardar cupos</button>
+    <section
+      className={`${panel} p-4 space-y-3`}
+    >
+      <p className="section-label">
+        Cupos manuales de la Home
+      </p>
+
+      <CupoInput
+        label="Miércoles · Principiantes"
+        value={
+          cupos.miercoles
+            .principiantes
+        }
+        onChange={(value) =>
+          setCupos({
+            ...cupos,
+            miercoles: {
+              ...cupos.miercoles,
+              principiantes:
+                value,
+            },
+          })
+        }
+      />
+
+      <CupoInput
+        label="Miércoles · Avanzado"
+        value={
+          cupos.miercoles.avanzado
+        }
+        onChange={(value) =>
+          setCupos({
+            ...cupos,
+            miercoles: {
+              ...cupos.miercoles,
+              avanzado: value,
+            },
+          })
+        }
+      />
+
+      <CupoInput
+        label="Sábado · Kids"
+        value={cupos.sabado.kids}
+        onChange={(value) =>
+          setCupos({
+            ...cupos,
+            sabado: {
+              ...cupos.sabado,
+              kids: value,
+            },
+          })
+        }
+      />
+
+      <CupoInput
+        label="Sábado · Adultos"
+        value={
+          cupos.sabado.adultos
+        }
+        onChange={(value) =>
+          setCupos({
+            ...cupos,
+            sabado: {
+              ...cupos.sabado,
+              adultos: value,
+            },
+          })
+        }
+      />
+
+      <button
+        type="button"
+        onClick={onSave}
+        className="btn-gold w-full"
+      >
+        Guardar cupos
+      </button>
     </section>
   )
 }
@@ -996,37 +2677,91 @@ function CuposPanel({ cupos, setCupos, onSave }) {
 function ConfigPanel() {
   return (
     <section className={`${panel} p-4`}>
-      <p className="section-label">Config</p>
+      <p className="section-label">
+        Config
+      </p>
+
       <p className="text-white/45 text-sm mt-2">
-        Configuración global preparada. Los contactos PR ya se cargan desde Supabase en el perfil del alumno.
+        Configuración global preparada.
+        Próximamente agregaremos
+        mensualidades, avisos y próximas
+        clases.
       </p>
     </section>
   )
 }
 
-function Stat({ label, value, alert }) {
+function Stat({
+  label,
+  value,
+  alert,
+}) {
   return (
-    <div className={`rounded-3xl p-4 border ${alert ? 'bg-red-500/10 border-red-500/20' : 'bg-white/[0.035] border-white/10'}`}>
-      <p className="text-2xl font-display text-white">{value}</p>
-      <p className="text-white/35 text-[10px] uppercase tracking-[0.16em]">{label}</p>
+    <div
+      className={`rounded-3xl p-4 border ${
+        alert
+          ? 'bg-red-500/10 border-red-500/20'
+          : 'bg-white/[0.035] border-white/10'
+      }`}
+    >
+      <p className="text-2xl font-display text-white">
+        {value}
+      </p>
+
+      <p className="text-white/35 text-[10px] uppercase tracking-[0.16em]">
+        {label}
+      </p>
     </div>
   )
 }
 
-function Quick({ icon, label, active, disabled, onClick }) {
+function Quick({
+  icon,
+  label,
+  active,
+  disabled,
+  onClick,
+}) {
   return (
-    <button disabled={disabled} onClick={onClick} className={`rounded-2xl p-3 min-w-[70px] text-center border ${active ? 'bg-pr-gold text-black border-pr-gold' : 'bg-white/[0.035] text-white border-white/10'} ${disabled ? 'opacity-30' : ''}`}>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`rounded-2xl p-3 min-w-[74px] text-center border ${
+        active
+          ? 'bg-pr-gold text-black border-pr-gold'
+          : 'bg-white/[0.035] text-white border-white/10'
+      } ${
+        disabled ? 'opacity-30' : ''
+      }`}
+    >
       <p>{icon}</p>
-      <p className="text-[10px] font-bold mt-1">{label}</p>
+
+      <p className="text-[10px] font-bold mt-1">
+        {label}
+      </p>
     </button>
   )
 }
 
-function ActionButton({ icon, label, onClick }) {
+function ActionButton({
+  icon,
+  label,
+  onClick,
+}) {
   return (
-    <button onClick={onClick} className="rounded-2xl bg-black/25 border border-white/5 p-4 text-left">
-      <p className="text-xl">{icon}</p>
-      <p className="text-white text-sm font-semibold mt-2">{label}</p>
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-2xl bg-black/25 border border-white/5 p-4 text-left"
+    >
+      <p className="text-xl">
+        {icon}
+      </p>
+
+      <p className="text-white text-sm font-semibold mt-2">
+        {label}
+      </p>
     </button>
   )
 }
@@ -1034,8 +2769,13 @@ function ActionButton({ icon, label, onClick }) {
 function Field({ label, value }) {
   return (
     <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
-      <p className="text-white/30 text-[10px] uppercase tracking-wider">{label}</p>
-      <p className="text-white/75 text-sm mt-1 break-words">{value}</p>
+      <p className="text-white/30 text-[10px] uppercase tracking-wider">
+        {label}
+      </p>
+
+      <p className="text-white/75 text-sm mt-1 break-words">
+        {value}
+      </p>
     </div>
   )
 }
@@ -1044,54 +2784,138 @@ function List({ items }) {
   return (
     <div className="space-y-2">
       {items.length ? (
-        items.map((item, idx) => (
-          <div key={idx} className="rounded-2xl bg-black/25 border border-white/5 p-3">
-            <p className="text-white text-sm font-semibold">{item.title}</p>
-            <p className="text-white/40 text-xs mt-1">{item.desc}</p>
+        items.map((item, index) => (
+          <div
+            key={`${item.title}-${index}`}
+            className="rounded-2xl bg-black/25 border border-white/5 p-3"
+          >
+            <p className="text-white text-sm font-semibold">
+              {item.title}
+            </p>
+
+            <p className="text-white/40 text-xs mt-1">
+              {item.desc}
+            </p>
           </div>
         ))
       ) : (
         <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
-          <p className="text-white/45 text-sm">Sin registros todavía.</p>
+          <p className="text-white/45 text-sm">
+            Sin registros todavía.
+          </p>
         </div>
       )}
     </div>
   )
 }
 
-function ToggleRow({ label, active, disabled, onClick }) {
+function ToggleRow({
+  label,
+  active,
+  onClick,
+}) {
   return (
     <div className="flex items-center justify-between rounded-2xl bg-black/25 border border-white/5 p-4">
       <div>
-        <p className="text-white font-semibold">{label}</p>
-        <p className={active ? 'text-emerald-400 text-xs' : 'text-red-300 text-xs'}>
-          {active ? 'Activo' : 'Inactivo'}
+        <p className="text-white font-semibold">
+          {label}
+        </p>
+
+        <p
+          className={
+            active
+              ? 'text-emerald-400 text-xs'
+              : 'text-red-300 text-xs'
+          }
+        >
+          {active
+            ? 'Activo'
+            : 'Inactivo'}
         </p>
       </div>
 
-      <button disabled={disabled} onClick={onClick} className="px-3 py-2 rounded-xl bg-white/5 text-white/70 text-xs disabled:opacity-30">
+      <button
+        type="button"
+        onClick={onClick}
+        className="px-3 py-2 rounded-xl bg-white/5 text-white/70 text-xs"
+      >
         Cambiar
       </button>
     </div>
   )
 }
 
-function CupoInput({ label, value, onChange }) {
+function CheckRow({
+  label,
+  checked,
+  onChange,
+}) {
   return (
-    <label className="block">
-      <span className="text-white/40 text-xs">{label}</span>
-      <input type="number" value={value} onChange={e => onChange(Number(e.target.value))} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white" />
+    <label className="flex items-center justify-between gap-3 rounded-2xl bg-black/25 border border-white/5 p-4">
+      <span className="text-white text-sm">
+        {label}
+      </span>
+
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) =>
+          onChange(
+            event.target.checked
+          )
+        }
+        className="w-5 h-5"
+      />
     </label>
   )
 }
 
-function AdminInput({ label, value, onChange, placeholder = '' }) {
+function CupoInput({
+  label,
+  value,
+  onChange,
+}) {
   return (
     <label className="block">
-      <span className="text-white/40 text-xs">{label}</span>
+      <span className="text-white/40 text-xs">
+        {label}
+      </span>
+
       <input
+        type="number"
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(event) =>
+          onChange(
+            Number(event.target.value)
+          )
+        }
+        className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+      />
+    </label>
+  )
+}
+
+function AdminInput({
+  label,
+  value,
+  onChange,
+  placeholder = '',
+  type = 'text',
+  inputMode,
+}) {
+  return (
+    <label className="block">
+      <span className="text-white/40 text-xs">
+        {label}
+      </span>
+
+      <input
+        type={type}
+        inputMode={inputMode}
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
         placeholder={placeholder}
         className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
       />
@@ -1100,19 +2924,30 @@ function AdminInput({ label, value, onChange, placeholder = '' }) {
 }
 
 function formatDate(value) {
-  if (!value) return 'Sin fecha'
+  if (!value) {
+    return 'Sin fecha'
+  }
+
   try {
     const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return value
 
-    return date.toLocaleString('es-UY', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    if (
+      Number.isNaN(date.getTime())
+    ) {
+      return value
+    }
+
+    return date.toLocaleString(
+      'es-UY',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }
+    )
   } catch {
     return value
   }
-        }
+              }
