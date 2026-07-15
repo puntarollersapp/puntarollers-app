@@ -1,21 +1,30 @@
-import { useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
-import PublicLayout from "../layouts/PublicLayout"
-import { useAuth } from "../lib/auth"
+import { useState } from 'react'
+import {
+  useLocation,
+  useNavigate,
+  Link,
+} from 'react-router-dom'
+import PublicLayout from '../layouts/PublicLayout'
+import { useAuth } from '../lib/auth'
 
 export default function Login() {
-  const [documento, setDocumento] = useState("")
-  const [pin, setPin] = useState("")
-  const [error, setError] = useState("")
+  const [documento, setDocumento] = useState('')
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const from = location.state?.from?.pathname || "/app/dashboard"
+  const from =
+    location.state?.from?.pathname || '/app/dashboard'
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
+  async function handleSubmit(event) {
+    event.preventDefault()
+
+    setError('')
+    setLoading(true)
 
     try {
       const result = await login(documento, pin)
@@ -25,60 +34,108 @@ export default function Login() {
         return
       }
 
-      const destination =
-        result?.user?.role === "admin" || result?.user?.role === "profesor"
-          ? "/admin"
-          : from
+      const isAdmin =
+        result?.user?.role === 'admin' ||
+        result?.user?.role === 'profesor'
 
-      navigate(destination, { replace: true })
+      navigate(isAdmin ? '/admin' : from, {
+        replace: true,
+      })
     } catch {
-      setError("No pudimos iniciar sesión. Revisá tus datos.")
+      setError(
+        'No pudimos iniciar sesión. Revisá tus datos.'
+      )
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <PublicLayout>
-      <div className="px-4 py-10 max-w-md mx-auto space-y-8">
-        <section className="text-center space-y-3">
-          <h1 className="text-3xl text-white font-bold">Ingresar</h1>
-          <p className="text-gray-400 text-sm">
-            Accedé a tu perfil PR, observaciones, insignias y participaciones.
+      <div className="min-h-[calc(100vh-70px)] px-5 py-8 max-w-md mx-auto flex flex-col justify-center">
+        <section className="text-center mb-8 animate-fade-up">
+          <div className="w-20 h-20 mx-auto rounded-[26px] grid place-items-center bg-pr-gold/10 border border-pr-gold/20 shadow-[0_20px_55px_rgba(0,0,0,.35)]">
+            <img
+              src="/logo.png"
+              alt="Punta Rollers"
+              className="w-14 h-14 object-contain"
+            />
+          </div>
+
+          <p className="section-label mt-6">
+            PuntaRollers.app
+          </p>
+
+          <h1 className="font-display text-[38px] leading-none text-white mt-2">
+            Tu club, en tu bolsillo.
+          </h1>
+
+          <p className="text-white/40 text-sm mt-3 max-w-[290px] mx-auto">
+            Ingresá para ver tu perfil, progreso,
+            beneficios y vida dentro de PR.
           </p>
         </section>
 
-        <form onSubmit={handleSubmit} className="glass p-5 rounded-2xl space-y-4">
-          <div className="space-y-2">
-            <label className="text-gray-400 text-xs">Documento</label>
+        <form
+          onSubmit={handleSubmit}
+          className="pr-panel p-5 space-y-4 animate-fade-up stagger-1"
+        >
+          <label className="block">
+            <span className="section-label">
+              Documento
+            </span>
+
             <input
               value={documento}
-              onChange={(e) => setDocumento(e.target.value)}
-              type="text"
+              onChange={(event) =>
+                setDocumento(event.target.value)
+              }
+              inputMode="numeric"
               placeholder="Ej: 12345678"
-              className="input-pr"
+              className="input-pr mt-2"
             />
-          </div>
+          </label>
 
-          <div className="space-y-2">
-            <label className="text-gray-400 text-xs">PIN</label>
+          <label className="block">
+            <span className="section-label">
+              PIN personal
+            </span>
+
             <input
               value={pin}
-              onChange={(e) => setPin(e.target.value)}
+              onChange={(event) =>
+                setPin(event.target.value)
+              }
               type="password"
-              placeholder="Tu PIN"
-              className="input-pr"
+              inputMode="numeric"
+              placeholder="Ingresá tu PIN"
+              className="input-pr mt-2"
             />
-          </div>
+          </label>
 
-          {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+          {error && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300 text-xs text-center">
+              {error}
+            </div>
+          )}
 
-          <button type="submit" className="btn-gold w-full">
-            Entrar
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-gold w-full disabled:opacity-50"
+          >
+            {loading
+              ? 'Ingresando…'
+              : 'Ingresar a mi cuenta'}
           </button>
         </form>
 
-        <a href="/" className="block text-center text-xs text-gray-500 underline">
-          Volver al inicio
-        </a>
+        <Link
+          to="/"
+          className="text-center text-white/30 text-xs mt-6"
+        >
+          Volver al sitio público
+        </Link>
       </div>
     </PublicLayout>
   )
