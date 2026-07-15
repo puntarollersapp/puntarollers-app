@@ -4,35 +4,129 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
 
+const TYPE = {
+  Evento: { icon: '🎯', color: '#818cf8' },
+  Insignia: { icon: '🏅', color: '#C9A84C' },
+  Nota: { icon: '📝', color: '#4ecb8b' },
+}
+
 const quickAccess = [
-  { icon: '💳', label: 'Mi PRCard', to: '/app/prcard', accent: '#C9A84C' },
-  { icon: '📝', label: 'Notas del profe', to: '/app/perfil#observaciones', accent: '#818cf8' },
-  { icon: '✏️', label: 'Editar perfil', to: '/app/perfil#editar', accent: '#C9A84C' },
-  { icon: '📊', label: 'Actividad', to: '/app/actividad', accent: '#4ecb8b' },
-  { icon: '📍', label: 'Tracking', to: '/app/tracking', accent: '#C9A84C' },
-  { icon: '🎬', label: 'Contenido', to: '/app/contenido', accent: '#f97316' },
-  { icon: '🛒', label: 'Tienda', to: '/app/tienda', accent: '#4ecb8b' },
+  {
+    icon: 'card',
+    label: 'Mi PRCard',
+    desc: 'Beneficios y acceso',
+    to: '/app/prcard',
+  },
+  {
+    icon: 'note',
+    label: 'Notas del profe',
+    desc: 'Tu evolución',
+    to: '/app/perfil#observaciones',
+  },
+  {
+    icon: 'pin',
+    label: 'PR Tracking',
+    desc: 'Tus equipos',
+    to: '/app/tracking',
+  },
+  {
+    icon: 'play',
+    label: 'Contenido',
+    desc: 'Videos y recursos',
+    to: '/app/contenido',
+  },
+  {
+    icon: 'bag',
+    label: 'Tienda PR',
+    desc: 'Uniformes y más',
+    to: '/app/tienda',
+  },
 ]
 
-const PHRASES = [
-  'Hoy también es un buen día para rodar.',
-  'Tu historia sobre ruedas continúa acá.',
-  'Cada rodada queda.',
-]
+function QIcon({ type }) {
+  const paths = {
+    card: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <path d="M3 10h18M7 15h3" />
+      </>
+    ),
+    note: (
+      <>
+        <path d="M6 3h9l3 3v15H6z" />
+        <path d="M15 3v4h4M9 12h6M9 16h5" />
+      </>
+    ),
+    pin: (
+      <>
+        <path d="M12 22s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z" />
+        <circle cx="12" cy="10" r="2.4" />
+      </>
+    ),
+    play: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <path d="m10 9 5 3-5 3Z" />
+      </>
+    ),
+    bag: (
+      <>
+        <path d="M5 8h14l-1 13H6L5 8Z" />
+        <path d="M9 9V6a3 3 0 0 1 6 0v3" />
+      </>
+    ),
+  }
+
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {paths[type]}
+    </svg>
+  )
+}
 
 function greeting(nombre) {
-  const h = new Date().getHours()
-  const time = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
-  return `${time}, ${nombre?.split(' ')[0] || 'Alumno'}.`
+  const hour = new Date().getHours()
+
+  const time =
+    hour < 12
+      ? 'Buenos días'
+      : hour < 19
+        ? 'Buenas tardes'
+        : 'Buenas noches'
+
+  return `${time}, ${nombre?.split(' ')[0] || 'Alumno'}`
 }
 
 function loadSavedUser() {
   try {
-    const saved = localStorage.getItem('pr_user')
-    return saved ? JSON.parse(saved) : {}
+    return JSON.parse(localStorage.getItem('pr_user') || '{}')
   } catch {
     return {}
   }
+}
+
+function formatDate(value) {
+  if (!value) return ''
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleDateString('es-UY', {
+    day: '2-digit',
+    month: 'short',
+  })
 }
 
 const emptyUser = {
@@ -45,248 +139,390 @@ const emptyUser = {
   foto: '',
   banner: '',
   gruposInfo: [],
-  estadisticas: { eventos: 0, insignias: 0, notas: 0 },
 }
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth()
-  const [u, setU] = useState({ ...emptyUser, ...loadSavedUser(), ...user })
-  const phrase = PHRASES[new Date().getDay() % PHRASES.length]
+
+  const [profile, setProfile] = useState({
+    ...emptyUser,
+    ...loadSavedUser(),
+    ...user,
+  })
+
+  const [activity, setActivity] = useState([])
+  const [allActivity, setAllActivity] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadProfile() {
-      const base = { ...emptyUser, ...loadSavedUser(), ...user }
-      const profileId = base.id
+    async function loadDashboard() {
+      const base = {
+        ...emptyUser,
+        ...loadSavedUser(),
+        ...user,
+      }
 
-      if (!profileId) {
-        setU(base)
+      if (!base.id) {
+        setProfile(base)
+        setLoading(false)
         return
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', profileId)
-        .maybeSingle()
+      setLoading(true)
 
-      if (!error && data) {
-        const updated = {
+      const [
+        { data: profileData },
+        { data: recentRows },
+        { data: totalRows },
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', base.id)
+          .maybeSingle(),
+
+        supabase
+          .from('actividad_pr')
+          .select('*')
+          .eq('alumno_id', base.id)
+          .order('fecha', { ascending: false })
+          .limit(3),
+
+        supabase
+          .from('actividad_pr')
+          .select('id, tipo')
+          .eq('alumno_id', base.id),
+      ])
+
+      if (profileData) {
+        const updatedProfile = {
           ...base,
-          nombre: data.nombre || base.nombre,
-          ciudad: data.ciudad || base.ciudad,
-          instagram: data.instagram || base.instagram,
-          email: data.email || base.email,
-          fechaNacimiento: data.fecha_nacimiento || base.fechaNacimiento,
-          sobreMi: data.sobre_mi || base.sobreMi,
-          foto: data.foto || '',
-          banner: data.banner || '',
-          miembroDesde: data.miembro_desde || '2026',
-          estado: data.estado || 'Activo',
-          verificado: Boolean(data.verificado),
-          prcardActiva: Boolean(data.prcard_activa),
-          trackingActivo: Boolean(data.tracking_activo),
-          gruposInfo: Array.isArray(data.grupos_info) ? data.grupos_info : [],
-          estadisticas: data.estadisticas || { eventos: 0, insignias: 0, notas: 0 },
+          nombre: profileData.nombre || base.nombre,
+          ciudad: profileData.ciudad || '',
+          instagram: profileData.instagram || '',
+          email: profileData.email || '',
+          fechaNacimiento:
+            profileData.fecha_nacimiento || '',
+          sobreMi: profileData.sobre_mi || '',
+          foto: profileData.foto || '',
+          banner: profileData.banner || '',
+          miembroDesde:
+            profileData.miembro_desde || '2026',
+          estado: profileData.estado || 'Activo',
+          verificado: Boolean(profileData.verificado),
+          prcardActiva: Boolean(
+            profileData.prcard_activa
+          ),
+          trackingActivo: Boolean(
+            profileData.tracking_activo
+          ),
+          gruposInfo: Array.isArray(
+            profileData.grupos_info
+          )
+            ? profileData.grupos_info
+            : [],
         }
 
-        setU(updated)
-        localStorage.setItem('pr_user', JSON.stringify(updated))
-        updateUser?.(updated)
-      } else {
-        setU(base)
+        setProfile(updatedProfile)
+        localStorage.setItem(
+          'pr_user',
+          JSON.stringify(updatedProfile)
+        )
+        updateUser?.(updatedProfile)
       }
+
+      setActivity(recentRows || [])
+      setAllActivity(totalRows || [])
+      setLoading(false)
     }
 
-    loadProfile()
+    loadDashboard()
   }, [user?.id])
 
-  const stats = [
-    { label: 'Eventos', value: u.estadisticas?.eventos || 0, color: '#818cf8' },
-    { label: 'Insignias', value: u.estadisticas?.insignias || 0, color: '#C9A84C' },
-    { label: 'Notas', value: u.estadisticas?.notas || 0, color: '#4ecb8b' },
-  ]
+  const counts = allActivity.reduce(
+    (accumulator, item) => {
+      if (item.tipo === 'Evento') {
+        accumulator.eventos += 1
+      }
+
+      if (item.tipo === 'Insignia') {
+        accumulator.insignias += 1
+      }
+
+      if (item.tipo === 'Nota') {
+        accumulator.notas += 1
+      }
+
+      return accumulator
+    },
+    {
+      eventos: 0,
+      insignias: 0,
+      notas: 0,
+    }
+  )
 
   return (
     <AppLayout>
-      <div className="px-4 pt-6 pb-8 space-y-7">
-        <div className="animate-fade-up">
-          <h1 className="font-display text-2xl font-semibold text-white">
-            {greeting(u.nombre)}
-          </h1>
-          <p className="text-sm font-body mt-1 italic" style={{ color: 'rgba(216,216,232,0.32)' }}>
-            "{phrase}"
+      <div className="pr-page space-y-7 animate-page-enter">
+        <section>
+          <p className="section-label">
+            Mi comunidad PR
           </p>
-        </div>
 
-        <section
-          className="animate-fade-up stagger-1 rounded-3xl overflow-hidden relative"
-          style={{
-            background: 'rgba(255,255,255,0.035)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-          }}
-        >
-          <div className="h-32 relative bg-gradient-to-br from-[#19140b] via-[#090910] to-black overflow-hidden">
-            {u.banner ? (
-              <img src={u.banner} alt="Banner" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+          <h1 className="font-display text-[34px] leading-none text-white mt-2">
+            {greeting(profile.nombre)}
+          </h1>
+
+          <p className="text-white/38 text-sm mt-2">
+            Cada rodada suma una parte de tu historia.
+          </p>
+        </section>
+
+        <section className="pr-panel overflow-hidden relative">
+          <div className="h-[150px] relative overflow-hidden bg-gradient-to-br from-[#221b0e] via-[#101018] to-[#08080d]">
+            {profile.banner ? (
+              <img
+                src={profile.banner}
+                alt="Banner del perfil"
+                className="absolute inset-0 w-full h-full object-cover opacity-70"
+              />
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                <div className="text-3xl mb-1">🛼</div>
-                <p className="text-pr-gold text-sm font-semibold">Personalizá tu banner</p>
-                <p className="text-white/35 text-xs mt-1">Subí tu imagen desde Perfil.</p>
+              <div className="absolute inset-0 grid place-items-center text-center px-8">
+                <div>
+                  <div className="text-3xl">🛼</div>
+
+                  <p className="text-pr-gold font-semibold text-sm mt-2">
+                    Hacé tuyo este espacio
+                  </p>
+
+                  <p className="text-white/30 text-xs mt-1">
+                    Subí un banner desde tu perfil.
+                  </p>
+                </div>
               </div>
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-[#0a0a14]/90" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d13] via-transparent to-black/10" />
+
+            <span className="absolute top-4 right-4 pr-chip">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+
+              {profile.estado || 'Activo'}
+            </span>
           </div>
 
           <div className="px-5 pb-5 relative">
-            <div
-              className="w-24 h-24 rounded-full overflow-hidden border-4 absolute -top-12 flex items-center justify-center"
-              style={{
-                borderColor: '#0b0b12',
-                background: 'linear-gradient(145deg, rgba(201,168,76,0.35), rgba(255,255,255,0.08))',
-              }}
-            >
-              {u.foto ? (
-                <img src={u.foto} alt={u.nombre} className="w-full h-full object-cover" />
+            <div className="absolute -top-12 left-5 w-24 h-24 rounded-[28px] overflow-hidden border-[4px] border-[#0d0d13] bg-[#181821] shadow-2xl grid place-items-center">
+              {profile.foto ? (
+                <img
+                  src={profile.foto}
+                  alt={profile.nombre}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="text-center px-2">
-                  <div className="text-2xl mb-1">📸</div>
-                  <p className="text-[9px] text-pr-gold leading-tight">Poné tu foto</p>
-                </div>
+                <span className="text-3xl">📷</span>
               )}
             </div>
 
-            <div className="pt-14 flex items-start justify-between gap-3">
+            <div className="pt-14 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-white leading-tight">
-                  {u.nombre} {u.verificado && <span className="text-sky-400">✓</span>}
+                <h2 className="font-display text-[28px] leading-none text-white">
+                  {profile.nombre}
+
+                  {profile.verificado && (
+                    <span className="text-sky-400 text-lg ml-1">
+                      ✓
+                    </span>
+                  )}
                 </h2>
 
-                <p className="text-xs mt-1" style={{ color: 'rgba(216,216,232,0.45)' }}>
-                  {u.ciudad || 'Sin ciudad'} · Miembro desde {u.miembroDesde || '2026'}
+                <p className="text-white/38 text-xs mt-2">
+                  {profile.ciudad || 'Sin ciudad'} ·
+                  Miembro desde {profile.miembroDesde}
                 </p>
-
-                {u.instagram && (
-                  <p className="text-xs mt-1" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                    {u.instagram}
-                  </p>
-                )}
               </div>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold badge-activo">
-                <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                {u.estado || 'Activo'}
-              </span>
+              <Link
+                to="/app/perfil"
+                className="text-pr-gold text-xs font-semibold shrink-0"
+              >
+                Ver perfil →
+              </Link>
             </div>
 
-            {u.gruposInfo?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {u.gruposInfo.map((grupo, index) => (
-                  <span
-                    key={`${grupo.titulo}-${index}`}
-                    className="text-[11px] px-3 py-1 rounded-full"
-                    style={{
-                      color: 'rgba(216,216,232,0.72)',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    {grupo.titulo}
-                  </span>
-                ))}
+            {profile.gruposInfo?.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto mt-4 pb-1">
+                {profile.gruposInfo.map(
+                  (group, index) => (
+                    <span
+                      key={`${group.titulo}-${index}`}
+                      className="shrink-0 px-3 py-1.5 rounded-full text-[10px] text-white/60 bg-white/[0.04] border border-white/[0.06]"
+                    >
+                      {group.titulo}
+                    </span>
+                  )
+                )}
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-3 text-center mt-5">
-              {stats.map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-2xl py-3"
-                  style={{
-                    background: 'rgba(255,255,255,0.035)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                  }}
+            <div className="grid grid-cols-3 gap-2.5 mt-5">
+              {[
+                [
+                  'Eventos',
+                  counts.eventos,
+                  '#818cf8',
+                ],
+                [
+                  'Insignias',
+                  counts.insignias,
+                  '#C9A84C',
+                ],
+                ['Notas', counts.notas, '#4ecb8b'],
+              ].map(([label, value, color]) => (
+                <Link
+                  to="/app/actividad"
+                  key={label}
+                  className="pr-card p-3 text-center"
                 >
-                  <p className="font-display text-2xl font-bold" style={{ color: s.color }}>
-                    {s.value}
+                  <p
+                    className="font-display text-2xl font-bold"
+                    style={{ color }}
+                  >
+                    {loading ? '—' : value}
                   </p>
-                  <p className="section-label mt-0.5">{s.label}</p>
-                </div>
+
+                  <p className="section-label mt-1">
+                    {label}
+                  </p>
+                </Link>
               ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <Link to="/app/perfil" className="block text-center rounded-2xl py-3 text-sm font-semibold" style={{ color: '#0b0b12', background: '#C9A84C' }}>
-                Ver perfil
-              </Link>
-
-              <Link
-                to="/app/perfil#editar"
-                className="block text-center rounded-2xl py-3 text-sm font-semibold"
-                style={{
-                  color: 'rgba(216,216,232,0.85)',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                Editar perfil
-              </Link>
             </div>
           </div>
         </section>
 
-        <div className="animate-fade-up stagger-2">
-          <p className="section-label mb-3">Accesos rápidos</p>
+        <section>
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <p className="section-label">
+                Accesos rápidos
+              </p>
 
-          <div className="grid grid-cols-2 gap-2.5">
+              <h2 className="font-display text-2xl text-white mt-1">
+                Todo PR, más cerca
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             {quickAccess.map((item, index) => (
               <Link
                 key={item.label}
                 to={item.to}
-                className={`rounded-xl p-4 flex items-center gap-3 transition-all active:scale-95 ${
-                  index === quickAccess.length - 1 ? 'col-span-2' : ''
+                className={`pr-card p-4 flex flex-col gap-4 min-h-[128px] ${
+                  index === quickAccess.length - 1
+                    ? 'col-span-2 min-h-0 flex-row items-center'
+                    : ''
                 }`}
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                }}
               >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: `${item.accent}12` }}>
-                  {item.icon}
+                <div className="pr-icon-box">
+                  <QIcon type={item.icon} />
                 </div>
 
-                <span className="text-sm font-body font-medium leading-tight" style={{ color: 'rgba(216,216,232,0.75)' }}>
-                  {item.label}
-                </span>
+                <div>
+                  <p className="text-white text-sm font-semibold">
+                    {item.label}
+                  </p>
+
+                  <p className="text-white/32 text-[11px] mt-1">
+                    {item.desc}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="animate-fade-up stagger-3">
+        <section>
           <div className="flex items-center justify-between mb-3">
-            <p className="section-label">Actividad reciente</p>
-            <Link to="/app/actividad" className="text-xs font-body" style={{ color: 'rgba(201,168,76,0.6)' }}>
+            <div>
+              <p className="section-label">
+                Actividad reciente
+              </p>
+
+              <h2 className="font-display text-2xl text-white mt-1">
+                Lo último en tu perfil
+              </h2>
+            </div>
+
+            <Link
+              to="/app/actividad"
+              className="text-pr-gold text-xs"
+            >
               Ver todo
             </Link>
           </div>
 
-          <div
-            className="rounded-2xl p-4"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <p className="text-white font-semibold text-sm">Sin actividad reciente</p>
-            <p className="text-white/40 text-xs mt-1">
-              Cuando el equipo PR agregue eventos, notas o insignias, aparecerán acá.
-            </p>
-          </div>
-        </div>
+          {loading ? (
+            <div className="pr-card p-5">
+              <p className="text-white/45 text-sm">
+                Cargando tu actividad…
+              </p>
+            </div>
+          ) : activity.length > 0 ? (
+            <div className="space-y-3">
+              {activity.map((item) => {
+                const config =
+                  TYPE[item.tipo] || TYPE.Evento
+
+                return (
+                  <Link
+                    to="/app/actividad"
+                    key={item.id}
+                    className="pr-card p-4 flex gap-3 items-center"
+                  >
+                    <div
+                      className="w-11 h-11 rounded-[14px] grid place-items-center text-xl shrink-0"
+                      style={{
+                        background: `${config.color}12`,
+                        border: `1px solid ${config.color}22`,
+                      }}
+                    >
+                      {config.icon}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white text-sm font-semibold truncate">
+                        {item.titulo}
+                      </p>
+
+                      <p className="text-white/32 text-[11px] mt-1">
+                        {item.tipo} ·{' '}
+                        {formatDate(item.fecha)}
+                      </p>
+                    </div>
+
+                    <span className="text-white/20">
+                      ›
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="pr-card p-5">
+              <p className="text-white font-semibold text-sm">
+                Todavía no hay actividad
+              </p>
+
+              <p className="text-white/35 text-xs mt-1">
+                Cuando el equipo PR cargue algo nuevo,
+                aparecerá acá.
+              </p>
+            </div>
+          )}
+        </section>
       </div>
     </AppLayout>
   )
-}
+      }
