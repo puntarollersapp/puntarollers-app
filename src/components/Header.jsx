@@ -4,46 +4,77 @@ import { useAuth } from '../lib/auth'
 export default function Header({ title, showBack = false, onBack }) {
   const { user } = useAuth()
 
-  return (
-    <header
-      className="sticky top-0 z-50 glass-dark"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-    >
-      <div className="flex items-center justify-between px-4" style={{ height: '52px' }}>
+  const initials =
+    user?.nombre
+      ?.split(' ')
+      .filter(Boolean)
+      .map((name) => name[0])
+      .join('')
+      .slice(0, 2) || 'PR'
 
+  return (
+    <header className="sticky top-0 z-50 glass-dark border-b border-white/[0.055]">
+      <div className="h-[62px] px-[18px] flex items-center justify-between relative">
         {showBack ? (
           <button
+            type="button"
             onClick={onBack}
-            className="w-9 h-9 flex items-center justify-center rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            aria-label="Volver"
+            className="w-10 h-10 rounded-[14px] grid place-items-center bg-white/[0.035] border border-white/[0.075] active:scale-95"
           >
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(216,216,232,0.5)" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              className="text-white/55"
+              strokeWidth="1.9"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
         ) : (
-          <Link to="/app/dashboard">
-            <img src="/logo.png" alt="PR" className="w-8 h-8 object-contain opacity-90" />
+          <Link
+            to="/app/dashboard"
+            className="w-10 h-10 grid place-items-center"
+            aria-label="Ir al inicio"
+          >
+            <img
+              src="/logo.png"
+              alt="Punta Rollers"
+              className="w-9 h-9 object-contain"
+            />
           </Link>
         )}
 
         {title && (
-          <span className="font-display text-base font-semibold absolute left-1/2 -translate-x-1/2" style={{ color: 'rgba(216,216,232,0.85)' }}>
+          <span className="font-display text-[20px] font-bold tracking-wide absolute left-1/2 -translate-x-1/2 text-white/90 whitespace-nowrap">
             {title}
           </span>
         )}
 
-        <Link to="/app/perfil" className="relative">
-          <div
-            className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,168,76,0.2)' }}
-          >
-            <span className="font-display text-xs font-bold" style={{ color: '#C9A84C' }}>
-              {user?.nombre?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'PR'}
+        <Link
+          to="/app/perfil"
+          aria-label="Abrir perfil"
+          className="w-10 h-10 rounded-[14px] overflow-hidden grid place-items-center bg-pr-gold/10 border border-pr-gold/20 active:scale-95"
+        >
+          {user?.foto ? (
+            <img
+              src={user.foto}
+              alt={user.nombre || 'Perfil'}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="font-display text-[13px] font-bold text-pr-gold">
+              {initials}
             </span>
-          </div>
+          )}
         </Link>
-
       </div>
     </header>
   )
