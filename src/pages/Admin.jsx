@@ -1927,4 +1927,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-            }
+          }
