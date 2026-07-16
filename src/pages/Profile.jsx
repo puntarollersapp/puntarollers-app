@@ -8,6 +8,8 @@ import {
 } from '../lib/supabase'
 import { mockUser } from '../data/mockData'
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
 function loadSavedUser() {
   try {
     return JSON.parse(
@@ -16,6 +18,20 @@ function loadSavedUser() {
   } catch {
     return {}
   }
+}
+
+function parsePaymentDate(value) {
+  if (!value) return null
+
+  const date = new Date(
+    `${String(value).slice(0, 10)}T23:59:59`
+  )
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return date
 }
 
 function formatDate(value) {
@@ -32,6 +48,142 @@ function formatDate(value) {
     month: 'long',
     year: 'numeric',
   })
+}
+
+function formatPaymentDate(value) {
+  const date = parsePaymentDate(value)
+
+  if (!date) {
+    return 'Sin fecha registrada'
+  }
+
+  return date.toLocaleDateString('es-UY', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function getPaymentStatus(
+  expirationValue,
+  accessEnabled
+) {
+  if (!expirationValue) {
+    return {
+      title: 'Sin pago registrado',
+      description:
+        'Todavía no hay una vigencia cargada para tu mensualidad.',
+      detail:
+        'Consultá con Tesorería si considerás que esto es un error.',
+      icon: '💳',
+      containerClass:
+        'border-white/[0.08] bg-white/[0.025]',
+      badgeClass:
+        'border-white/10 bg-white/[0.05] text-white/50',
+      badge: 'Sin registrar',
+    }
+  }
+
+  const expiration =
+    parsePaymentDate(expirationValue)
+
+  if (!expiration) {
+    return {
+      title: 'Información no disponible',
+      description:
+        'No pudimos interpretar la fecha de tu mensualidad.',
+      detail:
+        'Comunicate con Tesorería para revisarla.',
+      icon: '💳',
+      containerClass:
+        'border-white/[0.08] bg-white/[0.025]',
+      badgeClass:
+        'border-white/10 bg-white/[0.05] text-white/50',
+      badge: 'Revisar',
+    }
+  }
+
+  const remainingDays = Math.ceil(
+    (expiration.getTime() - Date.now()) /
+      DAY_MS
+  )
+
+  if (
+    remainingDays < 0 ||
+    accessEnabled === false
+  ) {
+    const expiredDays = Math.max(
+      1,
+      Math.abs(remainingDays)
+    )
+
+    return {
+      title: 'Mensualidad vencida',
+      description: `Venció el ${formatPaymentDate(
+        expirationValue
+      )}.`,
+      detail: `Vencida hace ${expiredDays} día${
+        expiredDays === 1 ? '' : 's'
+      }.`,
+      icon: '⚠️',
+      containerClass:
+        'border-red-400/20 bg-gradient-to-br from-red-500/10 to-white/[0.02]',
+      badgeClass:
+        'border-red-400/20 bg-red-400/10 text-red-200',
+      badge: 'Vencida',
+    }
+  }
+
+  if (remainingDays === 0) {
+    return {
+      title: 'Tu mensualidad vence hoy',
+      description: `Vigente hasta el ${formatPaymentDate(
+        expirationValue
+      )}.`,
+      detail:
+        'Regularizala para mantener todos tus accesos.',
+      icon: '⏳',
+      containerClass:
+        'border-amber-400/20 bg-gradient-to-br from-amber-400/10 to-white/[0.02]',
+      badgeClass:
+        'border-amber-400/20 bg-amber-400/10 text-amber-200',
+      badge: 'Vence hoy',
+    }
+  }
+
+  if (remainingDays <= 7) {
+    return {
+      title: 'Tu mensualidad vence pronto',
+      description: `Vigente hasta el ${formatPaymentDate(
+        expirationValue
+      )}.`,
+      detail: `Te quedan ${remainingDays} día${
+        remainingDays === 1 ? '' : 's'
+      }.`,
+      icon: '⏳',
+      containerClass:
+        'border-amber-400/20 bg-gradient-to-br from-amber-400/10 to-white/[0.02]',
+      badgeClass:
+        'border-amber-400/20 bg-amber-400/10 text-amber-200',
+      badge: `${remainingDays} día${
+        remainingDays === 1 ? '' : 's'
+      }`,
+    }
+  }
+
+  return {
+    title: 'Mensualidad vigente',
+    description: `Vigente hasta el ${formatPaymentDate(
+      expirationValue
+    )}.`,
+    detail: `Te quedan ${remainingDays} días.`,
+    icon: '✓',
+    containerClass:
+      'border-emerald-400/15 bg-gradient-to-br from-emerald-400/[0.08] to-white/[0.02]',
+    badgeClass:
+      'border-emerald-400/20 bg-emerald-400/10 text-emerald-300',
+    badge: `${remainingDays} días`,
+  }
 }
 
 export default function Profile() {
@@ -71,6 +223,13 @@ export default function Profile() {
     prcardActiva: false,
     trackingActivo: false,
     gruposInfo: [],
+    ultimoPago: base.ultimoPago || '',
+    mensualidadHasta:
+      base.mensualidadHasta || '',
+    accesoHabilitado:
+      typeof base.accesoHabilitado === 'boolean'
+        ? base.accesoHabilitado
+        : true,
   })
 
   useEffect(() => {
@@ -92,6 +251,16 @@ export default function Profile() {
       setTimeout(() => {
         document
           .getElementById('editar-perfil')
+          ?.scrollIntoView({
+            behavior: 'smooth',
+          })
+      }, 250)
+    }
+
+    if (location.hash === '#mensualidad') {
+      setTimeout(() => {
+        document
+          .getElementById('mensualidad')
           ?.scrollIntoView({
             behavior: 'smooth',
           })
@@ -165,6 +334,15 @@ export default function Profile() {
           )
             ? data.grupos_info
             : [],
+          ultimoPago:
+            data.ultimo_pago || '',
+          mensualidadHasta:
+            data.mensualidad_hasta || '',
+          accesoHabilitado:
+            typeof data.acceso_habilitado ===
+            'boolean'
+              ? data.acceso_habilitado
+              : true,
         }
 
         setForm(loadedProfile)
@@ -224,6 +402,12 @@ export default function Profile() {
       ),
     [activity]
   )
+
+  const paymentStatus =
+    getPaymentStatus(
+      profile.mensualidadHasta,
+      profile.accesoHabilitado
+    )
 
   function previewImage(file, field) {
     if (!file) return
@@ -475,6 +659,59 @@ export default function Profile() {
                 value={notes.length}
                 label="Notas"
               />
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="mensualidad"
+          className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl grid place-items-center shrink-0 bg-black/25 border border-white/[0.06] text-xl">
+              {paymentStatus.icon}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="section-label">
+                    Mensualidad PR
+                  </p>
+
+                  <h2 className="font-display text-xl text-white mt-1">
+                    {paymentStatus.title}
+                  </h2>
+                </div>
+
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${paymentStatus.badgeClass}`}
+                >
+                  {paymentStatus.badge}
+                </span>
+              </div>
+
+              <p className="text-white/55 text-sm mt-3 leading-relaxed">
+                {paymentStatus.description}
+              </p>
+
+              <p className="text-white/30 text-xs mt-1">
+                {paymentStatus.detail}
+              </p>
+
+              {profile.ultimoPago && (
+                <div className="rounded-2xl bg-black/20 border border-white/[0.05] p-3 mt-4">
+                  <p className="text-white/25 text-[10px] uppercase tracking-[0.14em]">
+                    Último pago registrado
+                  </p>
+
+                  <p className="text-white/70 text-sm mt-1">
+                    {formatPaymentDate(
+                      profile.ultimoPago
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -965,4 +1202,4 @@ function EditInput({
       />
     </label>
   )
-          }
+}
