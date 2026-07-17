@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import PaymentsPanel from '../components/admin/PaymentsPanel'
 import PrivateLessonsPanel from '../components/admin/PrivateLessonsPanel'
+import ContactsPanel from '../components/admin/ContactsPanel'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
@@ -218,6 +219,12 @@ export default function Admin() {
       show: canFullAdmin,
     },
     {
+      id: 'contactos',
+      icon: '📱',
+      label: 'Contactos',
+      show: canFullAdmin,
+    },
+    {
       id: 'acciones',
       icon: '⚡',
       label: 'Acciones',
@@ -340,6 +347,12 @@ export default function Admin() {
             profiles={profiles}
             currentUser={user}
             reload={reloadAll}
+            setMsg={setMsg}
+          />
+        )}
+
+        {!loading && section === 'contactos' && canFullAdmin && (
+          <ContactsPanel
             setMsg={setMsg}
           />
         )}
