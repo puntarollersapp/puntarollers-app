@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import PaymentsPanel from '../components/admin/PaymentsPanel'
-import PrivateLessonsPanel from '../components/admin/PrivateLessonsPanel'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
@@ -212,12 +211,6 @@ export default function Admin() {
     },
     { id: 'pagos', icon: '💳', label: 'Pagos', show: canFullAdmin },
     {
-      id: 'particulares',
-      icon: '🛼',
-      label: 'Particulares',
-      show: canFullAdmin,
-    },
-    {
       id: 'acciones',
       icon: '⚡',
       label: 'Acciones',
@@ -335,15 +328,6 @@ export default function Admin() {
           />
         )}
 
-        {!loading && section === 'particulares' && canFullAdmin && (
-          <PrivateLessonsPanel
-            profiles={profiles}
-            currentUser={user}
-            reload={reloadAll}
-            setMsg={setMsg}
-          />
-        )}
-
         {section === 'cupos' && canFullAdmin && (
           <CuposPanel
             cupos={cupos}
@@ -352,7 +336,12 @@ export default function Admin() {
           />
         )}
 
-        {section === 'config' && canFullAdmin && <ConfigPanel />}
+        {section === 'config' && canFullAdmin && (
+          <ConfigPanel
+            setMsg={setMsg}
+            reload={reloadAll}
+          />
+        )}
       </div>
     </AppLayout>
   )
@@ -1741,15 +1730,188 @@ function CuposPanel({ cupos, setCupos, onSave }) {
   )
 }
 
-function ConfigPanel() {
+function ConfigPanel({
+  setMsg,
+  reload,
+}) {
+  const [migrating, setMigrating] =
+    useState(false)
+
+  const [migrationResult, setMigrationResult] =
+    useState(null)
+
+  async function migrateOneUser() {
+    try {
+      setMigrating(true)
+      setMigrationResult(null)
+      setMsg(
+        'Migrando un usuario de prueba a la sesión segura...'
+      )
+
+      const {
+        data,
+        error,
+      } = await supabase.functions.invoke(
+        'migrar-usuarios-auth',
+        {
+          body: {
+            action: 'migrate_batch',
+            limit: 1,
+          },
+        }
+      )
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      if (!data?.success) {
+        throw new Error(
+          data?.error ||
+            'La función no confirmó la migración.'
+        )
+      }
+
+      setMigrationResult(data)
+
+      const migrated =
+        Number(data.created || 0) +
+        Number(data.linked || 0)
+
+      setMsg(
+        migrated > 0
+          ? `Migración correcta: ${migrated} usuario vinculado. Quedan ${data.remaining ?? 'sin calcular'}.`
+          : `La función terminó sin migrar usuarios. Omitidos: ${data.skipped || 0}. Errores: ${data.failed || 0}.`
+      )
+
+      await reload()
+    } catch (error) {
+      setMsg(
+        `No se pudo migrar el usuario: ${error.message}`
+      )
+    } finally {
+      setMigrating(false)
+    }
+  }
+
   return (
-    <section className={`${panel} p-4`}>
-      <p className="section-label">Config</p>
-      <p className="text-white/45 text-sm mt-2">
-        Configuración global preparada. Próximamente agregaremos avisos y
-        próximas clases.
-      </p>
-    </section>
+    <div className="space-y-4">
+      <section className={`${panel} p-4`}>
+        <p className="section-label">
+          Seguridad de usuarios
+        </p>
+
+        <h2 className="font-display text-2xl text-white mt-1">
+          Migración a Supabase Auth
+        </h2>
+
+        <p className="text-white/45 text-sm mt-2 leading-relaxed">
+          Esta prueba crea y vincula solamente una cuenta segura. El alumno seguirá entrando con su documento y PIN habituales.
+        </p>
+
+        <div className="rounded-2xl bg-amber-400/[0.08] border border-amber-400/15 p-3 mt-4">
+          <p className="text-amber-200 text-xs leading-relaxed">
+            Primero probamos con un único usuario. No migraremos el resto hasta confirmar que puede cerrar sesión y volver a ingresar correctamente.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={migrating}
+          onClick={migrateOneUser}
+          className="btn-gold w-full mt-4 disabled:opacity-50"
+        >
+          {migrating
+            ? 'Migrando usuario...'
+            : 'Migrar 1 usuario de prueba'}
+        </button>
+      </section>
+
+      {migrationResult && (
+        <section className={`${panel} p-4`}>
+          <p className="section-label">
+            Resultado de la prueba
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Field
+              label="Procesados"
+              value={migrationResult.processed ?? 0}
+            />
+
+            <Field
+              label="Creados"
+              value={migrationResult.created ?? 0}
+            />
+
+            <Field
+              label="Vinculados"
+              value={migrationResult.linked ?? 0}
+            />
+
+            <Field
+              label="Pendientes"
+              value={
+                migrationResult.remaining ??
+                'Sin calcular'
+              }
+            />
+
+            <Field
+              label="Omitidos"
+              value={migrationResult.skipped ?? 0}
+            />
+
+            <Field
+              label="Errores"
+              value={migrationResult.failed ?? 0}
+            />
+          </div>
+
+          {Array.isArray(
+            migrationResult.results
+          ) &&
+            migrationResult.results.length > 0 && (
+              <div className="space-y-2 mt-4">
+                {migrationResult.results.map(
+                  (item, index) => (
+                    <div
+                      key={`${item.id || 'resultado'}-${index}`}
+                      className="rounded-2xl bg-black/25 border border-white/5 p-3"
+                    >
+                      <p className="text-white text-sm font-semibold">
+                        {item.nombre ||
+                          item.id ||
+                          'Usuario'}
+                      </p>
+
+                      <p className="text-white/40 text-xs mt-1">
+                        Estado: {item.status}
+                      </p>
+
+                      {item.reason && (
+                        <p className="text-red-200/75 text-xs mt-1">
+                          {item.reason}
+                        </p>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+        </section>
+      )}
+
+      <section className={`${panel} p-4`}>
+        <p className="section-label">
+          Configuración general
+        </p>
+
+        <p className="text-white/45 text-sm mt-2">
+          Próximamente agregaremos avisos y próximas clases.
+        </p>
+      </section>
+    </div>
   )
 }
 
@@ -1927,4 +2089,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-          }
+}
