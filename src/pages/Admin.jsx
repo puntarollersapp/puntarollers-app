@@ -366,10 +366,7 @@ export default function Admin() {
         )}
 
         {section === 'config' && canFullAdmin && (
-          <ConfigPanel
-            setMsg={setMsg}
-            reload={reloadAll}
-          />
+          <ConfigPanel />
         )}
       </div>
     </AppLayout>
@@ -1855,188 +1852,29 @@ function CuposPanel({ cupos, setCupos, onSave }) {
   )
 }
 
-function ConfigPanel({
-  setMsg,
-  reload,
-}) {
-  const [migrating, setMigrating] =
-    useState(false)
-
-  const [migrationResult, setMigrationResult] =
-    useState(null)
-
-  async function migrateUsersBatch() {
-    try {
-      setMigrating(true)
-      setMigrationResult(null)
-      setMsg(
-        'Migrando hasta 20 usuarios a la sesión segura...'
-      )
-
-      const {
-        data,
-        error,
-      } = await supabase.functions.invoke(
-        'migrar-usuarios-auth',
-        {
-          body: {
-            action: 'migrate_batch',
-            limit: 20,
-          },
-        }
-      )
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      if (!data?.success) {
-        throw new Error(
-          data?.error ||
-            'La función no confirmó la migración.'
-        )
-      }
-
-      setMigrationResult(data)
-
-      const migrated =
-        Number(data.created || 0) +
-        Number(data.linked || 0)
-
-      setMsg(
-        migrated > 0
-          ? `Migración correcta: ${migrated} usuario${migrated === 1 ? '' : 's'} vinculado${migrated === 1 ? '' : 's'}. Quedan ${data.remaining ?? 'sin calcular'}.`
-          : `La función terminó sin migrar usuarios. Omitidos: ${data.skipped || 0}. Errores: ${data.failed || 0}.`
-      )
-
-      await reload()
-    } catch (error) {
-      setMsg(
-        `No se pudo migrar el usuario: ${error.message}`
-      )
-    } finally {
-      setMigrating(false)
-    }
-  }
-
+function ConfigPanel() {
   return (
-    <div className="space-y-4">
-      <section className={`${panel} p-4`}>
-        <p className="section-label">
-          Seguridad de usuarios
+    <section className={`${panel} p-4`}>
+      <p className="section-label">
+        Configuración general
+      </p>
+
+      <h2 className="font-display text-2xl text-white mt-1">
+        PuntaRollers.app
+      </h2>
+
+      <p className="text-white/45 text-sm mt-2 leading-relaxed">
+        La migración de usuarios a Supabase Auth ya fue completada.
+        La gestión diaria de cuentas, PIN, pagos, clases particulares
+        y contactos permanece activa desde este panel.
+      </p>
+
+      <div className="rounded-2xl bg-emerald-400/[0.08] border border-emerald-400/15 p-3 mt-4">
+        <p className="text-emerald-200 text-xs leading-relaxed">
+          Sistema de usuarios seguro y operativo.
         </p>
-
-        <h2 className="font-display text-2xl text-white mt-1">
-          Migración a Supabase Auth
-        </h2>
-
-        <p className="text-white/45 text-sm mt-2 leading-relaxed">
-          Cada ejecución crea y vincula hasta 20 cuentas seguras. Los alumnos seguirán entrando con su documento y PIN habituales.
-        </p>
-
-        <div className="rounded-2xl bg-amber-400/[0.08] border border-amber-400/15 p-3 mt-4">
-          <p className="text-amber-200 text-xs leading-relaxed">
-            La prueba con Agustín Silva fue correcta. Ahora podés migrar los usuarios restantes en grupos de hasta 20, revisando el resultado después de cada lote.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          disabled={migrating}
-          onClick={migrateUsersBatch}
-          className="btn-gold w-full mt-4 disabled:opacity-50"
-        >
-          {migrating
-            ? 'Migrando usuarios...'
-            : 'Migrar próximos 20 usuarios'}
-        </button>
-      </section>
-
-      {migrationResult && (
-        <section className={`${panel} p-4`}>
-          <p className="section-label">
-            Resultado del último lote
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <Field
-              label="Procesados"
-              value={migrationResult.processed ?? 0}
-            />
-
-            <Field
-              label="Creados"
-              value={migrationResult.created ?? 0}
-            />
-
-            <Field
-              label="Vinculados"
-              value={migrationResult.linked ?? 0}
-            />
-
-            <Field
-              label="Pendientes"
-              value={
-                migrationResult.remaining ??
-                'Sin calcular'
-              }
-            />
-
-            <Field
-              label="Omitidos"
-              value={migrationResult.skipped ?? 0}
-            />
-
-            <Field
-              label="Errores"
-              value={migrationResult.failed ?? 0}
-            />
-          </div>
-
-          {Array.isArray(
-            migrationResult.results
-          ) &&
-            migrationResult.results.length > 0 && (
-              <div className="space-y-2 mt-4">
-                {migrationResult.results.map(
-                  (item, index) => (
-                    <div
-                      key={`${item.id || 'resultado'}-${index}`}
-                      className="rounded-2xl bg-black/25 border border-white/5 p-3"
-                    >
-                      <p className="text-white text-sm font-semibold">
-                        {item.nombre ||
-                          item.id ||
-                          'Usuario'}
-                      </p>
-
-                      <p className="text-white/40 text-xs mt-1">
-                        Estado: {item.status}
-                      </p>
-
-                      {item.reason && (
-                        <p className="text-red-200/75 text-xs mt-1">
-                          {item.reason}
-                        </p>
-                      )}
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-        </section>
-      )}
-
-      <section className={`${panel} p-4`}>
-        <p className="section-label">
-          Configuración general
-        </p>
-
-        <p className="text-white/45 text-sm mt-2">
-          Próximamente agregaremos avisos y próximas clases.
-        </p>
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }
 
