@@ -100,45 +100,33 @@ export default function PrivateLessonsPanel({
   async function loadData() {
     setLoading(true)
 
-    const [
-      cuponerasResponse,
-      historyResponse,
-    ] = await Promise.all([
-      supabase
-        .from('cuponeras_particulares')
-        .select('*')
-        .order('updated_at', {
-          ascending: false,
-        }),
-
-      supabase
-        .from(
-          'clases_particulares_historial'
-        )
-        .select('*')
-        .order('created_at', {
-          ascending: false,
-        }),
-    ])
-
-    if (cuponerasResponse.error) {
-      setMsg(
-        `Error cargando cuponeras: ${cuponerasResponse.error.message}`
+    const { data, error } =
+      await supabase.rpc(
+        'obtener_panel_particulares_admin'
       )
-    }
 
-    if (historyResponse.error) {
+    if (error) {
+      setCuponeras([])
+      setHistory([])
       setMsg(
-        `Error cargando historial: ${historyResponse.error.message}`
+        `Error cargando particulares: ${error.message}`
       )
+      setLoading(false)
+      return
     }
 
     setCuponeras(
-      cuponerasResponse.data || []
+      Array.isArray(data?.cuponeras)
+        ? data.cuponeras
+        : []
     )
+
     setHistory(
-      historyResponse.data || []
+      Array.isArray(data?.historial)
+        ? data.historial
+        : []
     )
+
     setLoading(false)
   }
 
@@ -924,4 +912,4 @@ function MiniStat({
       </p>
     </div>
   )
-}
+        }
