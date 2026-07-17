@@ -207,6 +207,12 @@ export default function Profile() {
   const [bannerFile, setBannerFile] = useState(null)
   const [contactos, setContactos] = useState([])
   const [activity, setActivity] = useState([])
+  const [particularesHabilitadas, setParticularesHabilitadas] =
+    useState(false)
+  const [cuponeraParticular, setCuponeraParticular] =
+    useState(null)
+  const [historialParticular, setHistorialParticular] =
+    useState([])
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
@@ -276,6 +282,7 @@ export default function Profile() {
         profileResponse,
         contactsResponse,
         activityResponse,
+        particularesResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -298,6 +305,13 @@ export default function Profile() {
           .order('fecha', {
             ascending: false,
           }),
+
+        supabase.rpc(
+          'obtener_cuponera_particular',
+          {
+            p_alumno_id: profileId,
+          }
+        ),
       ])
 
       if (profileResponse.error) {
@@ -366,6 +380,29 @@ export default function Profile() {
 
       if (!activityResponse.error) {
         setActivity(activityResponse.data || [])
+      }
+
+      if (particularesResponse.error) {
+        setParticularesHabilitadas(false)
+        setCuponeraParticular(null)
+        setHistorialParticular([])
+      } else {
+        const particulares =
+          particularesResponse.data || {}
+
+        setParticularesHabilitadas(
+          Boolean(particulares.habilitada)
+        )
+
+        setCuponeraParticular(
+          particulares.cuponera || null
+        )
+
+        setHistorialParticular(
+          Array.isArray(particulares.historial)
+            ? particulares.historial
+            : []
+        )
       }
 
       setLoading(false)
@@ -716,6 +753,13 @@ export default function Profile() {
           </div>
         </section>
 
+        {particularesHabilitadas && (
+          <PrivateLessonsCard
+            cuponera={cuponeraParticular}
+            historial={historialParticular}
+          />
+        )}
+
         {message && (
           <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-pr-gold text-sm">
             {message}
@@ -1022,6 +1066,230 @@ export default function Profile() {
   )
 }
 
+function PrivateLessonsCard({
+  cuponera,
+  historial,
+}) {
+  const loaded = Number(
+    cuponera?.clases_cargadas || 0
+  )
+
+  const used = Number(
+    cuponera?.clases_utilizadas || 0
+  )
+
+  const available = Number(
+    cuponera?.clases_disponibles || 0
+  )
+
+  const movements = Array.isArray(historial)
+    ? historial
+    : []
+
+  const completedClasses = movements.filter(
+    (item) => item.tipo === 'clase_dada'
+  )
+
+  return (
+    <section className="pr-panel overflow-hidden">
+      <div className="p-5 bg-gradient-to-br from-pr-gold/10 via-white/[0.025] to-transparent border-b border-white/[0.05]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="section-label">
+              Clases particulares
+            </p>
+
+            <h2 className="font-display text-2xl text-white mt-1">
+              Mi cuponera digital
+            </h2>
+
+            <p className="text-white/40 text-xs mt-2">
+              Tu saldo y el registro de cada clase realizada.
+            </p>
+          </div>
+
+          <div className="w-14 h-14 rounded-[18px] bg-pr-gold/10 border border-pr-gold/20 grid place-items-center text-2xl shrink-0">
+            🛼
+          </div>
+        </div>
+
+        <div className="rounded-[26px] border border-pr-gold/20 bg-black/25 p-5 mt-5">
+          <p className="text-white/30 text-[10px] uppercase tracking-[0.18em]">
+            Clases disponibles
+          </p>
+
+          <div className="flex items-end justify-between gap-4 mt-2">
+            <p className="font-display text-6xl leading-none text-pr-gold font-bold">
+              {available}
+            </p>
+
+            <span
+              className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
+                available > 0
+                  ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+                  : 'border-white/10 bg-white/[0.04] text-white/40'
+              }`}
+            >
+              {available > 0
+                ? 'Cuponera activa'
+                : 'Sin clases'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 mt-5">
+            <PrivateMiniStat
+              label="Cargadas"
+              value={loaded}
+            />
+
+            <PrivateMiniStat
+              label="Utilizadas"
+              value={used}
+            />
+          </div>
+
+          {loaded > 0 && (
+            <div className="mt-4">
+              <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-full bg-pr-gold rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.max(
+                        0,
+                        (used / loaded) * 100
+                      )
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <p className="text-white/25 text-[10px] mt-2 text-right">
+                {used} de {loaded} utilizadas
+              </p>
+            </div>
+          )}
+        </div>
+
+        {cuponera?.ultima_clase && (
+          <div className="rounded-2xl bg-white/[0.035] border border-white/[0.06] p-4 mt-4">
+            <p className="section-label">
+              Última clase
+            </p>
+
+            <p className="text-white text-sm font-semibold mt-2">
+              {formatPrivateDateTime(
+                cuponera.ultima_clase
+              )}
+            </p>
+
+            {cuponera.ultima_observacion && (
+              <p className="text-white/45 text-xs leading-relaxed mt-2">
+                {cuponera.ultima_observacion}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="p-5">
+        <p className="section-label">
+          Historial de clases
+        </p>
+
+        {completedClasses.length ? (
+          <div className="space-y-3 mt-4">
+            {completedClasses.map((item) => (
+              <div
+                key={item.id}
+                className="pr-card p-4 flex gap-3"
+              >
+                <div className="w-10 h-10 rounded-[14px] bg-pr-gold/10 border border-pr-gold/15 grid place-items-center shrink-0">
+                  ✓
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-semibold">
+                    Clase particular realizada
+                  </p>
+
+                  <p className="text-white/30 text-[11px] mt-1">
+                    {formatPrivateDateTime(
+                      item.fecha_clase ||
+                        item.created_at
+                    )}
+                  </p>
+
+                  {item.observacion && (
+                    <p className="text-white/45 text-xs leading-relaxed mt-2">
+                      {item.observacion}
+                    </p>
+                  )}
+
+                  {item.registrado_por_nombre && (
+                    <p className="text-white/20 text-[10px] mt-2">
+                      Registrada por{' '}
+                      {item.registrado_por_nombre}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="pr-card p-4 mt-4">
+            <p className="text-white font-semibold text-sm">
+              Todavía no hay clases registradas
+            </p>
+
+            <p className="text-white/35 text-xs mt-1">
+              Cuando el profesor confirme una clase, aparecerá acá con la fecha y lo trabajado.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function PrivateMiniStat({
+  label,
+  value,
+}) {
+  return (
+    <div className="rounded-2xl bg-white/[0.035] border border-white/[0.06] p-3 text-center">
+      <p className="font-display text-2xl text-white font-bold">
+        {value}
+      </p>
+
+      <p className="text-white/25 text-[9px] uppercase tracking-wider mt-1">
+        {label}
+      </p>
+    </div>
+  )
+}
+
+function formatPrivateDateTime(value) {
+  if (!value) {
+    return 'Sin fecha'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleString('es-UY', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 function MiniStat({ value, label }) {
   return (
     <div className="pr-card p-3 text-center">
@@ -1202,4 +1470,4 @@ function EditInput({
       />
     </label>
   )
-}
+            }
