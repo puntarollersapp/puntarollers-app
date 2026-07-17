@@ -202,20 +202,16 @@ export default function Profile() {
   const [editing, setEditing] = useState(false)
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const [savingMedia, setSavingMedia] = useState('')
   const [loading, setLoading] = useState(true)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
+  const [savedMedia, setSavedMedia] = useState({
+    foto: base.foto || '',
+    banner: base.banner || '',
+  })
   const [contactos, setContactos] = useState([])
   const [activity, setActivity] = useState([])
-  const [originalPin, setOriginalPin] = useState(
-    base.pin || ''
-  )
-  const [particularesHabilitadas, setParticularesHabilitadas] =
-    useState(false)
-  const [cuponeraParticular, setCuponeraParticular] =
-    useState(null)
-  const [historialParticular, setHistorialParticular] =
-    useState([])
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
@@ -285,7 +281,6 @@ export default function Profile() {
         profileResponse,
         contactsResponse,
         activityResponse,
-        particularesResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -308,13 +303,6 @@ export default function Profile() {
           .order('fecha', {
             ascending: false,
           }),
-
-        supabase.rpc(
-          'obtener_cuponera_particular',
-          {
-            p_alumno_id: profileId,
-          }
-        ),
       ])
 
       if (profileResponse.error) {
@@ -363,9 +351,10 @@ export default function Profile() {
         }
 
         setForm(loadedProfile)
-        setOriginalPin(
-          String(loadedProfile.pin || '')
-        )
+        setSavedMedia({
+          foto: loadedProfile.foto,
+          banner: loadedProfile.banner,
+        })
 
         const nextUser = {
           ...base,
@@ -386,29 +375,6 @@ export default function Profile() {
 
       if (!activityResponse.error) {
         setActivity(activityResponse.data || [])
-      }
-
-      if (particularesResponse.error) {
-        setParticularesHabilitadas(false)
-        setCuponeraParticular(null)
-        setHistorialParticular([])
-      } else {
-        const particulares =
-          particularesResponse.data || {}
-
-        setParticularesHabilitadas(
-          Boolean(particulares.habilitada)
-        )
-
-        setCuponeraParticular(
-          particulares.cuponera || null
-        )
-
-        setHistorialParticular(
-          Array.isArray(particulares.historial)
-            ? particulares.historial
-            : []
-        )
       }
 
       setLoading(false)
@@ -469,24 +435,108 @@ export default function Profile() {
     }))
 
     setMessage(
-      'Imagen lista. Tocá Guardar cambios para publicarla.'
+      field === 'foto'
+        ? 'La foto está lista. Tocá Guardar foto.'
+        : 'El banner está listo. Tocá Guardar banner.'
     )
+  }
+
+  function cancelMedia(field) {
+    if (field === 'foto') {
+      setFotoFile(null)
+    } else {
+      setBannerFile(null)
+    }
+
+    setForm((previous) => ({
+      ...previous,
+      [field]: savedMedia[field] || '',
+    }))
+  }
+
+  async function saveMedia(field) {
+    const file = field === 'foto' ? fotoFile : bannerFile
+
+    if (!file) return
+
+    try {
+      setSavingMedia(field)
+      setMessage(
+        field === 'foto'
+          ? 'Guardando foto…'
+          : 'Guardando banner…'
+      )
+
+      const bucket =
+        field === 'foto' ? 'avatars' : 'banners'
+
+      const result = await uploadPublicImage(
+        bucket,
+        file,
+        profileId
+      )
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          [field]: result.url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profileId)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      const nextUser = {
+        ...base,
+        ...form,
+        [field]: result.url,
+      }
+
+      localStorage.setItem(
+        'pr_user',
+        JSON.stringify(nextUser)
+      )
+
+      updateUser?.({ [field]: result.url })
+
+      setForm((previous) => ({
+        ...previous,
+        [field]: result.url,
+      }))
+
+      setSavedMedia((previous) => ({
+        ...previous,
+        [field]: result.url,
+      }))
+
+      if (field === 'foto') {
+        setFotoFile(null)
+      } else {
+        setBannerFile(null)
+      }
+
+      setMessage(
+        field === 'foto'
+          ? 'Foto actualizada correctamente.'
+          : 'Banner actualizado correctamente.'
+      )
+    } catch (error) {
+      setMessage(`No se pudo guardar: ${error.message}`)
+    } finally {
+      setSavingMedia('')
+    }
   }
 
   async function saveProfile() {
     try {
       setSaving(true)
       setMessage('Guardando cambios…')
-
-      const nextPin = String(
-        form.pin || ''
-      ).trim()
-
-      if (!/^\d{4,8}$/.test(nextPin)) {
-        throw new Error(
-          'El PIN debe tener entre 4 y 8 números.'
-        )
-      }
 
       let foto = form.foto
       let banner = form.banner
@@ -519,9 +569,6 @@ export default function Profile() {
         banner = result.url
       }
 
-      const pinChanged =
-        nextPin !== String(originalPin || '')
-
       const payload = {
         nombre: form.nombre,
         ciudad: form.ciudad,
@@ -529,6 +576,7 @@ export default function Profile() {
         email: form.email,
         fecha_nacimiento: form.fechaNacimiento,
         sobre_mi: form.sobreMi,
+        pin: form.pin,
         foto,
         banner,
         updated_at: new Date().toISOString(),
@@ -543,41 +591,9 @@ export default function Profile() {
         throw new Error(error.message)
       }
 
-      if (pinChanged) {
-        setMessage(
-          'Actualizando tu PIN seguro…'
-        )
-
-        const {
-          data: pinData,
-          error: pinError,
-        } = await supabase.functions.invoke(
-          'actualizar-pin-usuario',
-          {
-            body: {
-              nuevo_pin: nextPin,
-            },
-          }
-        )
-
-        if (pinError) {
-          throw new Error(pinError.message)
-        }
-
-        if (!pinData?.success) {
-          throw new Error(
-            pinData?.error ||
-              'No pudimos actualizar el PIN.'
-          )
-        }
-
-        setOriginalPin(nextPin)
-      }
-
       const nextUser = {
         ...base,
         ...form,
-        pin: nextPin,
         foto,
         banner,
       }
@@ -591,20 +607,16 @@ export default function Profile() {
 
       setForm((previous) => ({
         ...previous,
-        pin: nextPin,
         foto,
         banner,
       }))
 
+      setSavedMedia({ foto, banner })
+
       setFotoFile(null)
       setBannerFile(null)
       setEditing(false)
-
-      setMessage(
-        pinChanged
-          ? 'Cambios y PIN guardados correctamente.'
-          : 'Cambios guardados correctamente.'
-      )
+      setMessage('Cambios guardados correctamente.')
     } catch (error) {
       setMessage(
         `No se pudo guardar: ${error.message}`
@@ -664,6 +676,30 @@ export default function Profile() {
                 }
               />
             </label>
+
+            {bannerFile && (
+              <div className="absolute left-4 right-4 bottom-4 flex gap-2">
+                <button
+                  type="button"
+                  disabled={savingMedia === 'banner'}
+                  onClick={() => saveMedia('banner')}
+                  className="flex-1 rounded-2xl bg-pr-gold text-black py-3 text-xs font-bold disabled:opacity-50"
+                >
+                  {savingMedia === 'banner'
+                    ? 'Guardando…'
+                    : 'Guardar banner'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={savingMedia === 'banner'}
+                  onClick={() => cancelMedia('banner')}
+                  className="px-4 rounded-2xl bg-black/60 border border-white/10 text-white/70 text-xs font-semibold"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="px-5 pb-5 relative">
@@ -731,6 +767,40 @@ export default function Profile() {
                 {editing ? 'Cerrar' : 'Editar'}
               </button>
             </div>
+
+            {fotoFile && (
+              <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 mt-4">
+                <p className="text-pr-gold text-xs font-semibold">
+                  Nueva foto lista
+                </p>
+
+                <p className="text-white/40 text-[11px] mt-1">
+                  Guardala ahora sin abrir Editar perfil.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button
+                    type="button"
+                    disabled={savingMedia === 'foto'}
+                    onClick={() => saveMedia('foto')}
+                    className="rounded-xl bg-pr-gold text-black py-3 text-xs font-bold disabled:opacity-50"
+                  >
+                    {savingMedia === 'foto'
+                      ? 'Guardando…'
+                      : 'Guardar foto'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={savingMedia === 'foto'}
+                    onClick={() => cancelMedia('foto')}
+                    className="rounded-xl bg-white/5 border border-white/10 text-white/65 py-3 text-xs font-semibold"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
 
             <p className="text-white/50 text-sm leading-relaxed mt-5">
               {profile.sobreMi ||
@@ -808,13 +878,6 @@ export default function Profile() {
             </div>
           </div>
         </section>
-
-        {particularesHabilitadas && (
-          <PrivateLessonsCard
-            cuponera={cuponeraParticular}
-            historial={historialParticular}
-          />
-        )}
 
         {message && (
           <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-pr-gold text-sm">
@@ -1120,230 +1183,6 @@ export default function Profile() {
       </div>
     </AppLayout>
   )
-}
-
-function PrivateLessonsCard({
-  cuponera,
-  historial,
-}) {
-  const loaded = Number(
-    cuponera?.clases_cargadas || 0
-  )
-
-  const used = Number(
-    cuponera?.clases_utilizadas || 0
-  )
-
-  const available = Number(
-    cuponera?.clases_disponibles || 0
-  )
-
-  const movements = Array.isArray(historial)
-    ? historial
-    : []
-
-  const completedClasses = movements.filter(
-    (item) => item.tipo === 'clase_dada'
-  )
-
-  return (
-    <section className="pr-panel overflow-hidden">
-      <div className="p-5 bg-gradient-to-br from-pr-gold/10 via-white/[0.025] to-transparent border-b border-white/[0.05]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="section-label">
-              Clases particulares
-            </p>
-
-            <h2 className="font-display text-2xl text-white mt-1">
-              Mi cuponera digital
-            </h2>
-
-            <p className="text-white/40 text-xs mt-2">
-              Tu saldo y el registro de cada clase realizada.
-            </p>
-          </div>
-
-          <div className="w-14 h-14 rounded-[18px] bg-pr-gold/10 border border-pr-gold/20 grid place-items-center text-2xl shrink-0">
-            🛼
-          </div>
-        </div>
-
-        <div className="rounded-[26px] border border-pr-gold/20 bg-black/25 p-5 mt-5">
-          <p className="text-white/30 text-[10px] uppercase tracking-[0.18em]">
-            Clases disponibles
-          </p>
-
-          <div className="flex items-end justify-between gap-4 mt-2">
-            <p className="font-display text-6xl leading-none text-pr-gold font-bold">
-              {available}
-            </p>
-
-            <span
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
-                available > 0
-                  ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
-                  : 'border-white/10 bg-white/[0.04] text-white/40'
-              }`}
-            >
-              {available > 0
-                ? 'Cuponera activa'
-                : 'Sin clases'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5 mt-5">
-            <PrivateMiniStat
-              label="Cargadas"
-              value={loaded}
-            />
-
-            <PrivateMiniStat
-              label="Utilizadas"
-              value={used}
-            />
-          </div>
-
-          {loaded > 0 && (
-            <div className="mt-4">
-              <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <div
-                  className="h-full bg-pr-gold rounded-full transition-all"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      Math.max(
-                        0,
-                        (used / loaded) * 100
-                      )
-                    )}%`,
-                  }}
-                />
-              </div>
-
-              <p className="text-white/25 text-[10px] mt-2 text-right">
-                {used} de {loaded} utilizadas
-              </p>
-            </div>
-          )}
-        </div>
-
-        {cuponera?.ultima_clase && (
-          <div className="rounded-2xl bg-white/[0.035] border border-white/[0.06] p-4 mt-4">
-            <p className="section-label">
-              Última clase
-            </p>
-
-            <p className="text-white text-sm font-semibold mt-2">
-              {formatPrivateDateTime(
-                cuponera.ultima_clase
-              )}
-            </p>
-
-            {cuponera.ultima_observacion && (
-              <p className="text-white/45 text-xs leading-relaxed mt-2">
-                {cuponera.ultima_observacion}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="p-5">
-        <p className="section-label">
-          Historial de clases
-        </p>
-
-        {completedClasses.length ? (
-          <div className="space-y-3 mt-4">
-            {completedClasses.map((item) => (
-              <div
-                key={item.id}
-                className="pr-card p-4 flex gap-3"
-              >
-                <div className="w-10 h-10 rounded-[14px] bg-pr-gold/10 border border-pr-gold/15 grid place-items-center shrink-0">
-                  ✓
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-white text-sm font-semibold">
-                    Clase particular realizada
-                  </p>
-
-                  <p className="text-white/30 text-[11px] mt-1">
-                    {formatPrivateDateTime(
-                      item.fecha_clase ||
-                        item.created_at
-                    )}
-                  </p>
-
-                  {item.observacion && (
-                    <p className="text-white/45 text-xs leading-relaxed mt-2">
-                      {item.observacion}
-                    </p>
-                  )}
-
-                  {item.registrado_por_nombre && (
-                    <p className="text-white/20 text-[10px] mt-2">
-                      Registrada por{' '}
-                      {item.registrado_por_nombre}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="pr-card p-4 mt-4">
-            <p className="text-white font-semibold text-sm">
-              Todavía no hay clases registradas
-            </p>
-
-            <p className="text-white/35 text-xs mt-1">
-              Cuando el profesor confirme una clase, aparecerá acá con la fecha y lo trabajado.
-            </p>
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function PrivateMiniStat({
-  label,
-  value,
-}) {
-  return (
-    <div className="rounded-2xl bg-white/[0.035] border border-white/[0.06] p-3 text-center">
-      <p className="font-display text-2xl text-white font-bold">
-        {value}
-      </p>
-
-      <p className="text-white/25 text-[9px] uppercase tracking-wider mt-1">
-        {label}
-      </p>
-    </div>
-  )
-}
-
-function formatPrivateDateTime(value) {
-  if (!value) {
-    return 'Sin fecha'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return date.toLocaleString('es-UY', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 function MiniStat({ value, label }) {
