@@ -1740,12 +1740,12 @@ function ConfigPanel({
   const [migrationResult, setMigrationResult] =
     useState(null)
 
-  async function migrateOneUser() {
+  async function migrateUsersBatch() {
     try {
       setMigrating(true)
       setMigrationResult(null)
       setMsg(
-        'Migrando un usuario de prueba a la sesión segura...'
+        'Migrando hasta 20 usuarios a la sesión segura...'
       )
 
       const {
@@ -1756,7 +1756,7 @@ function ConfigPanel({
         {
           body: {
             action: 'migrate_batch',
-            limit: 1,
+            limit: 20,
           },
         }
       )
@@ -1780,7 +1780,7 @@ function ConfigPanel({
 
       setMsg(
         migrated > 0
-          ? `Migración correcta: ${migrated} usuario vinculado. Quedan ${data.remaining ?? 'sin calcular'}.`
+          ? `Migración correcta: ${migrated} usuario${migrated === 1 ? '' : 's'} vinculado${migrated === 1 ? '' : 's'}. Quedan ${data.remaining ?? 'sin calcular'}.`
           : `La función terminó sin migrar usuarios. Omitidos: ${data.skipped || 0}. Errores: ${data.failed || 0}.`
       )
 
@@ -1806,31 +1806,31 @@ function ConfigPanel({
         </h2>
 
         <p className="text-white/45 text-sm mt-2 leading-relaxed">
-          Esta prueba crea y vincula solamente una cuenta segura. El alumno seguirá entrando con su documento y PIN habituales.
+          Cada ejecución crea y vincula hasta 20 cuentas seguras. Los alumnos seguirán entrando con su documento y PIN habituales.
         </p>
 
         <div className="rounded-2xl bg-amber-400/[0.08] border border-amber-400/15 p-3 mt-4">
           <p className="text-amber-200 text-xs leading-relaxed">
-            Primero probamos con un único usuario. No migraremos el resto hasta confirmar que puede cerrar sesión y volver a ingresar correctamente.
+            La prueba con Agustín Silva fue correcta. Ahora podés migrar los usuarios restantes en grupos de hasta 20, revisando el resultado después de cada lote.
           </p>
         </div>
 
         <button
           type="button"
           disabled={migrating}
-          onClick={migrateOneUser}
+          onClick={migrateUsersBatch}
           className="btn-gold w-full mt-4 disabled:opacity-50"
         >
           {migrating
-            ? 'Migrando usuario...'
-            : 'Migrar 1 usuario de prueba'}
+            ? 'Migrando usuarios...'
+            : 'Migrar próximos 20 usuarios'}
         </button>
       </section>
 
       {migrationResult && (
         <section className={`${panel} p-4`}>
           <p className="section-label">
-            Resultado de la prueba
+            Resultado del último lote
           </p>
 
           <div className="grid grid-cols-2 gap-3 mt-3">
