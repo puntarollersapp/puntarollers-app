@@ -669,84 +669,117 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
   async function createUser() {
     try {
       setSaving(true)
-      setMsg('Creando usuario...')
+      setMsg('Creando usuario y cuenta segura...')
 
-      const documento = cleanDocument(form.documento)
-      const pin = String(form.pin || '').trim()
+      const documento = cleanDocument(
+        form.documento
+      )
 
-      if (!form.nombre.trim()) throw new Error('Falta el nombre.')
-      if (!documento) throw new Error('Falta el documento.')
+      const pin = String(
+        form.pin || ''
+      ).trim()
+
+      if (!form.nombre.trim()) {
+        throw new Error('Falta el nombre.')
+      }
+
+      if (!documento) {
+        throw new Error('Falta el documento.')
+      }
+
       if (documento.length < 6) {
-        throw new Error('El documento parece incompleto.')
-      }
-      if (!pin) throw new Error('Falta el PIN.')
-      if (pin.length < 4) {
-        throw new Error('El PIN debe tener al menos 4 dígitos.')
-      }
-      if (form.role === 'admin' && !canCreateAdmin) {
-        throw new Error('Solo Claudio puede crear administradores.')
-      }
-
-      const { data: existingProfile, error: existingError } = await supabase
-        .from('profiles')
-        .select('id, nombre, documento')
-        .eq('documento', documento)
-        .maybeSingle()
-
-      if (existingError) throw new Error(existingError.message)
-      if (existingProfile) {
         throw new Error(
-          `Ya existe un usuario con ese documento: ${existingProfile.nombre}.`
+          'El documento parece incompleto.'
         )
       }
 
-      const payload = {
-        id: makeProfileId(form.role, documento),
-        role: form.role,
-        nombre: form.nombre.trim(),
-        apellido: form.apellido.trim(),
-        documento,
-        pin,
-        email: form.email.trim(),
-        ciudad: form.ciudad.trim(),
-        instagram: form.instagram.trim(),
-        fecha_nacimiento: form.fechaNacimiento || null,
-        estado: form.estado,
-        verificado: Boolean(form.verificado),
-        prcard_activa:
-          form.role === 'alumno' ? Boolean(form.prcardActiva) : false,
-        tracking_activo:
-          form.role === 'alumno' ? Boolean(form.trackingActivo) : false,
-        miembro_desde:
-          form.miembroDesde || String(new Date().getFullYear()),
-        grupos_info: [],
-        estadisticas: EMPTY_STATS,
-        foto: '',
-        banner: '',
-        sobre_mi:
-          form.role === 'alumno'
-            ? 'Mi espacio personal dentro de Punta Rollers.'
-            : '',
-        ultimo_ingreso: null,
-        ultimo_pago: null,
-        mensualidad_hasta: null,
-        acceso_habilitado: true,
-        updated_at: new Date().toISOString(),
+      if (!/^\d{4,8}$/.test(pin)) {
+        throw new Error(
+          'El PIN debe tener entre 4 y 8 números.'
+        )
       }
 
-      const { error } = await supabase.from('profiles').insert(payload)
-      if (error) throw new Error(error.message)
+      if (
+        form.role === 'admin' &&
+        !canCreateAdmin
+      ) {
+        throw new Error(
+          'Solo Claudio puede crear administradores.'
+        )
+      }
+
+      const {
+        data,
+        error,
+      } = await supabase.functions.invoke(
+        'gestionar-usuario-auth',
+        {
+          body: {
+            action: 'create',
+            profile: {
+              role: form.role,
+              nombre: form.nombre.trim(),
+              apellido:
+                form.apellido.trim(),
+              documento,
+              pin,
+              email: form.email.trim(),
+              ciudad: form.ciudad.trim(),
+              instagram:
+                form.instagram.trim(),
+              fecha_nacimiento:
+                form.fechaNacimiento ||
+                null,
+              miembro_desde:
+                form.miembroDesde ||
+                String(
+                  new Date().getFullYear()
+                ),
+              estado: form.estado,
+              verificado:
+                Boolean(form.verificado),
+              prcard_activa:
+                form.role === 'alumno'
+                  ? Boolean(
+                      form.prcardActiva
+                    )
+                  : false,
+              tracking_activo:
+                form.role === 'alumno'
+                  ? Boolean(
+                      form.trackingActivo
+                    )
+                  : false,
+            },
+          },
+        }
+      )
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      if (!data?.success) {
+        throw new Error(
+          data?.error ||
+            'La función no confirmó la creación.'
+        )
+      }
 
       setForm(emptyUserForm())
       setOpen(false)
+
       setMsg(
         `${getRoleLabel(
-          payload.role
-        )} creado correctamente. Ya puede iniciar sesión.`
+          form.role
+        )} creado correctamente con cuenta segura.`
       )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo crear: ${error.message}`)
+      setMsg(
+        `No se pudo crear: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
@@ -896,8 +929,7 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
           </button>
 
           <p className="text-white/30 text-xs">
-            El usuario podrá iniciar sesión inmediatamente con su documento y
-            PIN.
+            La cuenta segura se crea automáticamente. El usuario podrá iniciar sesión inmediatamente con su documento y PIN.
           </p>
         </div>
       )}
@@ -1004,58 +1036,95 @@ function EditUserTab({
   async function saveUser() {
     try {
       setSaving(true)
-      setMsg('Guardando usuario...')
+      setMsg(
+        'Actualizando usuario y cuenta segura...'
+      )
 
-      const document = cleanDocument(form.documento)
+      const documento = cleanDocument(
+        form.documento
+      )
 
-      if (!form.nombre.trim()) throw new Error('Falta el nombre.')
-      if (!document) throw new Error('Falta el documento.')
-      if (!form.pin.trim()) throw new Error('Falta el PIN.')
+      const pin = String(
+        form.pin || ''
+      ).trim()
+
+      if (!form.nombre.trim()) {
+        throw new Error('Falta el nombre.')
+      }
+
+      if (!documento) {
+        throw new Error('Falta el documento.')
+      }
+
+      if (!/^\d{4,8}$/.test(pin)) {
+        throw new Error(
+          'El PIN debe tener entre 4 y 8 números.'
+        )
+      }
 
       if (
         form.role === 'admin' &&
         !canCreateAdmin &&
         profile.role !== 'admin'
       ) {
-        throw new Error('Solo Claudio puede asignar el rol administrador.')
+        throw new Error(
+          'Solo Claudio puede asignar el rol administrador.'
+        )
       }
 
-      const { data: duplicated, error: duplicateError } = await supabase
-        .from('profiles')
-        .select('id, nombre')
-        .eq('documento', document)
-        .neq('id', profile.id)
-        .maybeSingle()
+      const {
+        data,
+        error,
+      } = await supabase.functions.invoke(
+        'gestionar-usuario-auth',
+        {
+          body: {
+            action: 'update',
+            profile_id: profile.id,
+            updates: {
+              role: form.role,
+              nombre:
+                form.nombre.trim(),
+              apellido:
+                form.apellido.trim(),
+              documento,
+              pin,
+              email: form.email.trim(),
+              ciudad: form.ciudad.trim(),
+              instagram:
+                form.instagram.trim(),
+              estado: form.estado,
+              fecha_nacimiento:
+                form.fechaNacimiento ||
+                null,
+              miembro_desde:
+                form.miembroDesde ||
+                '2026',
+            },
+          },
+        }
+      )
 
-      if (duplicateError) throw new Error(duplicateError.message)
-      if (duplicated) {
-        throw new Error(`Ese documento pertenece a ${duplicated.nombre}.`)
+      if (error) {
+        throw new Error(error.message)
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          role: form.role,
-          nombre: form.nombre.trim(),
-          apellido: form.apellido.trim(),
-          documento: document,
-          pin: form.pin.trim(),
-          email: form.email.trim(),
-          ciudad: form.ciudad.trim(),
-          instagram: form.instagram.trim(),
-          estado: form.estado,
-          fecha_nacimiento: form.fechaNacimiento || null,
-          miembro_desde: form.miembroDesde || '2026',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', profile.id)
+      if (!data?.success) {
+        throw new Error(
+          data?.error ||
+            'La función no confirmó la actualización.'
+        )
+      }
 
-      if (error) throw new Error(error.message)
+      setMsg(
+        'Usuario y cuenta segura actualizados correctamente.'
+      )
 
-      setMsg('Usuario actualizado correctamente.')
       await reload()
     } catch (error) {
-      setMsg(`No se pudo actualizar: ${error.message}`)
+      setMsg(
+        `No se pudo actualizar: ${error.message}`
+      )
     } finally {
       setSaving(false)
     }
@@ -1063,35 +1132,62 @@ function EditUserTab({
 
   async function deleteUser() {
     if (profile.id === currentUser?.id) {
-      setMsg('No podés eliminar tu propia cuenta mientras estás conectado.')
+      setMsg(
+        'No podés eliminar tu propia cuenta mientras estás conectado.'
+      )
       return
     }
 
     const confirmed = window.confirm(
-      `¿Eliminar definitivamente a ${profile.nombre}? Esta acción también eliminará su actividad.`
+      `¿Eliminar definitivamente a ${profile.nombre}? También se eliminarán su cuenta segura y sus registros relacionados.`
     )
 
-    if (!confirmed) return
+    if (!confirmed) {
+      return
+    }
 
     try {
-      setMsg('Eliminando usuario...')
+      setSaving(true)
+      setMsg(
+        'Eliminando usuario y cuenta segura...'
+      )
 
-      await supabase
-        .from('actividad_pr')
-        .delete()
-        .eq('alumno_id', profile.id)
+      const {
+        data,
+        error,
+      } = await supabase.functions.invoke(
+        'gestionar-usuario-auth',
+        {
+          body: {
+            action: 'delete',
+            profile_id: profile.id,
+          },
+        }
+      )
 
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', profile.id)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      if (error) throw new Error(error.message)
+      if (!data?.success) {
+        throw new Error(
+          data?.error ||
+            'La función no confirmó la eliminación.'
+        )
+      }
 
-      setMsg('Usuario eliminado correctamente.')
+      setMsg(
+        data?.warning ||
+          'Usuario y cuenta segura eliminados correctamente.'
+      )
+
       await reload()
     } catch (error) {
-      setMsg(`No se pudo eliminar: ${error.message}`)
+      setMsg(
+        `No se pudo eliminar: ${error.message}`
+      )
+    } finally {
+      setSaving(false)
     }
   }
 
