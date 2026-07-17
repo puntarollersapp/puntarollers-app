@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import PaymentsPanel from '../components/admin/PaymentsPanel'
+import PrivateLessonsPanel from '../components/admin/PrivateLessonsPanel'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
@@ -211,6 +212,12 @@ export default function Admin() {
     },
     { id: 'pagos', icon: '💳', label: 'Pagos', show: canFullAdmin },
     {
+      id: 'particulares',
+      icon: '🛼',
+      label: 'Particulares',
+      show: canFullAdmin,
+    },
+    {
       id: 'acciones',
       icon: '⚡',
       label: 'Acciones',
@@ -321,6 +328,15 @@ export default function Admin() {
 
         {!loading && section === 'pagos' && canFullAdmin && (
           <PaymentsPanel
+            profiles={profiles}
+            currentUser={user}
+            reload={reloadAll}
+            setMsg={setMsg}
+          />
+        )}
+
+        {!loading && section === 'particulares' && canFullAdmin && (
+          <PrivateLessonsPanel
             profiles={profiles}
             currentUser={user}
             reload={reloadAll}
