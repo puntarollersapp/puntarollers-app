@@ -208,35 +208,57 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true
 
+    async function loadProfileByAuthUserId(
+      authUserId
+    ) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle()
+
+      if (error || !data) {
+        return {
+          error:
+            'No pudimos cargar el perfil vinculado.',
+        }
+      }
+
+      return {
+        user: normalizeProfile(data),
+      }
+    }
+
     async function restoreSession() {
       const {
         data: sessionData,
+        error: sessionError,
       } = await supabase.auth.getSession()
 
-      const authUser =
-        sessionData?.session?.user || null
+      if (!active) {
+        return
+      }
 
-      if (authUser?.id) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('auth_user_id', authUser.id)
-          .maybeSingle()
+      if (
+        sessionError ||
+        !sessionData?.session?.user?.id
+      ) {
+        clearLocalUser()
+        setUser(null)
+        setLoading(false)
+        return
+      }
 
-        if (!active) {
-          return
-        }
+      const result =
+        await loadProfileByAuthUserId(
+          sessionData.session.user.id
+        )
 
-        if (!error && data) {
-          const refreshedUser =
-            normalizeProfile(data)
+      if (!active) {
+        return
+      }
 
-          saveLocalUser(refreshedUser)
-          setUser(refreshedUser)
-          setLoading(false)
-          return
-        }
-
+      if (result.error || !result.user) {
         await supabase.auth.signOut()
         clearLocalUser()
         setUser(null)
@@ -244,66 +266,8 @@ export function AuthProvider({ children }) {
         return
       }
 
-      const saved = localStorage.getItem(
-        STORAGE_KEY
-      )
-
-      if (!saved) {
-        if (active) {
-          setLoading(false)
-        }
-
-        return
-      }
-
-      let savedUser
-
-      try {
-        savedUser = JSON.parse(saved)
-      } catch {
-        clearLocalUser()
-
-        if (active) {
-          setUser(null)
-          setLoading(false)
-        }
-
-        return
-      }
-
-      if (!savedUser?.id) {
-        clearLocalUser()
-
-        if (active) {
-          setUser(null)
-          setLoading(false)
-        }
-
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', savedUser.id)
-        .maybeSingle()
-
-      if (!active) {
-        return
-      }
-
-      if (error || !data) {
-        clearLocalUser()
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      const refreshedUser =
-        normalizeProfile(data)
-
-      saveLocalUser(refreshedUser)
-      setUser(refreshedUser)
+      saveLocalUser(result.user)
+      setUser(result.user)
       setLoading(false)
     }
 
@@ -321,21 +285,24 @@ export function AuthProvider({ children }) {
           event === 'SIGNED_OUT' ||
           !session?.user?.id
         ) {
+          clearLocalUser()
+          setUser(null)
+          setLoading(false)
           return
         }
 
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle()
+        const result =
+          await loadProfileByAuthUserId(
+            session.user.id
+          )
 
-        if (!error && data && active) {
-          const nextUser =
-            normalizeProfile(data)
-
-          saveLocalUser(nextUser)
-          setUser(nextUser)
+        if (
+          active &&
+          result.user
+        ) {
+          saveLocalUser(result.user)
+          setUser(result.user)
+          setLoading(false)
         }
       }
     )
@@ -351,7 +318,9 @@ export function AuthProvider({ children }) {
       documento || ''
     ).replace(/\D/g, '')
 
-    const cleanPin = String(pin || '').trim()
+    const cleanPin = String(
+      pin || ''
+    ).trim()
 
     if (!cleanDoc || !cleanPin) {
       return {
@@ -360,83 +329,66 @@ export function AuthProvider({ children }) {
       }
     }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('documento', cleanDoc)
-      .eq('pin', cleanPin)
-      .maybeSingle()
+    const email =
+      buildAuthEmail(cleanDoc)
 
-    if (error) {
-      console.error(
-        'Error consultando el perfil:',
-        error
+    const password =
+      buildAuthPassword(
+        cleanDoc,
+        cleanPin
       )
 
-      return {
-        error:
-          'No pudimos verificar tus datos. Intentá nuevamente.',
-      }
-    }
+    const {
+      data: authData,
+      error: authError,
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    if (!data) {
+    if (
+      authError ||
+      !authData?.user?.id
+    ) {
       return {
         error:
           'Documento o PIN incorrecto.',
       }
     }
 
+    const {
+      data: profileData,
+      error: profileError,
+    } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq(
+        'auth_user_id',
+        authData.user.id
+      )
+      .maybeSingle()
+
     if (
-      data.auth_migrado &&
-      data.auth_user_id
+      profileError ||
+      !profileData
     ) {
-      const email =
-        buildAuthEmail(cleanDoc)
+      await supabase.auth.signOut()
 
-      const password =
-        buildAuthPassword(cleanDoc, cleanPin)
-
-      const {
-        data: authData,
-        error: authError,
-      } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (
-        authError ||
-        !authData?.user?.id
-      ) {
-        console.error(
-          'Error iniciando sesión segura:',
-          authError
-        )
-
-        return {
-          error:
-            'No pudimos iniciar tu sesión segura. Revisá el PIN o comunicáte con Punta Rollers.',
-        }
+      return {
+        error:
+          'La cuenta existe, pero no encontramos su perfil vinculado.',
       }
+    }
 
-      if (
-        authData.user.id !==
-        data.auth_user_id
-      ) {
-        await supabase.auth.signOut()
+    if (
+      String(profileData.documento || '') !==
+      cleanDoc
+    ) {
+      await supabase.auth.signOut()
 
-        return {
-          error:
-            'La cuenta segura no coincide con este perfil.',
-        }
-      }
-    } else {
-      const {
-        data: sessionData,
-      } = await supabase.auth.getSession()
-
-      if (sessionData?.session) {
-        await supabase.auth.signOut()
+      return {
+        error:
+          'La cuenta segura no coincide con este documento.',
       }
     }
 
@@ -449,7 +401,7 @@ export function AuthProvider({ children }) {
         .update({
           ultimo_ingreso: loginDate,
         })
-        .eq('id', data.id)
+        .eq('id', profileData.id)
 
     if (updateError) {
       console.warn(
@@ -458,10 +410,11 @@ export function AuthProvider({ children }) {
       )
     }
 
-    const userData = normalizeProfile({
-      ...data,
-      ultimo_ingreso: loginDate,
-    })
+    const userData =
+      normalizeProfile({
+        ...profileData,
+        ultimo_ingreso: loginDate,
+      })
 
     saveLocalUser(userData)
     setUser(userData)
@@ -505,12 +458,6 @@ export function AuthProvider({ children }) {
   }
 
   async function refreshUser() {
-    if (!user?.id) {
-      return {
-        error: 'No hay una sesión activa.',
-      }
-    }
-
     const {
       data: sessionData,
     } = await supabase.auth.getSession()
@@ -518,21 +465,21 @@ export function AuthProvider({ children }) {
     const authUserId =
       sessionData?.session?.user?.id || ''
 
-    let query = supabase
+    if (!authUserId) {
+      return {
+        error:
+          'No hay una sesión segura activa.',
+      }
+    }
+
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
-
-    if (authUserId) {
-      query = query.eq(
+      .eq(
         'auth_user_id',
         authUserId
       )
-    } else {
-      query = query.eq('id', user.id)
-    }
-
-    const { data, error } =
-      await query.maybeSingle()
+      .maybeSingle()
 
     if (error || !data) {
       return {
@@ -586,4 +533,4 @@ export function useAuth() {
   }
 
   return context
-      }
+}
