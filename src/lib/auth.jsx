@@ -122,6 +122,8 @@ function normalizeProfile(profile) {
 
   return {
     id: profile.id,
+    authUserId: profile.auth_user_id || '',
+    authMigrado: Boolean(profile.auth_migrado),
     nombre: profile.nombre || '',
     apellido: profile.apellido || '',
     documento: profile.documento || '',
@@ -191,6 +193,14 @@ function clearLocalUser() {
   localStorage.removeItem(STORAGE_KEY)
 }
 
+function buildAuthEmail(documento) {
+  return `${documento}@usuarios.puntarollers.app`
+}
+
+function buildAuthPassword(documento, pin) {
+  return `PR-${pin}-${documento}`
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -199,6 +209,41 @@ export function AuthProvider({ children }) {
     let active = true
 
     async function restoreSession() {
+      const {
+        data: sessionData,
+      } = await supabase.auth.getSession()
+
+      const authUser =
+        sessionData?.session?.user || null
+
+      if (authUser?.id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('auth_user_id', authUser.id)
+          .maybeSingle()
+
+        if (!active) {
+          return
+        }
+
+        if (!error && data) {
+          const refreshedUser =
+            normalizeProfile(data)
+
+          saveLocalUser(refreshedUser)
+          setUser(refreshedUser)
+          setLoading(false)
+          return
+        }
+
+        await supabase.auth.signOut()
+        clearLocalUser()
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
       const saved = localStorage.getItem(
         STORAGE_KEY
       )
@@ -264,8 +309,40 @@ export function AuthProvider({ children }) {
 
     restoreSession()
 
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!active) {
+          return
+        }
+
+        if (
+          event === 'SIGNED_OUT' ||
+          !session?.user?.id
+        ) {
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle()
+
+        if (!error && data && active) {
+          const nextUser =
+            normalizeProfile(data)
+
+          saveLocalUser(nextUser)
+          setUser(nextUser)
+        }
+      }
+    )
+
     return () => {
       active = false
+      authListener?.subscription?.unsubscribe()
     }
   }, [])
 
@@ -309,6 +386,60 @@ export function AuthProvider({ children }) {
       }
     }
 
+    if (
+      data.auth_migrado &&
+      data.auth_user_id
+    ) {
+      const email =
+        buildAuthEmail(cleanDoc)
+
+      const password =
+        buildAuthPassword(cleanDoc, cleanPin)
+
+      const {
+        data: authData,
+        error: authError,
+      } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (
+        authError ||
+        !authData?.user?.id
+      ) {
+        console.error(
+          'Error iniciando sesión segura:',
+          authError
+        )
+
+        return {
+          error:
+            'No pudimos iniciar tu sesión segura. Revisá el PIN o comunicáte con Punta Rollers.',
+        }
+      }
+
+      if (
+        authData.user.id !==
+        data.auth_user_id
+      ) {
+        await supabase.auth.signOut()
+
+        return {
+          error:
+            'La cuenta segura no coincide con este perfil.',
+        }
+      }
+    } else {
+      const {
+        data: sessionData,
+      } = await supabase.auth.getSession()
+
+      if (sessionData?.session) {
+        await supabase.auth.signOut()
+      }
+    }
+
     const loginDate =
       new Date().toISOString()
 
@@ -343,7 +474,15 @@ export function AuthProvider({ children }) {
     }
   }
 
-  function logout() {
+  async function logout() {
+    const {
+      data: sessionData,
+    } = await supabase.auth.getSession()
+
+    if (sessionData?.session) {
+      await supabase.auth.signOut()
+    }
+
     clearLocalUser()
     setUser(null)
   }
@@ -372,11 +511,28 @@ export function AuthProvider({ children }) {
       }
     }
 
-    const { data, error } = await supabase
+    const {
+      data: sessionData,
+    } = await supabase.auth.getSession()
+
+    const authUserId =
+      sessionData?.session?.user?.id || ''
+
+    let query = supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
-      .maybeSingle()
+
+    if (authUserId) {
+      query = query.eq(
+        'auth_user_id',
+        authUserId
+      )
+    } else {
+      query = query.eq('id', user.id)
+    }
+
+    const { data, error } =
+      await query.maybeSingle()
 
     if (error || !data) {
       return {
@@ -430,4 +586,4 @@ export function useAuth() {
   }
 
   return context
-}
+      }
