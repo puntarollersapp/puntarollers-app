@@ -207,6 +207,9 @@ export default function Profile() {
   const [bannerFile, setBannerFile] = useState(null)
   const [contactos, setContactos] = useState([])
   const [activity, setActivity] = useState([])
+  const [originalPin, setOriginalPin] = useState(
+    base.pin || ''
+  )
   const [particularesHabilitadas, setParticularesHabilitadas] =
     useState(false)
   const [cuponeraParticular, setCuponeraParticular] =
@@ -360,6 +363,9 @@ export default function Profile() {
         }
 
         setForm(loadedProfile)
+        setOriginalPin(
+          String(loadedProfile.pin || '')
+        )
 
         const nextUser = {
           ...base,
@@ -472,6 +478,16 @@ export default function Profile() {
       setSaving(true)
       setMessage('Guardando cambios…')
 
+      const nextPin = String(
+        form.pin || ''
+      ).trim()
+
+      if (!/^\d{4,8}$/.test(nextPin)) {
+        throw new Error(
+          'El PIN debe tener entre 4 y 8 números.'
+        )
+      }
+
       let foto = form.foto
       let banner = form.banner
 
@@ -503,6 +519,9 @@ export default function Profile() {
         banner = result.url
       }
 
+      const pinChanged =
+        nextPin !== String(originalPin || '')
+
       const payload = {
         nombre: form.nombre,
         ciudad: form.ciudad,
@@ -510,7 +529,6 @@ export default function Profile() {
         email: form.email,
         fecha_nacimiento: form.fechaNacimiento,
         sobre_mi: form.sobreMi,
-        pin: form.pin,
         foto,
         banner,
         updated_at: new Date().toISOString(),
@@ -525,9 +543,41 @@ export default function Profile() {
         throw new Error(error.message)
       }
 
+      if (pinChanged) {
+        setMessage(
+          'Actualizando tu PIN seguro…'
+        )
+
+        const {
+          data: pinData,
+          error: pinError,
+        } = await supabase.functions.invoke(
+          'actualizar-pin-usuario',
+          {
+            body: {
+              nuevo_pin: nextPin,
+            },
+          }
+        )
+
+        if (pinError) {
+          throw new Error(pinError.message)
+        }
+
+        if (!pinData?.success) {
+          throw new Error(
+            pinData?.error ||
+              'No pudimos actualizar el PIN.'
+          )
+        }
+
+        setOriginalPin(nextPin)
+      }
+
       const nextUser = {
         ...base,
         ...form,
+        pin: nextPin,
         foto,
         banner,
       }
@@ -541,6 +591,7 @@ export default function Profile() {
 
       setForm((previous) => ({
         ...previous,
+        pin: nextPin,
         foto,
         banner,
       }))
@@ -548,7 +599,12 @@ export default function Profile() {
       setFotoFile(null)
       setBannerFile(null)
       setEditing(false)
-      setMessage('Cambios guardados correctamente.')
+
+      setMessage(
+        pinChanged
+          ? 'Cambios y PIN guardados correctamente.'
+          : 'Cambios guardados correctamente.'
+      )
     } catch (error) {
       setMessage(
         `No se pudo guardar: ${error.message}`
@@ -1470,4 +1526,4 @@ function EditInput({
       />
     </label>
   )
-            }
+}
