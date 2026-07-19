@@ -1,147 +1,143 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PublicLayout from '../layouts/PublicLayout'
+import { supabase } from '../lib/supabase'
 
 const WHATSAPP_NUMBER = '59898971505'
-
-const PRODUCTS = [
-  {
-    id: 'kids-roja',
-    name: 'Remera PR Kids',
-    subtitle: 'Modelo infantil oficial',
-    image: '/uniformes/pr-kids-roja.jpg',
-    price: 900,
-    category: 'Kids',
-    options: {
-      modelo: ['PR Kids'],
-      color: ['Rojo'],
-      talle: ['4', '6', '8', '10', '12', '14'],
-    },
-  },
-  {
-    id: 'girls-violeta',
-    name: 'Remera PR Girls',
-    subtitle: 'Modelo femenino oficial',
-    image: '/uniformes/pr-girls-violeta.jpg',
-    price: 1200,
-    category: 'Adultos',
-    options: {
-      modelo: ['Girls'],
-      color: ['Violeta'],
-      talle: ['XS', 'S', 'M', 'L', 'XL'],
-    },
-  },
-  {
-    id: 'boys-celeste',
-    name: 'Remera PR Boys',
-    subtitle: 'Modelo masculino oficial',
-    image: '/uniformes/pr-boys-celeste.jpg',
-    price: 1200,
-    category: 'Adultos',
-    options: {
-      modelo: ['Boys'],
-      color: ['Celeste'],
-      talle: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-    },
-  },
-  {
-    id: 'hoodie-rojo',
-    name: 'Hoodie PR Rojo',
-    subtitle: 'Modelo unisex',
-    image: '/uniformes/hoodie-pr-rojo.jpg',
-    price: 1800,
-    category: 'Hoodies',
-    options: {
-      modelo: ['Unisex'],
-      color: ['Rojo'],
-      talle: ['S', 'M', 'L', 'XL', 'XXL'],
-    },
-  },
-  {
-    id: 'hoodie-negro',
-    name: 'Hoodie PR Negro',
-    subtitle: 'Modelo unisex',
-    image: '/uniformes/hoodie-pr-negro.jpg',
-    price: 1800,
-    category: 'Hoodies',
-    options: {
-      modelo: ['Unisex'],
-      color: ['Negro'],
-      talle: ['S', 'M', 'L', 'XL', 'XXL'],
-    },
-  },
-]
 
 function formatPrice(value) {
   return new Intl.NumberFormat('es-UY', {
     style: 'currency',
     currency: 'UYU',
     maximumFractionDigits: 0,
-  }).format(value)
+  }).format(Number(value || 0))
+}
+
+function normalizeProduct(product) {
+  return {
+    ...product,
+    modelos: Array.isArray(product.modelos) ? product.modelos : [],
+    colores: Array.isArray(product.colores) ? product.colores : [],
+    talles: Array.isArray(product.talles) ? product.talles : [],
+  }
 }
 
 export default function Uniformes() {
-  const [selectedProductId, setSelectedProductId] = useState(PRODUCTS[0].id)
-  const [selectedModel, setSelectedModel] = useState(PRODUCTS[0].options.modelo[0])
-  const [selectedColor, setSelectedColor] = useState(PRODUCTS[0].options.color[0])
-  const [selectedSize, setSelectedSize] = useState(PRODUCTS[0].options.talle[0])
-  const [name, setName] = useState('')
-  const [student, setStudent] = useState('')
-  const [notes, setNotes] = useState('')
+  const [productos, setProductos] = useState([])
+  const [selectedId, setSelectedId] = useState('')
+  const [modelo, setModelo] = useState('')
+  const [color, setColor] = useState('')
+  const [talle, setTalle] = useState('')
+  const [nombre, setNombre] = useState('')
+  const [observacion, setObservacion] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState('')
 
-  const selectedProduct = useMemo(
-    () => PRODUCTS.find((product) => product.id === selectedProductId) || PRODUCTS[0],
-    [selectedProductId]
-  )
+  async function loadProducts() {
+    setLoading(true)
+    setErrorMsg('')
 
-  function chooseProduct(product) {
-    setSelectedProductId(product.id)
-    setSelectedModel(product.options.modelo[0])
-    setSelectedColor(product.options.color[0])
-    setSelectedSize(product.options.talle[0])
+    const { data, error } = await supabase
+      .from('productos_pr')
+      .select('*')
+      .eq('activo', true)
+      .order('orden', { ascending: true })
+
+    if (error) {
+      setErrorMsg(`No se pudieron cargar los uniformes: ${error.message}`)
+      setProductos([])
+      setLoading(false)
+      return
+    }
+
+    setProductos((data || []).map(normalizeProduct))
+    setLoading(false)
   }
 
-  const whatsappLink = useMemo(() => {
-    const message = [
+  useEffect(() => {
+    loadProducts()
+  }, [])
+
+  const selected = useMemo(
+    () => productos.find((product) => product.id === selectedId) || null,
+    [productos, selectedId]
+  )
+
+  function selectProduct(product) {
+    setSelectedId(product.id)
+    setModelo(product.modelos[0] || '')
+    setColor(product.colores[0] || '')
+    setTalle('')
+
+    setTimeout(() => {
+      document
+        .getElementById('formulario-pedido')
+        ?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+    }, 150)
+  }
+
+  function sendOrder() {
+    if (!selected) {
+      window.alert('Elegí primero el uniforme que querés solicitar.')
+      return
+    }
+
+    if (!nombre.trim()) {
+      window.alert('Ingresá tu nombre para continuar.')
+      return
+    }
+
+    if (selected.modelos.length > 0 && !modelo) {
+      window.alert('Seleccioná el modelo.')
+      return
+    }
+
+    if (selected.colores.length > 0 && !color) {
+      window.alert('Seleccioná el color.')
+      return
+    }
+
+    if (!talle) {
+      window.alert('Seleccioná el talle.')
+      return
+    }
+
+    const lines = [
       'Hola, quiero solicitar un uniforme de Punta Rollers.',
       '',
-      `Producto: ${selectedProduct.name}`,
-      `Modelo: ${selectedModel}`,
-      `Color: ${selectedColor}`,
-      `Talle: ${selectedSize}`,
-      `Precio publicado: ${formatPrice(selectedProduct.price)}`,
-      name.trim() ? `Nombre de quien solicita: ${name.trim()}` : '',
-      student.trim() ? `Alumno/a: ${student.trim()}` : '',
-      notes.trim() ? `Observaciones: ${notes.trim()}` : '',
+      `Producto: ${selected.nombre}`,
+      `Precio: ${formatPrice(selected.precio)}`,
+      modelo ? `Modelo: ${modelo}` : '',
+      color ? `Color: ${color}` : '',
+      `Talle: ${talle}`,
+      `Nombre: ${nombre.trim()}`,
+      observacion.trim()
+        ? `Observaciones: ${observacion.trim()}`
+        : '',
       '',
-      'Entiendo que el pedido se confirma una vez abonado y que los datos de transferencia me serán enviados por WhatsApp.',
-    ]
-      .filter(Boolean)
-      .join('\n')
+      'Entiendo que el pedido debe abonarse para confirmarlo y que recibiré los datos de transferencia por este medio.',
+    ].filter(Boolean)
 
-    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
-  }, [
-    selectedProduct,
-    selectedModel,
-    selectedColor,
-    selectedSize,
-    name,
-    student,
-    notes,
-  ])
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      lines.join('\n')
+    )}`
+
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <PublicLayout>
-      <div className="px-4 py-6 space-y-10">
+      <div className="px-4 py-6 space-y-8">
         <section className="text-center space-y-3">
           <p className="section-label">Tienda oficial</p>
-
           <h1 className="text-3xl font-bold text-white">
             👕 Uniformes PR
           </h1>
-
           <p className="text-gray-400 text-sm max-w-sm mx-auto">
-            Elegí tu modelo, color y talle. El pedido se envía directamente por
-            WhatsApp.
+            Elegí tu uniforme oficial de Punta Rollers y envianos el
+            pedido directamente por WhatsApp.
           </p>
         </section>
 
@@ -151,203 +147,234 @@ export default function Uniformes() {
           </p>
 
           <p className="text-gray-300 text-sm leading-relaxed">
-            Los uniformes de Punta Rollers están pensados para acompañarte en
-            entrenamientos, salidas, eventos y actividades del club.
+            Remeras para PR Kids, modelos para adultos y hoodies
+            unisex pensados para entrenar, participar en eventos y
+            representar a Punta Rollers.
           </p>
 
-          <p className="text-gray-400 text-sm leading-relaxed">
-            Cada línea tiene su propio diseño y disponibilidad según modelo,
-            color, talle y stock.
-          </p>
+          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] p-4">
+            <p className="text-pr-gold text-sm font-semibold">
+              Pedidos con pago previo
+            </p>
+            <p className="text-white/45 text-xs mt-1 leading-relaxed">
+              Después de enviar el pedido por WhatsApp recibirás los
+              datos de transferencia. El uniforme se encarga una vez
+              confirmado el pago.
+            </p>
+          </div>
         </section>
 
-        <section className="space-y-4">
-          <p className="section-label">Modelos disponibles</p>
+        {loading && (
+          <div className="glass rounded-2xl p-4 text-white/45 text-sm">
+            Cargando uniformes...
+          </div>
+        )}
 
-          <div className="grid grid-cols-1 gap-4">
-            {PRODUCTS.map((product) => {
-              const active = selectedProductId === product.id
+        {errorMsg && (
+          <div className="rounded-2xl border border-red-400/20 bg-red-400/[0.08] p-4 text-red-200 text-sm">
+            {errorMsg}
+          </div>
+        )}
 
-              return (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() => chooseProduct(product)}
-                  className={`text-left overflow-hidden rounded-2xl border transition-all ${
-                    active
-                      ? 'border-pr-gold bg-pr-gold/10'
-                      : 'border-white/10 bg-white/[0.035]'
-                  }`}
-                >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full aspect-square object-cover bg-white"
-                  />
+        {!loading && !errorMsg && (
+          <section className="space-y-4">
+            <p className="section-label">
+              Elegí el producto
+            </p>
 
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3">
+            <div className="space-y-4">
+              {productos.map((product) => {
+                const active = selectedId === product.id
+
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => selectProduct(product)}
+                    className={`w-full glass rounded-3xl overflow-hidden text-left border transition-all ${
+                      active
+                        ? 'border-pr-gold shadow-[0_0_0_1px_rgba(201,168,76,0.2)]'
+                        : 'border-white/10'
+                    }`}
+                  >
+                    <img
+                      src={product.imagen}
+                      alt={product.nombre}
+                      className="w-full aspect-square object-cover bg-white"
+                    />
+
+                    <div className="p-4 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-white font-semibold">
-                          {product.name}
+                        <p className="text-white font-semibold text-lg">
+                          {product.nombre}
                         </p>
 
-                        <p className="text-gray-400 text-xs mt-1">
-                          {product.subtitle}
+                        <p className="text-pr-gold font-bold mt-1">
+                          {formatPrice(product.precio)}
                         </p>
+
+                        {product.descripcion && (
+                          <p className="text-white/40 text-xs mt-2">
+                            {product.descripcion}
+                          </p>
+                        )}
                       </div>
 
-                      <p className="text-pr-gold font-bold text-sm">
-                        {formatPrice(product.price)}
-                      </p>
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
+                          active
+                            ? 'bg-pr-gold text-black'
+                            : 'bg-white/[0.05] text-white/45'
+                        }`}
+                      >
+                        {active ? 'Elegido' : 'Elegir'}
+                      </span>
                     </div>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
-                    <p className="text-gray-500 text-xs mt-3">
-                      {product.category}
-                    </p>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="glass p-5 rounded-2xl space-y-5">
+        <section
+          id="formulario-pedido"
+          className="glass rounded-3xl p-5 space-y-4 scroll-mt-24"
+        >
           <div>
-            <p className="section-label">Armá tu pedido</p>
+            <p className="section-label">
+              Pedido
+            </p>
 
             <h2 className="text-white font-semibold text-xl mt-1">
-              {selectedProduct.name}
+              {selected
+                ? selected.nombre
+                : 'Seleccioná un uniforme'}
             </h2>
 
-            <p className="text-pr-gold font-bold mt-1">
-              {formatPrice(selectedProduct.price)}
-            </p>
+            {selected && (
+              <p className="text-pr-gold font-bold mt-1">
+                {formatPrice(selected.precio)}
+              </p>
+            )}
           </div>
 
-          <OptionGroup
-            label="Modelo"
-            values={selectedProduct.options.modelo}
-            selected={selectedModel}
-            onSelect={setSelectedModel}
-          />
+          {!selected ? (
+            <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
+              <p className="text-white/45 text-sm">
+                Tocá cualquiera de las imágenes de arriba para comenzar
+                el pedido.
+              </p>
+            </div>
+          ) : (
+            <>
+              {selected.modelos.length > 0 && (
+                <OptionGroup
+                  label="Modelo"
+                  options={selected.modelos}
+                  value={modelo}
+                  onChange={setModelo}
+                />
+              )}
 
-          <OptionGroup
-            label="Color"
-            values={selectedProduct.options.color}
-            selected={selectedColor}
-            onSelect={setSelectedColor}
-          />
+              {selected.colores.length > 0 && (
+                <OptionGroup
+                  label="Color"
+                  options={selected.colores}
+                  value={color}
+                  onChange={setColor}
+                />
+              )}
 
-          <OptionGroup
-            label="Talle"
-            values={selectedProduct.options.talle}
-            selected={selectedSize}
-            onSelect={setSelectedSize}
-          />
+              <OptionGroup
+                label="Talle"
+                options={selected.talles}
+                value={talle}
+                onChange={setTalle}
+              />
 
-          <Field
-            label="Tu nombre"
-            value={name}
-            onChange={setName}
-            placeholder="Ej: Claudio Facelli"
-          />
+              <label className="block">
+                <span className="text-white/40 text-xs">
+                  Nombre y apellido
+                </span>
+                <input
+                  value={nombre}
+                  onChange={(event) =>
+                    setNombre(event.target.value)
+                  }
+                  className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                  placeholder="Tu nombre"
+                />
+              </label>
 
-          <Field
-            label="Nombre del alumno/a"
-            value={student}
-            onChange={setStudent}
-            placeholder="Opcional"
-          />
+              <label className="block">
+                <span className="text-white/40 text-xs">
+                  Observaciones
+                </span>
+                <textarea
+                  value={observacion}
+                  onChange={(event) =>
+                    setObservacion(event.target.value)
+                  }
+                  rows="3"
+                  className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none resize-none"
+                  placeholder="Alguna consulta o detalle del pedido"
+                />
+              </label>
 
-          <label className="block">
-            <span className="text-gray-400 text-xs">
-              Observaciones
-            </span>
-
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              rows="3"
-              placeholder="Ej: necesito confirmar medidas"
-              className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
-            />
-          </label>
-
-          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-4">
-            <p className="text-pr-gold text-sm font-semibold">
-              Información importante
-            </p>
-
-            <p className="text-white/60 text-xs leading-relaxed mt-2">
-              El uniforme debe abonarse para confirmar el pedido. Los datos de
-              transferencia se envían por WhatsApp una vez realizada la
-              solicitud.
-            </p>
-          </div>
-
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-gold w-full text-center"
-          >
-            Solicitar por WhatsApp
-          </a>
-
-          <p className="text-gray-500 text-xs text-center">
-            Pedidos al 098 971 505 · Disponibilidad según stock y temporada
-          </p>
+              <button
+                type="button"
+                onClick={sendOrder}
+                className="btn-gold w-full"
+              >
+                Solicitar por WhatsApp
+              </button>
+            </>
+          )}
         </section>
 
-        <section className="space-y-3">
-          <p className="section-label">¿Por qué tenerlo?</p>
-
-          <div className="grid grid-cols-1 gap-3">
-            <Benefit
-              icon="🔥"
-              title="Identidad"
-              text="Representás Punta Rollers dentro y fuera de la pista."
-            />
-
-            <Benefit
-              icon="🛼"
-              title="Comodidad"
-              text="Diseñado para acompañarte durante el entrenamiento."
-            />
-
-            <Benefit
-              icon="📸"
-              title="Presencia"
-              text="Ideal para clases, fotos, eventos y rolleadas."
-            />
-          </div>
+        <section className="grid grid-cols-1 gap-3">
+          <Benefit
+            icon="🔥"
+            title="Identidad"
+            text="Representás a Punta Rollers dentro y fuera de la pista."
+          />
+          <Benefit
+            icon="🛼"
+            title="Comodidad"
+            text="Prendas pensadas para acompañarte en los entrenamientos."
+          />
+          <Benefit
+            icon="📸"
+            title="Presencia"
+            text="Uniformes oficiales para fotos, eventos y salidas."
+          />
         </section>
       </div>
     </PublicLayout>
   )
 }
 
-function OptionGroup({ label, values, selected, onSelect }) {
+function OptionGroup({ label, options, value, onChange }) {
   return (
     <div>
-      <p className="text-gray-400 text-xs mb-2">
+      <p className="text-white/40 text-xs uppercase tracking-wider mb-2">
         {label}
       </p>
 
       <div className="flex flex-wrap gap-2">
-        {values.map((value) => (
+        {options.map((option) => (
           <button
-            key={value}
+            key={option}
             type="button"
-            onClick={() => onSelect(value)}
-            className={`px-4 py-2 rounded-xl border text-sm ${
-              selected === value
-                ? 'bg-pr-gold text-black border-pr-gold font-semibold'
-                : 'bg-white/5 text-white/60 border-white/10'
+            onClick={() => onChange(option)}
+            className={`rounded-xl px-3 py-2 text-xs font-semibold border ${
+              value === option
+                ? 'bg-pr-gold text-black border-pr-gold'
+                : 'bg-white/[0.04] text-white/60 border-white/10'
             }`}
           >
-            {value}
+            {option}
           </button>
         ))}
       </div>
@@ -355,31 +382,13 @@ function OptionGroup({ label, values, selected, onSelect }) {
   )
 }
 
-function Field({ label, value, onChange, placeholder }) {
-  return (
-    <label className="block">
-      <span className="text-gray-400 text-xs">
-        {label}
-      </span>
-
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
-      />
-    </label>
-  )
-}
-
 function Benefit({ icon, title, text }) {
   return (
     <div className="glass p-4 rounded-2xl">
-      <p className="text-white font-medium">
+      <p className="text-white font-semibold">
         {icon} {title}
       </p>
-
-      <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+      <p className="text-gray-400 text-xs mt-1">
         {text}
       </p>
     </div>
