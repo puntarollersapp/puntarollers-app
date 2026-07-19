@@ -17,6 +17,69 @@ const EMPTY_STATS = {
   notas: 0,
 }
 
+const OFFICIAL_BADGES = [
+  {
+    title: 'Primer evento PR',
+    image: '/insignias-pr/primer-evento-pr.png',
+    description:
+      'Participó por primera vez en un evento junto a Punta Rollers.',
+  },
+  {
+    title: 'Rodador frecuente',
+    image: '/insignias-pr/rodador-frecuente.png',
+    description:
+      'Demostró constancia y compromiso asistiendo regularmente a las clases.',
+  },
+  {
+    title: 'Espíritu PR',
+    image: '/insignias-pr/espiritu-pr.png',
+    description:
+      'Representa los valores, la energía y el sentido de pertenencia de Punta Rollers.',
+  },
+  {
+    title: 'Primeros 6K',
+    image: '/insignias-pr/primeros-6k.png',
+    description:
+      'Completó por primera vez una distancia de 6 kilómetros.',
+  },
+  {
+    title: 'Primeros 10K',
+    image: '/insignias-pr/primeros-10k.png',
+    description:
+      'Completó por primera vez una distancia de 10 kilómetros.',
+  },
+  {
+    title: 'Ya frena en T',
+    image: '/insignias-pr/frena-en-t.png',
+    description:
+      'Aprendió y logró aplicar correctamente el frenado en T.',
+  },
+  {
+    title: 'Ya frena con taco',
+    image: '/insignias-pr/frena-con-taco.png',
+    description:
+      'Aprendió y logró aplicar correctamente el frenado con taco.',
+  },
+  {
+    title: 'Buen compañero',
+    image: '/insignias-pr/buen-companero.png',
+    description:
+      'Se destacó por acompañar, ayudar y cuidar a sus compañeros.',
+  },
+  {
+    title: 'Actitud positiva',
+    image: '/insignias-pr/actitud-positiva.png',
+    description:
+      'Mantuvo una actitud positiva, entusiasta y perseverante durante las clases.',
+  },
+  {
+    title: 'Entrenador potencial',
+    image: '/insignias-pr/entrenador-potencial.png',
+    description:
+      'Demostró liderazgo, responsabilidad y capacidad para acompañar a otros.',
+  },
+]
+
 function cleanDocument(value) {
   return String(value || '').replace(/\D/g, '')
 }
@@ -1458,16 +1521,123 @@ function ObservationTab({ creator, profile, reload, setMsg }) {
 }
 
 function BadgeTab({ creator, profile, reload, setMsg }) {
+  const [selectedBadge, setSelectedBadge] = useState(null)
+  const [description, setDescription] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setSelectedBadge(null)
+    setDescription('')
+  }, [profile.id])
+
+  function chooseBadge(badge) {
+    setSelectedBadge(badge)
+    setDescription(badge.description)
+  }
+
+  async function grantBadge() {
+    try {
+      setSaving(true)
+      setMsg('Otorgando insignia...')
+
+      if (!selectedBadge) {
+        throw new Error('Elegí una insignia.')
+      }
+
+      const creatorName =
+        `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+        'Equipo Punta Rollers'
+
+      const { error } = await supabase.from('actividad_pr').insert({
+        alumno_id: profile.id,
+        tipo: 'Insignia',
+        titulo: selectedBadge.title,
+        descripcion: description.trim(),
+        fecha: new Date().toISOString(),
+        creado_por_id: creator?.id || '',
+        creado_por_nombre: creatorName,
+        creado_por_role: creator?.role || '',
+        creado_por_foto: creator?.foto || '',
+      })
+
+      if (error) throw new Error(error.message)
+
+      setSelectedBadge(null)
+      setDescription('')
+      setMsg(`Insignia otorgada a ${profile.nombre}.`)
+      await reload()
+    } catch (error) {
+      setMsg(`No se pudo otorgar: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <ActivityCreateTab
-      creator={creator}
-      profile={profile}
-      tipo="Insignia"
-      title="Otorgar insignia"
-      label="Otorgar insignia"
-      reload={reload}
-      setMsg={setMsg}
-    />
+    <div className="space-y-4">
+      <div>
+        <p className="section-label">Insignias oficiales</p>
+        <h3 className="font-display text-2xl text-white mt-1">
+          Elegí una insignia
+        </h3>
+        <p className="text-white/35 text-xs mt-1">
+          Tocá la imagen que querés otorgarle a {profile.nombre}.
+        </p>
+      </div>
+
+      <BadgePicker
+        selectedTitle={selectedBadge?.title || ''}
+        onSelect={chooseBadge}
+      />
+
+      {selectedBadge && (
+        <section className="rounded-3xl border border-pr-gold/25 bg-pr-gold/[0.07] p-4 space-y-3">
+          <div className="flex items-center gap-4">
+            <img
+              src={selectedBadge.image}
+              alt={selectedBadge.title}
+              className="w-24 h-24 rounded-2xl object-contain bg-black/30 border border-pr-gold/15"
+            />
+
+            <div>
+              <p className="section-label">Seleccionada</p>
+              <h4 className="text-white font-semibold text-lg mt-1">
+                {selectedBadge.title}
+              </h4>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="text-white/40 text-xs">
+              Descripción para el alumno
+            </span>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows="4"
+              className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
+            />
+          </label>
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={grantBadge}
+            className="btn-gold w-full disabled:opacity-50"
+          >
+            {saving ? 'Otorgando...' : 'Otorgar insignia'}
+          </button>
+        </section>
+      )}
+
+      <ProfileActivityList
+        profileId={profile.id}
+        tipo="Insignia"
+        creator={creator}
+        reload={reload}
+        setMsg={setMsg}
+      />
+    </div>
   )
 }
 
@@ -1955,7 +2125,11 @@ function ActionsPanel({
           <span className="text-white/40 text-xs">Tipo de acción</span>
           <select
             value={actionType}
-            onChange={(event) => setActionType(event.target.value)}
+            onChange={(event) => {
+              setActionType(event.target.value)
+              setTitulo('')
+              setDescripcion('')
+            }}
             className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
           >
             <option value="Nota">Observación / Nota</option>
@@ -1964,7 +2138,28 @@ function ActionsPanel({
           </select>
         </label>
 
-        <AdminInput label="Título" value={titulo} onChange={setTitulo} />
+        {actionType === 'Insignia' ? (
+          <BadgePicker
+            selectedTitle={titulo}
+            onSelect={(badge) => {
+              setTitulo(badge.title)
+              setDescripcion(badge.description)
+            }}
+          />
+        ) : (
+          <AdminInput
+            label="Título"
+            value={titulo}
+            onChange={setTitulo}
+          />
+        )}
+
+        {actionType === 'Insignia' && titulo && (
+          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] p-3">
+            <p className="section-label">Seleccionada</p>
+            <p className="text-white font-semibold mt-1">{titulo}</p>
+          </div>
+        )}
 
         <label className="block">
           <span className="text-white/40 text-xs">Descripción</span>
@@ -2024,6 +2219,52 @@ function ActionsPanel({
       >
         {saving ? 'Guardando...' : `Guardar ${actionType}`}
       </button>
+    </div>
+  )
+}
+
+
+function BadgePicker({ selectedTitle, onSelect }) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {OFFICIAL_BADGES.map((badge) => {
+        const selected = selectedTitle === badge.title
+
+        return (
+          <button
+            key={badge.title}
+            type="button"
+            onClick={() => onSelect(badge)}
+            className={`rounded-3xl overflow-hidden border text-left transition-all ${
+              selected
+                ? 'border-pr-gold bg-pr-gold/10 shadow-[0_0_0_1px_rgba(201,168,76,0.25)]'
+                : 'border-white/10 bg-white/[0.035]'
+            }`}
+          >
+            <div className="aspect-square bg-black/30 p-3 grid place-items-center">
+              <img
+                src={badge.image}
+                alt={badge.title}
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            <div className="p-3">
+              <p className="text-white text-xs font-semibold leading-tight">
+                {badge.title}
+              </p>
+
+              <p
+                className={`text-[10px] mt-1 font-bold ${
+                  selected ? 'text-pr-gold' : 'text-white/30'
+                }`}
+              >
+                {selected ? 'Seleccionada' : 'Tocar para elegir'}
+              </p>
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
