@@ -7,6 +7,15 @@ import PublicLayout from '../layouts/PublicLayout'
 import { getCupos } from '../data/cupos'
 import { useAuth } from '../lib/auth'
 
+const GALLERY_LINKS = {
+  clases:
+    'https://drive.google.com/drive/folders/1Bn4Yy6IDiy8lJYyKf12z99Qyx5GllSST',
+  rolleadas:
+    'https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ',
+  contenido:
+    'https://drive.google.com/drive/folders/1hnBU-O1sjZC88O6EqMa_1dKAE5HybkW_',
+}
+
 export default function Home() {
   const { user } = useAuth()
 
@@ -124,33 +133,40 @@ export default function Home() {
             Quiénes somos
           </p>
 
-          <div className="glass p-6 rounded-2xl text-center space-y-3">
+          <div className="glass p-6 rounded-2xl text-center space-y-4">
             <p className="text-xl font-semibold">
               🛼 Punta Rollers
             </p>
 
-            <p className="text-gray-300 text-sm">
-              Somos una escuela con 10
-              años de experiencia
-              acompañando a niños,
-              adolescentes, adultos y
-              adultos mayores en todo el
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Somos una escuela con 10 años
+              de experiencia acompañando a
+              niños, adolescentes, adultos
+              y adultos mayores en todo el
               proceso de aprendizaje.
             </p>
 
-            <p className="text-gray-400 text-sm">
-              Trabajamos con dos
-              profesores en simultáneo,
-              clases al aire libre, pista
-              cerrada, salidas de calle,
-              eventos y seguimiento
-              personalizado.
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Trabajamos con dos profesores
+              en simultáneo, clases al aire
+              libre, pista cerrada, salidas
+              de calle, eventos,
+              entrenamientos competitivos y
+              clases personalizadas para
+              todos los niveles y edades.
             </p>
 
-            <p className="text-gray-500 text-xs">
-              Creada por Claudio Facelli
-              junto al equipo PR. No es
-              solo patinar: es pertenecer.
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Creada y dirigida por Claudio
+              Facelli, acompañado por el
+              equipo PR: David Almeida,
+              profesor, y Lucía Bernales,
+              tesorera y administrativa.
+            </p>
+
+            <p className="text-pr-gold text-sm font-semibold">
+              No es solo patinar: es
+              pertenecer.
             </p>
           </div>
         </section>
@@ -213,15 +229,10 @@ export default function Home() {
           {day === 'miercoles' && (
             <div className="space-y-3">
               <ScheduleCard
-                title="Principiantes"
-                time="19:00 - 20:00"
+                title="Clases mixtas"
+                detail="Principiantes, intermedios y avanzados"
+                time="19:30 - 20:30"
                 cupos={`${cupos.miercoles.principiantes} disponibles`}
-              />
-
-              <ScheduleCard
-                title="Avanzado"
-                time="20:00 - 21:00"
-                cupos={`${cupos.miercoles.avanzado} disponibles`}
               />
             </div>
           )}
@@ -229,18 +240,32 @@ export default function Home() {
           {day === 'sabado' && (
             <div className="space-y-3">
               <ScheduleCard
+                title="Adultos mixtos"
+                detail="Clase al aire libre"
+                time="09:00 - 10:00"
+                cupos={`${cupos.miercoles.avanzado} disponibles`}
+              />
+
+              <ScheduleCard
                 title="PR Kids"
+                detail="Pista cerrada"
                 time="19:00 - 20:00"
                 cupos={`${cupos.sabado.kids} disponibles`}
               />
 
               <ScheduleCard
-                title="Adultos"
+                title="Adultos mixtos"
+                detail="Pista cerrada"
                 time="20:00 - 21:00"
                 cupos={`${cupos.sabado.adultos} disponibles`}
               />
             </div>
           )}
+
+          <p className="text-gray-500 text-[11px] text-center">
+            Los cupos disponibles se
+            actualizan desde Administración.
+          </p>
         </section>
 
         <section
@@ -326,36 +351,27 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-2 gap-4">
-            <a
-              href="https://drive.google.com/..."
-              target="_blank"
-              rel="noreferrer"
-              className="glass p-4 rounded-2xl text-center"
-            >
-              <p className="text-white font-semibold">
-                📸 Clases
-              </p>
+            <GalleryCard
+              href={GALLERY_LINKS.clases}
+              icon="📸"
+              title="Clases"
+              subtitle="Fotos de cada jornada"
+            />
 
-              <p className="text-gray-400 text-xs">
-                Se actualiza luego de cada
-                clase
-              </p>
-            </a>
+            <GalleryCard
+              href={GALLERY_LINKS.rolleadas}
+              icon="🎉"
+              title="Rolleadas"
+              subtitle="Eventos y salidas"
+            />
 
-            <a
-              href="https://drive.google.com/..."
-              target="_blank"
-              rel="noreferrer"
-              className="glass p-4 rounded-2xl text-center"
-            >
-              <p className="text-white font-semibold">
-                🎉 Rolleadas
-              </p>
-
-              <p className="text-gray-400 text-xs">
-                Eventos y salidas
-              </p>
-            </a>
+            <GalleryCard
+              href={GALLERY_LINKS.contenido}
+              icon="🎬"
+              title="Contenido"
+              subtitle="Material de Punta Rollers"
+              className="col-span-2"
+            />
           </div>
         </section>
 
@@ -421,22 +437,29 @@ export default function Home() {
 
 function ScheduleCard({
   title,
+  detail,
   time,
   cupos,
 }) {
   return (
-    <div className="glass p-4 rounded-2xl flex justify-between items-center">
-      <div>
+    <div className="glass p-4 rounded-2xl flex justify-between items-center gap-3">
+      <div className="min-w-0">
         <p className="text-white font-semibold">
           {title}
         </p>
 
-        <p className="text-gray-400 text-sm">
+        {detail && (
+          <p className="text-gray-500 text-xs mt-1">
+            {detail}
+          </p>
+        )}
+
+        <p className="text-gray-400 text-sm mt-1">
           {time}
         </p>
       </div>
 
-      <p className="text-green-400 text-xs">
+      <p className="text-green-400 text-xs shrink-0">
         ● {cupos}
       </p>
     </div>
@@ -486,5 +509,34 @@ function Card({
         {subtitle}
       </p>
     </Link>
+  )
+}
+
+function GalleryCard({
+  href,
+  icon,
+  title,
+  subtitle,
+  className = '',
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`glass p-4 rounded-2xl text-center ${className}`}
+    >
+      <p className="text-xl">
+        {icon}
+      </p>
+
+      <p className="text-white font-semibold">
+        {title}
+      </p>
+
+      <p className="text-gray-400 text-xs mt-1">
+        {subtitle}
+      </p>
+    </a>
   )
 }
