@@ -1,0 +1,8 @@
+Subir estos 3 archivos dentro de:
+
+public/pasaporte-kids/
+
+Nombres exactos:
+01-presentacion-pasaporte-pr-kids.jpg
+02-como-funciona-pasaporte-pr-kids.jpg
+03-experiencia-pasaporte-pr-kids.jpg
