@@ -2020,7 +2020,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
     <section className={`${panel} p-4 space-y-3`}>
       <p className="section-label">Cupos manuales de la Home</p>
       <CupoInput
-        label="Miércoles · Principiantes"
+        label="Miércoles · Clases mixtas"
         value={cupos.miercoles.principiantes}
         onChange={(value) =>
           setCupos({
@@ -2030,7 +2030,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
         }
       />
       <CupoInput
-        label="Miércoles · Avanzado"
+        label="Sábado · Adultos 09:00"
         value={cupos.miercoles.avanzado}
         onChange={(value) =>
           setCupos({
@@ -2040,7 +2040,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
         }
       />
       <CupoInput
-        label="Sábado · Kids"
+        label="Sábado · PR Kids 19:00"
         value={cupos.sabado.kids}
         onChange={(value) =>
           setCupos({
@@ -2050,7 +2050,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
         }
       />
       <CupoInput
-        label="Sábado · Adultos"
+        label="Sábado · Adultos 20:00"
         value={cupos.sabado.adultos}
         onChange={(value) =>
           setCupos({
