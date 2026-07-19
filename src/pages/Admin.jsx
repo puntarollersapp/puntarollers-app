@@ -3,6 +3,7 @@ import AppLayout from '../layouts/AppLayout'
 import PaymentsPanel from '../components/admin/PaymentsPanel'
 import PrivateLessonsPanel from '../components/admin/PrivateLessonsPanel'
 import ContactsPanel from '../components/admin/ContactsPanel'
+import ProductsPanel from '../components/admin/ProductsPanel'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
@@ -225,6 +226,12 @@ export default function Admin() {
       show: canFullAdmin,
     },
     {
+      id: 'tienda',
+      icon: '🛍️',
+      label: 'Tienda',
+      show: canFullAdmin,
+    },
+    {
       id: 'acciones',
       icon: '⚡',
       label: 'Acciones',
@@ -353,6 +360,12 @@ export default function Admin() {
 
         {!loading && section === 'contactos' && canFullAdmin && (
           <ContactsPanel
+            setMsg={setMsg}
+          />
+        )}
+
+        {!loading && section === 'tienda' && canFullAdmin && (
+          <ProductsPanel
             setMsg={setMsg}
           />
         )}
