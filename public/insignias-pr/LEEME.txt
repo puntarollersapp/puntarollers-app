@@ -1,0 +1,18 @@
+INSIGNIAS PR — VERSIÓN PREMIUM
+
+Subir estos 10 archivos dentro de:
+public/insignias-pr/
+
+Como conservan exactamente los mismos nombres, GitHub los mostrará como archivos reemplazados.
+
+Nombres:
+primer-evento-pr.png
+rodador-frecuente.png
+espiritu-pr.png
+primeros-6k.png
+primeros-10k.png
+frena-en-t.png
+frena-con-taco.png
+buen-companero.png
+actitud-positiva.png
+entrenador-potencial.png
