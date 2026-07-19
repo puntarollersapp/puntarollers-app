@@ -1543,44 +1543,258 @@ function ActivityCreateTab({
         {saving ? 'Guardando...' : label}
       </button>
 
-      <ProfileActivityList profileId={profile.id} tipo={tipo} />
+      <ProfileActivityList
+        profileId={profile.id}
+        tipo={tipo}
+        creator={creator}
+        reload={reload}
+        setMsg={setMsg}
+      />
     </div>
   )
 }
 
-function ProfileActivityList({ profileId, tipo }) {
+function ProfileActivityList({
+  profileId,
+  tipo,
+  creator,
+  reload,
+  setMsg,
+}) {
   const [items, setItems] = useState([])
+  const [editingId, setEditingId] = useState('')
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    async function load() {
-      let request = supabase
-        .from('actividad_pr')
-        .select('*')
-        .eq('alumno_id', profileId)
-        .order('fecha', { ascending: false })
+  const canEditObservations = tipo === 'Nota' && Boolean(creator)
 
-      if (tipo) request = request.eq('tipo', tipo)
+  async function loadItems() {
+    let request = supabase
+      .from('actividad_pr')
+      .select('*')
+      .eq('alumno_id', profileId)
+      .eq('eliminado', false)
+      .order('fecha', { ascending: false })
 
-      const { data, error } = await request
-      if (!error) setItems(data || [])
+    if (tipo) request = request.eq('tipo', tipo)
+
+    const { data, error } = await request
+
+    if (error) {
+      setMsg?.(`No se pudieron cargar los registros: ${error.message}`)
+      return
     }
 
-    load()
+    setItems(data || [])
+  }
+
+  useEffect(() => {
+    loadItems()
   }, [profileId, tipo])
+
+  function startEditing(item) {
+    setEditingId(String(item.id))
+    setEditTitle(item.titulo || '')
+    setEditDescription(item.descripcion || '')
+  }
+
+  function cancelEditing() {
+    setEditingId('')
+    setEditTitle('')
+    setEditDescription('')
+  }
+
+  async function saveObservation(item) {
+    try {
+      setSaving(true)
+      setMsg?.('Guardando corrección...')
+
+      if (!editTitle.trim()) {
+        throw new Error('El título no puede quedar vacío.')
+      }
+
+      const editorName =
+        `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+        'Equipo Punta Rollers'
+
+      const { error } = await supabase.rpc(
+        'editar_observacion_pr',
+        {
+          p_actividad_id: String(item.id),
+          p_titulo: editTitle.trim(),
+          p_descripcion: editDescription.trim(),
+          p_modificado_por_id: creator?.id || '',
+          p_modificado_por_nombre: editorName,
+        }
+      )
+
+      if (error) throw new Error(error.message)
+
+      cancelEditing()
+      setMsg?.('Observación corregida correctamente.')
+      await loadItems()
+      await reload?.()
+    } catch (error) {
+      setMsg?.(`No se pudo corregir: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteObservation(item) {
+    const confirmed = window.confirm(
+      `¿Eliminar la observación "${item.titulo}"? Dejará de mostrarse al alumno, pero quedará registrada internamente.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setSaving(true)
+      setMsg?.('Eliminando observación...')
+
+      const editorName =
+        `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+        'Equipo Punta Rollers'
+
+      const { error } = await supabase.rpc(
+        'eliminar_observacion_pr',
+        {
+          p_actividad_id: String(item.id),
+          p_modificado_por_id: creator?.id || '',
+          p_modificado_por_nombre: editorName,
+        }
+      )
+
+      if (error) throw new Error(error.message)
+
+      cancelEditing()
+      setMsg?.('Observación eliminada correctamente.')
+      await loadItems()
+      await reload?.()
+    } catch (error) {
+      setMsg?.(`No se pudo eliminar: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="space-y-2 pt-2">
       <p className="section-label">Registros actuales</p>
-      <List
-        items={items.map((item) => ({
-          title: item.titulo,
-          desc: `${item.tipo} · ${formatDate(item.fecha)} · ${
-            item.descripcion || ''
-          }${
-            item.creado_por_nombre ? ` · ${item.creado_por_nombre}` : ''
-          }`,
-        }))}
-      />
+
+      {items.length ? (
+        items.map((item) => {
+          const isEditing = editingId === String(item.id)
+
+          return (
+            <div
+              key={item.id}
+              className="rounded-2xl bg-black/25 border border-white/5 p-3"
+            >
+              {isEditing ? (
+                <div className="space-y-3">
+                  <AdminInput
+                    label="Título"
+                    value={editTitle}
+                    onChange={setEditTitle}
+                  />
+
+                  <label className="block">
+                    <span className="text-white/40 text-xs">
+                      Descripción
+                    </span>
+                    <textarea
+                      value={editDescription}
+                      onChange={(event) =>
+                        setEditDescription(event.target.value)
+                      }
+                      rows="5"
+                      className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
+                    />
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={cancelEditing}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-white/65 text-xs font-bold disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => saveObservation(item)}
+                      className="btn-gold w-full disabled:opacity-50"
+                    >
+                      {saving ? 'Guardando...' : 'Guardar corrección'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-white text-sm font-semibold">
+                    {item.titulo}
+                  </p>
+
+                  <p className="text-white/40 text-xs mt-1 leading-relaxed break-words">
+                    {item.tipo} · {formatDate(item.fecha)}
+                    {item.creado_por_nombre
+                      ? ` · ${item.creado_por_nombre}`
+                      : ''}
+                  </p>
+
+                  {item.descripcion && (
+                    <p className="text-white/60 text-sm mt-2 leading-relaxed break-words">
+                      {item.descripcion}
+                    </p>
+                  )}
+
+                  {item.editado_en && (
+                    <p className="text-pr-gold/55 text-[10px] mt-2">
+                      Corregida el {formatDate(item.editado_en)}
+                      {item.editado_por_nombre
+                        ? ` por ${item.editado_por_nombre}`
+                        : ''}
+                    </p>
+                  )}
+
+                  {canEditObservations && (
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => startEditing(item)}
+                        className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-white/70 text-xs font-bold disabled:opacity-50"
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => deleteObservation(item)}
+                        className="rounded-2xl border border-red-400/20 bg-red-400/[0.07] py-3 text-red-200 text-xs font-bold disabled:opacity-50"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )
+        })
+      ) : (
+        <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
+          <p className="text-white/45 text-sm">
+            Sin registros todavía.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
