@@ -8,6 +8,7 @@ const EMPTY_MODAL = {
   open: false,
   type: '',
   alumno: null,
+  item: null,
 }
 
 function fullName(profile) {
@@ -96,6 +97,8 @@ export default function PrivateLessonsPanel({
     useState(toLocalDateTimeInput())
   const [observacion, setObservacion] =
     useState('')
+  const [motivo, setMotivo] =
+    useState('')
 
   async function loadData() {
     setLoading(true)
@@ -141,15 +144,19 @@ export default function PrivateLessonsPanel({
           item.alumno_id === alumno.id
       )
 
-      const lastHistory = history.find(
+      const studentHistory = history.filter(
         (item) =>
           item.alumno_id === alumno.id
       )
+
+      const lastHistory =
+        studentHistory[0]
 
       return {
         alumno,
         cuponera,
         lastHistory,
+        studentHistory,
       }
     })
   }, [alumnos, cuponeras, history])
@@ -230,7 +237,8 @@ export default function PrivateLessonsPanel({
     const classesThisMonth =
       history.filter((item) => {
         if (
-          item.tipo !== 'clase_dada'
+          item.tipo !== 'clase_dada' ||
+          item.anulado === true
         ) {
           return false
         }
@@ -274,10 +282,41 @@ export default function PrivateLessonsPanel({
       toLocalDateTimeInput()
     )
     setObservacion('')
+    setMotivo('')
     setModal({
       open: true,
       type: 'clase',
       alumno,
+      item: null,
+    })
+  }
+
+  function openEditModal(alumno, item) {
+    setFechaClase(
+      toLocalDateTimeInput(
+        item.fecha_clase ||
+          item.created_at
+      )
+    )
+    setObservacion(
+      item.observacion || ''
+    )
+    setMotivo('')
+    setModal({
+      open: true,
+      type: 'editar',
+      alumno,
+      item,
+    })
+  }
+
+  function openCancelModal(alumno, item) {
+    setMotivo('')
+    setModal({
+      open: true,
+      type: 'anular',
+      alumno,
+      item,
     })
   }
 
@@ -287,6 +326,7 @@ export default function PrivateLessonsPanel({
     setModal(EMPTY_MODAL)
     setCantidad(4)
     setObservacion('')
+    setMotivo('')
     setFechaClase(
       toLocalDateTimeInput()
     )
@@ -356,6 +396,124 @@ export default function PrivateLessonsPanel({
     } catch (error) {
       setMsg(
         `No se pudieron cargar las clases: ${error.message}`
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function editarClase() {
+    if (!modal.item) return
+
+    try {
+      setSaving(true)
+      setMsg('Actualizando clase...')
+
+      if (!fechaClase) {
+        throw new Error(
+          'Seleccioná fecha y hora.'
+        )
+      }
+
+      const date = new Date(fechaClase)
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+        throw new Error(
+          'La fecha y hora no son válidas.'
+        )
+      }
+
+      const { error } =
+        await supabase.rpc(
+          'editar_clase_particular',
+          {
+            p_historial_id:
+              String(modal.item.id),
+            p_fecha_clase:
+              date.toISOString(),
+            p_observacion:
+              observacion.trim(),
+            p_modificado_por_id:
+              currentUser?.id || '',
+            p_modificado_por_nombre:
+              getCreatorName(
+                currentUser
+              ),
+          }
+        )
+
+      if (error) {
+        throw new Error(
+          error.message
+        )
+      }
+
+      setMsg(
+        'La fecha y la devolución fueron actualizadas.'
+      )
+
+      closeModal()
+      await loadData()
+      await reload?.()
+    } catch (error) {
+      setMsg(
+        `No se pudo editar la clase: ${error.message}`
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function anularClase() {
+    if (!modal.item) return
+
+    try {
+      setSaving(true)
+      setMsg('Anulando clase...')
+
+      if (!motivo.trim()) {
+        throw new Error(
+          'Escribí el motivo de la anulación.'
+        )
+      }
+
+      const { error } =
+        await supabase.rpc(
+          'anular_clase_particular',
+          {
+            p_historial_id:
+              String(modal.item.id),
+            p_motivo:
+              motivo.trim(),
+            p_modificado_por_id:
+              currentUser?.id || '',
+            p_modificado_por_nombre:
+              getCreatorName(
+                currentUser
+              ),
+          }
+        )
+
+      if (error) {
+        throw new Error(
+          error.message
+        )
+      }
+
+      setMsg(
+        'Clase anulada. La clase volvió al saldo de la cuponera.'
+      )
+
+      closeModal()
+      await loadData()
+      await reload?.()
+    } catch (error) {
+      setMsg(
+        `No se pudo anular la clase: ${error.message}`
       )
     } finally {
       setSaving(false)
@@ -554,6 +712,7 @@ export default function PrivateLessonsPanel({
               alumno,
               cuponera,
               lastHistory,
+              studentHistory,
             }) => {
               const available = Number(
                 cuponera?.clases_disponibles ||
@@ -704,6 +863,102 @@ export default function PrivateLessonsPanel({
                       Clase dada
                     </button>
                   </div>
+
+                  {studentHistory?.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-white/25 text-[10px] uppercase tracking-[0.14em]">
+                        Historial reciente
+                      </p>
+
+                      {studentHistory
+                        .filter(
+                          (item) =>
+                            item.tipo ===
+                            'clase_dada'
+                        )
+                        .slice(0, 5)
+                        .map((item) => {
+                          const cancelled =
+                            item.anulado === true
+
+                          return (
+                            <div
+                              key={item.id}
+                              className={`rounded-2xl border p-3 ${
+                                cancelled
+                                  ? 'border-red-400/15 bg-red-400/[0.05]'
+                                  : 'border-white/[0.06] bg-black/20'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-white/70 text-xs font-semibold">
+                                    {formatDateTime(
+                                      item.fecha_clase ||
+                                        item.created_at
+                                    )}
+                                  </p>
+
+                                  <p className="text-white/40 text-xs mt-1 leading-relaxed break-words">
+                                    {item.observacion ||
+                                      'Sin devolución cargada.'}
+                                  </p>
+
+                                  {cancelled && (
+                                    <p className="text-red-200/70 text-[11px] mt-2">
+                                      Anulada
+                                      {item.motivo_correccion
+                                        ? ` · ${item.motivo_correccion}`
+                                        : ''}
+                                    </p>
+                                  )}
+
+                                  {!cancelled &&
+                                    item.corregido_en && (
+                                      <p className="text-pr-gold/60 text-[10px] mt-2">
+                                        Editada el{' '}
+                                        {formatDateTime(
+                                          item.corregido_en
+                                        )}
+                                      </p>
+                                    )}
+                                </div>
+
+                                {!cancelled && (
+                                  <div className="flex gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        openEditModal(
+                                          alumno,
+                                          item
+                                        )
+                                      }
+                                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-white/70 text-[10px] font-bold"
+                                    >
+                                      Editar
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        openCancelModal(
+                                          alumno,
+                                          item
+                                        )
+                                      }
+                                      className="rounded-xl border border-red-400/20 bg-red-400/[0.07] px-3 py-2 text-red-200 text-[10px] font-bold"
+                                    >
+                                      Anular
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  )}
                 </section>
               )
             }
@@ -717,10 +972,13 @@ export default function PrivateLessonsPanel({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="section-label">
-                  {modal.type ===
-                  'cargar'
+                  {modal.type === 'cargar'
                     ? 'Nueva carga'
-                    : 'Registrar clase'}
+                    : modal.type === 'editar'
+                      ? 'Editar clase'
+                      : modal.type === 'anular'
+                        ? 'Anular clase'
+                        : 'Registrar clase'}
                 </p>
 
                 <h2 className="font-display text-2xl text-white mt-1">
@@ -739,8 +997,7 @@ export default function PrivateLessonsPanel({
               </button>
             </div>
 
-            {modal.type ===
-            'cargar' ? (
+            {modal.type === 'cargar' ? (
               <div className="space-y-4 mt-5">
                 <div>
                   <p className="text-white/40 text-xs">
@@ -754,14 +1011,10 @@ export default function PrivateLessonsPanel({
                           key={value}
                           type="button"
                           onClick={() =>
-                            setCantidad(
-                              value
-                            )
+                            setCantidad(value)
                           }
                           className={`rounded-2xl border py-3 text-sm font-bold ${
-                            Number(
-                              cantidad
-                            ) === value
+                            Number(cantidad) === value
                               ? 'bg-pr-gold border-pr-gold text-black'
                               : 'bg-white/[0.035] border-white/10 text-white'
                           }`}
@@ -784,8 +1037,7 @@ export default function PrivateLessonsPanel({
                     value={cantidad}
                     onChange={(event) =>
                       setCantidad(
-                        event.target
-                          .value
+                        event.target.value
                       )
                     }
                     className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
@@ -801,12 +1053,47 @@ export default function PrivateLessonsPanel({
                   {saving
                     ? 'Cargando...'
                     : `Cargar ${cantidad} clase${
-                        Number(
-                          cantidad
-                        ) === 1
+                        Number(cantidad) === 1
                           ? ''
                           : 's'
                       }`}
+                </button>
+              </div>
+            ) : modal.type === 'anular' ? (
+              <div className="space-y-4 mt-5">
+                <div className="rounded-2xl border border-red-400/15 bg-red-400/[0.06] p-3">
+                  <p className="text-red-100/80 text-xs leading-relaxed">
+                    La clase quedará marcada como anulada y volverá al saldo disponible. El registro no se borrará.
+                  </p>
+                </div>
+
+                <label className="block">
+                  <span className="text-white/40 text-xs">
+                    Motivo de la anulación
+                  </span>
+
+                  <textarea
+                    rows="4"
+                    value={motivo}
+                    onChange={(event) =>
+                      setMotivo(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Ej: clase cargada por error, fecha equivocada..."
+                    className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={anularClase}
+                  className="w-full rounded-2xl border border-red-400/25 bg-red-400/10 py-4 text-red-100 text-sm font-bold disabled:opacity-50"
+                >
+                  {saving
+                    ? 'Anulando...'
+                    : 'Anular y devolver clase'}
                 </button>
               </div>
             ) : (
@@ -830,8 +1117,7 @@ export default function PrivateLessonsPanel({
 
                 <label className="block">
                   <span className="text-white/40 text-xs">
-                    Qué trabajaron en
-                    la clase
+                    Qué trabajaron en la clase
                   </span>
 
                   <textarea
@@ -847,25 +1133,31 @@ export default function PrivateLessonsPanel({
                   />
                 </label>
 
-                <div className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.06] p-3">
-                  <p className="text-amber-100/70 text-xs leading-relaxed">
-                    Al confirmar, se
-                    descontará una clase
-                    de la cuponera.
-                  </p>
-                </div>
+                {modal.type === 'clase' && (
+                  <div className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.06] p-3">
+                    <p className="text-amber-100/70 text-xs leading-relaxed">
+                      Al confirmar, se descontará una clase de la cuponera.
+                    </p>
+                  </div>
+                )}
 
                 <button
                   type="button"
                   disabled={saving}
                   onClick={
-                    registrarClase
+                    modal.type === 'editar'
+                      ? editarClase
+                      : registrarClase
                   }
                   className="btn-gold w-full disabled:opacity-50"
                 >
                   {saving
-                    ? 'Registrando...'
-                    : 'Confirmar clase dada'}
+                    ? modal.type === 'editar'
+                      ? 'Guardando...'
+                      : 'Registrando...'
+                    : modal.type === 'editar'
+                      ? 'Guardar corrección'
+                      : 'Confirmar clase dada'}
                 </button>
               </div>
             )}
@@ -912,4 +1204,4 @@ function MiniStat({
       </p>
     </div>
   )
-        }
+}
