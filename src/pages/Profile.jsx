@@ -7,6 +7,7 @@ import {
   uploadPublicImage,
 } from '../lib/supabase'
 import { mockUser } from '../data/mockData'
+import TreasuryPanel from '../components/treasury/TreasuryPanel'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -235,6 +236,10 @@ export default function Profile() {
       typeof base.accesoHabilitado === 'boolean'
         ? base.accesoHabilitado
         : true,
+    esTesoreria: Boolean(
+      base.esTesoreria ||
+        base.es_tesoreria
+    ),
   })
 
   useEffect(() => {
@@ -348,6 +353,9 @@ export default function Profile() {
             'boolean'
               ? data.acceso_habilitado
               : true,
+          esTesoreria: Boolean(
+            data.es_tesoreria
+          ),
         }
 
         setForm(loadedProfile)
@@ -1126,6 +1134,30 @@ export default function Profile() {
             />
           </Accordion>
         </section>
+
+
+        {form.esTesoreria && (
+          <Accordion
+            title="Tesorería"
+            subtitle="Registrar y consultar pagos"
+            open={open === 'tesoreria'}
+            onClick={() =>
+              setOpen(
+                open === 'tesoreria'
+                  ? ''
+                  : 'tesoreria'
+              )
+            }
+          >
+            <TreasuryPanel
+              currentUser={{
+                ...base,
+                ...form,
+              }}
+              setMessage={setMessage}
+            />
+          </Accordion>
+        )}
 
         <Accordion
           title="Contactos PR"
