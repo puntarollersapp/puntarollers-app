@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
 
@@ -20,12 +20,38 @@ import Uniformes from './pages/Uniformes'
 import Tracking from './pages/Tracking'
 import Terminos from './pages/Terminos'
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    })
+
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [pathname])
+
+  return null
+}
+
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
   const location = useLocation()
 
   if (loading) return null
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />
+
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location }}
+        replace
+      />
+    )
+  }
 
   return children
 }
@@ -35,39 +61,135 @@ function AdminRoute({ children }) {
   const location = useLocation()
 
   if (loading) return null
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />
-  if (!['admin', 'profesor'].includes(user.role)) return <Navigate to="/app/dashboard" replace />
+
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location }}
+        replace
+      />
+    )
+  }
+
+  if (!['admin', 'profesor'].includes(user.role)) {
+    return <Navigate to="/app/dashboard" replace />
+  }
 
   return children
 }
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
+    <>
+      <ScrollToTop />
 
-      <Route path="/alianza" element={<Alianza />} />
-      <Route path="/cuponeras" element={<Cuponeras />} />
-      <Route path="/pasaporte-kids" element={<PasaporteKids />} />
-      <Route path="/uniformes" element={<Uniformes />} />
-      <Route path="/tracking" element={<Tracking />} />
-      <Route path="/terminos" element={<Terminos />} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
 
-      <Route path="/app/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/app/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
-      <Route path="/app/prcard" element={<PrivateRoute><PRCardPage /></PrivateRoute>} />
-      <Route path="/app/tracking" element={<PrivateRoute><Tracking /></PrivateRoute>} />
-      <Route path="/app/actividad" element={<PrivateRoute><ActivityPage /></PrivateRoute>} />
-      <Route path="/app/servicios" element={<PrivateRoute><ServicesPage /></PrivateRoute>} />
-      <Route path="/app/contenido" element={<PrivateRoute><ContentPage /></PrivateRoute>} />
-      <Route path="/app/tienda" element={<PrivateRoute><StorePage /></PrivateRoute>} />
+        <Route path="/alianza" element={<Alianza />} />
+        <Route path="/cuponeras" element={<Cuponeras />} />
+        <Route
+          path="/pasaporte-kids"
+          element={<PasaporteKids />}
+        />
+        <Route path="/uniformes" element={<Uniformes />} />
+        <Route path="/tracking" element={<Tracking />} />
+        <Route path="/terminos" element={<Terminos />} />
 
-      <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+        <Route
+          path="/app/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
 
-      <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route
+          path="/app/perfil"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/prcard"
+          element={
+            <PrivateRoute>
+              <PRCardPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/tracking"
+          element={
+            <PrivateRoute>
+              <Tracking />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/actividad"
+          element={
+            <PrivateRoute>
+              <ActivityPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/servicios"
+          element={
+            <PrivateRoute>
+              <ServicesPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/contenido"
+          element={
+            <PrivateRoute>
+              <ContentPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/tienda"
+          element={
+            <PrivateRoute>
+              <StorePage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/app"
+          element={<Navigate to="/app/dashboard" replace />}
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
+      </Routes>
+    </>
   )
 }
 
@@ -80,9 +202,13 @@ export default function App() {
         <LoadingScreen onDone={() => setLoaded(true)} />
       )}
 
-      <div className={`transition-opacity duration-500 ${
-        loaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}>
+      <div
+        className={`transition-opacity duration-500 ${
+          loaded
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none'
+        }`}
+      >
         <AppRoutes />
       </div>
     </AuthProvider>
