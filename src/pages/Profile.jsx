@@ -11,6 +11,33 @@ import TreasuryPanel from '../components/treasury/TreasuryPanel'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
+const BADGE_IMAGES = {
+  'primer evento pr': '/insignias-pr/primer-evento-pr.png',
+  'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
+  'espiritu pr': '/insignias-pr/espiritu-pr.png',
+  'primeros 6k': '/insignias-pr/primeros-6k.png',
+  'primeros 10k': '/insignias-pr/primeros-10k.png',
+  'ya frena en t': '/insignias-pr/frena-en-t.png',
+  'frena en t': '/insignias-pr/frena-en-t.png',
+  'ya frena con taco': '/insignias-pr/frena-con-taco.png',
+  'frena con taco': '/insignias-pr/frena-con-taco.png',
+  'buen companero': '/insignias-pr/buen-companero.png',
+  'actitud positiva': '/insignias-pr/actitud-positiva.png',
+  'entrenador potencial': '/insignias-pr/entrenador-potencial.png',
+}
+
+function normalizeBadgeTitle(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+}
+
+function getBadgeImage(title) {
+  return BADGE_IMAGES[normalizeBadgeTitle(title)] || ''
+}
+
 function loadSavedUser() {
   try {
     return JSON.parse(
@@ -1092,6 +1119,7 @@ export default function Profile() {
             items={badges}
             empty="Todavía no tenés insignias"
             icon="🏅"
+            badgeMode
           />
         </Accordion>
 
@@ -1329,6 +1357,7 @@ function ActivityList({
   items,
   empty,
   icon,
+  badgeMode = false,
 }) {
   if (!items.length) {
     return (
@@ -1341,36 +1370,86 @@ function ActivityList({
 
   return (
     <div className="space-y-2">
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className="pr-card p-4 flex gap-3"
-        >
-          <div className="text-xl">
-            {icon}
-          </div>
+      {items.map((item) => {
+        const badgeImage = badgeMode
+          ? getBadgeImage(item.titulo)
+          : ''
 
-          <div>
-            <p className="text-white font-semibold text-sm">
-              {item.titulo}
-            </p>
+        return (
+          <div
+            key={item.id}
+            className={`pr-card ${
+              badgeMode
+                ? 'p-3'
+                : 'p-4 flex gap-3'
+            }`}
+          >
+            {badgeMode ? (
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden bg-black/30 border border-pr-gold/15 grid place-items-center">
+                  {badgeImage ? (
+                    <img
+                      src={badgeImage}
+                      alt={item.titulo}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-3xl">
+                      🏅
+                    </span>
+                  )}
+                </div>
 
-            {item.descripcion && (
-              <p className="text-white/42 text-xs mt-1 leading-relaxed">
-                {item.descripcion}
-              </p>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm">
+                    {item.titulo}
+                  </p>
+
+                  {item.descripcion && (
+                    <p className="text-white/42 text-xs mt-1 leading-relaxed">
+                      {item.descripcion}
+                    </p>
+                  )}
+
+                  <p className="text-white/25 text-[10px] mt-2">
+                    {formatDate(item.fecha)}
+
+                    {item.creado_por_nombre
+                      ? ` · ${item.creado_por_nombre}`
+                      : ''}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-xl">
+                  {icon}
+                </div>
+
+                <div>
+                  <p className="text-white font-semibold text-sm">
+                    {item.titulo}
+                  </p>
+
+                  {item.descripcion && (
+                    <p className="text-white/42 text-xs mt-1 leading-relaxed">
+                      {item.descripcion}
+                    </p>
+                  )}
+
+                  <p className="text-white/25 text-[10px] mt-2">
+                    {formatDate(item.fecha)}
+
+                    {item.creado_por_nombre
+                      ? ` · ${item.creado_por_nombre}`
+                      : ''}
+                  </p>
+                </div>
+              </>
             )}
-
-            <p className="text-white/25 text-[10px] mt-2">
-              {formatDate(item.fecha)}
-
-              {item.creado_por_nombre
-                ? ` · ${item.creado_por_nombre}`
-                : ''}
-            </p>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
