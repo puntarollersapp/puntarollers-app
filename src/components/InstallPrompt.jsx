@@ -112,7 +112,7 @@ export default function InstallPrompt() {
     <>
       <div className="fixed inset-0 z-[90] bg-black/65 backdrop-blur-sm animate-fade-in" />
 
-      <section className="fixed left-1/2 bottom-0 z-[100] w-full max-w-[500px] -translate-x-1/2 overflow-y-auto overscroll-contain rounded-t-[26px] border border-white/[0.08] bg-[#101016] px-4 pt-4 pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-20px_70px_rgba(0,0,0,.55)] animate-fade-up max-h-[min(88dvh,720px)]">
+      <section className="fixed inset-x-0 bottom-0 z-[100] mx-auto w-full max-w-[500px] overflow-y-auto overscroll-contain rounded-t-[26px] border border-white/[0.08] bg-[#101016] px-4 pt-4 pb-[max(18px,env(safe-area-inset-bottom))] shadow-[0_-20px_70px_rgba(0,0,0,.55)] animate-fade-up max-h-[min(88dvh,720px)]">
         <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-white/15" />
 
         <button
