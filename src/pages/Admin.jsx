@@ -1751,7 +1751,7 @@ function ProfileActivityList({
   const [saving, setSaving] = useState(false)
 
   const canEditObservations = tipo === 'Nota' && Boolean(creator)
-  const canDeleteBadge = tipo === 'Insignia' && Boolean(creator)
+  const canDeleteBadge = tipo === 'Insignia'
 
   async function loadItems() {
     let request = supabase
@@ -2011,9 +2011,9 @@ function ProfileActivityList({
                       type="button"
                       disabled={saving}
                       onClick={() => deleteBadge(item)}
-                      className="mt-3 w-full rounded-2xl border border-red-400/20 bg-red-400/[0.07] py-3 text-red-200 text-xs font-bold disabled:opacity-50"
+                      className="mt-3 w-full rounded-2xl border border-red-400/40 bg-red-500/15 py-3.5 text-red-100 text-sm font-bold disabled:opacity-50"
                     >
-                      {saving ? 'Quitando...' : 'Quitar insignia'}
+                      {saving ? 'Quitando insignia...' : '🗑️ Quitar insignia'}
                     </button>
                   )}
                 </>
