@@ -1751,6 +1751,7 @@ function ProfileActivityList({
   const [saving, setSaving] = useState(false)
 
   const canEditObservations = tipo === 'Nota' && Boolean(creator)
+  const canDeleteBadge = tipo === 'Insignia' && Boolean(creator)
 
   async function loadItems() {
     let request = supabase
@@ -1862,6 +1863,44 @@ function ProfileActivityList({
     }
   }
 
+  async function deleteBadge(item) {
+    const confirmed = window.confirm(
+      `¿Quitar la insignia "${item.titulo}" de este alumno? Dejará de mostrarse inmediatamente en su perfil.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setSaving(true)
+      setMsg?.('Quitando insignia...')
+
+      const editorName =
+        `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+        'Equipo Punta Rollers'
+
+      const { error } = await supabase
+        .from('actividad_pr')
+        .update({
+          eliminado: true,
+          editado_en: new Date().toISOString(),
+          editado_por_id: creator?.id || '',
+          editado_por_nombre: editorName,
+        })
+        .eq('id', item.id)
+
+      if (error) throw new Error(error.message)
+
+      setMsg?.('Insignia quitada correctamente.')
+      await loadItems()
+      await reload?.()
+    } catch (error) {
+      setMsg?.(`No se pudo quitar: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+
   return (
     <div className="space-y-2 pt-2">
       <p className="section-label">Registros actuales</p>
@@ -1965,6 +2004,17 @@ function ProfileActivityList({
                         Eliminar
                       </button>
                     </div>
+                  )}
+
+                  {canDeleteBadge && (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => deleteBadge(item)}
+                      className="mt-3 w-full rounded-2xl border border-red-400/20 bg-red-400/[0.07] py-3 text-red-200 text-xs font-bold disabled:opacity-50"
+                    >
+                      {saving ? 'Quitando...' : 'Quitar insignia'}
+                    </button>
                   )}
                 </>
               )}
