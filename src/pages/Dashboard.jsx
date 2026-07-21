@@ -393,6 +393,7 @@ export default function Dashboard() {
           .from('actividad_pr')
           .select('*')
           .eq('alumno_id', base.id)
+          .or('eliminado.is.null,eliminado.eq.false')
           .order('fecha', {
             ascending: false,
           })
@@ -401,7 +402,8 @@ export default function Dashboard() {
         supabase
           .from('actividad_pr')
           .select('id, tipo')
-          .eq('alumno_id', base.id),
+          .eq('alumno_id', base.id)
+          .or('eliminado.is.null,eliminado.eq.false'),
       ])
 
       if (profileData) {
