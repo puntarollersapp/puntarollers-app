@@ -679,7 +679,7 @@ export default function Profile() {
                 className="absolute inset-0 w-full h-full object-cover opacity-75"
               />
             ) : (
-              <div className="absolute inset-0 grid place-items-center text-center px-8">
+              <div className="absolute inset-0 flex items-start justify-center text-center px-8 pt-5">
                 <div>
                   <div className="text-4xl">🛼</div>
 
