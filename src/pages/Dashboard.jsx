@@ -535,7 +535,7 @@ export default function Dashboard() {
                 className="absolute inset-0 w-full h-full object-cover opacity-70"
               />
             ) : (
-              <div className="absolute inset-0 grid place-items-center text-center px-8">
+              <div className="absolute inset-0 flex items-start justify-center text-center px-8 pt-5">
                 <div>
                   <div className="text-3xl">
                     🛼
