@@ -332,6 +332,7 @@ export default function Profile() {
           .from('actividad_pr')
           .select('*')
           .eq('alumno_id', profileId)
+          .or('eliminado.is.null,eliminado.eq.false')
           .order('fecha', {
             ascending: false,
           }),
