@@ -589,7 +589,12 @@ export default function Profile() {
         setPerformanceTakes(performanceTakesResponse.data || [])
       }
 
-      if (!coachGoalsResponse.error) {
+      if (coachGoalsResponse.error) {
+        setMessage(
+          `No se pudieron cargar los objetivos: ${coachGoalsResponse.error.message}`
+        )
+        setCoachGoals([])
+      } else {
         setCoachGoals(coachGoalsResponse.data || [])
       }
 
@@ -638,6 +643,11 @@ export default function Profile() {
     [activity]
   )
 
+  const unreadNotes = useMemo(
+    () => notes.filter((item) => item.leida !== true),
+    [notes]
+  )
+
   const performanceSummary = useMemo(
     () => buildPerformanceSummary(performance, performanceTakes),
     [performance, performanceTakes]
@@ -654,6 +664,44 @@ export default function Profile() {
       profile.mensualidadHasta,
       profile.accesoHabilitado
     )
+
+  async function markNotesAsRead() {
+    const unreadIds = unreadNotes
+      .map((item) => String(item.id || ''))
+      .filter(Boolean)
+
+    if (!unreadIds.length) return
+
+    const { error } = await supabase.rpc(
+      'marcar_mis_devoluciones_leidas',
+      { p_actividad_ids: unreadIds }
+    )
+
+    if (error) {
+      setMessage(
+        `No pudimos marcar las devoluciones como leídas: ${error.message}`
+      )
+      return
+    }
+
+    const now = new Date().toISOString()
+    const unreadSet = new Set(unreadIds)
+
+    setActivity((current) =>
+      current.map((item) =>
+        unreadSet.has(String(item.id))
+          ? { ...item, leida: true, leida_en: item.leida_en || now }
+          : item
+      )
+    )
+  }
+
+  function toggleNotes() {
+    const willOpen = open !== 'observaciones'
+    setOpen(willOpen ? 'observaciones' : '')
+
+    if (willOpen) markNotesAsRead()
+  }
 
   function previewImage(file, field) {
     if (!file) return
@@ -1064,6 +1112,20 @@ export default function Profile() {
         </section>
 
 
+        <EvolutionNotesSection
+          notes={notes}
+          unreadCount={unreadNotes.length}
+          open={open === 'observaciones'}
+          onClick={toggleNotes}
+        />
+
+        {coachGoals.length > 0 && (
+          <CoachGoalsProfile
+            goals={coachGoals}
+            takes={performanceTakes}
+          />
+        )}
+
         {hasPerformance && (
           <PerformanceProfile
             performance={performance}
@@ -1359,28 +1421,6 @@ export default function Profile() {
           />
         </Accordion>
 
-        <section id="observaciones">
-          <Accordion
-            title={`Observaciones (${notes.length})`}
-            subtitle="Tu evolución"
-            open={open === 'observaciones'}
-            onClick={() =>
-              setOpen(
-                open === 'observaciones'
-                  ? ''
-                  : 'observaciones'
-              )
-            }
-          >
-            <ActivityList
-              items={notes}
-              empty="Todavía no hay observaciones"
-              icon="📝"
-            />
-          </Accordion>
-        </section>
-
-
         {form.esTesoreria && (
           <Accordion
             title="Tesorería"
@@ -1462,6 +1502,105 @@ export default function Profile() {
   )
 }
 
+
+
+function EvolutionNotesSection({ notes, unreadCount, open, onClick }) {
+  const hasUnread = unreadCount > 0
+
+  return (
+    <section
+      id="observaciones"
+      className={`rounded-[30px] overflow-hidden border bg-gradient-to-br from-violet-500/[0.16] via-[#100d18] to-black ${
+        hasUnread
+          ? 'border-violet-300/40 shadow-[0_0_30px_rgba(139,92,246,0.10)]'
+          : 'border-violet-400/25'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full p-5 text-left"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="section-label text-violet-300">Tu evolución</p>
+            <h2 className="font-display text-[25px] leading-tight text-white mt-2">
+              📣 Leé las devoluciones de tus profesores
+            </h2>
+            <p className="text-violet-100/50 text-xs mt-2 leading-relaxed">
+              Cada evaluación incluye consejos personalizados para ayudarte a mejorar tu técnica.
+            </p>
+          </div>
+
+          <div className="shrink-0 flex flex-col items-center gap-2">
+            <div
+              className={`w-12 h-12 rounded-2xl border grid place-items-center text-xl ${
+                hasUnread
+                  ? 'border-violet-300/35 bg-violet-400/20 animate-pulse'
+                  : 'border-violet-400/25 bg-violet-400/10'
+              }`}
+            >
+              📣
+            </div>
+            <span
+              className={`min-w-8 h-8 px-2 rounded-full border text-xs font-bold grid place-items-center ${
+                hasUnread
+                  ? 'border-violet-300/35 bg-violet-400/20 text-violet-100'
+                  : 'border-violet-400/20 bg-violet-400/10 text-violet-200'
+              }`}
+            >
+              {hasUnread ? unreadCount : notes.length}
+            </span>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 rounded-2xl border px-4 py-3 flex items-center justify-between gap-3 ${
+            hasUnread
+              ? 'border-violet-300/30 bg-violet-400/15'
+              : 'border-violet-400/15 bg-violet-400/[0.07]'
+          }`}
+        >
+          <div>
+            <p
+              className={`text-sm font-bold ${
+                hasUnread ? 'text-violet-100' : 'text-violet-200'
+              }`}
+            >
+              {hasUnread
+                ? `Tenés ${unreadCount} devolución${
+                    unreadCount === 1 ? '' : 'es'
+                  } nueva${unreadCount === 1 ? '' : 's'}`
+                : notes.length
+                  ? 'Estás al día con tus devoluciones'
+                  : 'Todavía no tenés devoluciones'}
+            </p>
+            <p className="text-white/42 text-[11px] mt-1">
+              {notes.length
+                ? open
+                  ? 'Tocá para cerrar'
+                  : '👇 Tocá aquí para leerlas'
+                : 'Cuando tus profesores carguen una, aparecerá acá.'}
+            </p>
+          </div>
+          <span className="w-9 h-9 rounded-full border border-violet-300/25 bg-violet-400/15 text-violet-100 grid place-items-center font-bold shrink-0">
+            {open ? '−' : '↓'}
+          </span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 animate-fade-in">
+          <ActivityList
+            items={notes}
+            empty="Todavía no hay devoluciones de profesores"
+            icon="📝"
+          />
+        </div>
+      )}
+    </section>
+  )
+}
 
 
 function CoachGoalsProfile({ goals, takes }) {
@@ -2335,4 +2474,4 @@ function EditInput({
       />
     </label>
   )
-                          }
+            }
