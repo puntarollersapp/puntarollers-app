@@ -295,6 +295,12 @@ export default function Admin() {
       show: canFullAdmin,
     },
     {
+      id: 'performance',
+      icon: '🏁',
+      label: 'Performance',
+      show: canManageContent,
+    },
+    {
       id: 'acciones',
       icon: '⚡',
       label: 'Acciones',
@@ -386,6 +392,14 @@ export default function Admin() {
             canManageContent={canManageContent}
             canCreateAdmin={isClaudio}
             reload={reloadAll}
+            setMsg={setMsg}
+          />
+        )}
+
+        {!loading && section === 'performance' && canManageContent && (
+          <PerformancePanel
+            creator={user}
+            alumnos={alumnos}
             setMsg={setMsg}
           />
         )}
@@ -484,6 +498,11 @@ function DashboardPanel({
 
           {canManageContent && (
             <>
+              <ActionButton
+                icon="🏁"
+                label="Cargar toma"
+                onClick={() => setSection('performance')}
+              />
               <ActionButton
                 icon="📝"
                 label="Observación"
@@ -2085,6 +2104,829 @@ function ServicesTab({ profile, reload, setMsg }) {
 
 function ActivityTab({ profile }) {
   return <ProfileActivityList profileId={profile.id} tipo="" />
+}
+
+
+function PerformancePanel({ creator, alumnos, setMsg }) {
+  const today = new Date().toISOString().slice(0, 10)
+  const [selectedStudentId, setSelectedStudentId] = useState(
+    alumnos[0]?.id || ''
+  )
+  const [performance, setPerformance] = useState(null)
+  const [takes, setTakes] = useState([])
+  const [nextTakeNumber, setNextTakeNumber] = useState(1)
+  const [loadingPerformance, setLoadingPerformance] = useState(false)
+  const [savingTake, setSavingTake] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [studentQuery, setStudentQuery] = useState('')
+  const [takeDate, setTakeDate] = useState(today)
+  const [feedback, setFeedback] = useState('')
+  const [records, setRecords] = useState([
+    { id: crypto.randomUUID(), distance: '6', customDistance: '', time: '' },
+  ])
+  const [profileForm, setProfileForm] = useState({
+    perfilRodaje: 'En evolución',
+    tecnica: '',
+    resistencia: '',
+  })
+
+  const selectedStudent = alumnos.find(
+    (student) => student.id === selectedStudentId
+  )
+
+  const filteredStudents = alumnos.filter((student) =>
+    `${student.nombre} ${student.apellido}`
+      .toLowerCase()
+      .includes(studentQuery.toLowerCase())
+  )
+
+  const groupedTakes = Object.values(
+    takes.reduce((groups, take) => {
+      const key = String(take.numero_toma)
+      if (!groups[key]) {
+        groups[key] = {
+          numero_toma: take.numero_toma,
+          fecha: take.fecha,
+          devolucion: take.devolucion || '',
+          registros: [],
+        }
+      }
+
+      groups[key].registros.push(take)
+      if (!groups[key].devolucion && take.devolucion) {
+        groups[key].devolucion = take.devolucion
+      }
+
+      return groups
+    }, {})
+  ).sort((a, b) => Number(b.numero_toma) - Number(a.numero_toma))
+
+  async function loadPerformance(studentId) {
+    if (!studentId) {
+      setPerformance(null)
+      setTakes([])
+      setNextTakeNumber(1)
+      return
+    }
+
+    try {
+      setLoadingPerformance(true)
+
+      const [profileResult, takesResult, nextResult] = await Promise.all([
+        supabase
+          .from('pr_performance')
+          .select('*')
+          .eq('alumno_id', studentId)
+          .maybeSingle(),
+        supabase
+          .from('pr_performance_tomas_calculadas')
+          .select('*')
+          .eq('alumno_id', studentId)
+          .order('numero_toma', { ascending: false })
+          .order('distancia_km', { ascending: true }),
+        supabase.rpc('next_pr_toma_number', {
+          p_alumno_id: studentId,
+        }),
+      ])
+
+      if (profileResult.error) {
+        throw new Error(profileResult.error.message)
+      }
+
+      if (takesResult.error) {
+        throw new Error(takesResult.error.message)
+      }
+
+      const profileData = profileResult.data || null
+      const loadedTakes = takesResult.data || []
+      const fallbackNext =
+        loadedTakes.reduce(
+          (maximum, take) => Math.max(maximum, Number(take.numero_toma) || 0),
+          0
+        ) + 1
+
+      setPerformance(profileData)
+      setTakes(loadedTakes)
+      setNextTakeNumber(
+        nextResult.error ? fallbackNext : Number(nextResult.data) || fallbackNext
+      )
+      setProfileForm({
+        perfilRodaje: profileData?.perfil_rodaje || 'En evolución',
+        tecnica: profileData?.tecnica ? String(profileData.tecnica) : '',
+        resistencia: profileData?.resistencia
+          ? String(profileData.resistencia)
+          : '',
+      })
+    } catch (error) {
+      setMsg(`No se pudo cargar Performance: ${error.message}`)
+    } finally {
+      setLoadingPerformance(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedStudentId && alumnos[0]?.id) {
+      setSelectedStudentId(alumnos[0].id)
+      return
+    }
+
+    if (
+      selectedStudentId &&
+      !alumnos.some((student) => student.id === selectedStudentId)
+    ) {
+      setSelectedStudentId(alumnos[0]?.id || '')
+    }
+  }, [alumnos, selectedStudentId])
+
+  useEffect(() => {
+    loadPerformance(selectedStudentId)
+  }, [selectedStudentId])
+
+  function resetTakeForm() {
+    setTakeDate(today)
+    setFeedback('')
+    setRecords([
+      { id: crypto.randomUUID(), distance: '6', customDistance: '', time: '' },
+    ])
+  }
+
+  function addRecord() {
+    setRecords((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        distance: current.some((record) => record.distance === '12')
+          ? 'custom'
+          : '12',
+        customDistance: '',
+        time: '',
+      },
+    ])
+  }
+
+  function updateRecord(id, field, value) {
+    setRecords((current) =>
+      current.map((record) =>
+        record.id === id ? { ...record, [field]: value } : record
+      )
+    )
+  }
+
+  function removeRecord(id) {
+    setRecords((current) =>
+      current.length === 1
+        ? current
+        : current.filter((record) => record.id !== id)
+    )
+  }
+
+  async function savePerformanceProfile() {
+    if (!selectedStudentId) {
+      setMsg('Seleccioná un alumno.')
+      return
+    }
+
+    try {
+      setSavingProfile(true)
+      setMsg('Guardando perfil Performance...')
+
+      const tecnica = profileForm.tecnica
+        ? Number(profileForm.tecnica)
+        : null
+      const resistencia = profileForm.resistencia
+        ? Number(profileForm.resistencia)
+        : null
+
+      const { error } = await supabase.from('pr_performance').upsert(
+        {
+          alumno_id: selectedStudentId,
+          perfil_rodaje: profileForm.perfilRodaje,
+          tecnica,
+          resistencia,
+          indice_actualizado_en: new Date().toISOString(),
+          visible: true,
+        },
+        { onConflict: 'alumno_id' }
+      )
+
+      if (error) throw new Error(error.message)
+
+      setMsg(`Perfil Performance de ${selectedStudent?.nombre} actualizado.`)
+      await loadPerformance(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo guardar el perfil: ${error.message}`)
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  async function saveTake() {
+    if (!selectedStudentId) {
+      setMsg('Seleccioná un alumno.')
+      return
+    }
+
+    if (!takeDate) {
+      setMsg('Seleccioná la fecha de la toma.')
+      return
+    }
+
+    const parsedRecords = records.map((record) => {
+      const distance = Number(
+        record.distance === 'custom'
+          ? record.customDistance
+          : record.distance
+      )
+      const seconds = parsePerformanceTime(record.time)
+
+      return { ...record, parsedDistance: distance, parsedSeconds: seconds }
+    })
+
+    if (
+      parsedRecords.some(
+        (record) => !record.parsedDistance || record.parsedDistance <= 0
+      )
+    ) {
+      setMsg('Revisá las distancias cargadas.')
+      return
+    }
+
+    if (parsedRecords.some((record) => !record.parsedSeconds)) {
+      setMsg('Ingresá todos los tiempos como MM:SS o HH:MM:SS.')
+      return
+    }
+
+    const uniqueDistances = new Set(
+      parsedRecords.map((record) => record.parsedDistance)
+    )
+
+    if (uniqueDistances.size !== parsedRecords.length) {
+      setMsg('No podés repetir la misma distancia dentro de una toma.')
+      return
+    }
+
+    try {
+      setSavingTake(true)
+      setMsg(`Guardando Toma ${nextTakeNumber} completa...`)
+
+      const { error: profileError } = await supabase
+        .from('pr_performance')
+        .upsert(
+          {
+            alumno_id: selectedStudentId,
+            perfil_rodaje: profileForm.perfilRodaje,
+            tecnica: profileForm.tecnica
+              ? Number(profileForm.tecnica)
+              : null,
+            resistencia: profileForm.resistencia
+              ? Number(profileForm.resistencia)
+              : null,
+            indice_actualizado_en: new Date().toISOString(),
+            visible: true,
+          },
+          { onConflict: 'alumno_id' }
+        )
+
+      if (profileError) throw new Error(profileError.message)
+
+      const rows = parsedRecords.map((record) => ({
+        alumno_id: selectedStudentId,
+        numero_toma: nextTakeNumber,
+        fecha: takeDate,
+        distancia_km: record.parsedDistance,
+        tiempo_segundos: record.parsedSeconds,
+        devolucion: feedback.trim() || null,
+        origen: 'manual',
+        creado_por: creator?.id || null,
+      }))
+
+      const { error } = await supabase
+        .from('pr_performance_tomas')
+        .insert(rows)
+
+      if (error) throw new Error(error.message)
+
+      resetTakeForm()
+      setMsg(
+        `Toma ${nextTakeNumber} guardada para ${selectedStudent?.nombre} con ${rows.length} distancia/s. Ritmo y velocidad se calcularon automáticamente.`
+      )
+      await loadPerformance(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo guardar la toma: ${error.message}`)
+    } finally {
+      setSavingTake(false)
+    }
+  }
+
+  async function removeTakeGroup(group) {
+    const confirmed = window.confirm(
+      `¿Eliminar completa la Toma ${group.numero_toma} de ${selectedStudent?.nombre}? Se quitarán todas sus distancias.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setMsg(`Eliminando Toma ${group.numero_toma}...`)
+
+      const { error } = await supabase
+        .from('pr_performance_tomas')
+        .update({ eliminado: true })
+        .eq('alumno_id', selectedStudentId)
+        .eq('numero_toma', group.numero_toma)
+        .eq('eliminado', false)
+
+      if (error) throw new Error(error.message)
+
+      setMsg(`Toma ${group.numero_toma} eliminada correctamente.`)
+      await loadPerformance(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo eliminar la toma: ${error.message}`)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-[28px] border border-pr-gold/25 bg-gradient-to-br from-pr-gold/[0.14] via-black/60 to-black p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-pr-gold text-[10px] font-bold uppercase tracking-[0.22em]">
+              PR Performance
+            </p>
+            <h2 className="font-display text-3xl text-white mt-1">
+              Tomas de rendimiento
+            </h2>
+            <p className="text-white/40 text-xs mt-2 leading-relaxed">
+              Cada toma representa una instancia completa y puede incluir una o varias distancias. El sistema calcula ritmo y velocidad automáticamente.
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
+            🏁
+          </div>
+        </div>
+      </section>
+
+      <section className={`${panel} p-4 space-y-3`}>
+        <div>
+          <p className="section-label">Alumno</p>
+          <h3 className="font-display text-2xl text-white mt-1">
+            Elegir perfil
+          </h3>
+        </div>
+
+        <input
+          value={studentQuery}
+          onChange={(event) => setStudentQuery(event.target.value)}
+          placeholder="Buscar alumno..."
+          className="w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+        />
+
+        <select
+          value={selectedStudentId}
+          onChange={(event) => setSelectedStudentId(event.target.value)}
+          className="w-full rounded-2xl bg-black/40 border border-pr-gold/20 px-4 py-4 text-sm outline-none text-white"
+        >
+          <option value="">Seleccionar alumno</option>
+          {filteredStudents.map((student) => (
+            <option key={student.id} value={student.id}>
+              {student.nombre} {student.apellido}
+            </option>
+          ))}
+        </select>
+
+        {selectedStudent && (
+          <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-black/30 p-3">
+            <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 bg-black/40 grid place-items-center shrink-0">
+              {selectedStudent.foto ? (
+                <img
+                  src={selectedStudent.foto}
+                  alt={selectedStudent.nombre}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>👤</span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-semibold truncate">
+                {selectedStudent.nombre} {selectedStudent.apellido}
+              </p>
+              <p className="text-pr-gold text-xs font-bold mt-1">
+                Próxima: Toma {nextTakeNumber}
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {loadingPerformance ? (
+        <section className={`${panel} p-4 text-white/45 text-sm`}>
+          Cargando PR Performance...
+        </section>
+      ) : selectedStudent ? (
+        <>
+          <section className={`${panel} p-4 space-y-4`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="section-label">Nueva instancia</p>
+                <h3 className="font-display text-2xl text-white mt-1">
+                  Toma {nextTakeNumber}
+                </h3>
+                <p className="text-white/35 text-xs mt-1">
+                  Agregá todas las distancias realizadas en esta misma toma.
+                </p>
+              </div>
+              <span className="rounded-full border border-pr-gold/20 bg-pr-gold/10 px-3 py-1.5 text-pr-gold text-[10px] font-bold">
+                {records.length} DISTANCIA/S
+              </span>
+            </div>
+
+            <AdminInput
+              label="Fecha de la toma"
+              value={takeDate}
+              onChange={setTakeDate}
+              type="date"
+            />
+
+            <div className="space-y-3">
+              {records.map((record, index) => {
+                const distance = Number(
+                  record.distance === 'custom'
+                    ? record.customDistance
+                    : record.distance
+                )
+                const seconds = parsePerformanceTime(record.time)
+                const pace =
+                  seconds > 0 && distance > 0 ? seconds / distance : 0
+                const speed =
+                  seconds > 0 && distance > 0
+                    ? distance / (seconds / 3600)
+                    : 0
+
+                return (
+                  <div
+                    key={record.id}
+                    className="rounded-3xl border border-white/8 bg-black/30 p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-white text-sm font-semibold">
+                        Registro {index + 1}
+                      </p>
+                      {records.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeRecord(record.id)}
+                          className="text-red-200 text-xs"
+                        >
+                          Quitar
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="text-white/40 text-xs">Distancia</span>
+                      <div className="grid grid-cols-4 gap-2 mt-2">
+                        {['2', '6', '12', 'custom'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() =>
+                              updateRecord(record.id, 'distance', option)
+                            }
+                            className={`rounded-2xl border py-3 text-xs font-bold ${
+                              record.distance === option
+                                ? 'border-pr-gold bg-pr-gold text-black'
+                                : 'border-white/10 bg-white/[0.035] text-white'
+                            }`}
+                          >
+                            {option === 'custom' ? 'Otra' : `${option}K`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {record.distance === 'custom' && (
+                      <AdminInput
+                        label="Distancia en kilómetros"
+                        value={record.customDistance}
+                        onChange={(value) =>
+                          updateRecord(record.id, 'customDistance', value)
+                        }
+                        inputMode="decimal"
+                        placeholder="Ej: 10"
+                      />
+                    )}
+
+                    <AdminInput
+                      label="Tiempo"
+                      value={record.time}
+                      onChange={(value) =>
+                        updateRecord(record.id, 'time', value)
+                      }
+                      inputMode="numeric"
+                      placeholder="Ej: 17:32 o 01:05:20"
+                    />
+
+                    {seconds > 0 && distance > 0 && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <PerformancePreview
+                          label="Ritmo estimado"
+                          value={`${formatPerformanceDuration(pace)}/km`}
+                        />
+                        <PerformancePreview
+                          label="Velocidad estimada"
+                          value={`${speed.toFixed(2)} km/h`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={addRecord}
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.035] py-3.5 text-white text-sm font-semibold"
+            >
+              + Agregar otra distancia a esta toma
+            </button>
+
+            <label className="block">
+              <span className="text-white/40 text-xs">
+                Devolución general de la Toma {nextTakeNumber}
+              </span>
+              <textarea
+                value={feedback}
+                onChange={(event) => setFeedback(event.target.value)}
+                rows="5"
+                placeholder="Devolución técnica general para el alumno..."
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
+              />
+            </label>
+
+            <button
+              type="button"
+              disabled={savingTake}
+              onClick={saveTake}
+              className="btn-gold w-full disabled:opacity-50"
+            >
+              {savingTake
+                ? `Guardando Toma ${nextTakeNumber}...`
+                : `Guardar Toma ${nextTakeNumber} completa`}
+            </button>
+          </section>
+
+          <section className={`${panel} p-4 space-y-4`}>
+            <div>
+              <p className="section-label">Evaluación técnica</p>
+              <h3 className="font-display text-2xl text-white mt-1">
+                Perfil de rodaje
+              </h3>
+            </div>
+
+            <label className="block">
+              <span className="text-white/40 text-xs">Perfil de rodaje</span>
+              <select
+                value={profileForm.perfilRodaje}
+                onChange={(event) =>
+                  setProfileForm({
+                    ...profileForm,
+                    perfilRodaje: event.target.value,
+                  })
+                }
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+              >
+                <option value="Recreativo">Recreativo</option>
+                <option value="En evolución">En evolución</option>
+                <option value="Competitivo">Competitivo</option>
+                <option value="Racing Team">Racing Team</option>
+              </select>
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <PerformanceRating
+                label="Técnica"
+                value={profileForm.tecnica}
+                onChange={(value) =>
+                  setProfileForm({ ...profileForm, tecnica: value })
+                }
+              />
+              <PerformanceRating
+                label="Resistencia"
+                value={profileForm.resistencia}
+                onChange={(value) =>
+                  setProfileForm({ ...profileForm, resistencia: value })
+                }
+              />
+            </div>
+
+            <button
+              type="button"
+              disabled={savingProfile}
+              onClick={savePerformanceProfile}
+              className="w-full rounded-2xl border border-pr-gold/25 bg-pr-gold/10 py-4 text-pr-gold text-sm font-bold disabled:opacity-50"
+            >
+              {savingProfile ? 'Guardando perfil...' : 'Guardar perfil técnico'}
+            </button>
+          </section>
+
+          <section className={`${panel} p-4 space-y-3`}>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="section-label">Historial</p>
+                <h3 className="font-display text-2xl text-white mt-1">
+                  Tomas registradas
+                </h3>
+              </div>
+              <span className="text-pr-gold text-xs font-bold">
+                {groupedTakes.length} TOMAS
+              </span>
+            </div>
+
+            {groupedTakes.length > 0 ? (
+              groupedTakes.map((group) => (
+                <div
+                  key={group.numero_toma}
+                  className="rounded-3xl border border-white/8 bg-black/30 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-pr-gold text-[10px] font-bold uppercase tracking-[0.18em]">
+                        Toma {group.numero_toma}
+                      </p>
+                      <p className="text-white/35 text-xs mt-1">
+                        {formatPerformanceDate(group.fecha)} ·{' '}
+                        {group.registros.length} distancia/s
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeTakeGroup(group)}
+                      className="w-9 h-9 rounded-full border border-red-400/15 bg-red-400/[0.07] text-red-200 text-xs grid place-items-center shrink-0"
+                      aria-label={`Eliminar toma ${group.numero_toma}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 mt-3">
+                    {group.registros.map((take) => (
+                      <div
+                        key={take.id}
+                        className="rounded-2xl border border-white/5 bg-white/[0.025] p-3"
+                      >
+                        <p className="text-white font-display text-lg">
+                          {formatPerformanceDistance(take.distancia_km)} ·{' '}
+                          {formatPerformanceDuration(take.tiempo_segundos)}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <PerformancePreview
+                            label="Ritmo"
+                            value={`${formatPerformanceDuration(
+                              take.ritmo_segundos_km
+                            )}/km`}
+                          />
+                          <PerformancePreview
+                            label="Velocidad"
+                            value={`${Number(take.velocidad_kmh).toFixed(
+                              2
+                            )} km/h`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {group.devolucion && (
+                    <div className="rounded-2xl border border-pr-gold/10 bg-pr-gold/[0.04] p-3 mt-3">
+                      <p className="text-white/30 text-[10px] uppercase tracking-wider">
+                        Devolución de la toma
+                      </p>
+                      <p className="text-white/65 text-sm leading-relaxed mt-1 break-words">
+                        {group.devolucion}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
+                <p className="text-white/45 text-sm">
+                  Este alumno todavía no tiene tomas registradas en PR Performance.
+                </p>
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <section className={`${panel} p-4`}>
+          <p className="text-white/45 text-sm">
+            Seleccioná un alumno para administrar su rendimiento.
+          </p>
+        </section>
+      )}
+    </div>
+  )
+}
+
+function PerformanceRating({ label, value, onChange }) {
+  return (
+    <div>
+      <span className="text-white/40 text-xs">{label}</span>
+      <div className="grid grid-cols-5 gap-1 mt-2">
+        {[1, 2, 3, 4, 5].map((rating) => (
+          <button
+            key={rating}
+            type="button"
+            onClick={() => onChange(String(rating))}
+            className={`aspect-square rounded-xl border text-xs font-bold ${
+              Number(value) === rating
+                ? 'border-pr-gold bg-pr-gold text-black'
+                : 'border-white/10 bg-white/[0.035] text-white/55'
+            }`}
+          >
+            {rating}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PerformancePreview({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-pr-gold/10 bg-pr-gold/[0.055] p-3">
+      <p className="text-white/30 text-[9px] uppercase tracking-[0.14em]">
+        {label}
+      </p>
+      <p className="text-white text-sm font-semibold mt-1">{value}</p>
+    </div>
+  )
+}
+
+function parsePerformanceTime(value) {
+  const clean = String(value || '').trim()
+  if (!clean) return 0
+
+  if (/^\d+$/.test(clean)) {
+    const seconds = Number(clean)
+    return seconds > 0 ? seconds : 0
+  }
+
+  const parts = clean.split(':').map((part) => Number(part))
+  if (
+    parts.some((part) => !Number.isFinite(part) || part < 0) ||
+    parts.length < 2 ||
+    parts.length > 3
+  ) {
+    return 0
+  }
+
+  if (parts.length === 2) {
+    const [minutes, seconds] = parts
+    if (seconds >= 60) return 0
+    return minutes * 60 + seconds
+  }
+
+  const [hours, minutes, seconds] = parts
+  if (minutes >= 60 || seconds >= 60) return 0
+  return hours * 3600 + minutes * 60 + seconds
+}
+
+function formatPerformanceDuration(value) {
+  const totalSeconds = Math.round(Number(value) || 0)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+      2,
+      '0'
+    )}:${String(seconds).padStart(2, '0')}`
+  }
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
+    2,
+    '0'
+  )}`
+}
+
+function formatPerformanceDistance(value) {
+  const distance = Number(value)
+  if (!Number.isFinite(distance)) return `${value} km`
+  return `${Number.isInteger(distance) ? distance : distance.toFixed(2)}K`
+}
+
+function formatPerformanceDate(value) {
+  if (!value) return 'Sin fecha'
+
+  const parts = String(value).split('-')
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+
+  return formatDate(value)
 }
 
 function ActionsPanel({
