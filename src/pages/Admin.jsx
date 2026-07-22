@@ -301,6 +301,12 @@ export default function Admin() {
       show: canManageContent,
     },
     {
+      id: 'objetivos',
+      icon: '🎯',
+      label: 'Objetivos',
+      show: canManageContent,
+    },
+    {
       id: 'acciones',
       icon: '⚡',
       label: 'Acciones',
@@ -398,6 +404,14 @@ export default function Admin() {
 
         {!loading && section === 'performance' && canManageContent && (
           <PerformancePanel
+            creator={user}
+            alumnos={alumnos}
+            setMsg={setMsg}
+          />
+        )}
+
+        {!loading && section === 'objetivos' && canManageContent && (
+          <ObjectivesPanel
             creator={user}
             alumnos={alumnos}
             setMsg={setMsg}
@@ -502,6 +516,11 @@ function DashboardPanel({
                 icon="🏁"
                 label="Cargar toma"
                 onClick={() => setSection('performance')}
+              />
+              <ActionButton
+                icon="🎯"
+                label="Crear objetivo"
+                onClick={() => setSection('objetivos')}
               />
               <ActionButton
                 icon="📝"
@@ -2107,6 +2126,556 @@ function ActivityTab({ profile }) {
 }
 
 
+
+function ObjectivesPanel({ creator, alumnos, setMsg }) {
+  const today = new Date().toISOString().slice(0, 10)
+  const [selectedStudentId, setSelectedStudentId] = useState(
+    alumnos[0]?.id || ''
+  )
+  const [studentQuery, setStudentQuery] = useState('')
+  const [objectives, setObjectives] = useState([])
+  const [loadingObjectives, setLoadingObjectives] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState('')
+  const [form, setForm] = useState({
+    titulo: '',
+    distancia: '6',
+    distanciaPersonalizada: '',
+    tiempoObjetivo: '',
+    indicacion: '',
+    fechaLimite: '',
+    estado: 'Activo',
+  })
+
+  const selectedStudent = alumnos.find(
+    (student) => student.id === selectedStudentId
+  )
+
+  const filteredStudents = alumnos.filter((student) =>
+    `${student.nombre} ${student.apellido}`
+      .toLowerCase()
+      .includes(studentQuery.toLowerCase())
+  )
+
+  useEffect(() => {
+    if (!selectedStudentId && alumnos[0]?.id) {
+      setSelectedStudentId(alumnos[0].id)
+      return
+    }
+
+    if (
+      selectedStudentId &&
+      !alumnos.some((student) => student.id === selectedStudentId)
+    ) {
+      setSelectedStudentId(alumnos[0]?.id || '')
+    }
+  }, [alumnos, selectedStudentId])
+
+  useEffect(() => {
+    loadObjectives(selectedStudentId)
+    cancelEdit()
+  }, [selectedStudentId])
+
+  async function loadObjectives(studentId) {
+    if (!studentId) {
+      setObjectives([])
+      return
+    }
+
+    try {
+      setLoadingObjectives(true)
+
+      const { data, error } = await supabase
+        .from('pr_performance_objetivos')
+        .select('*')
+        .eq('alumno_id', studentId)
+        .eq('eliminado', false)
+        .order('estado', { ascending: true })
+        .order('creado_en', { ascending: false })
+
+      if (error) throw new Error(error.message)
+      setObjectives(data || [])
+    } catch (error) {
+      setMsg(`No se pudieron cargar los objetivos: ${error.message}`)
+    } finally {
+      setLoadingObjectives(false)
+    }
+  }
+
+  function resetForm() {
+    setForm({
+      titulo: '',
+      distancia: '6',
+      distanciaPersonalizada: '',
+      tiempoObjetivo: '',
+      indicacion: '',
+      fechaLimite: '',
+      estado: 'Activo',
+    })
+  }
+
+  function cancelEdit() {
+    setEditingId('')
+    resetForm()
+  }
+
+  function startEdit(objective) {
+    const standardDistance = ['2', '6', '12'].includes(
+      String(Number(objective.distancia_km))
+    )
+
+    setEditingId(String(objective.id))
+    setForm({
+      titulo: objective.titulo || '',
+      distancia: standardDistance
+        ? String(Number(objective.distancia_km))
+        : 'custom',
+      distanciaPersonalizada: standardDistance
+        ? ''
+        : String(objective.distancia_km || ''),
+      tiempoObjetivo: formatPerformanceDuration(
+        objective.tiempo_objetivo_segundos
+      ),
+      indicacion: objective.indicacion || '',
+      fechaLimite: objective.fecha_limite || '',
+      estado: objective.estado || 'Activo',
+    })
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function saveObjective() {
+    if (!selectedStudentId) {
+      setMsg('Seleccioná un alumno.')
+      return
+    }
+
+    const distance = Number(
+      form.distancia === 'custom'
+        ? form.distanciaPersonalizada
+        : form.distancia
+    )
+    const targetSeconds = parsePerformanceTime(form.tiempoObjetivo)
+
+    if (!form.titulo.trim()) {
+      setMsg('Escribí un título para el objetivo.')
+      return
+    }
+
+    if (!distance || distance <= 0) {
+      setMsg('Revisá la distancia objetivo.')
+      return
+    }
+
+    if (!targetSeconds) {
+      setMsg('Ingresá el tiempo objetivo como MM:SS o HH:MM:SS.')
+      return
+    }
+
+    try {
+      setSaving(true)
+      setMsg(editingId ? 'Actualizando objetivo...' : 'Creando objetivo...')
+
+      const creatorName =
+        `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+        'Equipo Punta Rollers'
+
+      const payload = {
+        alumno_id: selectedStudentId,
+        titulo: form.titulo.trim(),
+        distancia_km: distance,
+        tiempo_objetivo_segundos: targetSeconds,
+        indicacion: form.indicacion.trim() || null,
+        fecha_limite: form.fechaLimite || null,
+        estado: form.estado,
+        creado_por_id: creator?.id || null,
+        creado_por_nombre: creatorName,
+        actualizado_en: new Date().toISOString(),
+      }
+
+      let result
+
+      if (editingId) {
+        result = await supabase
+          .from('pr_performance_objetivos')
+          .update(payload)
+          .eq('id', editingId)
+      } else {
+        result = await supabase
+          .from('pr_performance_objetivos')
+          .insert({
+            ...payload,
+            creado_en: new Date().toISOString(),
+            eliminado: false,
+          })
+      }
+
+      if (result.error) throw new Error(result.error.message)
+
+      setMsg(
+        editingId
+          ? `Objetivo de ${selectedStudent?.nombre} actualizado.`
+          : `Objetivo creado para ${selectedStudent?.nombre}.`
+      )
+      cancelEdit()
+      await loadObjectives(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo guardar el objetivo: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function changeObjectiveStatus(objective, nextStatus) {
+    try {
+      setMsg('Actualizando estado del objetivo...')
+
+      const { error } = await supabase
+        .from('pr_performance_objetivos')
+        .update({
+          estado: nextStatus,
+          completado_en:
+            nextStatus === 'Completado' ? new Date().toISOString() : null,
+          actualizado_en: new Date().toISOString(),
+        })
+        .eq('id', objective.id)
+
+      if (error) throw new Error(error.message)
+
+      setMsg(
+        nextStatus === 'Completado'
+          ? 'Objetivo marcado como completado. 🎉'
+          : 'Objetivo reactivado.'
+      )
+      await loadObjectives(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo actualizar: ${error.message}`)
+    }
+  }
+
+  async function deleteObjective(objective) {
+    const confirmed = window.confirm(
+      `¿Eliminar el objetivo "${objective.titulo}"? Dejará de mostrarse al alumno.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setMsg('Eliminando objetivo...')
+
+      const { error } = await supabase
+        .from('pr_performance_objetivos')
+        .update({
+          eliminado: true,
+          actualizado_en: new Date().toISOString(),
+        })
+        .eq('id', objective.id)
+
+      if (error) throw new Error(error.message)
+
+      if (editingId === String(objective.id)) cancelEdit()
+      setMsg('Objetivo eliminado correctamente.')
+      await loadObjectives(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo eliminar: ${error.message}`)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-[28px] border border-pr-gold/25 bg-gradient-to-br from-pr-gold/[0.14] via-black/60 to-black p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-pr-gold text-[10px] font-bold uppercase tracking-[0.22em]">
+              PR Performance
+            </p>
+            <h2 className="font-display text-3xl text-white mt-1">
+              Objetivos del entrenador
+            </h2>
+            <p className="text-white/40 text-xs mt-2 leading-relaxed">
+              Definí una meta concreta para cada alumno. En el perfil verá su objetivo y, en el próximo paso, su progreso automático.
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
+            🎯
+          </div>
+        </div>
+      </section>
+
+      <section className={`${panel} p-4 space-y-3`}>
+        <div>
+          <p className="section-label">Alumno</p>
+          <h3 className="font-display text-2xl text-white mt-1">
+            Elegir perfil
+          </h3>
+        </div>
+
+        <input
+          value={studentQuery}
+          onChange={(event) => setStudentQuery(event.target.value)}
+          placeholder="Buscar alumno..."
+          className="w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+        />
+
+        <select
+          value={selectedStudentId}
+          onChange={(event) => setSelectedStudentId(event.target.value)}
+          className="w-full rounded-2xl bg-black/40 border border-pr-gold/20 px-4 py-4 text-sm outline-none text-white"
+        >
+          <option value="">Seleccionar alumno</option>
+          {filteredStudents.map((student) => (
+            <option key={student.id} value={student.id}>
+              {student.nombre} {student.apellido}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      {selectedStudent && (
+        <>
+          <section className={`${panel} p-4 space-y-4`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="section-label">
+                  {editingId ? 'Editar meta' : 'Nueva meta'}
+                </p>
+                <h3 className="font-display text-2xl text-white mt-1">
+                  {selectedStudent.nombre} {selectedStudent.apellido}
+                </h3>
+              </div>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-white/60 text-xs"
+                >
+                  Cancelar edición
+                </button>
+              )}
+            </div>
+
+            <AdminInput
+              label="Título del objetivo"
+              value={form.titulo}
+              onChange={(value) => setForm({ ...form, titulo: value })}
+              placeholder="Ej: Bajar de 21:00 en 6K"
+            />
+
+            <div>
+              <span className="text-white/40 text-xs">Distancia objetivo</span>
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {['2', '6', '12', 'custom'].map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setForm({ ...form, distancia: option })}
+                    className={`rounded-2xl border py-3 text-xs font-bold ${
+                      form.distancia === option
+                        ? 'border-pr-gold bg-pr-gold text-black'
+                        : 'border-white/10 bg-white/[0.035] text-white'
+                    }`}
+                  >
+                    {option === 'custom' ? 'Otra' : `${option}K`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {form.distancia === 'custom' && (
+              <AdminInput
+                label="Distancia en kilómetros"
+                value={form.distanciaPersonalizada}
+                onChange={(value) =>
+                  setForm({ ...form, distanciaPersonalizada: value })
+                }
+                inputMode="decimal"
+                placeholder="Ej: 10"
+              />
+            )}
+
+            <AdminInput
+              label="Tiempo objetivo"
+              value={form.tiempoObjetivo}
+              onChange={(value) =>
+                setForm({ ...form, tiempoObjetivo: value })
+              }
+              placeholder="Ej: 20:59"
+            />
+
+            <label className="block">
+              <span className="text-white/40 text-xs">
+                Indicación del entrenador
+              </span>
+              <textarea
+                value={form.indicacion}
+                onChange={(event) =>
+                  setForm({ ...form, indicacion: event.target.value })
+                }
+                rows="4"
+                placeholder="Ej: Mantener un ritmo parejo y no acelerar demasiado en la primera vuelta."
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
+              />
+            </label>
+
+            <AdminInput
+              label="Fecha límite opcional"
+              value={form.fechaLimite}
+              onChange={(value) => setForm({ ...form, fechaLimite: value })}
+              type="date"
+            />
+
+            <label className="block">
+              <span className="text-white/40 text-xs">Estado</span>
+              <select
+                value={form.estado}
+                onChange={(event) =>
+                  setForm({ ...form, estado: event.target.value })
+                }
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+              >
+                <option value="Activo">Activo</option>
+                <option value="Pausado">Pausado</option>
+                <option value="Completado">Completado</option>
+              </select>
+            </label>
+
+            <button
+              type="button"
+              disabled={saving}
+              onClick={saveObjective}
+              className="btn-gold w-full disabled:opacity-50"
+            >
+              {saving
+                ? 'Guardando...'
+                : editingId
+                ? 'Guardar cambios del objetivo'
+                : 'Crear objetivo'}
+            </button>
+          </section>
+
+          <section className={`${panel} p-4 space-y-3`}>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="section-label">Historial de metas</p>
+                <h3 className="font-display text-2xl text-white mt-1">
+                  Objetivos asignados
+                </h3>
+              </div>
+              <span className="text-pr-gold text-xs font-bold">
+                {objectives.length} OBJETIVO/S
+              </span>
+            </div>
+
+            {loadingObjectives ? (
+              <div className="rounded-2xl bg-black/25 border border-white/5 p-4 text-white/45 text-sm">
+                Cargando objetivos...
+              </div>
+            ) : objectives.length > 0 ? (
+              objectives.map((objective) => (
+                <div
+                  key={objective.id}
+                  className={`rounded-3xl border p-4 ${
+                    objective.estado === 'Completado'
+                      ? 'border-emerald-400/20 bg-emerald-400/[0.06]'
+                      : objective.estado === 'Pausado'
+                      ? 'border-amber-300/15 bg-amber-300/[0.045]'
+                      : 'border-pr-gold/15 bg-pr-gold/[0.045]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="inline-flex rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/55 text-[9px] font-bold uppercase tracking-wider">
+                        {objective.estado}
+                      </span>
+                      <h4 className="text-white font-semibold mt-2 break-words">
+                        {objective.titulo}
+                      </h4>
+                    </div>
+                    <span className="text-xl shrink-0">
+                      {objective.estado === 'Completado' ? '🏆' : '🎯'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <PerformancePreview
+                      label="Distancia"
+                      value={formatPerformanceDistance(
+                        objective.distancia_km
+                      )}
+                    />
+                    <PerformancePreview
+                      label="Meta"
+                      value={formatPerformanceDuration(
+                        objective.tiempo_objetivo_segundos
+                      )}
+                    />
+                  </div>
+
+                  {objective.indicacion && (
+                    <p className="text-white/60 text-sm leading-relaxed mt-3 break-words">
+                      {objective.indicacion}
+                    </p>
+                  )}
+
+                  <p className="text-white/30 text-[10px] mt-3">
+                    Creado {formatDate(objective.creado_en)}
+                    {objective.fecha_limite
+                      ? ` · Límite ${formatPerformanceDate(
+                          objective.fecha_limite
+                        )}`
+                      : ''}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(objective)}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-white/70 text-xs font-bold"
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        changeObjectiveStatus(
+                          objective,
+                          objective.estado === 'Completado'
+                            ? 'Activo'
+                            : 'Completado'
+                        )
+                      }
+                      className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] py-3 text-emerald-200 text-xs font-bold"
+                    >
+                      {objective.estado === 'Completado'
+                        ? 'Reactivar'
+                        : 'Completar'}
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => deleteObjective(objective)}
+                    className="mt-2 w-full rounded-2xl border border-red-400/20 bg-red-400/[0.07] py-3 text-red-200 text-xs font-bold"
+                  >
+                    Eliminar objetivo
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
+                <p className="text-white/45 text-sm">
+                  Este alumno todavía no tiene objetivos asignados.
+                </p>
+              </div>
+            )}
+          </section>
+        </>
+      )}
+    </div>
+  )
+}
+
 function PerformancePanel({ creator, alumnos, setMsg }) {
   const today = new Date().toISOString().slice(0, 10)
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -3700,4 +4269,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-}
+    }
