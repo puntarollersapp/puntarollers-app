@@ -592,6 +592,19 @@ function UsersPanel({
   setMsg,
 }) {
   const [tab, setTab] = useState('info')
+  const [bulkMode, setBulkMode] = useState(false)
+  const [bulkSelectedIds, setBulkSelectedIds] = useState([])
+  const [deletingBulk, setDeletingBulk] = useState(false)
+
+  const selectableStudents = profiles.filter(
+    (profile) => profile.role === 'alumno'
+  )
+
+  const allVisibleStudentsSelected =
+    selectableStudents.length > 0 &&
+    selectableStudents.every((profile) =>
+      bulkSelectedIds.includes(profile.id)
+    )
 
   const tabs = [
     { id: 'info', label: 'info', show: true },
@@ -632,6 +645,97 @@ function UsersPanel({
     if (!tabs.some((item) => item.id === tab)) setTab('info')
   }, [canFullAdmin, canManageContent, selected?.id])
 
+  useEffect(() => {
+    setBulkSelectedIds((current) =>
+      current.filter((id) => profiles.some((profile) => profile.id === id))
+    )
+  }, [profiles])
+
+  function toggleBulkStudent(id, checked) {
+    setBulkSelectedIds((current) =>
+      checked
+        ? [...new Set([...current, id])]
+        : current.filter((profileId) => profileId !== id)
+    )
+  }
+
+  function toggleAllVisibleStudents() {
+    const visibleIds = selectableStudents.map((profile) => profile.id)
+
+    setBulkSelectedIds((current) => {
+      if (allVisibleStudentsSelected) {
+        return current.filter((id) => !visibleIds.includes(id))
+      }
+
+      return [...new Set([...current, ...visibleIds])]
+    })
+  }
+
+  async function deleteSelectedStudents() {
+    if (!bulkSelectedIds.length) {
+      setMsg('Seleccioná al menos un alumno para eliminar.')
+      return
+    }
+
+    const selectedProfiles = profiles.filter((profile) =>
+      bulkSelectedIds.includes(profile.id)
+    )
+
+    const confirmed = window.confirm(
+      `¿Eliminar definitivamente ${selectedProfiles.length} alumno/s? También se eliminarán sus accesos seguros y registros relacionados. Esta acción no se puede deshacer.`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setDeletingBulk(true)
+      setMsg(`Eliminando 0 de ${selectedProfiles.length} alumnos...`)
+
+      const failures = []
+      let deleted = 0
+
+      for (const profile of selectedProfiles) {
+        const { data, error } = await supabase.functions.invoke(
+          'gestionar-usuario-auth',
+          {
+            body: {
+              action: 'delete',
+              profile_id: profile.id,
+            },
+          }
+        )
+
+        if (error || !data?.success) {
+          failures.push(
+            `${profile.nombre} ${profile.apellido}`.trim() || profile.id
+          )
+        } else {
+          deleted += 1
+        }
+
+        setMsg(
+          `Eliminando ${deleted + failures.length} de ${selectedProfiles.length} alumnos...`
+        )
+      }
+
+      setBulkSelectedIds([])
+      setBulkMode(false)
+      await reload()
+
+      if (failures.length) {
+        setMsg(
+          `Se eliminaron ${deleted} alumno/s. No se pudieron eliminar ${failures.length}: ${failures.join(', ')}.`
+        )
+      } else {
+        setMsg(`Se eliminaron correctamente ${deleted} alumno/s.`)
+      }
+    } catch (error) {
+      setMsg(`No se pudo completar la eliminación múltiple: ${error.message}`)
+    } finally {
+      setDeletingBulk(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {canFullAdmin && (
@@ -640,6 +744,92 @@ function UsersPanel({
           reload={reload}
           setMsg={setMsg}
         />
+      )}
+
+      {canFullAdmin && (
+        <section className={`${panel} overflow-hidden`}>
+          <button
+            type="button"
+            onClick={() => {
+              setBulkMode((value) => !value)
+              setBulkSelectedIds([])
+            }}
+            className="w-full p-4 flex items-center justify-between text-left"
+          >
+            <div>
+              <p className="section-label">Limpieza de perfiles</p>
+              <h2 className="font-display text-2xl text-white mt-1">
+                Eliminar varios alumnos
+              </h2>
+              <p className="text-white/35 text-xs mt-1">
+                Seleccioná únicamente los perfiles que ya no deben permanecer.
+              </p>
+            </div>
+            <span className="w-9 h-9 rounded-full border border-red-400/20 bg-red-400/[0.08] text-red-200 grid place-items-center">
+              {bulkMode ? '−' : '🗑️'}
+            </span>
+          </button>
+
+          {bulkMode && (
+            <div className="px-4 pb-4 space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-white/45 text-xs">
+                  Seleccionados: {bulkSelectedIds.length}
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleAllVisibleStudents}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-white/65 text-xs"
+                >
+                  {allVisibleStudentsSelected
+                    ? 'Quitar visibles'
+                    : 'Seleccionar visibles'}
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                {selectableStudents.map((profile) => (
+                  <label
+                    key={profile.id}
+                    className={`flex items-center gap-3 rounded-2xl border p-3 ${
+                      bulkSelectedIds.includes(profile.id)
+                        ? 'border-red-400/30 bg-red-400/[0.08]'
+                        : 'border-white/5 bg-black/25'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={bulkSelectedIds.includes(profile.id)}
+                      onChange={(event) =>
+                        toggleBulkStudent(profile.id, event.target.checked)
+                      }
+                      className="w-5 h-5"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-white text-sm font-semibold truncate">
+                        {profile.nombre} {profile.apellido}
+                      </p>
+                      <p className="text-white/30 text-[10px] mt-1">
+                        CI {profile.documento || 'sin documento'}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={deletingBulk || bulkSelectedIds.length === 0}
+                onClick={deleteSelectedStudents}
+                className="w-full rounded-2xl border border-red-500/30 bg-red-500/15 py-4 text-red-100 text-sm font-bold disabled:opacity-35"
+              >
+                {deletingBulk
+                  ? 'Eliminando perfiles...'
+                  : `Eliminar ${bulkSelectedIds.length} alumno/s seleccionado/s`}
+              </button>
+            </div>
+          )}
+        </section>
       )}
 
       <input
@@ -652,9 +842,7 @@ function UsersPanel({
       {profiles.length === 0 && (
         <section className={`${panel} p-4`}>
           <p className="text-white font-semibold">No encontramos usuarios</p>
-          <p className="text-white/40 text-sm mt-1">
-            Probá con otra búsqueda.
-          </p>
+          <p className="text-white/40 text-sm mt-1">Probá con otra búsqueda.</p>
         </section>
       )}
 
@@ -755,11 +943,7 @@ function UsersPanel({
                 />
               )}
               {tab === 'grupos' && canFullAdmin && (
-                <GroupsTab
-                  profile={selected}
-                  reload={reload}
-                  setMsg={setMsg}
-                />
+                <GroupsTab profile={selected} reload={reload} setMsg={setMsg} />
               )}
               {tab === 'observaciones' && canManageContent && (
                 <ObservationTab
@@ -786,11 +970,7 @@ function UsersPanel({
                 />
               )}
               {tab === 'servicios' && canFullAdmin && (
-                <ServicesTab
-                  profile={selected}
-                  reload={reload}
-                  setMsg={setMsg}
-                />
+                <ServicesTab profile={selected} reload={reload} setMsg={setMsg} />
               )}
               {tab === 'actividad' && <ActivityTab profile={selected} />}
             </div>
@@ -1562,13 +1742,37 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
   const [selectedBadge, setSelectedBadge] = useState(null)
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
+  const [assignedBadges, setAssignedBadges] = useState([])
+
+  const assignedByTitle = new Map(
+    assignedBadges.map((item) => [normalizePerformanceText(item.titulo), item])
+  )
+
+  async function loadAssignedBadges() {
+    const { data, error } = await supabase
+      .from('actividad_pr')
+      .select('id, titulo, creado_por_nombre, fecha')
+      .eq('alumno_id', profile.id)
+      .eq('tipo', 'Insignia')
+      .or('eliminado.is.null,eliminado.eq.false')
+      .order('fecha', { ascending: false })
+
+    if (error) {
+      setMsg(`No se pudieron comprobar las insignias: ${error.message}`)
+      return
+    }
+
+    setAssignedBadges(data || [])
+  }
 
   useEffect(() => {
     setSelectedBadge(null)
     setDescription('')
+    loadAssignedBadges()
   }, [profile.id])
 
   function chooseBadge(badge) {
+    if (assignedByTitle.has(normalizePerformanceText(badge.title))) return
     setSelectedBadge(badge)
     setDescription(badge.description)
   }
@@ -1578,8 +1782,16 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
       setSaving(true)
       setMsg('Otorgando insignia...')
 
-      if (!selectedBadge) {
-        throw new Error('Elegí una insignia.')
+      if (!selectedBadge) throw new Error('Elegí una insignia.')
+
+      const badgeKey = normalizePerformanceText(selectedBadge.title)
+      if (assignedByTitle.has(badgeKey)) {
+        const existing = assignedByTitle.get(badgeKey)
+        throw new Error(
+          `Esta insignia ya fue otorgada${
+            existing?.creado_por_nombre ? ` por ${existing.creado_por_nombre}` : ''
+          }.`
+        )
       }
 
       const creatorName =
@@ -1603,6 +1815,7 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
       setSelectedBadge(null)
       setDescription('')
       setMsg(`Insignia otorgada a ${profile.nombre}.`)
+      await loadAssignedBadges()
       await reload()
     } catch (error) {
       setMsg(`No se pudo otorgar: ${error.message}`)
@@ -1619,13 +1832,14 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
           Elegí una insignia
         </h3>
         <p className="text-white/35 text-xs mt-1">
-          Tocá la imagen que querés otorgarle a {profile.nombre}.
+          Las insignias ya otorgadas aparecen bloqueadas para evitar duplicados entre profesores.
         </p>
       </div>
 
       <BadgePicker
         selectedTitle={selectedBadge?.title || ''}
         onSelect={chooseBadge}
+        disabledBadges={assignedByTitle}
       />
 
       {selectedBadge && (
@@ -1636,7 +1850,6 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
               alt={selectedBadge.title}
               className="w-24 h-24 rounded-2xl object-contain bg-black/30 border border-pr-gold/15"
             />
-
             <div>
               <p className="section-label">Seleccionada</p>
               <h4 className="text-white font-semibold text-lg mt-1">
@@ -1672,7 +1885,10 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
         profileId={profile.id}
         tipo="Insignia"
         creator={creator}
-        reload={reload}
+        reload={async () => {
+          await loadAssignedBadges()
+          await reload()
+        }}
         setMsg={setMsg}
       />
     </div>
@@ -3801,15 +4017,67 @@ function ActionsPanel({
   )
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [selectedBadges, setSelectedBadges] = useState([])
+  const [existingBadges, setExistingBadges] = useState([])
   const [saving, setSaving] = useState(false)
+  const [loadingBadges, setLoadingBadges] = useState(false)
 
   const allSelected =
     alumnos.length > 0 && selectedStudents.length === alumnos.length
 
-  function toggleAll() {
-    setSelectedStudents(
-      allSelected ? [] : alumnos.map((alumno) => alumno.id)
+  const existingBadgeKeys = new Set(
+    existingBadges.map(
+      (item) => `${item.alumno_id}::${normalizePerformanceText(item.titulo)}`
     )
+  )
+
+  const totalBadgeCombinations =
+    selectedStudents.length * selectedBadges.length
+
+  const pendingBadgeRows = selectedStudents.flatMap((studentId) =>
+    selectedBadges
+      .filter(
+        (badge) =>
+          !existingBadgeKeys.has(
+            `${studentId}::${normalizePerformanceText(badge.title)}`
+          )
+      )
+      .map((badge) => ({ studentId, badge }))
+  )
+
+  const skippedBadgeCombinations =
+    totalBadgeCombinations - pendingBadgeRows.length
+
+  useEffect(() => {
+    if (actionType !== 'Insignia' || selectedStudents.length === 0) {
+      setExistingBadges([])
+      return
+    }
+
+    async function loadExistingBadges() {
+      try {
+        setLoadingBadges(true)
+        const { data, error } = await supabase
+          .from('actividad_pr')
+          .select('alumno_id, titulo, creado_por_nombre')
+          .in('alumno_id', selectedStudents)
+          .eq('tipo', 'Insignia')
+          .or('eliminado.is.null,eliminado.eq.false')
+
+        if (error) throw new Error(error.message)
+        setExistingBadges(data || [])
+      } catch (error) {
+        setMsg(`No se pudieron comprobar las insignias existentes: ${error.message}`)
+      } finally {
+        setLoadingBadges(false)
+      }
+    }
+
+    loadExistingBadges()
+  }, [actionType, selectedStudents.join('|')])
+
+  function toggleAll() {
+    setSelectedStudents(allSelected ? [] : alumnos.map((alumno) => alumno.id))
   }
 
   function toggleStudent(id, checked) {
@@ -3820,6 +4088,15 @@ function ActionsPanel({
     )
   }
 
+  function toggleBadge(badge) {
+    setSelectedBadges((current) => {
+      const exists = current.some((item) => item.title === badge.title)
+      return exists
+        ? current.filter((item) => item.title !== badge.title)
+        : [...current, badge]
+    })
+  }
+
   async function saveAction() {
     if (!canManageContent) return
 
@@ -3827,7 +4104,6 @@ function ActionsPanel({
       setSaving(true)
       setMsg('Guardando acción...')
 
-      if (!titulo.trim()) throw new Error('Falta el título.')
       if (selectedStudents.length === 0) {
         throw new Error('Seleccioná al menos un alumno.')
       }
@@ -3836,6 +4112,46 @@ function ActionsPanel({
         `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
         'Equipo Punta Rollers'
       const date = new Date().toISOString()
+
+      if (actionType === 'Insignia') {
+        if (!selectedBadges.length) {
+          throw new Error('Seleccioná al menos una insignia.')
+        }
+
+        if (!pendingBadgeRows.length) {
+          throw new Error(
+            'Todas las insignias seleccionadas ya estaban asignadas a esos alumnos.'
+          )
+        }
+
+        const rows = pendingBadgeRows.map(({ studentId, badge }) => ({
+          alumno_id: studentId,
+          tipo: 'Insignia',
+          titulo: badge.title,
+          descripcion: badge.description,
+          fecha: date,
+          creado_por_id: creator?.id || '',
+          creado_por_nombre: creatorName,
+          creado_por_role: creator?.role || '',
+          creado_por_foto: creator?.foto || '',
+        }))
+
+        const { error } = await supabase.from('actividad_pr').insert(rows)
+        if (error) throw new Error(error.message)
+
+        setSelectedBadges([])
+        setMsg(
+          `${rows.length} insignia/s otorgada/s. ${
+            skippedBadgeCombinations
+              ? `${skippedBadgeCombinations} asignación/es duplicada/s fueron omitidas.`
+              : 'No hubo duplicados.'
+          }`
+        )
+        await reload()
+        return
+      }
+
+      if (!titulo.trim()) throw new Error('Falta el título.')
 
       const rows = selectedStudents.map((id) => ({
         alumno_id: id,
@@ -3854,9 +4170,7 @@ function ActionsPanel({
 
       setTitulo('')
       setDescripcion('')
-      setMsg(
-        `${actionType} guardada para ${selectedStudents.length} alumno/s.`
-      )
+      setMsg(`${actionType} guardada para ${selectedStudents.length} alumno/s.`)
       await reload()
     } catch (error) {
       setMsg(`No se pudo guardar: ${error.message}`)
@@ -3878,6 +4192,7 @@ function ActionsPanel({
               setActionType(event.target.value)
               setTitulo('')
               setDescripcion('')
+              setSelectedBadges([])
             }}
             className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
           >
@@ -3888,37 +4203,53 @@ function ActionsPanel({
         </label>
 
         {actionType === 'Insignia' ? (
-          <BadgePicker
-            selectedTitle={titulo}
-            onSelect={(badge) => {
-              setTitulo(badge.title)
-              setDescripcion(badge.description)
-            }}
-          />
+          <>
+            <div>
+              <p className="text-white/40 text-xs">Insignias</p>
+              <p className="text-white/30 text-[10px] mt-1">
+                Podés seleccionar varias. Tocá nuevamente para quitar una.
+              </p>
+            </div>
+            <BadgePicker
+              selectedTitles={selectedBadges.map((badge) => badge.title)}
+              onSelect={toggleBadge}
+              multi
+            />
+
+            <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] p-3">
+              <p className="section-label">Resumen de asignación</p>
+              <p className="text-white font-semibold mt-1">
+                {selectedStudents.length} alumno/s × {selectedBadges.length} insignia/s
+              </p>
+              <p className="text-pr-gold text-sm font-bold mt-2">
+                {pendingBadgeRows.length} asignación/es nuevas
+              </p>
+              {skippedBadgeCombinations > 0 && (
+                <p className="text-amber-200/75 text-xs mt-1">
+                  {skippedBadgeCombinations} ya existen y se omitirán automáticamente.
+                </p>
+              )}
+              {loadingBadges && (
+                <p className="text-white/35 text-xs mt-2">
+                  Comprobando insignias existentes...
+                </p>
+              )}
+            </div>
+          </>
         ) : (
-          <AdminInput
-            label="Título"
-            value={titulo}
-            onChange={setTitulo}
-          />
+          <>
+            <AdminInput label="Título" value={titulo} onChange={setTitulo} />
+            <label className="block">
+              <span className="text-white/40 text-xs">Descripción</span>
+              <textarea
+                value={descripcion}
+                onChange={(event) => setDescripcion(event.target.value)}
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+                rows="4"
+              />
+            </label>
+          </>
         )}
-
-        {actionType === 'Insignia' && titulo && (
-          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] p-3">
-            <p className="section-label">Seleccionada</p>
-            <p className="text-white font-semibold mt-1">{titulo}</p>
-          </div>
-        )}
-
-        <label className="block">
-          <span className="text-white/40 text-xs">Descripción</span>
-          <textarea
-            value={descripcion}
-            onChange={(event) => setDescripcion(event.target.value)}
-            className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
-            rows="4"
-          />
-        </label>
       </section>
 
       <section className={`${panel} p-4`}>
@@ -3929,7 +4260,6 @@ function ActionsPanel({
               Seleccionados: {selectedStudents.length}
             </p>
           </div>
-
           <button
             type="button"
             onClick={toggleAll}
@@ -3962,53 +4292,95 @@ function ActionsPanel({
 
       <button
         type="button"
-        disabled={saving || !canManageContent}
+        disabled={
+          saving ||
+          !canManageContent ||
+          (actionType === 'Insignia' &&
+            (loadingBadges || pendingBadgeRows.length === 0))
+        }
         onClick={saveAction}
         className="btn-gold w-full disabled:opacity-50"
       >
-        {saving ? 'Guardando...' : `Guardar ${actionType}`}
+        {saving
+          ? 'Guardando...'
+          : actionType === 'Insignia'
+          ? `Otorgar ${pendingBadgeRows.length} asignación/es`
+          : `Guardar ${actionType}`}
       </button>
     </div>
   )
 }
 
 
-function BadgePicker({ selectedTitle, onSelect }) {
+function BadgePicker({
+  selectedTitle = '',
+  selectedTitles = [],
+  onSelect,
+  disabledBadges = new Map(),
+  multi = false,
+}) {
+  const chosenTitles = multi ? selectedTitles : [selectedTitle]
+
   return (
     <div className="grid grid-cols-2 gap-3">
       {OFFICIAL_BADGES.map((badge) => {
-        const selected = selectedTitle === badge.title
+        const selected = chosenTitles.includes(badge.title)
+        const disabledItem = disabledBadges.get(
+          normalizePerformanceText(badge.title)
+        )
+        const disabled = Boolean(disabledItem)
 
         return (
           <button
             key={badge.title}
             type="button"
+            disabled={disabled}
             onClick={() => onSelect(badge)}
             className={`rounded-3xl overflow-hidden border text-left transition-all ${
-              selected
+              disabled
+                ? 'border-emerald-400/15 bg-emerald-400/[0.045] opacity-55 cursor-not-allowed'
+                : selected
                 ? 'border-pr-gold bg-pr-gold/10 shadow-[0_0_0_1px_rgba(201,168,76,0.25)]'
                 : 'border-white/10 bg-white/[0.035]'
             }`}
           >
-            <div className="aspect-square bg-black/30 p-3 grid place-items-center">
+            <div className="aspect-square bg-black/30 p-3 grid place-items-center relative">
               <img
                 src={badge.image}
                 alt={badge.title}
                 className="w-full h-full object-contain"
               />
+              {disabled && (
+                <span className="absolute top-2 right-2 w-8 h-8 rounded-full border border-emerald-300/20 bg-emerald-400/15 text-emerald-200 grid place-items-center font-bold">
+                  ✓
+                </span>
+              )}
             </div>
 
             <div className="p-3">
               <p className="text-white text-xs font-semibold leading-tight">
                 {badge.title}
               </p>
-
               <p
                 className={`text-[10px] mt-1 font-bold ${
-                  selected ? 'text-pr-gold' : 'text-white/30'
+                  disabled
+                    ? 'text-emerald-300/75'
+                    : selected
+                    ? 'text-pr-gold'
+                    : 'text-white/30'
                 }`}
               >
-                {selected ? 'Seleccionada' : 'Tocar para elegir'}
+                {disabled
+                  ? `Ya otorgada${
+                      disabledItem?.creado_por_nombre
+                        ? ` por ${disabledItem.creado_por_nombre}`
+                        : ''
+                    }`
+                  : selected
+                  ? multi
+                    ? 'Seleccionada · tocar para quitar'
+                    : 'Seleccionada'
+                  : 'Tocar para elegir'}
               </p>
             </div>
           </button>
@@ -4269,4 +4641,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-    }
+        }
