@@ -2902,6 +2902,144 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
   )
 }
 
+
+function buildAutomaticTakeFeedback(existingTakes, parsedRecords, takeNumber, takeDate) {
+  const messages = parsedRecords.map((record, index) => {
+    const distance = record.normalizedDistance
+    const previousSummary = buildStudentPerformance(existingTakes).summaries.find(
+      (summary) => summary.distance === distance
+    )
+
+    const prospectiveTake = {
+      id: `preview-${takeNumber}-${index}-${distance}`,
+      alumno_id: existingTakes[0]?.alumno_id || '',
+      numero_toma: takeNumber,
+      fecha: takeDate,
+      distancia_km: record.parsedDistance,
+      tiempo_segundos: record.parsedSeconds,
+      origen: 'manual',
+      eliminado: false,
+    }
+
+    const updatedSummary = buildStudentPerformance([
+      ...existingTakes,
+      prospectiveTake,
+    ]).summaries.find((summary) => summary.distance === distance)
+
+    const distanceLabel = formatEngineDistance(distance)
+    const currentTime = formatEngineDuration(record.parsedSeconds)
+
+    if (!previousSummary?.count) {
+      return `${distanceLabel}: primera referencia registrada en ${currentTime}. Esta marca será el punto de partida para medir su evolución.`
+    }
+
+    const previousBestSeconds = previousSummary.best?.tiempo_segundos || 0
+    const previousLatestSeconds = previousSummary.latest?.tiempo_segundos || 0
+    const bestDifference = previousBestSeconds - record.parsedSeconds
+    const latestDifference = previousLatestSeconds - record.parsedSeconds
+
+    if (previousBestSeconds && record.parsedSeconds < previousBestSeconds) {
+      return `${distanceLabel}: nuevo récord personal en ${currentTime}. Mejoró ${formatEngineDuration(
+        bestDifference
+      )} respecto a su mejor marca anterior.`
+    }
+
+    if (latestDifference > 0) {
+      return `${distanceLabel}: completó la toma en ${currentTime} y mejoró ${formatEngineDuration(
+        latestDifference
+      )} respecto a la toma anterior.`
+    }
+
+    if (Math.abs(updatedSummary?.latestChangePercent || 0) < 1.5) {
+      return `${distanceLabel}: completó la toma en ${currentTime}, manteniendo un rendimiento estable respecto al registro anterior.`
+    }
+
+    return `${distanceLabel}: completó la toma en ${currentTime}. Aunque esta vez no mejoró su marca anterior, el registro suma información útil para ajustar el entrenamiento.`
+  })
+
+  return `Actualización automática PR:\n${messages.join('\n')}`
+}
+
+async function grantAutomaticPerformanceBadges({
+  studentId,
+  parsedRecords,
+  existingTakes,
+  creator,
+}) {
+  const completedBefore = new Set(
+    buildStudentPerformance(existingTakes).distances.map(String)
+  )
+
+  const badgeCandidates = []
+
+  parsedRecords.forEach((record) => {
+    const distance = String(record.normalizedDistance)
+
+    if (distance === '6' && !completedBefore.has('6')) {
+      badgeCandidates.push(
+        OFFICIAL_BADGES.find((badge) => badge.title === 'Primeros 6K')
+      )
+    }
+
+    if (distance === '10' && !completedBefore.has('10')) {
+      badgeCandidates.push(
+        OFFICIAL_BADGES.find((badge) => badge.title === 'Primeros 10K')
+      )
+    }
+  })
+
+  const uniqueCandidates = badgeCandidates.filter(
+    (badge, index, list) =>
+      badge &&
+      list.findIndex((item) => item?.title === badge.title) === index
+  )
+
+  if (!uniqueCandidates.length) return []
+
+  const { data: existingBadges, error: existingError } = await supabase
+    .from('actividad_pr')
+    .select('titulo')
+    .eq('alumno_id', studentId)
+    .eq('tipo', 'Insignia')
+    .or('eliminado.is.null,eliminado.eq.false')
+
+  if (existingError) throw new Error(existingError.message)
+
+  const existingTitles = new Set(
+    (existingBadges || []).map((item) =>
+      normalizePerformanceText(item.titulo)
+    )
+  )
+
+  const creatorName =
+    `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+    'Equipo Punta Rollers'
+
+  const rows = uniqueCandidates
+    .filter(
+      (badge) =>
+        !existingTitles.has(normalizePerformanceText(badge.title))
+    )
+    .map((badge) => ({
+      alumno_id: studentId,
+      tipo: 'Insignia',
+      titulo: badge.title,
+      descripcion: badge.description,
+      fecha: new Date().toISOString(),
+      creado_por_id: creator?.id || '',
+      creado_por_nombre: creatorName,
+      creado_por_role: creator?.role || '',
+      creado_por_foto: creator?.foto || '',
+    }))
+
+  if (!rows.length) return []
+
+  const { error } = await supabase.from('actividad_pr').insert(rows)
+  if (error) throw new Error(error.message)
+
+  return rows.map((row) => row.titulo)
+}
+
 function PerformancePanel({ creator, alumnos, setMsg }) {
   const today = new Date().toISOString().slice(0, 10)
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -3232,13 +3370,27 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
       if (profileError) throw new Error(profileError.message)
 
+      const automaticFeedback = buildAutomaticTakeFeedback(
+        takes,
+        parsedRecords,
+        nextTakeNumber,
+        takeDate
+      )
+
+      const completeFeedback = [
+        feedback.trim(),
+        automaticFeedback,
+      ]
+        .filter(Boolean)
+        .join('\n\n')
+
       const rows = parsedRecords.map((record) => ({
         alumno_id: selectedStudentId,
         numero_toma: nextTakeNumber,
         fecha: takeDate,
         distancia_km: record.parsedDistance,
         tiempo_segundos: record.parsedSeconds,
-        devolucion: feedback.trim() || null,
+        devolucion: completeFeedback || null,
         origen: 'manual',
         creado_por: creator?.id || null,
       }))
@@ -3249,9 +3401,27 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
       if (error) throw new Error(error.message)
 
+      let automaticBadges = []
+
+      try {
+        automaticBadges = await grantAutomaticPerformanceBadges({
+          studentId: selectedStudentId,
+          parsedRecords,
+          existingTakes: takes,
+          creator,
+        })
+      } catch (badgeError) {
+        console.error('No se pudieron otorgar insignias automáticas:', badgeError)
+      }
+
       resetTakeForm()
+
+      const badgeMessage = automaticBadges.length
+        ? ` También se otorgó automáticamente: ${automaticBadges.join(', ')}.`
+        : ''
+
       setMsg(
-        `Toma ${nextTakeNumber} guardada para ${selectedStudent?.nombre} con ${rows.length} distancia/s. Ritmo y velocidad se calcularon automáticamente.`
+        `Toma ${nextTakeNumber} guardada para ${selectedStudent?.nombre} con ${rows.length} distancia/s. Se calcularon ritmo, velocidad, evolución, récord personal y progreso de objetivos.${badgeMessage}`
       )
       await loadPerformance(selectedStudentId)
     } catch (error) {
@@ -4757,4 +4927,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-            }
+        }
