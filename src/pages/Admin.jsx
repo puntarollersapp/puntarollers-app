@@ -2118,6 +2118,8 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
   const [loadingPerformance, setLoadingPerformance] = useState(false)
   const [savingTake, setSavingTake] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [legacyObservations, setLegacyObservations] = useState([])
+  const [importingObservationId, setImportingObservationId] = useState('')
   const [studentQuery, setStudentQuery] = useState('')
   const [takeDate, setTakeDate] = useState(today)
   const [feedback, setFeedback] = useState('')
@@ -2161,10 +2163,16 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     }, {})
   ).sort((a, b) => Number(b.numero_toma) - Number(a.numero_toma))
 
+  const legacyCandidates = buildLegacyPerformanceCandidates(
+    legacyObservations,
+    takes
+  )
+
   async function loadPerformance(studentId) {
     if (!studentId) {
       setPerformance(null)
       setTakes([])
+      setLegacyObservations([])
       setNextTakeNumber(1)
       return
     }
@@ -2172,7 +2180,12 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     try {
       setLoadingPerformance(true)
 
-      const [profileResult, takesResult, nextResult] = await Promise.all([
+      const [
+        profileResult,
+        takesResult,
+        nextResult,
+        observationsResult,
+      ] = await Promise.all([
         supabase
           .from('pr_performance')
           .select('*')
@@ -2187,6 +2200,13 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
         supabase.rpc('next_pr_toma_number', {
           p_alumno_id: studentId,
         }),
+        supabase
+          .from('actividad_pr')
+          .select('id, titulo, descripcion, fecha, tipo')
+          .eq('alumno_id', studentId)
+          .eq('tipo', 'Nota')
+          .or('eliminado.is.null,eliminado.eq.false')
+          .order('fecha', { ascending: true }),
       ])
 
       if (profileResult.error) {
@@ -2195,6 +2215,10 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
       if (takesResult.error) {
         throw new Error(takesResult.error.message)
+      }
+
+      if (observationsResult.error) {
+        throw new Error(observationsResult.error.message)
       }
 
       const profileData = profileResult.data || null
@@ -2207,6 +2231,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
       setPerformance(profileData)
       setTakes(loadedTakes)
+      setLegacyObservations(observationsResult.data || [])
       setNextTakeNumber(
         nextResult.error ? fallbackNext : Number(nextResult.data) || fallbackNext
       )
@@ -2418,6 +2443,73 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     }
   }
 
+  async function importLegacyObservation(candidate) {
+    if (!candidate.records.length) {
+      setMsg(
+        'No pude detectar distancia y tiempo en esta devolución. Revisaremos ese caso de forma manual.'
+      )
+      return
+    }
+
+    const confirmed = window.confirm(
+      `¿Importar ${candidate.title} como Toma ${candidate.takeNumber} con ${candidate.records.length} distancia/s?`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setImportingObservationId(String(candidate.id))
+      setMsg(`Importando ${candidate.title}...`)
+
+      const { error: profileError } = await supabase
+        .from('pr_performance')
+        .upsert(
+          {
+            alumno_id: selectedStudentId,
+            perfil_rodaje: profileForm.perfilRodaje,
+            tecnica: profileForm.tecnica
+              ? Number(profileForm.tecnica)
+              : null,
+            resistencia: profileForm.resistencia
+              ? Number(profileForm.resistencia)
+              : null,
+            indice_actualizado_en: new Date().toISOString(),
+            visible: true,
+          },
+          { onConflict: 'alumno_id' }
+        )
+
+      if (profileError) throw new Error(profileError.message)
+
+      const rows = candidate.records.map((record) => ({
+        alumno_id: selectedStudentId,
+        numero_toma: candidate.takeNumber,
+        fecha: candidate.date,
+        distancia_km: record.distance,
+        tiempo_segundos: record.seconds,
+        devolucion: candidate.description || candidate.title,
+        origen: 'observacion_importada',
+        observacion_original_id: String(candidate.id),
+        creado_por: creator?.id || null,
+      }))
+
+      const { error } = await supabase
+        .from('pr_performance_tomas')
+        .insert(rows)
+
+      if (error) throw new Error(error.message)
+
+      setMsg(
+        `${candidate.title} importada como Toma ${candidate.takeNumber} con ${rows.length} distancia/s.`
+      )
+      await loadPerformance(selectedStudentId)
+    } catch (error) {
+      setMsg(`No se pudo importar: ${error.message}`)
+    } finally {
+      setImportingObservationId('')
+    }
+  }
+
   async function removeTakeGroup(group) {
     const confirmed = window.confirm(
       `¿Eliminar completa la Toma ${group.numero_toma} de ${selectedStudent?.nombre}? Se quitarán todas sus distancias.`
@@ -2524,6 +2616,87 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
         </section>
       ) : selectedStudent ? (
         <>
+          <section className={`${panel} p-4 space-y-3`}>
+            <div>
+              <p className="section-label">Importación automática</p>
+              <h3 className="font-display text-2xl text-white mt-1">
+                Devoluciones anteriores
+              </h3>
+              <p className="text-white/40 text-xs mt-1 leading-relaxed">
+                Detectamos las observaciones de Toma 1 y Toma 2 que ya existen. No tenés que volver a escribirlas.
+              </p>
+            </div>
+
+            {legacyCandidates.length > 0 ? (
+              <div className="space-y-3">
+                {legacyCandidates.map((candidate) => (
+                  <div
+                    key={candidate.id}
+                    className="rounded-2xl border border-pr-gold/15 bg-pr-gold/[0.045] p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-white text-sm font-semibold">
+                          {candidate.title}
+                        </p>
+                        <p className="text-pr-gold/70 text-[10px] mt-1 uppercase tracking-wider">
+                          Se importará como Toma {candidate.takeNumber}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/45 text-[10px]">
+                        {candidate.records.length} registro/s
+                      </span>
+                    </div>
+
+                    {candidate.records.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-2 mt-3">
+                        {candidate.records.map((record, index) => (
+                          <div
+                            key={`${candidate.id}-${record.distance}-${record.seconds}-${index}`}
+                            className="rounded-xl border border-white/5 bg-black/25 px-3 py-2 flex items-center justify-between gap-3"
+                          >
+                            <span className="text-white/70 text-xs">
+                              {formatPerformanceDistance(record.distance)}
+                            </span>
+                            <span className="text-white text-xs font-semibold">
+                              {formatPerformanceDuration(record.seconds)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-amber-200/80 text-xs mt-3 leading-relaxed">
+                        Encontré la devolución, pero no pude detectar con seguridad la distancia y el tiempo. Este caso requiere revisión manual.
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={
+                        !candidate.records.length ||
+                        importingObservationId === String(candidate.id)
+                      }
+                      onClick={() => importLegacyObservation(candidate)}
+                      className="mt-3 w-full rounded-2xl border border-pr-gold/25 bg-pr-gold/10 py-3 text-pr-gold text-xs font-bold disabled:opacity-35"
+                    >
+                      {importingObservationId === String(candidate.id)
+                        ? 'Importando...'
+                        : candidate.records.length
+                        ? `Importar como Toma ${candidate.takeNumber}`
+                        : 'Revisión manual pendiente'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
+                <p className="text-white/45 text-sm">
+                  No hay devoluciones antiguas pendientes de importar para este alumno.
+                </p>
+              </div>
+            )}
+          </section>
+
           <section className={`${panel} p-4 space-y-4`}>
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -2827,6 +3000,80 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
       )}
     </div>
   )
+}
+
+function buildLegacyPerformanceCandidates(observations, takes) {
+  const importedIds = new Set(
+    takes
+      .map((take) => String(take.observacion_original_id || ''))
+      .filter(Boolean)
+  )
+
+  return observations
+    .map((observation) => {
+      const combined = `${observation.titulo || ''} ${
+        observation.descripcion || ''
+      }`
+      const takeNumber = inferLegacyTakeNumber(combined)
+
+      if (!takeNumber || importedIds.has(String(observation.id))) {
+        return null
+      }
+
+      return {
+        id: observation.id,
+        title: observation.titulo || `Toma ${takeNumber}`,
+        description: observation.descripcion || '',
+        date: String(observation.fecha || new Date().toISOString()).slice(0, 10),
+        takeNumber,
+        records: extractLegacyPerformanceRecords(combined),
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.takeNumber - b.takeNumber)
+}
+
+function inferLegacyTakeNumber(value) {
+  const normalized = normalizePerformanceText(value)
+  const numeric = normalized.match(
+    /(?:toma|devolucion|medicion|prueba)\s*(?:n[°ºo]?\s*)?([1-9]\d*)/
+  )
+
+  if (numeric) return Number(numeric[1])
+  if (/primera\s+(?:toma|medicion|prueba)/.test(normalized)) return 1
+  if (/segunda\s+(?:toma|medicion|prueba)/.test(normalized)) return 2
+  if (/tercera\s+(?:toma|medicion|prueba)/.test(normalized)) return 3
+  return 0
+}
+
+function extractLegacyPerformanceRecords(value) {
+  const text = normalizePerformanceText(value).replace(/,/g, '.')
+  const matches = []
+  const pattern = /(\d+(?:\.\d+)?)\s*(?:km|k)\b[^\d]{0,55}(\d{1,2}:\d{2}(?::\d{2})?)/g
+
+  for (const match of text.matchAll(pattern)) {
+    const distance = Number(match[1])
+    const seconds = parsePerformanceTime(match[2])
+
+    if (distance > 0 && seconds > 0) {
+      matches.push({ distance, seconds })
+    }
+  }
+
+  const unique = new Map()
+  matches.forEach((record) => {
+    const key = `${record.distance}-${record.seconds}`
+    if (!unique.has(key)) unique.set(key, record)
+  })
+
+  return Array.from(unique.values())
+}
+
+function normalizePerformanceText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
 }
 
 function PerformanceRating({ label, value, onChange }) {
@@ -3414,4 +3661,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-}
+            }
