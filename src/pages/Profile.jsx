@@ -1051,6 +1051,18 @@ export default function Profile() {
         </section>
 
 
+        <EvolutionNotesSection
+          notes={notes}
+          open={open === 'observaciones'}
+          onClick={() =>
+            setOpen(
+              open === 'observaciones'
+                ? ''
+                : 'observaciones'
+            )
+          }
+        />
+
         {hasPerformance && (
           <PerformanceProfile
             performance={performance}
@@ -1345,28 +1357,6 @@ export default function Profile() {
             icon="🎯"
           />
         </Accordion>
-
-        <section id="observaciones">
-          <Accordion
-            title={`Observaciones (${notes.length})`}
-            subtitle="Tu evolución"
-            open={open === 'observaciones'}
-            onClick={() =>
-              setOpen(
-                open === 'observaciones'
-                  ? ''
-                  : 'observaciones'
-              )
-            }
-          >
-            <ActivityList
-              items={notes}
-              empty="Todavía no hay observaciones"
-              icon="📝"
-            />
-          </Accordion>
-        </section>
-
 
         {form.esTesoreria && (
           <Accordion
@@ -1896,6 +1886,55 @@ function PerformanceRadar({ axes }) {
   )
 }
 
+function EvolutionNotesSection({ notes, open, onClick }) {
+  return (
+    <section
+      id="observaciones"
+      className="rounded-[30px] overflow-hidden border border-violet-400/25 bg-gradient-to-br from-violet-500/[0.13] via-[#100d18] to-black"
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full p-5 flex items-start justify-between gap-4 text-left"
+      >
+        <div className="min-w-0">
+          <p className="section-label text-violet-300">
+            Tu evolución
+          </p>
+
+          <h2 className="font-display text-[25px] leading-tight text-white mt-2">
+            Tu Evolución: Devoluciones de Profesores
+          </h2>
+
+          <p className="text-violet-100/45 text-xs mt-2 leading-relaxed">
+            Seguimiento y devoluciones de tus profesores para acompañar tu progreso.
+          </p>
+        </div>
+
+        <div className="shrink-0 flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-2xl border border-violet-400/25 bg-violet-400/10 grid place-items-center text-xl">
+            📝
+          </div>
+
+          <span className="min-w-8 h-8 px-2 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-200 text-xs font-bold grid place-items-center">
+            {notes.length}
+          </span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 animate-fade-in">
+          <ActivityList
+            items={notes}
+            empty="Todavía no hay devoluciones de profesores"
+            icon="📝"
+          />
+        </div>
+      )}
+    </section>
+  )
+}
+
 function MiniStat({ value, label }) {
   return (
     <div className="pr-card p-3 text-center">
@@ -2127,4 +2166,4 @@ function EditInput({
       />
     </label>
   )
-      }
+}
