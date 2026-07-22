@@ -2622,7 +2622,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                       onChange={(value) =>
                         updateRecord(record.id, 'time', value)
                       }
-                      inputMode="numeric"
+                      inputMode="text"
                       placeholder="Ej: 17:32 o 01:05:20"
                     />
 
@@ -2865,7 +2865,9 @@ function PerformancePreview({ label, value }) {
 }
 
 function parsePerformanceTime(value) {
-  const clean = String(value || '').trim()
+  const clean = String(value || '')
+    .trim()
+    .replace(/[,.]/g, ':')
   if (!clean) return 0
 
   if (/^\d+$/.test(clean)) {
