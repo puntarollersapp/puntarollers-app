@@ -377,6 +377,10 @@ export default function Profile() {
   const [activity, setActivity] = useState([])
   const [performance, setPerformance] = useState(null)
   const [performanceTakes, setPerformanceTakes] = useState([])
+  const [privateLessons, setPrivateLessons] = useState({
+    cuponera: null,
+    historial: [],
+  })
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
@@ -452,6 +456,7 @@ export default function Profile() {
         activityResponse,
         performanceResponse,
         performanceTakesResponse,
+        privateLessonsResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -488,6 +493,8 @@ export default function Profile() {
           .eq('alumno_id', profileId)
           .order('numero_toma', { ascending: false })
           .order('distancia_km', { ascending: true }),
+
+        supabase.rpc('obtener_mis_particulares'),
       ])
 
       if (profileResponse.error) {
@@ -573,6 +580,16 @@ export default function Profile() {
         setPerformanceTakes(performanceTakesResponse.data || [])
       }
 
+      if (!privateLessonsResponse.error) {
+        const particulars = privateLessonsResponse.data || {}
+        setPrivateLessons({
+          cuponera: particulars.cuponera || null,
+          historial: Array.isArray(particulars.historial)
+            ? particulars.historial
+            : [],
+        })
+      }
+
       setLoading(false)
     }
 
@@ -615,6 +632,9 @@ export default function Profile() {
 
   const hasPerformance =
     Boolean(performance) || performanceTakes.length > 0
+
+  const hasPrivateLessons =
+    Boolean(privateLessons.cuponera) || privateLessons.historial.length > 0
 
   const paymentStatus =
     getPaymentStatus(
@@ -1038,6 +1058,13 @@ export default function Profile() {
           />
         )}
 
+        {hasPrivateLessons && (
+          <PrivateLessonsProfile
+            cuponera={privateLessons.cuponera}
+            history={privateLessons.historial}
+          />
+        )}
+
         <section
           id="mensualidad"
           className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
@@ -1422,6 +1449,193 @@ export default function Profile() {
   )
 }
 
+
+
+function formatLessonDate(value) {
+  if (!value) return 'Sin fecha'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+
+  return date.toLocaleString('es-UY', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function getLessonTypeLabel(item) {
+  if (item?.tipo === 'clase_dada') return 'Clase realizada'
+  if (item?.tipo === 'carga') return 'Clases cargadas'
+  if (item?.tipo === 'devolucion') return 'Clase devuelta'
+  if (item?.tipo === 'correccion') return 'Corrección'
+  return item?.tipo ? String(item.tipo).replaceAll('_', ' ') : 'Movimiento'
+}
+
+function PrivateLessonsProfile({ cuponera, history }) {
+  const [historyOpen, setHistoryOpen] = useState(false)
+
+  const loaded = Number(
+    cuponera?.clases_cargadas ??
+      cuponera?.clases_compradas ??
+      cuponera?.total_clases ??
+      0
+  )
+  const used = Number(
+    cuponera?.clases_usadas ??
+      cuponera?.clases_utilizadas ??
+      0
+  )
+  const available = Number(
+    cuponera?.clases_disponibles ??
+      Math.max(0, loaded - used)
+  )
+
+  const visibleHistory = (history || []).filter(
+    (item) => item?.anulado !== true
+  )
+  const completedClasses = visibleHistory.filter(
+    (item) => item?.tipo === 'clase_dada'
+  )
+  const latestClass = completedClasses[0] || null
+
+  return (
+    <section className="rounded-[30px] border border-pr-gold/20 bg-gradient-to-br from-[#17130a] via-[#0b0b10] to-black overflow-hidden">
+      <div className="p-5 border-b border-pr-gold/10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="section-label text-pr-gold">Clases particulares</p>
+            <h2 className="font-display text-[28px] leading-none text-white mt-2">
+              Mi cuponera
+            </h2>
+            <p className="text-white/38 text-xs mt-3 leading-relaxed">
+              Consultá tus clases cargadas, utilizadas y disponibles.
+            </p>
+          </div>
+
+          <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
+            🛼
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <div className="grid grid-cols-3 gap-2.5">
+          <PrivateLessonStat value={loaded} label="Cargadas" />
+          <PrivateLessonStat value={used} label="Usadas" />
+          <PrivateLessonStat value={available} label="Disponibles" gold />
+        </div>
+
+        <div className="rounded-[24px] border border-white/[0.07] bg-white/[0.025] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="section-label">Estado actual</p>
+              <p className="text-white font-semibold mt-2">
+                {available > 0
+                  ? `${available} clase${available === 1 ? '' : 's'} disponible${available === 1 ? '' : 's'}`
+                  : 'Sin clases disponibles'}
+              </p>
+            </div>
+
+            <span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${
+              available > 0
+                ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+                : 'border-white/10 bg-white/[0.04] text-white/40'
+            }`}>
+              {available > 0 ? 'Activa' : 'Sin saldo'}
+            </span>
+          </div>
+        </div>
+
+        {latestClass && (
+          <div className="rounded-[24px] border border-white/[0.07] bg-black/30 p-4">
+            <p className="section-label">Última clase</p>
+            <p className="text-white font-semibold mt-2">
+              {formatLessonDate(latestClass.fecha_clase || latestClass.created_at)}
+            </p>
+            {latestClass.observacion && (
+              <p className="text-white/52 text-sm mt-3 leading-relaxed">
+                {latestClass.observacion}
+              </p>
+            )}
+          </div>
+        )}
+
+        {visibleHistory.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen((value) => !value)}
+              className="w-full rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] py-4 text-pr-gold text-sm font-bold"
+            >
+              {historyOpen
+                ? 'Ocultar historial'
+                : `Ver historial (${visibleHistory.length})`}
+            </button>
+
+            {historyOpen && (
+              <div className="space-y-2 animate-fade-in">
+                {visibleHistory.map((item, index) => (
+                  <div
+                    key={item.id || `${item.tipo}-${index}`}
+                    className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-white font-semibold text-sm capitalize">
+                          {getLessonTypeLabel(item)}
+                        </p>
+                        <p className="text-white/28 text-[10px] mt-1">
+                          {formatLessonDate(
+                            item.fecha_clase || item.created_at
+                          )}
+                        </p>
+                      </div>
+
+                      {item.cantidad && (
+                        <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-2.5 py-1 text-pr-gold text-[9px] font-bold">
+                          {Number(item.cantidad) > 0 ? '+' : ''}
+                          {item.cantidad}
+                        </span>
+                      )}
+                    </div>
+
+                    {item.observacion && (
+                      <p className="text-white/50 text-sm mt-3 leading-relaxed">
+                        {item.observacion}
+                      </p>
+                    )}
+
+                    {item.motivo && (
+                      <p className="text-white/35 text-xs mt-2 leading-relaxed">
+                        Motivo: {item.motivo}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function PrivateLessonStat({ value, label, gold = false }) {
+  return (
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center">
+      <p className={`font-display text-3xl ${gold ? 'text-pr-gold' : 'text-white'}`}>
+        {value}
+      </p>
+      <p className="text-white/30 text-[9px] uppercase tracking-[0.13em] mt-1">
+        {label}
+      </p>
+    </div>
+  )
+}
 
 function PerformanceProfile({ performance, summary }) {
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -1913,4 +2127,4 @@ function EditInput({
       />
     </label>
   )
-    }
+}
