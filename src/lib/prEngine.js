@@ -645,4 +645,4 @@ export function buildAutomaticPerformanceData({
     rankings,
     progressRankings,
   }
-        }
+      }
