@@ -3035,14 +3035,53 @@ function buildLegacyPerformanceCandidates(observations, takes) {
 
 function inferLegacyTakeNumber(value) {
   const normalized = normalizePerformanceText(value)
+
   const numeric = normalized.match(
-    /(?:toma|devolucion|medicion|prueba)\s*(?:n[°ºo]?\s*)?([1-9]\d*)/
+    /(?:toma|devolucion|medicion|prueba)\s*(?:de\s+tiempo\s*)?(?:n[°ºo]?\s*)?([1-9]\d*)/
   )
 
   if (numeric) return Number(numeric[1])
-  if (/primera\s+(?:toma|medicion|prueba)/.test(normalized)) return 1
-  if (/segunda\s+(?:toma|medicion|prueba)/.test(normalized)) return 2
-  if (/tercera\s+(?:toma|medicion|prueba)/.test(normalized)) return 3
+
+  if (
+    /(?:primer|primera|1ra|1era)\s+(?:toma|medicion|prueba)/.test(
+      normalized
+    )
+  ) {
+    return 1
+  }
+
+  if (
+    /(?:segundo|segunda|2da)\s+(?:toma|medicion|prueba)/.test(
+      normalized
+    )
+  ) {
+    return 2
+  }
+
+  if (
+    /(?:tercer|tercera|3ra)\s+(?:toma|medicion|prueba)/.test(
+      normalized
+    )
+  ) {
+    return 3
+  }
+
+  if (
+    /(?:cuarta|4ta)\s+(?:toma|medicion|prueba)/.test(
+      normalized
+    )
+  ) {
+    return 4
+  }
+
+  if (
+    /(?:quinta|5ta)\s+(?:toma|medicion|prueba)/.test(
+      normalized
+    )
+  ) {
+    return 5
+  }
+
   return 0
 }
 
@@ -3661,4 +3700,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-            }
+}
