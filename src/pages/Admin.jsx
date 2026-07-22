@@ -7,6 +7,16 @@ import ProductsPanel from '../components/admin/ProductsPanel'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
+import {
+  buildStudentPerformance,
+  calculatePaceSeconds,
+  calculateSpeedKmh,
+  formatDistance as formatEngineDistance,
+  formatDuration as formatEngineDuration,
+  getMotivationalMessage,
+  normalizeDistance,
+  parseDuration,
+} from '../lib/prEngine'
 
 const panel =
   'rounded-3xl border border-white/10 bg-white/[0.035] shadow-[0_24px_70px_rgba(0,0,0,0.35)]'
@@ -2953,6 +2963,20 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     takes
   )
 
+  const automaticPerformance = buildStudentPerformance(takes)
+  const automaticPrimarySummary =
+    automaticPerformance.summaries.find(
+      (summary) => summary.distance === 6 && summary.hasComparison
+    ) ||
+    automaticPerformance.summaries.find((summary) => summary.hasComparison) ||
+    automaticPerformance.summaries.find((summary) => summary.distance === 6) ||
+    automaticPerformance.summaries[0] ||
+    null
+
+  const automaticMessage = getMotivationalMessage(
+    automaticPrimarySummary
+  )
+
   async function loadPerformance(studentId) {
     if (!studentId) {
       setPerformance(null)
@@ -3142,19 +3166,28 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     }
 
     const parsedRecords = records.map((record) => {
-      const distance = Number(
+      const rawDistance = Number(
         record.distance === 'custom'
           ? record.customDistance
           : record.distance
       )
-      const seconds = parsePerformanceTime(record.time)
+      const seconds = parseDuration(record.time)
+      const normalizedDistance = normalizeDistance(rawDistance)
 
-      return { ...record, parsedDistance: distance, parsedSeconds: seconds }
+      return {
+        ...record,
+        parsedDistance: rawDistance,
+        normalizedDistance,
+        parsedSeconds: seconds,
+      }
     })
 
     if (
       parsedRecords.some(
-        (record) => !record.parsedDistance || record.parsedDistance <= 0
+        (record) =>
+          !record.parsedDistance ||
+          record.parsedDistance <= 0 ||
+          !record.normalizedDistance
       )
     ) {
       setMsg('Revisá las distancias cargadas.')
@@ -3167,7 +3200,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     }
 
     const uniqueDistances = new Set(
-      parsedRecords.map((record) => record.parsedDistance)
+      parsedRecords.map((record) => String(record.normalizedDistance))
     )
 
     if (uniqueDistances.size !== parsedRecords.length) {
@@ -3401,6 +3434,93 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
         </section>
       ) : selectedStudent ? (
         <>
+          <section className={`${panel} p-4 space-y-4`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="section-label">Motor PR automático</p>
+                <h3 className="font-display text-2xl text-white mt-1">
+                  Evolución calculada
+                </h3>
+                <p className="text-white/40 text-xs mt-1 leading-relaxed">
+                  Se recalcula con todas las tomas válidas del alumno, incluso cuando una distancia fue registrada con pequeñas diferencias.
+                </p>
+              </div>
+              <span className="w-11 h-11 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-lg shrink-0">
+                ⚙️
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <PerformancePreview
+                label="Registros válidos"
+                value={String(automaticPerformance.totalRecords)}
+              />
+              <PerformancePreview
+                label="Instancias"
+                value={String(automaticPerformance.totalTakeInstances)}
+              />
+              <PerformancePreview
+                label="Distancias comparables"
+                value={String(automaticPerformance.comparisonCount)}
+              />
+              <PerformancePreview
+                label="Distancias mejoradas"
+                value={String(automaticPerformance.improvedDistanceCount)}
+              />
+            </div>
+
+            {automaticPrimarySummary ? (
+              <div className="rounded-2xl border border-pr-gold/15 bg-pr-gold/[0.055] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-pr-gold text-[10px] font-bold uppercase tracking-[0.15em]">
+                      {formatEngineDistance(automaticPrimarySummary.distance)}
+                    </p>
+                    <p className="text-white font-semibold mt-1">
+                      {automaticMessage.title}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/50 text-[10px]">
+                    {automaticPrimarySummary.count} toma/s
+                  </span>
+                </div>
+
+                <p className="text-white/55 text-xs mt-2 leading-relaxed">
+                  {automaticMessage.text}
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <PerformancePreview
+                    label="Mejor marca"
+                    value={
+                      automaticPrimarySummary.best
+                        ? formatEngineDuration(
+                            automaticPrimarySummary.best.tiempo_segundos
+                          )
+                        : 'Sin marca'
+                    }
+                  />
+                  <PerformancePreview
+                    label="Última marca"
+                    value={
+                      automaticPrimarySummary.latest
+                        ? formatEngineDuration(
+                            automaticPrimarySummary.latest.tiempo_segundos
+                          )
+                        : 'Sin marca'
+                    }
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
+                <p className="text-white/45 text-sm">
+                  Todavía no hay tomas válidas para calcular una evolución.
+                </p>
+              </div>
+            )}
+          </section>
+
           <section className={`${panel} p-4 space-y-3`}>
             <div>
               <p className="section-label">Importación automática</p>
@@ -3512,13 +3632,9 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                     ? record.customDistance
                     : record.distance
                 )
-                const seconds = parsePerformanceTime(record.time)
-                const pace =
-                  seconds > 0 && distance > 0 ? seconds / distance : 0
-                const speed =
-                  seconds > 0 && distance > 0
-                    ? distance / (seconds / 3600)
-                    : 0
+                const seconds = parseDuration(record.time)
+                const pace = calculatePaceSeconds(distance, seconds)
+                const speed = calculateSpeedKmh(distance, seconds)
 
                 return (
                   <div
@@ -3588,7 +3704,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                       <div className="grid grid-cols-2 gap-2">
                         <PerformancePreview
                           label="Ritmo estimado"
-                          value={`${formatPerformanceDuration(pace)}/km`}
+                          value={`${formatEngineDuration(pace)}/km`}
                         />
                         <PerformancePreview
                           label="Velocidad estimada"
@@ -4641,4 +4757,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-        }
+            }
