@@ -11,6 +11,10 @@ import TreasuryPanel from '../components/treasury/TreasuryPanel'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
+const PAYMENT_EXEMPT_DOCUMENTS = new Set([
+  '50373134',
+])
+
 const BADGE_IMAGES = {
   'primer evento pr': '/insignias-pr/primer-evento-pr.png',
   'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
@@ -102,6 +106,28 @@ function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(Number(value) || 0)))
 }
 
+function normalizePerformanceDistance(value) {
+  const distance = Number(value)
+
+  if (!Number.isFinite(distance) || distance <= 0) {
+    return 0
+  }
+
+  if (distance >= 5 && distance <= 7) {
+    return 6
+  }
+
+  if (distance >= 10.5 && distance <= 13.5) {
+    return 12
+  }
+
+  return Number(distance.toFixed(1))
+}
+
+function normalizeDocument(value) {
+  return String(value || '').replace(/\D/g, '')
+}
+
 function groupPerformanceTakes(items) {
   const groups = new Map()
 
@@ -138,13 +164,15 @@ function buildPerformanceSummary(performance, takes) {
   const byDistance = new Map()
 
   active.forEach((item) => {
-    const key = Number(item.distancia_km)
+    const key = normalizePerformanceDistance(item.distancia_km)
+    if (!key) return
     if (!byDistance.has(key)) byDistance.set(key, [])
     byDistance.get(key).push(item)
   })
 
   const bestFor = (distance) => {
-    const records = byDistance.get(Number(distance)) || []
+    const records =
+      byDistance.get(normalizePerformanceDistance(distance)) || []
     if (!records.length) return null
     return records.reduce((best, current) =>
       Number(current.tiempo_segundos) < Number(best.tiempo_segundos)
@@ -153,7 +181,9 @@ function buildPerformanceSummary(performance, takes) {
     )
   }
 
-  let highlighted = Number(performance?.distancia_destacada)
+  let highlighted = normalizePerformanceDistance(
+    performance?.distancia_destacada
+  )
   if (!highlighted || !byDistance.has(highlighted)) {
     highlighted = [...byDistance.entries()]
       .sort((a, b) => b[1].length - a[1].length)[0]?.[0] || 0
@@ -665,6 +695,11 @@ export default function Profile() {
       profile.accesoHabilitado
     )
 
+  const hidePaymentSection =
+    PAYMENT_EXEMPT_DOCUMENTS.has(
+      normalizeDocument(profile.documento)
+    )
+
   async function markNotesAsRead() {
     const unreadIds = unreadNotes
       .map((item) => String(item.id || ''))
@@ -1140,10 +1175,11 @@ export default function Profile() {
           />
         )}
 
-        <section
-          id="mensualidad"
-          className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
-        >
+        {!hidePaymentSection && (
+          <section
+            id="mensualidad"
+            className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
+          >
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-2xl grid place-items-center shrink-0 bg-black/25 border border-white/[0.06] text-xl">
               {paymentStatus.icon}
@@ -1191,7 +1227,8 @@ export default function Profile() {
               )}
             </div>
           </div>
-        </section>
+          </section>
+        )}
 
         {message && (
           <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-pr-gold text-sm">
@@ -1618,7 +1655,9 @@ function CoachGoalsProfile({ goals, takes }) {
     const distance = Number(goal.distancia_km)
     const target = Number(goal.tiempo_objetivo_segundos)
     const comparable = visibleTakes.filter(
-      (take) => Math.abs(Number(take.distancia_km) - distance) < 0.001
+      (take) =>
+        normalizePerformanceDistance(take.distancia_km) ===
+        normalizePerformanceDistance(distance)
     )
     const best = comparable.length
       ? comparable.reduce((currentBest, take) =>
@@ -2474,4 +2513,4 @@ function EditInput({
       />
     </label>
   )
-    }
+}
