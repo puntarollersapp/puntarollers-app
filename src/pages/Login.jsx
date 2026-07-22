@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  useLocation,
   useNavigate,
   Link,
 } from 'react-router-dom'
@@ -15,10 +14,6 @@ export default function Login() {
 
   const { login } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
-
-  const from =
-    location.state?.from?.pathname || '/app/dashboard'
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -38,9 +33,12 @@ export default function Login() {
         result?.user?.role === 'admin' ||
         result?.user?.role === 'profesor'
 
-      navigate(isAdmin ? '/admin' : from, {
-        replace: true,
-      })
+      navigate(
+        isAdmin ? '/admin' : '/app/perfil',
+        {
+          replace: true,
+        }
+      )
     } catch {
       setError(
         'No pudimos iniciar sesión. Revisá tus datos.'
