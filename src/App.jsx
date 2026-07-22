@@ -73,7 +73,7 @@ function AdminRoute({ children }) {
   }
 
   if (!['admin', 'profesor'].includes(user.role)) {
-    return <Navigate to="/app/dashboard" replace />
+    return <Navigate to="/app/perfil" replace />
   }
 
   return children
@@ -181,7 +181,7 @@ function AppRoutes() {
 
         <Route
           path="/app"
-          element={<Navigate to="/app/dashboard" replace />}
+          element={<Navigate to="/app/perfil" replace />}
         />
 
         <Route
