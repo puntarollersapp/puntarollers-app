@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { supabase } from './supabase'
@@ -10,19 +11,14 @@ import { professores } from '../data/mockData'
 const AuthContext = createContext(null)
 
 const STORAGE_KEY = 'pr_user'
+const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 
 function parseJsonArray(value) {
-  if (Array.isArray(value)) {
-    return value
-  }
-
-  if (typeof value !== 'string' || !value.trim()) {
-    return []
-  }
+  if (Array.isArray(value)) return value
+  if (typeof value !== 'string' || !value.trim()) return []
 
   try {
     const parsed = JSON.parse(value)
-
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
@@ -30,36 +26,18 @@ function parseJsonArray(value) {
 }
 
 function parseStatistics(value) {
-  const fallback = {
-    eventos: 0,
-    insignias: 0,
-    notas: 0,
-  }
+  const fallback = { eventos: 0, insignias: 0, notas: 0 }
 
-  if (
-    value &&
-    typeof value === 'object' &&
-    !Array.isArray(value)
-  ) {
-    return {
-      ...fallback,
-      ...value,
-    }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return { ...fallback, ...value }
   }
 
   if (typeof value === 'string' && value.trim()) {
     try {
       const parsed = JSON.parse(value)
 
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        !Array.isArray(parsed)
-      ) {
-        return {
-          ...fallback,
-          ...parsed,
-        }
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return { ...fallback, ...parsed }
       }
     } catch {
       return fallback
@@ -70,9 +48,7 @@ function parseStatistics(value) {
 }
 
 function normalizeRole(role) {
-  const normalized = String(role || '')
-    .trim()
-    .toLowerCase()
+  const normalized = String(role || '').trim().toLowerCase()
 
   if (
     normalized === 'admin' ||
@@ -86,21 +62,11 @@ function normalizeRole(role) {
 }
 
 function normalizeStatus(status) {
-  const normalized = String(status || 'Activo')
-    .trim()
-    .toLowerCase()
+  const normalized = String(status || 'Activo').trim().toLowerCase()
 
-  if (normalized === 'inactivo') {
-    return 'Inactivo'
-  }
-
-  if (normalized === 'vencido') {
-    return 'Vencido'
-  }
-
-  if (normalized === 'bloqueado') {
-    return 'Bloqueado'
-  }
+  if (normalized === 'inactivo') return 'Inactivo'
+  if (normalized === 'vencido') return 'Vencido'
+  if (normalized === 'bloqueado') return 'Bloqueado'
 
   return 'Activo'
 }
@@ -138,55 +104,34 @@ function normalizeProfile(profile) {
     ciudad: profile.ciudad || '',
     instagram: profile.instagram || '',
     email: profile.email || '',
-    fechaNacimiento:
-      profile.fecha_nacimiento || '',
-    miembroDesde:
-      profile.miembro_desde || '2026',
+    fechaNacimiento: profile.fecha_nacimiento || '',
+    miembroDesde: profile.miembro_desde || '2026',
     estado,
     accesoHabilitado,
-    mensualidadHasta:
-      profile.mensualidad_hasta || '',
+    mensualidadHasta: profile.mensualidad_hasta || '',
     verificado: Boolean(profile.verificado),
     foto: profile.foto || '',
     banner: profile.banner || '',
     sobreMi: profile.sobre_mi || '',
-    gruposInfo: parseJsonArray(
-      profile.grupos_info
-    ),
-    prcardActiva: Boolean(
-      profile.prcard_activa
-    ),
-    trackingActivo: Boolean(
-      profile.tracking_activo
-    ),
-    origenUsuario:
-      profile.origen_usuario || '',
-    prcardMemberId:
-      profile.prcard_member_id || '',
-    ultimoIngreso:
-      profile.ultimo_ingreso || '',
+    gruposInfo: parseJsonArray(profile.grupos_info),
+    prcardActiva: Boolean(profile.prcard_activa),
+    trackingActivo: Boolean(profile.tracking_activo),
+    origenUsuario: profile.origen_usuario || '',
+    prcardMemberId: profile.prcard_member_id || '',
+    ultimoIngreso: profile.ultimo_ingreso || '',
     prcard: {
-      activa: Boolean(
-        profile.prcard_activa
-      ),
+      activa: Boolean(profile.prcard_activa),
       link: 'https://puntarollerscard.com/',
     },
     tracking: {
-      activo: Boolean(
-        profile.tracking_activo
-      ),
+      activo: Boolean(profile.tracking_activo),
     },
-    estadisticas: parseStatistics(
-      profile.estadisticas
-    ),
+    estadisticas: parseStatistics(profile.estadisticas),
   }
 }
 
 function saveLocalUser(userData) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(userData)
-  )
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userData))
 }
 
 function clearLocalUser() {
@@ -204,30 +149,63 @@ function buildAuthPassword(documento, pin) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const refreshInProgressRef = useRef(false)
 
-  useEffect(() => {
-    let active = true
+  async function loadProfileByAuthUserId(authUserId) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle()
 
-    async function loadProfileByAuthUserId(
-      authUserId
-    ) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('auth_user_id', authUserId)
-        .maybeSingle()
+    if (error || !data) {
+      return { error: 'No pudimos cargar el perfil vinculado.' }
+    }
 
-      if (error || !data) {
+    return { user: normalizeProfile(data) }
+  }
+
+  async function refreshUserSilently() {
+    if (refreshInProgressRef.current) {
+      return { skipped: true }
+    }
+
+    refreshInProgressRef.current = true
+
+    try {
+      const {
+        data: sessionData,
+        error: sessionError,
+      } = await supabase.auth.getSession()
+
+      const authUserId = sessionData?.session?.user?.id || ''
+
+      if (sessionError || !authUserId) {
+        clearLocalUser()
+        setUser(null)
+
+        return { error: 'No hay una sesión segura activa.' }
+      }
+
+      const result = await loadProfileByAuthUserId(authUserId)
+
+      if (result.error || !result.user) {
         return {
-          error:
-            'No pudimos cargar el perfil vinculado.',
+          error: result.error || 'No pudimos actualizar el perfil.',
         }
       }
 
-      return {
-        user: normalizeProfile(data),
-      }
+      saveLocalUser(result.user)
+      setUser(result.user)
+
+      return { success: true, user: result.user }
+    } finally {
+      refreshInProgressRef.current = false
     }
+  }
+
+  useEffect(() => {
+    let active = true
 
     async function restoreSession() {
       const {
@@ -235,28 +213,20 @@ export function AuthProvider({ children }) {
         error: sessionError,
       } = await supabase.auth.getSession()
 
-      if (!active) {
-        return
-      }
+      if (!active) return
 
-      if (
-        sessionError ||
-        !sessionData?.session?.user?.id
-      ) {
+      if (sessionError || !sessionData?.session?.user?.id) {
         clearLocalUser()
         setUser(null)
         setLoading(false)
         return
       }
 
-      const result =
-        await loadProfileByAuthUserId(
-          sessionData.session.user.id
-        )
+      const result = await loadProfileByAuthUserId(
+        sessionData.session.user.id
+      )
 
-      if (!active) {
-        return
-      }
+      if (!active) return
 
       if (result.error || !result.user) {
         await supabase.auth.signOut()
@@ -273,33 +243,20 @@ export function AuthProvider({ children }) {
 
     restoreSession()
 
-    const {
-      data: authListener,
-    } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!active) {
-          return
-        }
+        if (!active) return
 
-        if (
-          event === 'SIGNED_OUT' ||
-          !session?.user?.id
-        ) {
+        if (event === 'SIGNED_OUT' || !session?.user?.id) {
           clearLocalUser()
           setUser(null)
           setLoading(false)
           return
         }
 
-        const result =
-          await loadProfileByAuthUserId(
-            session.user.id
-          )
+        const result = await loadProfileByAuthUserId(session.user.id)
 
-        if (
-          active &&
-          result.user
-        ) {
+        if (active && result.user) {
           saveLocalUser(result.user)
           setUser(result.user)
           setLoading(false)
@@ -313,47 +270,53 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  async function login(documento, pin) {
-    const cleanDoc = String(
-      documento || ''
-    ).replace(/\D/g, '')
+  useEffect(() => {
+    if (!user) return undefined
 
-    const cleanPin = String(
-      pin || ''
-    ).trim()
-
-    if (!cleanDoc || !cleanPin) {
-      return {
-        error:
-          'Ingresá tu documento y tu PIN.',
+    function refreshWhenVisible() {
+      if (document.visibilityState === 'visible') {
+        refreshUserSilently()
       }
     }
 
-    const email =
-      buildAuthEmail(cleanDoc)
+    function refreshWhenFocused() {
+      refreshUserSilently()
+    }
 
-    const password =
-      buildAuthPassword(
-        cleanDoc,
-        cleanPin
-      )
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    window.addEventListener('focus', refreshWhenFocused)
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshUserSilently()
+      }
+    }, AUTO_REFRESH_INTERVAL_MS)
+
+    return () => {
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+      window.removeEventListener('focus', refreshWhenFocused)
+      window.clearInterval(intervalId)
+    }
+  }, [user?.id])
+
+  async function login(documento, pin) {
+    const cleanDoc = String(documento || '').replace(/\D/g, '')
+    const cleanPin = String(pin || '').trim()
+
+    if (!cleanDoc || !cleanPin) {
+      return { error: 'Ingresá tu documento y tu PIN.' }
+    }
+
+    const email = buildAuthEmail(cleanDoc)
+    const password = buildAuthPassword(cleanDoc, cleanPin)
 
     const {
       data: authData,
       error: authError,
-    } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (
-      authError ||
-      !authData?.user?.id
-    ) {
-      return {
-        error:
-          'Documento o PIN incorrecto.',
-      }
+    if (authError || !authData?.user?.id) {
+      return { error: 'Documento o PIN incorrecto.' }
     }
 
     const {
@@ -362,46 +325,31 @@ export function AuthProvider({ children }) {
     } = await supabase
       .from('profiles')
       .select('*')
-      .eq(
-        'auth_user_id',
-        authData.user.id
-      )
+      .eq('auth_user_id', authData.user.id)
       .maybeSingle()
 
-    if (
-      profileError ||
-      !profileData
-    ) {
+    if (profileError || !profileData) {
       await supabase.auth.signOut()
 
       return {
-        error:
-          'La cuenta existe, pero no encontramos su perfil vinculado.',
+        error: 'La cuenta existe, pero no encontramos su perfil vinculado.',
       }
     }
 
-    if (
-      String(profileData.documento || '') !==
-      cleanDoc
-    ) {
+    if (String(profileData.documento || '') !== cleanDoc) {
       await supabase.auth.signOut()
 
       return {
-        error:
-          'La cuenta segura no coincide con este documento.',
+        error: 'La cuenta segura no coincide con este documento.',
       }
     }
 
-    const loginDate =
-      new Date().toISOString()
+    const loginDate = new Date().toISOString()
 
-    const { error: updateError } =
-      await supabase
-        .from('profiles')
-        .update({
-          ultimo_ingreso: loginDate,
-        })
-        .eq('id', profileData.id)
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ ultimo_ingreso: loginDate })
+      .eq('id', profileData.id)
 
     if (updateError) {
       console.warn(
@@ -410,11 +358,10 @@ export function AuthProvider({ children }) {
       )
     }
 
-    const userData =
-      normalizeProfile({
-        ...profileData,
-        ultimo_ingreso: loginDate,
-      })
+    const userData = normalizeProfile({
+      ...profileData,
+      ultimo_ingreso: loginDate,
+    })
 
     saveLocalUser(userData)
     setUser(userData)
@@ -422,15 +369,12 @@ export function AuthProvider({ children }) {
     return {
       success: true,
       user: userData,
-      accessBlocked:
-        !userData.accesoHabilitado,
+      accessBlocked: !userData.accesoHabilitado,
     }
   }
 
   async function logout() {
-    const {
-      data: sessionData,
-    } = await supabase.auth.getSession()
+    const { data: sessionData } = await supabase.auth.getSession()
 
     if (sessionData?.session) {
       await supabase.auth.signOut()
@@ -442,9 +386,7 @@ export function AuthProvider({ children }) {
 
   function updateUser(updates) {
     setUser((currentUser) => {
-      if (!currentUser) {
-        return currentUser
-      }
+      if (!currentUser) return currentUser
 
       const nextUser = {
         ...currentUser,
@@ -452,52 +394,18 @@ export function AuthProvider({ children }) {
       }
 
       saveLocalUser(nextUser)
-
       return nextUser
     })
   }
 
   async function refreshUser() {
-    const {
-      data: sessionData,
-    } = await supabase.auth.getSession()
+    const result = await refreshUserSilently()
 
-    const authUserId =
-      sessionData?.session?.user?.id || ''
-
-    if (!authUserId) {
-      return {
-        error:
-          'No hay una sesión segura activa.',
-      }
+    if (result?.skipped) {
+      return { success: true, user }
     }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq(
-        'auth_user_id',
-        authUserId
-      )
-      .maybeSingle()
-
-    if (error || !data) {
-      return {
-        error:
-          'No pudimos actualizar el perfil.',
-      }
-    }
-
-    const refreshedUser =
-      normalizeProfile(data)
-
-    saveLocalUser(refreshedUser)
-    setUser(refreshedUser)
-
-    return {
-      success: true,
-      user: refreshedUser,
-    }
+    return result
   }
 
   return (
@@ -511,10 +419,8 @@ export function AuthProvider({ children }) {
         refreshUser,
         isAuthenticated: Boolean(user),
         isAdmin: user?.role === 'admin',
-        isProfessor:
-          user?.role === 'profesor',
-        hasPrivateAccess:
-          Boolean(user?.accesoHabilitado),
+        isProfessor: user?.role === 'profesor',
+        hasPrivateAccess: Boolean(user?.accesoHabilitado),
         professores,
       }}
     >
@@ -527,9 +433,7 @@ export function useAuth() {
   const context = useContext(AuthContext)
 
   if (!context) {
-    throw new Error(
-      'useAuth debe utilizarse dentro de AuthProvider'
-    )
+    throw new Error('useAuth debe utilizarse dentro de AuthProvider')
   }
 
   return context
