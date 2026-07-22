@@ -78,6 +78,141 @@ function formatDate(value) {
   })
 }
 
+
+function formatDuration(totalSeconds) {
+  const seconds = Math.max(0, Math.round(Number(totalSeconds) || 0))
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const rest = seconds % 60
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
+  }
+
+  return `${minutes}:${String(rest).padStart(2, '0')}`
+}
+
+function formatDistance(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return '—'
+  return `${Number.isInteger(number) ? number : number.toFixed(1)}K`
+}
+
+function clampScore(value) {
+  return Math.max(0, Math.min(100, Math.round(Number(value) || 0)))
+}
+
+function groupPerformanceTakes(items) {
+  const groups = new Map()
+
+  items.forEach((item) => {
+    const number = Number(item.numero_toma) || 0
+    if (!groups.has(number)) {
+      groups.set(number, {
+        numero: number,
+        fecha: item.fecha,
+        devolucion: item.devolucion || '',
+        registros: [],
+      })
+    }
+
+    const group = groups.get(number)
+    group.registros.push(item)
+    if (!group.devolucion && item.devolucion) group.devolucion = item.devolucion
+    if (!group.fecha && item.fecha) group.fecha = item.fecha
+  })
+
+  return [...groups.values()].sort((a, b) => b.numero - a.numero)
+}
+
+function buildPerformanceSummary(performance, takes) {
+  const active = [...takes]
+    .filter((item) => !item.eliminado)
+    .sort((a, b) => {
+      const takeDiff = Number(a.numero_toma || 0) - Number(b.numero_toma || 0)
+      if (takeDiff !== 0) return takeDiff
+      return new Date(a.fecha || 0) - new Date(b.fecha || 0)
+    })
+
+  const grouped = groupPerformanceTakes(active)
+  const byDistance = new Map()
+
+  active.forEach((item) => {
+    const key = Number(item.distancia_km)
+    if (!byDistance.has(key)) byDistance.set(key, [])
+    byDistance.get(key).push(item)
+  })
+
+  const bestFor = (distance) => {
+    const records = byDistance.get(Number(distance)) || []
+    if (!records.length) return null
+    return records.reduce((best, current) =>
+      Number(current.tiempo_segundos) < Number(best.tiempo_segundos)
+        ? current
+        : best
+    )
+  }
+
+  let highlighted = Number(performance?.distancia_destacada)
+  if (!highlighted || !byDistance.has(highlighted)) {
+    highlighted = [...byDistance.entries()]
+      .sort((a, b) => b[1].length - a[1].length)[0]?.[0] || 0
+  }
+
+  const highlightedRecords = byDistance.get(highlighted) || []
+  const firstHighlighted = highlightedRecords[0] || null
+  const latestHighlighted = highlightedRecords.at(-1) || null
+  const previousHighlighted = highlightedRecords.at(-2) || null
+
+  const totalDifference =
+    firstHighlighted && latestHighlighted
+      ? Number(firstHighlighted.tiempo_segundos) - Number(latestHighlighted.tiempo_segundos)
+      : 0
+
+  const improvementPercent =
+    firstHighlighted && totalDifference > 0
+      ? (totalDifference / Number(firstHighlighted.tiempo_segundos)) * 100
+      : 0
+
+  const latestDifference =
+    previousHighlighted && latestHighlighted
+      ? Number(previousHighlighted.tiempo_segundos) - Number(latestHighlighted.tiempo_segundos)
+      : 0
+
+  const best6 = bestFor(6)
+  const best12 = bestFor(12)
+  const maxSpeed = active.reduce(
+    (max, item) => Math.max(max, Number(item.velocidad_kmh) || 0),
+    0
+  )
+
+  const axes = {
+    velocidad: clampScore((maxSpeed / 30) * 100),
+    evolucion: clampScore(improvementPercent * 8),
+    constancia: clampScore((grouped.length / 6) * 100),
+    tecnica: clampScore((Number(performance?.tecnica) || 0) * 20),
+    resistencia: clampScore((Number(performance?.resistencia) || 0) * 20),
+  }
+
+  const index = Math.round(
+    Object.values(axes).reduce((sum, value) => sum + value, 0) / 5
+  )
+
+  return {
+    grouped,
+    highlighted,
+    best6,
+    best12,
+    firstHighlighted,
+    latestHighlighted,
+    totalDifference,
+    improvementPercent,
+    latestDifference,
+    axes,
+    index,
+  }
+}
+
 function formatPaymentDate(value) {
   const date = parsePaymentDate(value)
 
@@ -240,6 +375,8 @@ export default function Profile() {
   })
   const [contactos, setContactos] = useState([])
   const [activity, setActivity] = useState([])
+  const [performance, setPerformance] = useState(null)
+  const [performanceTakes, setPerformanceTakes] = useState([])
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
@@ -313,6 +450,8 @@ export default function Profile() {
         profileResponse,
         contactsResponse,
         activityResponse,
+        performanceResponse,
+        performanceTakesResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -336,6 +475,19 @@ export default function Profile() {
           .order('fecha', {
             ascending: false,
           }),
+
+        supabase
+          .from('pr_performance')
+          .select('*')
+          .eq('alumno_id', profileId)
+          .maybeSingle(),
+
+        supabase
+          .from('pr_performance_tomas_calculadas')
+          .select('*')
+          .eq('alumno_id', profileId)
+          .order('numero_toma', { ascending: false })
+          .order('distancia_km', { ascending: true }),
       ])
 
       if (profileResponse.error) {
@@ -413,6 +565,14 @@ export default function Profile() {
         setActivity(activityResponse.data || [])
       }
 
+      if (!performanceResponse.error) {
+        setPerformance(performanceResponse.data || null)
+      }
+
+      if (!performanceTakesResponse.error) {
+        setPerformanceTakes(performanceTakesResponse.data || [])
+      }
+
       setLoading(false)
     }
 
@@ -447,6 +607,14 @@ export default function Profile() {
       ),
     [activity]
   )
+
+  const performanceSummary = useMemo(
+    () => buildPerformanceSummary(performance, performanceTakes),
+    [performance, performanceTakes]
+  )
+
+  const hasPerformance =
+    Boolean(performance) || performanceTakes.length > 0
 
   const paymentStatus =
     getPaymentStatus(
@@ -862,6 +1030,14 @@ export default function Profile() {
           </div>
         </section>
 
+
+        {hasPerformance && (
+          <PerformanceProfile
+            performance={performance}
+            summary={performanceSummary}
+          />
+        )}
+
         <section
           id="mensualidad"
           className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
@@ -1243,6 +1419,266 @@ export default function Profile() {
         </button>
       </div>
     </AppLayout>
+  )
+}
+
+
+function PerformanceProfile({ performance, summary }) {
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const latestTake = summary.grouped[0]
+  const profileLabel = performance?.perfil_rodaje || 'En evolución'
+
+  return (
+    <section className="rounded-[30px] border border-pr-gold/25 bg-gradient-to-br from-[#17130a] via-[#0b0b10] to-black overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
+      <div className="p-5 border-b border-pr-gold/10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="section-label text-pr-gold">PR Performance</p>
+            <h2 className="font-display text-[29px] leading-none text-white mt-2">
+              Tu evolución sobre ruedas
+            </h2>
+            <p className="text-white/38 text-xs mt-3 leading-relaxed">
+              Tus registros, progreso y evaluación técnica reunidos en un solo lugar.
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
+            ⚡
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <div className="rounded-[26px] border border-pr-gold/20 bg-black/35 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="section-label">Índice PR</p>
+              <p className="font-display text-5xl text-pr-gold mt-2">
+                {summary.index}
+                <span className="text-white/25 text-base">/100</span>
+              </p>
+            </div>
+            <span className="rounded-full border border-pr-gold/20 bg-pr-gold/10 px-3 py-1.5 text-pr-gold text-[9px] font-bold uppercase tracking-wider">
+              {profileLabel}
+            </span>
+          </div>
+
+          <p className="text-white/38 text-xs leading-relaxed mt-3">
+            El Índice PR representa tu evolución personal sobre ruedas a partir de tus registros, progreso y evaluación técnica.
+          </p>
+
+          <PerformanceRadar axes={summary.axes} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <PerformanceStat
+            label="Distancia destacada"
+            value={summary.highlighted ? formatDistance(summary.highlighted) : '—'}
+            detail="Tu mejor registro actual está en esta distancia."
+          />
+          <PerformanceStat
+            label="Cantidad de tomas"
+            value={summary.grouped.length}
+            detail={summary.grouped.length === 1 ? 'instancia registrada' : 'instancias registradas'}
+          />
+          <PerformanceStat
+            label="Mejor marca 6K"
+            value={summary.best6 ? formatDuration(summary.best6.tiempo_segundos) : '—'}
+            detail={summary.best6 ? `${Number(summary.best6.velocidad_kmh).toFixed(1)} km/h` : 'Sin registro'}
+          />
+          <PerformanceStat
+            label="Mejor marca 12K"
+            value={summary.best12 ? formatDuration(summary.best12.tiempo_segundos) : '—'}
+            detail={summary.best12 ? `${Number(summary.best12.velocidad_kmh).toFixed(1)} km/h` : 'Sin registro'}
+          />
+        </div>
+
+        <div className="rounded-[24px] border border-white/[0.07] bg-white/[0.025] p-4">
+          <p className="section-label">Evolución total</p>
+          <div className="flex items-end justify-between gap-4 mt-2">
+            <p className="font-display text-3xl text-white">
+              {summary.totalDifference > 0
+                ? `−${formatDuration(summary.totalDifference)}`
+                : summary.totalDifference < 0
+                  ? `+${formatDuration(Math.abs(summary.totalDifference))}`
+                  : 'Sin comparación'}
+            </p>
+            {summary.improvementPercent > 0 && (
+              <span className="text-emerald-300 text-xs font-bold">
+                +{summary.improvementPercent.toFixed(1)}% mejora
+              </span>
+            )}
+          </div>
+          <p className="text-white/35 text-xs mt-2">
+            Comparación entre tu primera y tu última marca en {summary.highlighted ? formatDistance(summary.highlighted) : 'la distancia destacada'}.
+          </p>
+        </div>
+
+        <div className="rounded-[24px] border border-white/[0.07] bg-white/[0.025] p-4">
+          <p className="section-label">Último progreso</p>
+          <p className="text-white font-semibold mt-2">
+            {summary.latestDifference > 0
+              ? `Mejoraste ${formatDuration(summary.latestDifference)}`
+              : summary.latestDifference < 0
+                ? `Tu último registro fue ${formatDuration(Math.abs(summary.latestDifference))} más lento`
+                : 'Todavía necesitamos otra toma comparable'}
+          </p>
+          {latestTake?.devolucion && (
+            <p className="text-white/52 text-sm mt-3 leading-relaxed">
+              “{latestTake.devolucion}”
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setHistoryOpen((value) => !value)}
+          className="w-full rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] py-4 text-pr-gold text-sm font-bold"
+        >
+          {historyOpen ? 'Ocultar historial' : `Ver historial (${summary.grouped.length})`}
+        </button>
+
+        {historyOpen && (
+          <div className="space-y-3 animate-fade-in">
+            {summary.grouped.map((take) => (
+              <div
+                key={take.numero}
+                className="rounded-[24px] border border-white/[0.07] bg-black/30 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-white font-bold">Toma {take.numero}</p>
+                    <p className="text-white/30 text-[10px] mt-1">
+                      {formatDate(take.fecha)}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-2.5 py-1 text-pr-gold text-[9px] font-bold">
+                    {take.registros.length} {take.registros.length === 1 ? 'DISTANCIA' : 'DISTANCIAS'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 mt-3">
+                  {take.registros.map((record) => (
+                    <div
+                      key={record.id}
+                      className="rounded-2xl border border-white/[0.05] bg-white/[0.025] p-3 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p className="text-pr-gold font-bold text-sm">
+                          {formatDistance(record.distancia_km)}
+                        </p>
+                        <p className="text-white/30 text-[10px] mt-1">
+                          Ritmo {formatDuration(record.ritmo_segundos_km)}/km
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white font-bold">
+                          {formatDuration(record.tiempo_segundos)}
+                        </p>
+                        <p className="text-white/30 text-[10px] mt-1">
+                          {Number(record.velocidad_kmh).toFixed(1)} km/h
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {take.devolucion && (
+                  <p className="text-white/50 text-sm mt-3 leading-relaxed">
+                    {take.devolucion}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function PerformanceStat({ label, value, detail }) {
+  return (
+    <div className="rounded-[22px] border border-white/[0.07] bg-white/[0.025] p-4 min-h-[128px]">
+      <p className="section-label">{label}</p>
+      <p className="font-display text-[27px] leading-none text-white mt-3">
+        {value}
+      </p>
+      <p className="text-white/30 text-[10px] mt-3 leading-relaxed">
+        {detail}
+      </p>
+    </div>
+  )
+}
+
+function PerformanceRadar({ axes }) {
+  const labels = [
+    ['Velocidad', axes.velocidad],
+    ['Evolución', axes.evolucion],
+    ['Constancia', axes.constancia],
+    ['Técnica', axes.tecnica],
+    ['Resistencia', axes.resistencia],
+  ]
+  const center = 100
+  const radius = 70
+  const angleFor = (index) => -Math.PI / 2 + (index * Math.PI * 2) / 5
+  const point = (index, scale = 1) => {
+    const angle = angleFor(index)
+    return [
+      center + Math.cos(angle) * radius * scale,
+      center + Math.sin(angle) * radius * scale,
+    ]
+  }
+  const polygon = labels
+    .map(([, value], index) => point(index, value / 100).join(','))
+    .join(' ')
+
+  return (
+    <div className="mt-4">
+      <svg viewBox="0 0 200 200" className="w-full max-w-[270px] mx-auto" aria-label="Gráfica del Índice PR">
+        {[1, 0.75, 0.5, 0.25].map((scale) => (
+          <polygon
+            key={scale}
+            points={labels.map((_, index) => point(index, scale).join(',')).join(' ')}
+            fill="none"
+            stroke="rgba(255,255,255,0.10)"
+            strokeWidth="1"
+          />
+        ))}
+        {labels.map((_, index) => {
+          const [x, y] = point(index, 1)
+          return (
+            <line
+              key={index}
+              x1={center}
+              y1={center}
+              x2={x}
+              y2={y}
+              stroke="rgba(255,255,255,0.08)"
+              strokeWidth="1"
+            />
+          )
+        })}
+        <polygon
+          points={polygon}
+          fill="rgba(212,175,55,0.22)"
+          stroke="rgb(212,175,55)"
+          strokeWidth="2"
+        />
+        {labels.map(([, value], index) => {
+          const [x, y] = point(index, value / 100)
+          return <circle key={index} cx={x} cy={y} r="3" fill="rgb(212,175,55)" />
+        })}
+      </svg>
+
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        {labels.map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-2 text-[10px]">
+            <span className="text-white/40">{label}</span>
+            <span className="text-pr-gold font-bold">{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
