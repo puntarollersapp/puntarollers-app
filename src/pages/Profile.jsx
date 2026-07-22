@@ -1502,11 +1502,11 @@ function PrivateLessonsProfile({ cuponera, history }) {
   const latestClass = completedClasses[0] || null
 
   return (
-    <section className="rounded-[30px] border border-pr-gold/20 bg-gradient-to-br from-[#17130a] via-[#0b0b10] to-black overflow-hidden">
-      <div className="p-5 border-b border-pr-gold/10">
+    <section className="rounded-[30px] border border-sky-400/20 bg-gradient-to-br from-sky-500/[0.12] via-[#0b1018] to-black overflow-hidden">
+      <div className="p-5 border-b border-sky-400/10">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="section-label text-pr-gold">Clases particulares</p>
+            <p className="section-label text-sky-300">Clases particulares</p>
             <h2 className="font-display text-[28px] leading-none text-white mt-2">
               Mi cuponera
             </h2>
@@ -1515,7 +1515,7 @@ function PrivateLessonsProfile({ cuponera, history }) {
             </p>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
+          <div className="w-12 h-12 rounded-2xl border border-sky-400/20 bg-sky-400/10 grid place-items-center text-xl shrink-0">
             🛼
           </div>
         </div>
@@ -1525,7 +1525,7 @@ function PrivateLessonsProfile({ cuponera, history }) {
         <div className="grid grid-cols-3 gap-2.5">
           <PrivateLessonStat value={loaded} label="Cargadas" />
           <PrivateLessonStat value={used} label="Usadas" />
-          <PrivateLessonStat value={available} label="Disponibles" gold />
+          <PrivateLessonStat value={available} label="Disponibles" highlight />
         </div>
 
         <div className="rounded-[24px] border border-white/[0.07] bg-white/[0.025] p-4">
@@ -1568,7 +1568,7 @@ function PrivateLessonsProfile({ cuponera, history }) {
             <button
               type="button"
               onClick={() => setHistoryOpen((value) => !value)}
-              className="w-full rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] py-4 text-pr-gold text-sm font-bold"
+              className="w-full rounded-2xl border border-sky-400/20 bg-sky-400/[0.10] py-4 text-sky-200 text-sm font-bold"
             >
               {historyOpen
                 ? 'Ocultar historial'
@@ -1595,7 +1595,7 @@ function PrivateLessonsProfile({ cuponera, history }) {
                       </div>
 
                       {item.cantidad && (
-                        <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-2.5 py-1 text-pr-gold text-[9px] font-bold">
+                        <span className="rounded-full border border-sky-400/20 bg-sky-400/[0.10] px-2.5 py-1 text-sky-200 text-[9px] font-bold">
                           {Number(item.cantidad) > 0 ? '+' : ''}
                           {item.cantidad}
                         </span>
@@ -1624,10 +1624,10 @@ function PrivateLessonsProfile({ cuponera, history }) {
   )
 }
 
-function PrivateLessonStat({ value, label, gold = false }) {
+function PrivateLessonStat({ value, label, highlight = false }) {
   return (
     <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center">
-      <p className={`font-display text-3xl ${gold ? 'text-pr-gold' : 'text-white'}`}>
+      <p className={`font-display text-3xl ${highlight ? 'text-sky-300' : 'text-white'}`}>
         {value}
       </p>
       <p className="text-white/30 text-[9px] uppercase tracking-[0.13em] mt-1">
@@ -1746,7 +1746,7 @@ function PerformanceProfile({ performance, summary }) {
         <button
           type="button"
           onClick={() => setHistoryOpen((value) => !value)}
-          className="w-full rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] py-4 text-pr-gold text-sm font-bold"
+          className="w-full rounded-2xl border border-sky-400/20 bg-sky-400/[0.10] py-4 text-sky-200 text-sm font-bold"
         >
           {historyOpen ? 'Ocultar historial' : `Ver historial (${summary.grouped.length})`}
         </button>
@@ -1765,7 +1765,7 @@ function PerformanceProfile({ performance, summary }) {
                       {formatDate(take.fecha)}
                     </p>
                   </div>
-                  <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-2.5 py-1 text-pr-gold text-[9px] font-bold">
+                  <span className="rounded-full border border-sky-400/20 bg-sky-400/[0.10] px-2.5 py-1 text-sky-200 text-[9px] font-bold">
                     {take.registros.length} {take.registros.length === 1 ? 'DISTANCIA' : 'DISTANCIAS'}
                   </span>
                 </div>
@@ -2127,4 +2127,4 @@ function EditInput({
       />
     </label>
   )
-}
+      }
