@@ -377,6 +377,7 @@ export default function Profile() {
   const [activity, setActivity] = useState([])
   const [performance, setPerformance] = useState(null)
   const [performanceTakes, setPerformanceTakes] = useState([])
+  const [coachGoals, setCoachGoals] = useState([])
   const [privateLessons, setPrivateLessons] = useState({
     cuponera: null,
     historial: [],
@@ -456,6 +457,7 @@ export default function Profile() {
         activityResponse,
         performanceResponse,
         performanceTakesResponse,
+        coachGoalsResponse,
         privateLessonsResponse,
       ] = await Promise.all([
         supabase
@@ -493,6 +495,13 @@ export default function Profile() {
           .eq('alumno_id', profileId)
           .order('numero_toma', { ascending: false })
           .order('distancia_km', { ascending: true }),
+
+        supabase
+          .from('pr_performance_objetivos')
+          .select('*')
+          .eq('alumno_id', profileId)
+          .eq('eliminado', false)
+          .order('creado_en', { ascending: false }),
 
         supabase.rpc('obtener_mis_particulares'),
       ])
@@ -580,6 +589,10 @@ export default function Profile() {
         setPerformanceTakes(performanceTakesResponse.data || [])
       }
 
+      if (!coachGoalsResponse.error) {
+        setCoachGoals(coachGoalsResponse.data || [])
+      }
+
       if (!privateLessonsResponse.error) {
         const particulars = privateLessonsResponse.data || {}
         setPrivateLessons({
@@ -625,11 +638,6 @@ export default function Profile() {
     [activity]
   )
 
-  const unreadNotes = useMemo(
-    () => notes.filter((item) => item.leida !== true),
-    [notes]
-  )
-
   const performanceSummary = useMemo(
     () => buildPerformanceSummary(performance, performanceTakes),
     [performance, performanceTakes]
@@ -646,44 +654,6 @@ export default function Profile() {
       profile.mensualidadHasta,
       profile.accesoHabilitado
     )
-
-  async function markNotesAsRead() {
-    const unreadIds = unreadNotes
-      .map((item) => String(item.id || ''))
-      .filter(Boolean)
-
-    if (!unreadIds.length) return
-
-    const { error } = await supabase.rpc(
-      'marcar_mis_devoluciones_leidas',
-      { p_actividad_ids: unreadIds }
-    )
-
-    if (error) {
-      setMessage(
-        `No pudimos marcar las devoluciones como leídas: ${error.message}`
-      )
-      return
-    }
-
-    const now = new Date().toISOString()
-    const unreadSet = new Set(unreadIds)
-
-    setActivity((current) =>
-      current.map((item) =>
-        unreadSet.has(String(item.id))
-          ? { ...item, leida: true, leida_en: item.leida_en || now }
-          : item
-      )
-    )
-  }
-
-  function toggleNotes() {
-    const willOpen = open !== 'observaciones'
-    setOpen(willOpen ? 'observaciones' : '')
-
-    if (willOpen) markNotesAsRead()
-  }
 
   function previewImage(file, field) {
     if (!file) return
@@ -1094,13 +1064,6 @@ export default function Profile() {
         </section>
 
 
-        <EvolutionNotesSection
-          notes={notes}
-          unreadCount={unreadNotes.length}
-          open={open === 'observaciones'}
-          onClick={toggleNotes}
-        />
-
         {hasPerformance && (
           <PerformanceProfile
             performance={performance}
@@ -1396,6 +1359,28 @@ export default function Profile() {
           />
         </Accordion>
 
+        <section id="observaciones">
+          <Accordion
+            title={`Observaciones (${notes.length})`}
+            subtitle="Tu evolución"
+            open={open === 'observaciones'}
+            onClick={() =>
+              setOpen(
+                open === 'observaciones'
+                  ? ''
+                  : 'observaciones'
+              )
+            }
+          >
+            <ActivityList
+              items={notes}
+              empty="Todavía no hay observaciones"
+              icon="📝"
+            />
+          </Accordion>
+        </section>
+
+
         {form.esTesoreria && (
           <Accordion
             title="Tesorería"
@@ -1477,6 +1462,201 @@ export default function Profile() {
   )
 }
 
+
+
+function CoachGoalsProfile({ goals, takes }) {
+  const [historyOpen, setHistoryOpen] = useState(false)
+
+  const visibleTakes = (takes || []).filter((item) => item?.eliminado !== true)
+  const activeGoals = (goals || []).filter(
+    (goal) => goal.estado === 'Activo' || goal.estado === 'Pausado'
+  )
+  const completedGoals = (goals || []).filter(
+    (goal) => goal.estado === 'Completado'
+  )
+
+  function getGoalProgress(goal) {
+    const distance = Number(goal.distancia_km)
+    const target = Number(goal.tiempo_objetivo_segundos)
+    const comparable = visibleTakes.filter(
+      (take) => Math.abs(Number(take.distancia_km) - distance) < 0.001
+    )
+    const best = comparable.length
+      ? comparable.reduce((currentBest, take) =>
+          Number(take.tiempo_segundos) < Number(currentBest.tiempo_segundos)
+            ? take
+            : currentBest
+        )
+      : null
+    const bestSeconds = Number(best?.tiempo_segundos) || 0
+    const achieved = Boolean(bestSeconds && bestSeconds <= target)
+    const progress = bestSeconds
+      ? Math.max(8, Math.min(100, Math.round((target / bestSeconds) * 100)))
+      : 0
+    const remaining = bestSeconds ? bestSeconds - target : 0
+
+    return { best, bestSeconds, achieved, progress, remaining }
+  }
+
+  return (
+    <section className="rounded-[30px] border border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.12] via-[#0b1210] to-black overflow-hidden">
+      <div className="p-5 border-b border-emerald-400/10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="section-label text-emerald-300">Objetivos del entrenador</p>
+            <h2 className="font-display text-[28px] leading-none text-white mt-2">
+              Tu próxima meta
+            </h2>
+            <p className="text-white/38 text-xs mt-3 leading-relaxed">
+              Metas personalizadas definidas por tus profesores según tu evolución.
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 grid place-items-center text-xl shrink-0">
+            🎯
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        {activeGoals.length > 0 ? (
+          activeGoals.map((goal) => {
+            const progress = getGoalProgress(goal)
+            const isPaused = goal.estado === 'Pausado'
+            const visuallyCompleted = progress.achieved
+
+            return (
+              <div
+                key={goal.id}
+                className={`rounded-[26px] border p-4 ${
+                  visuallyCompleted
+                    ? 'border-emerald-300/30 bg-emerald-400/[0.10]'
+                    : 'border-white/[0.07] bg-white/[0.025]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-lg leading-tight">
+                      {goal.titulo}
+                    </p>
+                    <p className="text-white/35 text-xs mt-2">
+                      {formatDistance(goal.distancia_km)} · Meta {formatDuration(goal.tiempo_objetivo_segundos)}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${
+                      visuallyCompleted
+                        ? 'border-emerald-300/25 bg-emerald-400/15 text-emerald-200'
+                        : isPaused
+                          ? 'border-amber-300/20 bg-amber-400/10 text-amber-200'
+                          : 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'
+                    }`}
+                  >
+                    {visuallyCompleted ? 'Meta alcanzada' : isPaused ? 'Pausado' : 'En curso'}
+                  </span>
+                </div>
+
+                {goal.indicacion && (
+                  <div className="rounded-2xl border border-emerald-400/10 bg-black/25 p-3 mt-4">
+                    <p className="text-white/25 text-[9px] uppercase tracking-[0.14em]">
+                      Indicación del entrenador
+                    </p>
+                    <p className="text-white/60 text-sm mt-2 leading-relaxed">
+                      {goal.indicacion}
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <span className="text-white/38">Progreso automático</span>
+                    <span className="text-emerald-300 font-bold">{progress.progress}%</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-white/[0.07] overflow-hidden mt-2">
+                    <div
+                      className="h-full rounded-full bg-emerald-400 transition-all duration-500"
+                      style={{ width: `${progress.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="rounded-2xl border border-white/[0.06] bg-black/25 p-3">
+                    <p className="text-white/25 text-[9px] uppercase tracking-wider">Mejor marca</p>
+                    <p className="text-white font-semibold mt-1">
+                      {progress.bestSeconds ? formatDuration(progress.bestSeconds) : 'Sin registro'}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/[0.06] bg-black/25 p-3">
+                    <p className="text-white/25 text-[9px] uppercase tracking-wider">Situación</p>
+                    <p className={`font-semibold mt-1 ${visuallyCompleted ? 'text-emerald-300' : 'text-white'}`}>
+                      {visuallyCompleted
+                        ? `Superada por ${formatDuration(Math.abs(progress.remaining))}`
+                        : progress.bestSeconds
+                          ? `Faltan ${formatDuration(progress.remaining)}`
+                          : 'Esperando una toma'}
+                    </p>
+                  </div>
+                </div>
+
+                {goal.fecha_limite && (
+                  <p className="text-white/28 text-[10px] mt-3">
+                    Fecha objetivo: {formatDate(`${goal.fecha_limite}T12:00:00`)}
+                  </p>
+                )}
+              </div>
+            )
+          })
+        ) : (
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+            <p className="text-white/45 text-sm">No tenés objetivos activos en este momento.</p>
+          </div>
+        )}
+
+        {completedGoals.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen((value) => !value)}
+              className="w-full rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.10] py-4 text-emerald-200 text-sm font-bold"
+            >
+              {historyOpen
+                ? 'Ocultar metas completadas'
+                : `Ver metas completadas (${completedGoals.length})`}
+            </button>
+
+            {historyOpen && (
+              <div className="space-y-2 animate-fade-in">
+                {completedGoals.map((goal) => (
+                  <div
+                    key={goal.id}
+                    className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.06] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-white font-semibold text-sm">{goal.titulo}</p>
+                        <p className="text-white/32 text-[10px] mt-1">
+                          {formatDistance(goal.distancia_km)} · {formatDuration(goal.tiempo_objetivo_segundos)}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-emerald-200 text-[9px] font-bold">
+                        ✓ COMPLETADA
+                      </span>
+                    </div>
+                    {goal.completado_en && (
+                      <p className="text-white/25 text-[10px] mt-3">
+                        Completada el {formatDate(goal.completado_en)}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
 
 
 function formatLessonDate(value) {
@@ -1924,92 +2104,6 @@ function PerformanceRadar({ axes }) {
   )
 }
 
-function EvolutionNotesSection({ notes, unreadCount, open, onClick }) {
-  const hasUnread = unreadCount > 0
-
-  return (
-    <section
-      id="observaciones"
-      className={`rounded-[30px] overflow-hidden border bg-gradient-to-br from-violet-500/[0.16] via-[#100d18] to-black ${
-        hasUnread
-          ? 'border-violet-300/40 shadow-[0_0_30px_rgba(139,92,246,0.10)]'
-          : 'border-violet-400/25'
-      }`}
-    >
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full p-5 text-left"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="section-label text-violet-300">Tu evolución</p>
-            <h2 className="font-display text-[25px] leading-tight text-white mt-2">
-              📣 Leé las devoluciones de tus profesores
-            </h2>
-            <p className="text-violet-100/50 text-xs mt-2 leading-relaxed">
-              Cada evaluación incluye consejos personalizados para ayudarte a mejorar tu técnica.
-            </p>
-          </div>
-
-          <div className="shrink-0 flex flex-col items-center gap-2">
-            <div className={`w-12 h-12 rounded-2xl border grid place-items-center text-xl ${
-              hasUnread
-                ? 'border-violet-300/35 bg-violet-400/20 animate-pulse'
-                : 'border-violet-400/25 bg-violet-400/10'
-            }`}>
-              📣
-            </div>
-            <span className={`min-w-8 h-8 px-2 rounded-full border text-xs font-bold grid place-items-center ${
-              hasUnread
-                ? 'border-violet-300/35 bg-violet-400/20 text-violet-100'
-                : 'border-violet-400/20 bg-violet-400/10 text-violet-200'
-            }`}>
-              {hasUnread ? unreadCount : notes.length}
-            </span>
-          </div>
-        </div>
-
-        <div className={`mt-4 rounded-2xl border px-4 py-3 flex items-center justify-between gap-3 ${
-          hasUnread
-            ? 'border-violet-300/30 bg-violet-400/15'
-            : 'border-violet-400/15 bg-violet-400/[0.07]'
-        }`}>
-          <div>
-            <p className={`text-sm font-bold ${hasUnread ? 'text-violet-100' : 'text-violet-200'}`}>
-              {hasUnread
-                ? `Tenés ${unreadCount} devolución${unreadCount === 1 ? '' : 'es'} nueva${unreadCount === 1 ? '' : 's'}`
-                : notes.length
-                  ? 'Estás al día con tus devoluciones'
-                  : 'Todavía no tenés devoluciones'}
-            </p>
-            <p className="text-white/42 text-[11px] mt-1">
-              {notes.length
-                ? open
-                  ? 'Tocá para cerrar'
-                  : '👇 Tocá aquí para leerlas'
-                : 'Cuando tus profesores carguen una, aparecerá acá.'}
-            </p>
-          </div>
-          <span className="w-9 h-9 rounded-full border border-violet-300/25 bg-violet-400/15 text-violet-100 grid place-items-center font-bold shrink-0">
-            {open ? '−' : '↓'}
-          </span>
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-5 pb-5 animate-fade-in">
-          <ActivityList
-            items={notes}
-            empty="Todavía no hay devoluciones de profesores"
-            icon="📝"
-          />
-        </div>
-      )}
-    </section>
-  )
-}
-
 function MiniStat({ value, label }) {
   return (
     <div className="pr-card p-3 text-center">
@@ -2241,4 +2335,4 @@ function EditInput({
       />
     </label>
   )
-    }
+                          }
