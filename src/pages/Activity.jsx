@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -230,11 +230,81 @@ export default function Activity() {
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
+  const initialSyncDone = useRef(false)
 
-  async function loadFeed({ silent = false } = {}) {
+  async function syncStrava() {
+    const pin = String(currentUser?.pin || '').trim()
+
+    if (!profileId || !pin) {
+      return {
+        skipped: true,
+        newActivities: 0,
+      }
+    }
+
+    try {
+      setSyncing(true)
+
+      const { data, error } = await supabase.functions.invoke(
+        'strava-auth',
+        {
+          body: {
+            action: 'sync',
+            profile_id: profileId,
+            pin,
+          },
+        }
+      )
+
+      if (data?.code === 'STRAVA_NOT_CONNECTED') {
+        return {
+          notConnected: true,
+          newActivities: 0,
+        }
+      }
+
+      if (error) {
+        throw new Error(
+          data?.error ||
+            error.message ||
+            'No se pudo sincronizar Strava.'
+        )
+      }
+
+      if (data?.error) {
+        throw new Error(data.error)
+      }
+
+      return {
+        success: Boolean(data?.success),
+        newActivities:
+          Number(data?.new_activities) || 0,
+        importedActivities:
+          Number(data?.imported_activities) || 0,
+        synchronizedAt:
+          data?.synchronized_at || '',
+      }
+    } catch (error) {
+      return {
+        error: true,
+        errorMessage:
+          error?.message ||
+          'No se pudo sincronizar Strava.',
+        newActivities: 0,
+      }
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  async function loadFeed({
+    silent = false,
+    preserveMessage = false,
+  } = {}) {
     if (!silent) setLoading(true)
-    setMessage('')
+    if (!preserveMessage) setMessage('')
 
     const [
       profilesResponse,
@@ -293,7 +363,43 @@ export default function Activity() {
   }
 
   useEffect(() => {
-    loadFeed()
+    if (initialSyncDone.current) return
+
+    initialSyncDone.current = true
+    let active = true
+
+    async function initializeFeed() {
+      setLoading(true)
+
+      const syncResult = await syncStrava()
+
+      if (!active) return
+
+      await loadFeed({
+        silent: true,
+        preserveMessage: true,
+      })
+
+      if (!active) return
+
+      if (syncResult.newActivities > 0) {
+        setMessage(
+          syncResult.newActivities === 1
+            ? '⚡ Se agregó 1 actividad nueva de Strava al RollerFeed.'
+            : `⚡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
+        )
+      } else if (syncResult.error) {
+        setMessage(
+          `El RollerFeed se cargó, pero Strava no pudo actualizarse: ${syncResult.errorMessage}`
+        )
+      }
+    }
+
+    initializeFeed()
+
+    return () => {
+      active = false
+    }
   }, [profileId])
 
   const profilesById = useMemo(
@@ -367,8 +473,51 @@ export default function Activity() {
   )
 
   async function refreshFeed() {
+    if (refreshing || syncing) return
+
     setRefreshing(true)
-    await loadFeed({ silent: true })
+    setMessage('Sincronizando con Strava…')
+
+    const syncResult = await syncStrava()
+
+    await loadFeed({
+      silent: true,
+      preserveMessage: true,
+    })
+
+    if (syncResult.newActivities > 0) {
+      setMessage(
+        syncResult.newActivities === 1
+          ? '⚡ Se agregó 1 actividad nueva de Strava al RollerFeed.'
+          : `⚡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
+      )
+      return
+    }
+
+    if (syncResult.error) {
+      setMessage(
+        `El feed se actualizó, pero Strava respondió con un error: ${syncResult.errorMessage}`
+      )
+      return
+    }
+
+    if (syncResult.notConnected) {
+      setMessage(
+        'El feed está actualizado. Este perfil todavía no tiene Strava conectado.'
+      )
+      return
+    }
+
+    if (syncResult.skipped) {
+      setMessage(
+        'El feed está actualizado, pero no pudimos iniciar la sincronización automática de Strava.'
+      )
+      return
+    }
+
+    setMessage(
+      '✓ RollerFeed y Strava están al día. No encontramos actividades nuevas.'
+    )
   }
 
   return (
@@ -500,11 +649,13 @@ export default function Activity() {
 
             <button
               type="button"
-              disabled={refreshing}
+              disabled={refreshing || syncing}
               onClick={refreshFeed}
               className="rounded-2xl border border-white/[0.08] bg-white/[0.035] px-3 py-2.5 text-white/45 text-[10px] font-bold disabled:opacity-50"
             >
-              {refreshing ? 'Actualizando…' : '↻ Actualizar'}
+              {refreshing || syncing
+                ? 'Sincronizando…'
+                : '↻ Actualizar'}
             </button>
           </div>
 
@@ -892,4 +1043,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-}
+            }
