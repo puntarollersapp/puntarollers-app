@@ -412,6 +412,10 @@ export default function Profile() {
     cuponera: null,
     historial: [],
   })
+  const [stravaConnecting, setStravaConnecting] = useState(false)
+  const [stravaConnected, setStravaConnected] = useState(false)
+  const [activitySummary, setActivitySummary] = useState(null)
+  const [stravaActivities, setStravaActivities] = useState([])
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
@@ -489,6 +493,8 @@ export default function Profile() {
         performanceTakesResponse,
         coachGoalsResponse,
         privateLessonsResponse,
+        activitySummaryResponse,
+        stravaActivitiesResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -534,6 +540,21 @@ export default function Profile() {
           .order('creado_en', { ascending: false }),
 
         supabase.rpc('obtener_mis_particulares'),
+
+        supabase
+          .from('pr_activity_summary')
+          .select('*')
+          .eq('alumno_id', profileId)
+          .maybeSingle(),
+
+        supabase
+          .from('pr_activities')
+          .select('*')
+          .eq('alumno_id', profileId)
+          .eq('fuente', 'strava')
+          .eq('eliminada', false)
+          .order('fecha_inicio', { ascending: false })
+          .limit(6),
       ])
 
       if (profileResponse.error) {
@@ -638,11 +659,24 @@ export default function Profile() {
         })
       }
 
+      if (!activitySummaryResponse.error) {
+        setActivitySummary(activitySummaryResponse.data || null)
+      }
+
+      if (!stravaActivitiesResponse.error) {
+        const imported = stravaActivitiesResponse.data || []
+        setStravaActivities(imported)
+        setStravaConnected(
+          imported.length > 0 ||
+            new URLSearchParams(location.search).get('strava') === 'connected'
+        )
+      }
+
       setLoading(false)
     }
 
     loadAll()
-  }, [profileId])
+  }, [profileId, location.search])
 
   const profile = {
     ...base,
@@ -699,6 +733,42 @@ export default function Profile() {
     PAYMENT_EXEMPT_DOCUMENTS.has(
       normalizeDocument(profile.documento)
     )
+
+  async function connectStrava() {
+    try {
+      setStravaConnecting(true)
+      setMessage('Preparando la conexión segura con Strava…')
+
+      const { data, error } = await supabase.functions.invoke(
+        'strava-auth',
+        {
+          body: {
+            action: 'authorize',
+            profile_id: profileId,
+            pin: form.pin,
+          },
+        }
+      )
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      if (!data?.authorization_url) {
+        throw new Error(
+          data?.error ||
+            'No pudimos generar el enlace de autorización.'
+        )
+      }
+
+      window.location.assign(data.authorization_url)
+    } catch (error) {
+      setMessage(
+        `No se pudo iniciar la vinculación: ${error.message}`
+      )
+      setStravaConnecting(false)
+    }
+  }
 
   async function markNotesAsRead() {
     const unreadIds = unreadNotes
@@ -1147,6 +1217,14 @@ export default function Profile() {
         </section>
 
 
+        <StravaActivityProfile
+          connected={stravaConnected}
+          connecting={stravaConnecting}
+          summary={activitySummary}
+          activities={stravaActivities}
+          onConnect={connectStrava}
+        />
+
         <EvolutionNotesSection
           notes={notes}
           unreadCount={unreadNotes.length}
@@ -1249,6 +1327,17 @@ export default function Profile() {
               <h2 className="font-display text-2xl text-white mt-1">
                 Editá tu información
               </h2>
+
+              {!form.fechaNacimiento && (
+                <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/[0.08] p-3 mt-4">
+                  <p className="text-fuchsia-100 text-xs font-bold">
+                    🎂 Completá tu cumpleaños
+                  </p>
+                  <p className="text-white/40 text-[11px] mt-1 leading-relaxed">
+                    Así RollerFeed ⚡️ podrá celebrar tu día automáticamente con toda la comunidad.
+                  </p>
+                </div>
+              )}
             </div>
 
             <EditInput
@@ -1539,6 +1628,280 @@ export default function Profile() {
   )
 }
 
+
+
+function formatActivityHours(totalSeconds) {
+  const seconds = Math.max(0, Number(totalSeconds) || 0)
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+
+  if (hours > 0) {
+    return `${hours} h ${minutes ? `${minutes} min` : ''}`.trim()
+  }
+
+  return `${minutes} min`
+}
+
+function formatActivityKm(meters) {
+  const km = Math.max(0, Number(meters) || 0) / 1000
+  return `${km.toLocaleString('es-UY', {
+    minimumFractionDigits: km < 10 ? 1 : 0,
+    maximumFractionDigits: 1,
+  })} km`
+}
+
+function formatActivitySpeed(value) {
+  const metersPerSecond = Number(value) || 0
+  if (!metersPerSecond) return '—'
+  return `${(metersPerSecond * 3.6).toFixed(1)} km/h`
+}
+
+function buildWeeklyActivityMessage(summary) {
+  const activities = Number(summary?.actividades_semana) || 0
+  const km = Number(summary?.km_semana) || 0
+
+  if (!activities) {
+    return 'Tu próxima actividad sincronizada aparecerá acá automáticamente.'
+  }
+
+  return `Completaste ${activities} entrenamiento${
+    activities === 1 ? '' : 's'
+  } esta semana y acumulaste ${km.toLocaleString('es-UY', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} km.`
+}
+
+function StravaActivityProfile({
+  connected,
+  connecting,
+  summary,
+  activities,
+  onConnect,
+}) {
+  const latest = activities?.[0] || null
+  const weeklyActivities = Number(summary?.actividades_semana) || 0
+  const weeklyKm = Number(summary?.km_semana) || 0
+  const weeklySeconds = Number(summary?.segundos_semana) || 0
+  const monthlyKm = Number(summary?.km_mes) || 0
+
+  return (
+    <section className="relative overflow-hidden rounded-[32px] border border-orange-300/25 bg-gradient-to-br from-[#ff5a1f]/20 via-[#15100f] to-[#07070b] shadow-[0_28px_90px_rgba(249,115,22,0.13)]">
+      <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-orange-500/15 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -left-20 w-60 h-60 rounded-full bg-pr-gold/10 blur-3xl pointer-events-none" />
+
+      <div className="relative p-5 border-b border-orange-300/10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5">
+              <span className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.9)]" />
+              <span className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.16em]">
+                Strava + Punta Rollers
+              </span>
+            </div>
+
+            <h2 className="font-display text-[31px] leading-none text-white mt-4">
+              Mi actividad
+            </h2>
+
+            <p className="text-white/42 text-xs mt-3 leading-relaxed max-w-[270px]">
+              Tus entrenamientos, kilómetros y constancia se actualizan automáticamente.
+            </p>
+          </div>
+
+          <div className="w-14 h-14 rounded-[20px] border border-orange-300/25 bg-gradient-to-br from-orange-400/20 to-pr-gold/10 grid place-items-center text-2xl shrink-0 shadow-[0_0_26px_rgba(249,115,22,0.12)]">
+            ⚡
+          </div>
+        </div>
+      </div>
+
+      <div className="relative p-5 space-y-4">
+        {!connected ? (
+          <div className="rounded-[26px] border border-orange-300/20 bg-black/30 p-5">
+            <p className="text-white font-semibold text-lg">
+              Sincronizá tu entrenamiento
+            </p>
+
+            <p className="text-white/42 text-sm mt-2 leading-relaxed">
+              Vinculá Strava una sola vez. Después, tus nuevas actividades aparecerán automáticamente en tu perfil y en RollerFeed ⚡️.
+            </p>
+
+            <button
+              type="button"
+              disabled={connecting}
+              onClick={onConnect}
+              className="w-full rounded-2xl bg-[#fc4c02] border border-orange-300/20 py-4 px-4 text-white text-sm font-bold mt-5 shadow-[0_14px_36px_rgba(252,76,2,0.22)] disabled:opacity-50"
+            >
+              {connecting
+                ? 'Conectando con Strava…'
+                : '🟠 Vincular mi cuenta de Strava'}
+            </button>
+
+            <p className="text-white/25 text-[10px] text-center mt-3">
+              La autorización se realiza directamente en Strava.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-[24px] border border-emerald-300/20 bg-emerald-400/[0.07] p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-emerald-200 text-sm font-bold">
+                  ✓ Strava conectado
+                </p>
+                <p className="text-white/35 text-[10px] mt-1">
+                  Tus actividades importadas alimentan tus estadísticas.
+                </p>
+              </div>
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-emerald-200 text-[9px] font-bold uppercase tracking-wider">
+                Activo
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <ActivitySummaryStat
+                label="Esta semana"
+                value={weeklyActivities}
+                detail="entrenamientos"
+              />
+              <ActivitySummaryStat
+                label="Kilómetros"
+                value={weeklyKm.toLocaleString('es-UY', {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}
+                detail="km esta semana"
+                highlight
+              />
+              <ActivitySummaryStat
+                label="Tiempo activo"
+                value={formatActivityHours(weeklySeconds)}
+                detail="esta semana"
+              />
+              <ActivitySummaryStat
+                label="Este mes"
+                value={monthlyKm.toLocaleString('es-UY', {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}
+                detail="km acumulados"
+              />
+            </div>
+
+            <div className="rounded-[25px] border border-orange-300/15 bg-gradient-to-br from-orange-400/[0.09] to-white/[0.02] p-4">
+              <p className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.16em]">
+                Tu resumen automático
+              </p>
+              <p className="text-white text-sm font-semibold mt-2 leading-relaxed">
+                {buildWeeklyActivityMessage(summary)}
+              </p>
+              {weeklyActivities > 0 && (
+                <p className="text-white/35 text-xs mt-2">
+                  Seguimos construyendo constancia sobre ruedas. 🛼
+                </p>
+              )}
+            </div>
+
+            {latest && (
+              <div className="rounded-[26px] border border-white/[0.08] bg-black/35 overflow-hidden">
+                <div className="p-4 border-b border-white/[0.06] flex items-start justify-between gap-3">
+                  <div>
+                    <p className="section-label text-orange-200">
+                      Última actividad
+                    </p>
+                    <p className="text-white font-semibold mt-2">
+                      {latest.nombre || 'Entrenamiento'}
+                    </p>
+                    <p className="text-white/30 text-[10px] mt-1">
+                      {formatDate(latest.fecha_inicio)}
+                    </p>
+                  </div>
+                  <span className="w-10 h-10 rounded-2xl border border-orange-300/15 bg-orange-400/10 grid place-items-center">
+                    🛼
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 divide-x divide-white/[0.06]">
+                  <LatestActivityStat
+                    label="Distancia"
+                    value={formatActivityKm(latest.distancia_metros)}
+                  />
+                  <LatestActivityStat
+                    label="Tiempo"
+                    value={formatActivityHours(
+                      latest.tiempo_movimiento_segundos
+                    )}
+                  />
+                  <LatestActivityStat
+                    label="Velocidad"
+                    value={formatActivitySpeed(
+                      latest.velocidad_media_ms
+                    )}
+                  />
+                </div>
+
+                {latest.strava_url && (
+                  <a
+                    href={latest.strava_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block border-t border-white/[0.06] px-4 py-3 text-orange-200 text-xs font-bold text-center"
+                  >
+                    Ver actividad en Strava →
+                  </a>
+                )}
+              </div>
+            )}
+
+            <Link
+              to="/app/actividad"
+              className="w-full rounded-2xl border border-pr-gold/25 bg-gradient-to-r from-pr-gold/15 via-orange-400/10 to-pr-gold/10 py-4 px-4 text-pr-gold text-sm font-bold flex items-center justify-center gap-2 shadow-[0_14px_40px_rgba(212,175,55,0.08)]"
+            >
+              ⚡ Abrir RollerFeed
+            </Link>
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function ActivitySummaryStat({
+  label,
+  value,
+  detail,
+  highlight = false,
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/[0.07] bg-white/[0.03] p-4 min-h-[112px]">
+      <p className="text-white/30 text-[9px] uppercase tracking-[0.14em]">
+        {label}
+      </p>
+      <p
+        className={`font-display text-[28px] leading-none mt-3 ${
+          highlight ? 'text-orange-300' : 'text-white'
+        }`}
+      >
+        {value}
+      </p>
+      <p className="text-white/28 text-[10px] mt-2">
+        {detail}
+      </p>
+    </div>
+  )
+}
+
+function LatestActivityStat({ label, value }) {
+  return (
+    <div className="p-3 text-center min-w-0">
+      <p className="text-white/25 text-[8px] uppercase tracking-wider">
+        {label}
+      </p>
+      <p className="text-white text-[11px] font-bold mt-1 truncate">
+        {value}
+      </p>
+    </div>
+  )
+}
 
 
 function EvolutionNotesSection({ notes, unreadCount, open, onClick }) {
@@ -2513,4 +2876,4 @@ function EditInput({
       />
     </label>
   )
-}
+      }
