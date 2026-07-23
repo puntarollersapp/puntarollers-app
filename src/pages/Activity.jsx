@@ -235,9 +235,7 @@ export default function Activity() {
   const initialSyncDone = useRef(false)
 
   async function syncStrava() {
-    const pin = String(currentUser?.pin || '').trim()
-
-    if (!profileId || !pin) {
+    if (!profileId) {
       return {
         skipped: true,
         newActivities: 0,
@@ -253,7 +251,6 @@ export default function Activity() {
           body: {
             action: 'sync',
             profile_id: profileId,
-            pin,
           },
         }
       )
@@ -1043,4 +1040,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-            }
+      }
