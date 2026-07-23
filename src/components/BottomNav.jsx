@@ -27,12 +27,13 @@ const Icon = ({ type }) => {
         <path d="M7 15h3" />
       </>
     ),
-    activity: (
+    rollerfeed: (
       <>
-        <path d="M4 19V9" />
-        <path d="M10 19V5" />
-        <path d="M16 19v-7" />
-        <path d="M22 19H2" />
+        <path d="M5.5 15.5h9.2a3.8 3.8 0 0 0 3.8-3.8V9.4" />
+        <path d="M7 12.5 10.5 9l2.5 2.5L17.5 7" />
+        <circle cx="7" cy="18.5" r="1.5" />
+        <circle cx="13" cy="18.5" r="1.5" />
+        <path d="M4 15.5h2.2" />
       </>
     ),
     services: (
@@ -81,8 +82,9 @@ export default function BottomNav() {
     },
     {
       path: '/app/actividad',
-      label: 'Actividad',
-      icon: 'activity',
+      label: 'RollerFeed',
+      icon: 'rollerfeed',
+      featured: true,
     },
     {
       path: '/app/servicios',
@@ -106,24 +108,69 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-[520px] bg-[#0a0a0f]/95 backdrop-blur-2xl border-t border-white/[0.06]"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-[520px] border-t border-white/[0.07] bg-[#09090e]/95 backdrop-blur-2xl shadow-[0_-14px_40px_rgba(0,0,0,0.32)]"
       style={{
         paddingBottom:
           'max(env(safe-area-inset-bottom, 0px), 8px)',
       }}
     >
-      <div className="flex items-center justify-around px-2 pt-2 pb-1">
+      <div
+        className={`grid items-end px-2 pt-2 pb-1 ${
+          isAdmin
+            ? 'grid-cols-6'
+            : 'grid-cols-5'
+        }`}
+      >
         {nav.map((item) => {
           const active =
             pathname === item.path ||
             (item.path === '/admin' &&
               pathname.startsWith('/admin'))
 
+          if (item.featured) {
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                aria-label="Abrir RollerFeed"
+                className="relative flex flex-col items-center justify-end min-w-0 active:scale-95 transition-transform"
+              >
+                <span
+                  className={`absolute -top-[29px] w-[62px] h-[62px] rounded-[22px] border grid place-items-center transition-all duration-300 ${
+                    active
+                      ? 'text-black border-orange-200/70 bg-gradient-to-br from-[#ffd45e] via-[#ff9f43] to-[#ff641f] shadow-[0_0_0_5px_rgba(255,134,40,0.09),0_10px_34px_rgba(255,101,31,0.42)]'
+                      : 'text-white border-orange-300/30 bg-gradient-to-br from-[#ff8a2a] via-[#f36a22] to-[#d94b17] shadow-[0_0_0_5px_rgba(255,110,30,0.06),0_10px_30px_rgba(255,93,24,0.25)]'
+                  }`}
+                >
+                  <Icon type={item.icon} />
+
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#101016] border border-orange-300/30 grid place-items-center text-[10px]">
+                    ⚡
+                  </span>
+                </span>
+
+                <span
+                  className={`mt-[35px] text-[9px] font-extrabold tracking-[-0.01em] transition-colors ${
+                    active
+                      ? 'text-orange-300'
+                      : 'text-white/55'
+                  }`}
+                >
+                  {item.label}
+                </span>
+
+                {active && (
+                  <span className="mt-1 w-5 h-[2px] rounded-full bg-orange-300 shadow-[0_0_10px_rgba(251,146,60,0.95)]" />
+                )}
+              </Link>
+            )
+          }
+
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`relative min-w-[54px] flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl active:scale-95 ${
+              className={`relative min-w-0 flex flex-col items-center gap-1 px-1 py-1.5 rounded-xl active:scale-95 transition-all ${
                 active
                   ? 'text-pr-gold'
                   : 'text-white/28'
@@ -135,7 +182,7 @@ export default function BottomNav() {
 
               <Icon type={item.icon} />
 
-              <span className="text-[9px] font-semibold">
+              <span className="text-[9px] font-semibold truncate max-w-full">
                 {item.label}
               </span>
             </Link>
