@@ -19,6 +19,7 @@ import PasaporteKids from './pages/PasaporteKids'
 import Uniformes from './pages/Uniformes'
 import Tracking from './pages/Tracking'
 import Terminos from './pages/Terminos'
+import StravaCallback from './pages/StravaCallback'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -112,6 +113,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/strava/callback"
+          element={
+            <PrivateRoute>
+              <StravaCallback />
             </PrivateRoute>
           }
         />
