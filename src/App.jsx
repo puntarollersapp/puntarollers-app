@@ -1,226 +1,152 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { AuthProvider, useAuth } from './lib/auth'
-import LoadingScreen from './components/LoadingScreen'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import AppLayout from '../layouts/AppLayout'
+import { supabase } from '../lib/supabase'
 
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Profile from './pages/Profile'
-import PRCardPage from './pages/PRCard'
-import ActivityPage from './pages/Activity'
-import ServicesPage from './pages/Services'
-import ContentPage from './pages/Content'
-import StorePage from './pages/Store'
-import Admin from './pages/Admin'
-import Alianza from './pages/Alianza'
-import Cuponeras from './pages/Cuponeras'
-import PasaporteKids from './pages/PasaporteKids'
-import Uniformes from './pages/Uniformes'
-import Tracking from './pages/Tracking'
-import Terminos from './pages/Terminos'
-import StravaCallback from './pages/StravaCallback'
+export default function StravaCallback() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const started = useRef(false)
 
-function ScrollToTop() {
-  const { pathname } = useLocation()
+  const [status, setStatus] = useState('loading')
+  const [message, setMessage] = useState(
+    'Terminando la vinculación con Strava…'
+  )
+  const [importedActivities, setImportedActivities] = useState(0)
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'auto',
-    })
+    if (started.current) return
+    started.current = true
 
-    document.documentElement.scrollTop = 0
-    document.body.scrollTop = 0
-  }, [pathname])
+    async function finishConnection() {
+      const error = searchParams.get('error')
+      const code = searchParams.get('code')
+      const state = searchParams.get('state')
 
-  return null
-}
+      if (error) {
+        setStatus('error')
+        setMessage(
+          error === 'access_denied'
+            ? 'Cancelaste la autorización de Strava.'
+            : `Strava devolvió un error: ${error}`
+        )
+        return
+      }
 
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth()
-  const location = useLocation()
+      if (!code || !state) {
+        setStatus('error')
+        setMessage(
+          'No recibimos una autorización válida desde Strava.'
+        )
+        return
+      }
 
-  if (loading) return null
+      try {
+        const { data, error: functionError } =
+          await supabase.functions.invoke('strava-auth', {
+            body: {
+              action: 'exchange',
+              code,
+              state,
+            },
+          })
 
-  if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        state={{ from: location }}
-        replace
-      />
-    )
-  }
+        if (functionError) {
+          throw new Error(functionError.message)
+        }
 
-  return children
-}
+        if (!data?.success) {
+          throw new Error(
+            data?.error ||
+              'La función no confirmó la vinculación.'
+          )
+        }
 
-function AdminRoute({ children }) {
-  const { user, loading } = useAuth()
-  const location = useLocation()
+        setImportedActivities(
+          Number(data.imported_activities) || 0
+        )
+        setStatus('success')
+        setMessage(
+          'Tu cuenta de Strava quedó vinculada correctamente.'
+        )
 
-  if (loading) return null
+        window.setTimeout(() => {
+          navigate('/app/perfil?strava=connected', {
+            replace: true,
+          })
+        }, 2200)
+      } catch (connectionError) {
+        setStatus('error')
+        setMessage(
+          connectionError instanceof Error
+            ? connectionError.message
+            : 'No se pudo completar la vinculación con Strava.'
+        )
+      }
+    }
 
-  if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        state={{ from: location }}
-        replace
-      />
-    )
-  }
-
-  if (!['admin', 'profesor'].includes(user.role)) {
-    return <Navigate to="/app/perfil" replace />
-  }
-
-  return children
-}
-
-function AppRoutes() {
-  return (
-    <>
-      <ScrollToTop />
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/alianza" element={<Alianza />} />
-        <Route path="/cuponeras" element={<Cuponeras />} />
-        <Route
-          path="/pasaporte-kids"
-          element={<PasaporteKids />}
-        />
-        <Route path="/uniformes" element={<Uniformes />} />
-        <Route path="/tracking" element={<Tracking />} />
-        <Route path="/terminos" element={<Terminos />} />
-
-        <Route
-          path="/app/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/perfil"
-          element={
-            <PrivateRoute>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/strava/callback"
-          element={
-            <PrivateRoute>
-              <StravaCallback />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/prcard"
-          element={
-            <PrivateRoute>
-              <PRCardPage />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/tracking"
-          element={
-            <PrivateRoute>
-              <Tracking />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/actividad"
-          element={
-            <PrivateRoute>
-              <ActivityPage />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/servicios"
-          element={
-            <PrivateRoute>
-              <ServicesPage />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/contenido"
-          element={
-            <PrivateRoute>
-              <ContentPage />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/tienda"
-          element={
-            <PrivateRoute>
-              <StorePage />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
-          }
-        />
-
-        <Route
-          path="/app"
-          element={<Navigate to="/app/perfil" replace />}
-        />
-
-        <Route
-          path="*"
-          element={<Navigate to="/" replace />}
-        />
-      </Routes>
-    </>
-  )
-}
-
-export default function App() {
-  const [loaded, setLoaded] = useState(false)
+    finishConnection()
+  }, [navigate, searchParams])
 
   return (
-    <AuthProvider>
-      {!loaded && (
-        <LoadingScreen onDone={() => setLoaded(true)} />
-      )}
+    <AppLayout title="Strava">
+      <div className="pr-page animate-page-enter">
+        <section className="rounded-[30px] border border-white/[0.08] bg-gradient-to-br from-orange-500/[0.14] via-[#111117] to-black p-6 text-center">
+          <div
+            className={`w-20 h-20 mx-auto rounded-[26px] border grid place-items-center text-4xl ${
+              status === 'success'
+                ? 'border-emerald-400/25 bg-emerald-400/10'
+                : status === 'error'
+                  ? 'border-red-400/25 bg-red-400/10'
+                  : 'border-orange-400/25 bg-orange-400/10 animate-pulse'
+            }`}
+          >
+            {status === 'success'
+              ? '✓'
+              : status === 'error'
+                ? '!'
+                : '🟠'}
+          </div>
 
-      <div
-        className={`transition-opacity duration-500 ${
-          loaded
-            ? 'opacity-100'
-            : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <AppRoutes />
+          <p className="section-label text-orange-300 mt-5">
+            Strava + Punta Rollers
+          </p>
+
+          <h1 className="font-display text-3xl text-white mt-2">
+            {status === 'success'
+              ? '¡Conexión completada!'
+              : status === 'error'
+                ? 'No pudimos vincularla'
+                : 'Conectando tu cuenta'}
+          </h1>
+
+          <p className="text-white/50 text-sm leading-relaxed mt-4">
+            {message}
+          </p>
+
+          {status === 'success' && (
+            <div className="rounded-2xl border border-orange-400/15 bg-orange-400/[0.07] p-4 mt-5">
+              <p className="text-orange-200 font-semibold">
+                {importedActivities} actividad
+                {importedActivities === 1 ? '' : 'es'} importada
+                {importedActivities === 1 ? '' : 's'}
+              </p>
+              <p className="text-white/35 text-xs mt-1">
+                Te estamos llevando nuevamente a tu perfil.
+              </p>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <Link
+              to="/app/perfil"
+              className="btn-gold w-full mt-6 inline-flex items-center justify-center"
+            >
+              Volver a mi perfil
+            </Link>
+          )}
+        </section>
       </div>
-    </AuthProvider>
+    </AppLayout>
   )
 }
