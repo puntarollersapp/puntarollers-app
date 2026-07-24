@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
@@ -416,6 +416,8 @@ export default function Profile() {
   const [stravaConnected, setStravaConnected] = useState(false)
   const [activitySummary, setActivitySummary] = useState(null)
   const [stravaActivities, setStravaActivities] = useState([])
+  const profileTopRef = useRef(null)
+  const editSectionRef = useRef(null)
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
@@ -923,6 +925,30 @@ export default function Profile() {
     }
   }
 
+  function toggleProfileEditor() {
+    if (editing) {
+      setEditing(false)
+
+      window.setTimeout(() => {
+        profileTopRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 80)
+
+      return
+    }
+
+    setEditing(true)
+
+    window.setTimeout(() => {
+      editSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 120)
+  }
+
   async function saveProfile() {
     try {
       setSaving(true)
@@ -1007,6 +1033,13 @@ export default function Profile() {
       setBannerFile(null)
       setEditing(false)
       setMessage('Cambios guardados correctamente.')
+
+      window.setTimeout(() => {
+        profileTopRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 120)
     } catch (error) {
       setMessage(
         `No se pudo guardar: ${error.message}`
@@ -1025,7 +1058,10 @@ export default function Profile() {
           </div>
         )}
 
-        <section className="pr-panel overflow-hidden">
+        <section
+          ref={profileTopRef}
+          className="pr-panel overflow-hidden scroll-mt-4"
+        >
           <div className="h-[180px] relative bg-gradient-to-br from-[#211a0d] via-[#111119] to-[#08080d] overflow-hidden">
             {profile.banner ? (
               <img
@@ -1149,9 +1185,7 @@ export default function Profile() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setEditing((value) => !value)
-                }
+                onClick={toggleProfileEditor}
                 className="px-4 py-2.5 rounded-[14px] bg-pr-gold text-black text-xs font-bold"
               >
                 {editing ? 'Cerrar' : 'Editar'}
@@ -1268,8 +1302,9 @@ export default function Profile() {
 
         {editing && (
           <section
+            ref={editSectionRef}
             id="editar-perfil"
-            className="pr-panel p-5 space-y-4"
+            className="pr-panel p-5 space-y-4 scroll-mt-4"
           >
             <div>
               <p className="section-label">
