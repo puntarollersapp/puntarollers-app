@@ -128,139 +128,89 @@ function normalizeDocument(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+function getValidDateTimestamp(value) {
+  if (!value) return null
+
+  const timestamp = new Date(value).getTime()
+  return Number.isFinite(timestamp) ? timestamp : null
+}
+
+function getFirstPerformanceTakeTimestamp(items) {
+  const timestamps = (items || [])
+    .filter((item) => !item.eliminado)
+    .map((item) => getValidDateTimestamp(item.fecha))
+    .filter((timestamp) => timestamp !== null)
+
+  return timestamps.length ? Math.min(...timestamps) : null
+}
+
 function getStravaActivityKey(item) {
   const externalId =
-    item?.strava_activity_id ||
-    item?.strava_id ||
-    item?.external_id ||
-    item?.actividad_strava_id ||
-    item?.source_id
+    item.strava_activity_id ||
+    item.strava_id ||
+    item.external_id ||
+    item.actividad_strava_id ||
+    item.source_id ||
+    item.id_strava
 
   if (externalId) {
-    return `strava-${externalId}`
+    return `strava:${String(externalId)}`
   }
-
-  const date = String(
-    item?.fecha_inicio ||
-      item?.fecha ||
-      item?.created_at ||
-      ''
-  ).slice(0, 19)
-
-  const distance = Math.round(
-    Number(item?.distancia_metros) || 0
-  )
-
-  const duration = Math.round(
-    Number(item?.tiempo_movimiento_segundos) || 0
-  )
-
-  const name = String(
-    item?.nombre ||
-      item?.nombre_actividad ||
-      ''
-  )
-    .trim()
-    .toLowerCase()
-
-  return `${date}-${distance}-${duration}-${name}`
-}
-
-function normalizeActivityText(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_-]+/g, '')
-}
-
-function isSkatingStravaActivity(item) {
-  if (!item || item.eliminada === true) return false
-
-  const sportValues = [
-    item.sport_type,
-    item.sportType,
-    item.activity_type,
-    item.activityType,
-    item.tipo_actividad,
-    item.tipo_deporte,
-    item.deporte,
-    item.tipo,
-  ]
-    .map(normalizeActivityText)
-    .filter(Boolean)
-
-  const skatingTypes = new Set([
-    'inlineskate',
-    'rollerskate',
-    'rollerskating',
-    'skating',
-    'patinaje',
-    'patines',
-    'roller',
-  ])
-
-  if (sportValues.some((value) => skatingTypes.has(value))) {
-    return true
-  }
-
-  const activityName = normalizeActivityText(
-    item.nombre ||
-      item.nombre_actividad ||
-      item.name ||
-      item.title
-  )
 
   return [
-    'patin',
-    'skate',
-    'roller',
-  ].some((keyword) => activityName.includes(keyword))
+    'fallback',
+    item.fecha_inicio || item.start_date || item.fecha || '',
+    Number(item.distancia_metros) || 0,
+    Number(item.tiempo_movimiento_segundos) || 0,
+    String(item.nombre || item.name || item.titulo || '')
+      .trim()
+      .toLowerCase(),
+  ].join('|')
 }
 
-function getUniqueStravaActivities(items = []) {
+function getUniqueStravaActivitiesSinceFirstTake(activities, takes) {
+  const firstTakeTimestamp = getFirstPerformanceTakeTimestamp(takes)
   const unique = new Map()
 
-  items.forEach((item) => {
-    if (!isSkatingStravaActivity(item)) return
+  ;(activities || []).forEach((item) => {
+    if (item.eliminada === true) return
+
+    const activityTimestamp = getValidDateTimestamp(
+      item.fecha_inicio || item.start_date || item.fecha
+    )
+
+    if (
+      firstTakeTimestamp !== null &&
+      (activityTimestamp === null || activityTimestamp < firstTakeTimestamp)
+    ) {
+      return
+    }
 
     const key = getStravaActivityKey(item)
-
-    if (!unique.has(key)) {
-      unique.set(key, item)
-    }
+    if (!unique.has(key)) unique.set(key, item)
   })
 
   return [...unique.values()]
 }
 
-function calculatePerformanceKilometers(items = []) {
-  const takes = new Map()
+function calculatePerformanceKilometers(items) {
+  const groupedTakes = new Map()
 
-  items.forEach((item, index) => {
-    if (!item || item.eliminado === true) return
+  ;(items || []).forEach((item) => {
+    if (item.eliminado === true) return
 
-    const distance = normalizePerformanceDistance(
-      item.distancia_km
-    )
-
+    const distance = normalizePerformanceDistance(item.distancia_km)
     if (!distance) return
 
-    const takeNumber = Number(item.numero_toma)
-    const key = Number.isFinite(takeNumber) && takeNumber > 0
-      ? `take-${takeNumber}`
-      : `fallback-${item.id || item.fecha || index}`
+    const takeNumber = Number(item.numero_toma) || 0
+    const fallbackDate = String(item.fecha || '').slice(0, 10)
+    const key = takeNumber > 0 ? `take:${takeNumber}` : `date:${fallbackDate}`
+    const currentMaximum = groupedTakes.get(key) || 0
 
-    const currentDistance = takes.get(key) || 0
-
-    takes.set(
-      key,
-      Math.max(currentDistance, distance)
-    )
+    groupedTakes.set(key, Math.max(currentMaximum, distance))
   })
 
-  return [...takes.values()].reduce(
+  return [...groupedTakes.values()].reduce(
     (total, distance) => total + distance,
     0
   )
@@ -828,11 +778,16 @@ export default function Profile() {
       }
 
       if (!lifetimeActivitiesResponse.error) {
-        const importedActivities =
-          lifetimeActivitiesResponse.data || []
+        const allActivities = lifetimeActivitiesResponse.data || []
+        const allPerformanceTakes = performanceTakesResponse.error
+          ? []
+          : performanceTakesResponse.data || []
 
         const uniqueStravaActivities =
-          getUniqueStravaActivities(importedActivities)
+          getUniqueStravaActivitiesSinceFirstTake(
+            allActivities,
+            allPerformanceTakes
+          )
 
         const stravaTotals = uniqueStravaActivities.reduce(
           (accumulator, item) => ({
@@ -848,17 +803,12 @@ export default function Profile() {
         )
 
         const performanceKilometers =
-          performanceTakesResponse.error
-            ? 0
-            : calculatePerformanceKilometers(
-                performanceTakesResponse.data || []
-              )
+          calculatePerformanceKilometers(allPerformanceTakes)
 
         setLifetimeActivityStats({
           sessions: stravaTotals.sessions,
           kilometers:
-            stravaTotals.kilometers +
-            performanceKilometers,
+            stravaTotals.kilometers + performanceKilometers,
           activeSeconds: stravaTotals.activeSeconds,
         })
       }
