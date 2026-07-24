@@ -1301,63 +1301,6 @@ export default function Profile() {
           </div>
         </section>
 
-        <Link
-          to="/app/historia-sobre-ruedas"
-          className="group relative block overflow-hidden rounded-[32px] border border-pr-gold/30 bg-[#09090d] shadow-[0_28px_90px_rgba(216,184,90,0.12)] active:scale-[0.99] transition-transform"
-        >
-          <div className="absolute -top-24 -right-16 w-64 h-64 rounded-full bg-pr-gold/15 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-28 -left-20 w-64 h-64 rounded-full bg-orange-400/[0.08] blur-3xl pointer-events-none" />
-
-          <div className="relative min-h-[220px] p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-pr-gold/25 bg-pr-gold/10 px-3 py-1.5">
-                  <span className="w-2 h-2 rounded-full bg-pr-gold shadow-[0_0_13px_rgba(216,184,90,0.95)]" />
-                  <span className="text-pr-gold text-[9px] font-bold uppercase tracking-[0.16em]">
-                    Perfil Digital PR
-                  </span>
-                </div>
-
-                <h2 className="font-display text-[34px] leading-[0.98] text-white mt-4 max-w-[280px]">
-                  Mi Historia
-                  <span className="block text-pr-gold">
-                    sobre Ruedas
-                  </span>
-                </h2>
-
-                <p className="text-white/45 text-xs leading-relaxed mt-3 max-w-[270px]">
-                  Tu recorrido, tus kilómetros y tus logros contados como una historia que podés compartir.
-                </p>
-              </div>
-
-              <div className="shrink-0 w-12 h-12 rounded-2xl border border-pr-gold/25 bg-pr-gold/10 grid place-items-center text-xl text-pr-gold group-hover:translate-x-1 transition-transform">
-                →
-              </div>
-            </div>
-
-            <div className="relative mt-6 h-[54px]">
-              <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-pr-gold via-pr-gold/55 to-transparent" />
-
-              <div className="absolute left-0 top-[18px] w-4 h-4 rounded-full border-2 border-[#09090d] bg-pr-gold shadow-[0_0_18px_rgba(216,184,90,0.75)]" />
-              <div className="absolute left-[31%] top-[18px] w-4 h-4 rounded-full border border-pr-gold/60 bg-[#111116]" />
-              <div className="absolute left-[62%] top-[18px] w-4 h-4 rounded-full border border-pr-gold/60 bg-[#111116]" />
-
-              <div className="absolute right-0 top-[13px] w-7 h-7 rounded-full border border-pr-gold/30 bg-pr-gold/10 grid place-items-center text-[12px]">
-                🛼
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 mt-1">
-              <p className="text-white/30 text-[9px] uppercase tracking-[0.14em]">
-                Cada entrenamiento deja una huella
-              </p>
-
-              <span className="shrink-0 text-pr-gold text-[10px] font-bold uppercase tracking-[0.12em]">
-                Ver mi historia
-              </span>
-            </div>
-          </div>
-        </Link>
 
         <StravaActivityProfile
           connected={stravaConnected}
