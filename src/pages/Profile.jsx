@@ -166,11 +166,64 @@ function getStravaActivityKey(item) {
   return `${date}-${distance}-${duration}-${name}`
 }
 
+function normalizeActivityText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '')
+}
+
+function isSkatingStravaActivity(item) {
+  if (!item || item.eliminada === true) return false
+
+  const sportValues = [
+    item.sport_type,
+    item.sportType,
+    item.activity_type,
+    item.activityType,
+    item.tipo_actividad,
+    item.tipo_deporte,
+    item.deporte,
+    item.tipo,
+  ]
+    .map(normalizeActivityText)
+    .filter(Boolean)
+
+  const skatingTypes = new Set([
+    'inlineskate',
+    'rollerskate',
+    'rollerskating',
+    'skating',
+    'patinaje',
+    'patines',
+    'roller',
+  ])
+
+  if (sportValues.some((value) => skatingTypes.has(value))) {
+    return true
+  }
+
+  const activityName = normalizeActivityText(
+    item.nombre ||
+      item.nombre_actividad ||
+      item.name ||
+      item.title
+  )
+
+  return [
+    'patin',
+    'skate',
+    'roller',
+  ].some((keyword) => activityName.includes(keyword))
+}
+
 function getUniqueStravaActivities(items = []) {
   const unique = new Map()
 
   items.forEach((item) => {
-    if (!item || item.eliminada === true) return
+    if (!isSkatingStravaActivity(item)) return
 
     const key = getStravaActivityKey(item)
 
