@@ -317,6 +317,50 @@ function normalizeActivity(activity, profilesByAnyId) {
   }
 }
 
+function buildEventDate(item) {
+  const rawDate =
+    item.fecha_evento ||
+    item.fecha ||
+    item.inicio ||
+    item.starts_at ||
+    item.created_at ||
+    item.creado_en ||
+    ''
+
+  if (!rawDate) return null
+
+  const rawTime = clean(
+    item.hora_evento ||
+      item.hora ||
+      item.hora_inicio ||
+      item.start_time
+  )
+
+  const dateText = String(rawDate)
+  const alreadyHasTime = /T\d{2}:\d{2}/.test(dateText)
+  const candidate =
+    rawTime && !alreadyHasTime
+      ? `${dateText.slice(0, 10)}T${rawTime.slice(0, 5)}:00`
+      : dateText
+
+  const date = new Date(candidate)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function isVisibleEvent(item) {
+  if (resolveLegacyType(item) !== 'Evento') return true
+
+  const eventDate = buildEventDate(item)
+  if (!eventDate) return true
+
+  const graceMinutes = Math.max(
+    0,
+    Number(item.minutos_visible_despues) || 5
+  )
+
+  return Date.now() <= eventDate.getTime() + graceMinutes * 60000
+}
+
 function normalizeLegacyItem(item, profilesByAnyId) {
   const recipientProfile = findProfile(
     profilesByAnyId,
@@ -324,12 +368,15 @@ function normalizeLegacyItem(item, profilesByAnyId) {
   )
 
   const recipientName = getProfileName(recipientProfile)
+  const type = resolveLegacyType(item)
+  const eventDate = type === 'Evento' ? buildEventDate(item) : null
 
   return {
     id: `legacy-${item.id}`,
     rawId: item.id,
-    type: resolveLegacyType(item),
+    type,
     date:
+      eventDate?.toISOString() ||
       item.fecha ||
       item.created_at ||
       item.creado_en ||
@@ -353,6 +400,44 @@ function normalizeLegacyItem(item, profilesByAnyId) {
       item.otorgado_por_nombre ||
       'Equipo Punta Rollers',
     featured: Boolean(item.destacada),
+    eventLocation:
+      item.lugar || item.ubicacion || item.location || '',
+    eventUrl:
+      item.link || item.enlace || item.url || '',
+  }
+}
+
+function getBirthdayParts(profile = {}) {
+  const directMonth = Number(profile.cumple_mes)
+  const directDay = Number(profile.cumple_dia)
+
+  if (directMonth && directDay) {
+    return { month: directMonth, day: directDay }
+  }
+
+  const value =
+    profile.fecha_nacimiento ||
+    profile.fechaNacimiento ||
+    profile.birth_date ||
+    profile.birthday ||
+    ''
+
+  if (!value) return null
+
+  const match = String(value).match(/^(?:\d{4})-(\d{2})-(\d{2})/)
+  if (match) {
+    return {
+      month: Number(match[1]),
+      day: Number(match[2]),
+    }
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  return {
+    month: date.getMonth() + 1,
+    day: date.getDate(),
   }
 }
 
@@ -362,11 +447,13 @@ function buildBirthdayPosts(profiles) {
   const currentDay = today.getDate()
 
   return (profiles || [])
-    .filter(
-      (profile) =>
-        Number(profile.cumple_mes) === currentMonth &&
-        Number(profile.cumple_dia) === currentDay
-    )
+    .filter((profile) => {
+      const birthday = getBirthdayParts(profile)
+      return (
+        birthday?.month === currentMonth &&
+        birthday?.day === currentDay
+      )
+    })
     .map((profile) => {
       const name =
         getProfileName(profile) || 'un integrante PR'
@@ -410,32 +497,10 @@ export default function Activity() {
   const [message, setMessage] = useState('')
   const initialSyncDone = useRef(false)
 
-  async function hasStravaConnection() {
-    if (!profileId) return false
-
-    const { data, error } = await supabase
-      .from('pr_strava_connections')
-      .select('conectado')
-      .eq('alumno_id', profileId)
-      .maybeSingle()
-
-    if (error) return false
-    return data?.conectado === true
-  }
-
   async function syncStrava() {
     if (!profileId) {
       return {
         skipped: true,
-        newActivities: 0,
-      }
-    }
-
-    const connected = await hasStravaConnection()
-
-    if (!connected) {
-      return {
-        notConnected: true,
         newActivities: 0,
       }
     }
@@ -451,7 +516,15 @@ export default function Activity() {
           },
         })
 
-      if (data?.code === 'STRAVA_NOT_CONNECTED') {
+      const responseCode = clean(
+        data?.code || data?.error_code || data?.status
+      ).toUpperCase()
+
+      if (
+        responseCode === 'STRAVA_NOT_CONNECTED' ||
+        responseCode === 'NOT_CONNECTED' ||
+        data?.connected === false
+      ) {
         return {
           notConnected: true,
           newActivities: 0,
@@ -546,7 +619,9 @@ export default function Activity() {
     } else {
       setLegacyItems(
         (legacyResponse.data || []).filter(
-          isPublicLegacyItem
+          (item) =>
+            isPublicLegacyItem(item) &&
+            isVisibleEvent(item)
         )
       )
     }
@@ -723,8 +798,30 @@ export default function Activity() {
     }
 
     if (syncResult.notConnected) {
+      const currentProfile = profilesByAnyId.get(
+        String(profileId)
+      )
+
+      const validIds = new Set(
+        [
+          profileId,
+          currentProfile?.id,
+          currentProfile?.auth_user_id,
+        ]
+          .filter(Boolean)
+          .map(String)
+      )
+
+      const alreadyHasStravaActivity = activities.some(
+        (activity) =>
+          lower(activity.fuente) === 'strava' &&
+          validIds.has(String(activity.alumno_id))
+      )
+
       setMessage(
-        '✓ RollerFeed actualizado. Este perfil todavía no tiene Strava conectado.'
+        alreadyHasStravaActivity
+          ? 'El RollerFeed se actualizó, pero Strava no pudo sincronizar esta vez. Tu vinculación existe; volvé a intentar en unos segundos.'
+          : '✓ RollerFeed actualizado. Este perfil todavía no tiene Strava conectado.'
       )
       return
     }
@@ -1161,6 +1258,27 @@ function CommunityCard({ item }) {
           </p>
         )}
       </div>
+
+      {isEvent && (item.eventLocation || item.eventUrl) && (
+        <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-2">
+          {item.eventLocation && (
+            <p className="text-white/45 text-xs">
+              📍 {item.eventLocation}
+            </p>
+          )}
+
+          {item.eventUrl && (
+            <a
+              href={item.eventUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-pr-gold text-xs font-bold"
+            >
+              Ver información →
+            </a>
+          )}
+        </div>
+      )}
 
       {item.creatorName && (
         <p className="text-white/28 text-[9px] text-right mt-4 pt-4 border-t border-white/[0.06]">
