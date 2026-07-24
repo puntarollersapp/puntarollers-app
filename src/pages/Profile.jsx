@@ -1213,6 +1213,13 @@ export default function Profile() {
                 label="Notas"
               />
             </div>
+
+            {!hidePaymentSection && (
+              <PaymentStatusStrip
+                status={paymentStatus}
+                ultimoPago={profile.ultimoPago}
+              />
+            )}
           </div>
         </section>
 
@@ -1251,61 +1258,6 @@ export default function Profile() {
             cuponera={privateLessons.cuponera}
             history={privateLessons.historial}
           />
-        )}
-
-        {!hidePaymentSection && (
-          <section
-            id="mensualidad"
-            className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
-          >
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl grid place-items-center shrink-0 bg-black/25 border border-white/[0.06] text-xl">
-              {paymentStatus.icon}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="section-label">
-                    Mensualidad PR
-                  </p>
-
-                  <h2 className="font-display text-xl text-white mt-1">
-                    {paymentStatus.title}
-                  </h2>
-                </div>
-
-                <span
-                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${paymentStatus.badgeClass}`}
-                >
-                  {paymentStatus.badge}
-                </span>
-              </div>
-
-              <p className="text-white/55 text-sm mt-3 leading-relaxed">
-                {paymentStatus.description}
-              </p>
-
-              <p className="text-white/30 text-xs mt-1">
-                {paymentStatus.detail}
-              </p>
-
-              {profile.ultimoPago && (
-                <div className="rounded-2xl bg-black/20 border border-white/[0.05] p-3 mt-4">
-                  <p className="text-white/25 text-[10px] uppercase tracking-[0.14em]">
-                    Último pago registrado
-                  </p>
-
-                  <p className="text-white/70 text-sm mt-1">
-                    {formatPaymentDate(
-                      profile.ultimoPago
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-          </section>
         )}
 
         {message && (
@@ -1438,84 +1390,50 @@ export default function Profile() {
           </section>
         )}
 
-        <section className="pr-panel overflow-hidden">
-          <button
-            type="button"
-            onClick={() =>
-              setOpen(open === 'grupos' ? '' : 'grupos')
-            }
-            className="w-full p-5 text-left"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="section-label">
-                  Comunidad
-                </p>
+        <section className="pr-panel p-5">
+          <div>
+            <p className="section-label">
+              Comunidad
+            </p>
 
-                <h2 className="font-display text-[24px] leading-none text-white mt-2">
-                  Tus grupos
-                </h2>
+            <h2 className="font-display text-2xl text-white mt-1">
+              Tus grupos
+            </h2>
+          </div>
 
-                <p className="text-white/38 text-xs mt-2">
-                  {profile.gruposInfo?.length
-                    ? `Pertenecés a ${profile.gruposInfo.length} grupo${
-                        profile.gruposInfo.length === 1 ? '' : 's'
-                      }`
-                    : 'Todavía no tenés grupos asignados'}
-                </p>
-              </div>
-
-              <span className="shrink-0 rounded-full border border-pr-gold/20 bg-pr-gold/10 px-3 py-2 text-pr-gold text-[10px] font-bold">
-                {open === 'grupos' ? 'Ocultar' : 'Ver grupos'} →
-              </span>
-            </div>
-
-            {profile.gruposInfo?.length > 0 && open !== 'grupos' && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {profile.gruposInfo.slice(0, 3).map((group, index) => (
-                  <span
-                    key={`${group.titulo}-${index}`}
-                    className="max-w-full rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-white/55 text-[10px] truncate"
-                  >
-                    {group.titulo}
-                  </span>
-                ))}
-
-                {profile.gruposInfo.length > 3 && (
-                  <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.08] px-3 py-1.5 text-pr-gold text-[10px] font-semibold">
-                    +{profile.gruposInfo.length - 3}
-                  </span>
-                )}
-              </div>
-            )}
-          </button>
-
-          {open === 'grupos' && (
-            <div className="px-5 pb-5 space-y-2 animate-fade-in">
-              {profile.gruposInfo?.length ? (
-                profile.gruposInfo.map((group, index) => (
+          {profile.gruposInfo?.length ? (
+            <div className="space-y-2 mt-4">
+              {profile.gruposInfo.map(
+                (group, index) => (
                   <a
                     key={`${group.titulo}-${index}`}
                     href={group.link || '#'}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-[20px] border border-white/[0.07] bg-white/[0.025] px-4 py-3 flex items-center justify-between gap-3"
+                    className="pr-card p-4 flex items-center justify-between"
                   >
-                    <p className="text-white/80 font-semibold text-xs leading-snug min-w-0">
-                      {group.titulo}
-                    </p>
+                    <div>
+                      <p className="text-white font-semibold text-sm">
+                        {group.titulo}
+                      </p>
 
-                    <span className="text-pr-gold text-[10px] font-bold shrink-0">
+                      <p className="text-white/32 text-[11px] mt-1">
+                        Grupo asignado por Punta Rollers
+                      </p>
+                    </div>
+
+                    <span className="text-pr-gold text-xs">
                       Abrir →
                     </span>
                   </a>
-                ))
-              ) : (
-                <p className="text-white/35 text-xs leading-relaxed">
-                  Cuando el equipo PR te agregue a un grupo, aparecerá acá.
-                </p>
+                )
               )}
             </div>
+          ) : (
+            <Empty
+              title="Todavía no tenés grupos asignados"
+              text="Cuando el equipo PR te agregue a un grupo, aparecerá acá."
+            />
           )}
         </section>
 
@@ -2828,6 +2746,78 @@ function ProfileBadges({ badges = [] }) {
   )
 }
 
+
+function PaymentStatusStrip({
+  status,
+  ultimoPago,
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <section
+      id="mensualidad"
+      className={`rounded-[20px] border mt-3 overflow-hidden ${status.containerClass}`}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="w-full px-4 py-3 flex items-center gap-3 text-left"
+      >
+        <div className="w-10 h-10 rounded-[14px] grid place-items-center shrink-0 bg-black/25 border border-white/[0.06] text-base">
+          {status.icon}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-white/28 text-[8px] font-bold uppercase tracking-[0.16em]">
+            Mensualidad PR
+          </p>
+
+          <p className="text-white text-sm font-bold mt-1 truncate">
+            {status.title}
+          </p>
+
+          <p className="text-white/38 text-[10px] mt-0.5 truncate">
+            {status.description}
+          </p>
+        </div>
+
+        <div className="shrink-0 flex items-center gap-2">
+          <span
+            className={`rounded-full border px-2 py-1 text-[8px] font-bold uppercase tracking-wider ${status.badgeClass}`}
+          >
+            {status.badge}
+          </span>
+
+          <span className="text-white/30 text-xs">
+            {open ? '−' : '↓'}
+          </span>
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 animate-fade-in">
+          <div className="border-t border-white/[0.06] pt-3">
+            <p className="text-white/45 text-xs leading-relaxed">
+              {status.detail}
+            </p>
+
+            {ultimoPago && (
+              <div className="rounded-2xl bg-black/20 border border-white/[0.05] px-3 py-2.5 mt-3">
+                <p className="text-white/25 text-[9px] uppercase tracking-[0.14em]">
+                  Último pago registrado
+                </p>
+
+                <p className="text-white/70 text-xs mt-1">
+                  {formatPaymentDate(ultimoPago)}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
 
 function MiniStat({ value, label }) {
   return (
