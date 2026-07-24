@@ -1438,50 +1438,84 @@ export default function Profile() {
           </section>
         )}
 
-        <section className="pr-panel p-5">
-          <div>
-            <p className="section-label">
-              Comunidad
-            </p>
+        <section className="pr-panel overflow-hidden">
+          <button
+            type="button"
+            onClick={() =>
+              setOpen(open === 'grupos' ? '' : 'grupos')
+            }
+            className="w-full p-5 text-left"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="section-label">
+                  Comunidad
+                </p>
 
-            <h2 className="font-display text-2xl text-white mt-1">
-              Tus grupos
-            </h2>
-          </div>
+                <h2 className="font-display text-[24px] leading-none text-white mt-2">
+                  Tus grupos
+                </h2>
 
-          {profile.gruposInfo?.length ? (
-            <div className="space-y-2 mt-4">
-              {profile.gruposInfo.map(
-                (group, index) => (
+                <p className="text-white/38 text-xs mt-2">
+                  {profile.gruposInfo?.length
+                    ? `Pertenecés a ${profile.gruposInfo.length} grupo${
+                        profile.gruposInfo.length === 1 ? '' : 's'
+                      }`
+                    : 'Todavía no tenés grupos asignados'}
+                </p>
+              </div>
+
+              <span className="shrink-0 rounded-full border border-pr-gold/20 bg-pr-gold/10 px-3 py-2 text-pr-gold text-[10px] font-bold">
+                {open === 'grupos' ? 'Ocultar' : 'Ver grupos'} →
+              </span>
+            </div>
+
+            {profile.gruposInfo?.length > 0 && open !== 'grupos' && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {profile.gruposInfo.slice(0, 3).map((group, index) => (
+                  <span
+                    key={`${group.titulo}-${index}`}
+                    className="max-w-full rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-white/55 text-[10px] truncate"
+                  >
+                    {group.titulo}
+                  </span>
+                ))}
+
+                {profile.gruposInfo.length > 3 && (
+                  <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.08] px-3 py-1.5 text-pr-gold text-[10px] font-semibold">
+                    +{profile.gruposInfo.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
+          </button>
+
+          {open === 'grupos' && (
+            <div className="px-5 pb-5 space-y-2 animate-fade-in">
+              {profile.gruposInfo?.length ? (
+                profile.gruposInfo.map((group, index) => (
                   <a
                     key={`${group.titulo}-${index}`}
                     href={group.link || '#'}
                     target="_blank"
                     rel="noreferrer"
-                    className="pr-card p-4 flex items-center justify-between"
+                    className="rounded-[20px] border border-white/[0.07] bg-white/[0.025] px-4 py-3 flex items-center justify-between gap-3"
                   >
-                    <div>
-                      <p className="text-white font-semibold text-sm">
-                        {group.titulo}
-                      </p>
+                    <p className="text-white/80 font-semibold text-xs leading-snug min-w-0">
+                      {group.titulo}
+                    </p>
 
-                      <p className="text-white/32 text-[11px] mt-1">
-                        Grupo asignado por Punta Rollers
-                      </p>
-                    </div>
-
-                    <span className="text-pr-gold text-xs">
+                    <span className="text-pr-gold text-[10px] font-bold shrink-0">
                       Abrir →
                     </span>
                   </a>
-                )
+                ))
+              ) : (
+                <p className="text-white/35 text-xs leading-relaxed">
+                  Cuando el equipo PR te agregue a un grupo, aparecerá acá.
+                </p>
               )}
             </div>
-          ) : (
-            <Empty
-              title="Todavía no tenés grupos asignados"
-              text="Cuando el equipo PR te agregue a un grupo, aparecerá acá."
-            />
           )}
         </section>
 
