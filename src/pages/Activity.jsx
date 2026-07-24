@@ -26,9 +26,9 @@ const EMPTY_STATES = {
   },
   Cumpleaños: {
     icon: '🎂',
-    title: 'Hoy no hay cumpleaños',
+    title: 'No hay cumpleaños próximos',
     description:
-      'Cuando alguien de la comunidad cumpla años, lo celebraremos acá.',
+      'Mostraremos automáticamente los cumpleaños de hoy y de los próximos 5 días.',
   },
   Insignia: {
     icon: '🏅',
@@ -441,44 +441,99 @@ function getBirthdayParts(profile = {}) {
   }
 }
 
+function getUpcomingBirthday(month, day, today) {
+  const currentYear = today.getFullYear()
+  let birthdayDate = new Date(currentYear, month - 1, day, 12, 0, 0)
+
+  if (
+    birthdayDate.getMonth() !== month - 1 ||
+    birthdayDate.getDate() !== day
+  ) {
+    return null
+  }
+
+  const todayDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    12,
+    0,
+    0
+  )
+
+  if (birthdayDate < todayDate) {
+    birthdayDate = new Date(currentYear + 1, month - 1, day, 12, 0, 0)
+  }
+
+  const daysUntil = Math.round(
+    (birthdayDate.getTime() - todayDate.getTime()) /
+      (24 * 60 * 60 * 1000)
+  )
+
+  return {
+    date: birthdayDate,
+    daysUntil,
+  }
+}
+
 function buildBirthdayPosts(profiles) {
   const today = new Date()
-  const currentMonth = today.getMonth() + 1
-  const currentDay = today.getDate()
 
   return (profiles || [])
-    .filter((profile) => {
-      const birthday = getBirthdayParts(profile)
-      return (
-        birthday?.month === currentMonth &&
-        birthday?.day === currentDay
-      )
-    })
     .map((profile) => {
+      const birthday = getBirthdayParts(profile)
+      if (!birthday) return null
+
+      const upcoming = getUpcomingBirthday(
+        birthday.month,
+        birthday.day,
+        today
+      )
+
+      if (!upcoming || upcoming.daysUntil > 5) {
+        return null
+      }
+
       const name =
         getProfileName(profile) || 'un integrante PR'
 
+      const isToday = upcoming.daysUntil === 0
+      const isTomorrow = upcoming.daysUntil === 1
+
+      const title = isToday
+        ? `¡Hoy cumple años ${name}!`
+        : isTomorrow
+          ? `¡Mañana cumple años ${name}!`
+          : `En ${upcoming.daysUntil} días cumple años ${name}`
+
+      const description = isToday
+        ? 'Toda la comunidad Punta Rollers le desea un día increíble. Celebremos juntos. 🎉'
+        : 'Se acerca una fecha especial para nuestra comunidad. 🎈'
+
       return {
-        id: `birthday-${profile.id}-${today.getFullYear()}`,
+        id: `birthday-${profile.id}-${upcoming.date.getFullYear()}`,
         type: 'Cumpleaños',
         date: new Date(
           today.getFullYear(),
           today.getMonth(),
           today.getDate(),
           8,
-          0,
+          Math.min(upcoming.daysUntil, 5),
           0
         ).toISOString(),
-        title: `¡Hoy cumple años ${name}!`,
-        description:
-          'Toda la comunidad Punta Rollers le desea un día increíble. Celebremos juntos. 🎉',
+        birthdayDate: upcoming.date.toISOString(),
+        daysUntil: upcoming.daysUntil,
+        title,
+        description,
         userId: profile.id,
         userName: name,
         userPhoto: getProfilePhoto(profile),
         verified: getProfileVerified(profile),
-        featured: true,
+        featured: isToday,
       }
     })
+    .filter(Boolean)
+    .sort((a, b) => a.daysUntil - b.daysUntil)
 }
 
 export default function Activity() {
@@ -1195,7 +1250,9 @@ function BirthdayCard({ item }) {
       </div>
 
       <p className="section-label text-fuchsia-200 mt-5">
-        Celebración PR
+        {item.daysUntil === 0
+          ? 'Celebración PR'
+          : 'Próximo cumpleaños'}
       </p>
 
       <h3 className="font-display text-[29px] leading-tight text-white mt-2">
