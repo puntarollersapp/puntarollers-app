@@ -416,6 +416,11 @@ export default function Profile() {
   const [stravaConnected, setStravaConnected] = useState(false)
   const [activitySummary, setActivitySummary] = useState(null)
   const [stravaActivities, setStravaActivities] = useState([])
+  const [lifetimeActivityStats, setLifetimeActivityStats] = useState({
+    sessions: 0,
+    kilometers: 0,
+    activeSeconds: 0,
+  })
   const profileTopRef = useRef(null)
   const editSectionRef = useRef(null)
 
@@ -497,6 +502,7 @@ export default function Profile() {
         privateLessonsResponse,
         activitySummaryResponse,
         stravaActivitiesResponse,
+        lifetimeActivitiesResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -557,6 +563,14 @@ export default function Profile() {
           .eq('eliminada', false)
           .order('fecha_inicio', { ascending: false })
           .limit(6),
+
+        supabase
+          .from('pr_activities')
+          .select('distancia_metros, tiempo_movimiento_segundos')
+          .eq('alumno_id', profileId)
+          .eq('fuente', 'strava')
+          .eq('eliminada', false)
+          .limit(1000),
       ])
 
       if (profileResponse.error) {
@@ -674,6 +688,24 @@ export default function Profile() {
         )
       }
 
+      if (!lifetimeActivitiesResponse.error) {
+        const allActivities = lifetimeActivitiesResponse.data || []
+        const totals = allActivities.reduce(
+          (accumulator, item) => ({
+            sessions: accumulator.sessions + 1,
+            kilometers:
+              accumulator.kilometers +
+              (Number(item.distancia_metros) || 0) / 1000,
+            activeSeconds:
+              accumulator.activeSeconds +
+              (Number(item.tiempo_movimiento_segundos) || 0),
+          }),
+          { sessions: 0, kilometers: 0, activeSeconds: 0 }
+        )
+
+        setLifetimeActivityStats(totals)
+      }
+
       setLoading(false)
     }
 
@@ -735,6 +767,28 @@ export default function Profile() {
     PAYMENT_EXEMPT_DOCUMENTS.has(
       normalizeDocument(profile.documento)
     )
+
+  const headerStats = useMemo(() => {
+    const weeklySessions = Number(activitySummary?.actividades_semana) || 0
+    const kilometers = Number(lifetimeActivityStats.kilometers) || 0
+
+    return {
+      sessions: Number(lifetimeActivityStats.sessions) || 0,
+      kilometers,
+      badges: badges.length,
+      weeklySessions,
+    }
+  }, [activitySummary, lifetimeActivityStats, badges.length])
+
+  const profileRingClass = hidePaymentSection
+    ? 'from-sky-400 via-pr-gold to-sky-300'
+    : paymentStatus.badge === 'Vencida'
+      ? 'from-red-500 via-red-300 to-red-600'
+      : paymentStatus.badge === 'Por vencer' || paymentStatus.badge === 'Vence hoy'
+        ? 'from-amber-400 via-pr-gold to-orange-400'
+        : paymentStatus.badge === 'Vigente'
+          ? 'from-emerald-400 via-pr-gold to-emerald-300'
+          : 'from-pr-gold via-white/60 to-pr-gold'
 
   async function connectStrava() {
     try {
@@ -1062,7 +1116,7 @@ export default function Profile() {
           ref={profileTopRef}
           className="pr-panel overflow-hidden scroll-mt-4"
         >
-          <div className="h-[180px] relative bg-gradient-to-br from-[#211a0d] via-[#111119] to-[#08080d] overflow-hidden">
+          <div className="h-[150px] relative bg-gradient-to-br from-[#211a0d] via-[#111119] to-[#08080d] overflow-hidden">
             {profile.banner ? (
               <img
                 src={profile.banner}
@@ -1129,7 +1183,8 @@ export default function Profile() {
           </div>
 
           <div className="px-5 pb-5 relative">
-            <label className="absolute -top-14 left-5 w-28 h-28 rounded-[32px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center shadow-2xl cursor-pointer">
+            <label className={`absolute -top-16 left-5 w-32 h-32 rounded-[36px] p-[3px] bg-gradient-to-br ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)] cursor-pointer`}>
+              <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
               {profile.foto ? (
                 <img
                   src={profile.foto}
@@ -1145,6 +1200,7 @@ export default function Profile() {
                   </p>
                 </div>
               )}
+              </span>
 
               <input
                 type="file"
@@ -1159,7 +1215,7 @@ export default function Profile() {
               />
             </label>
 
-            <div className="pt-16 flex items-start justify-between gap-4">
+            <div className="pt-20 flex items-start justify-between gap-4">
               <div>
                 <h1 className="font-display text-[34px] leading-none text-white">
                   {profile.nombre}
@@ -1171,24 +1227,27 @@ export default function Profile() {
                   )}
                 </h1>
 
-                <p className="text-white/38 text-xs mt-2">
-                  {profile.ciudad || 'Sin ciudad'} ·
-                  Miembro desde {profile.miembroDesde}
-                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {profile.ciudad && (
+                    <span className="rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-white/48 text-[10px] font-semibold">
+                      📍 {profile.ciudad}
+                    </span>
+                  )}
 
-                {profile.instagram && (
-                  <p className="text-pr-gold/75 text-xs mt-1">
-                    {profile.instagram}
-                  </p>
-                )}
+                  {profile.instagram && (
+                    <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-3 py-1.5 text-pr-gold/80 text-[10px] font-semibold">
+                      {profile.instagram}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={toggleProfileEditor}
-                className="px-4 py-2.5 rounded-[14px] bg-pr-gold text-black text-xs font-bold"
+                className="shrink-0 px-4 py-2.5 rounded-[16px] border border-pr-gold/30 bg-pr-gold/10 text-pr-gold text-xs font-bold shadow-[0_10px_28px_rgba(212,175,55,0.08)] active:scale-[0.98] transition-transform"
               >
-                {editing ? 'Cerrar' : 'Editar'}
+                {editing ? '✕ Cerrar' : '✏️ Editar'}
               </button>
             </div>
 
@@ -1231,22 +1290,7 @@ export default function Profile() {
                 'Mi espacio personal dentro de Punta Rollers.'}
             </p>
 
-            <div className="grid grid-cols-3 gap-2.5 mt-5">
-              <MiniStat
-                value={events.length}
-                label="Eventos"
-              />
-
-              <MiniStat
-                value={badges.length}
-                label="Insignias"
-              />
-
-              <MiniStat
-                value={notes.length}
-                label="Notas"
-              />
-            </div>
+            <ProfileActivitySignature stats={headerStats} />
 
             {!hidePaymentSection && (
               <PaymentStatusStrip
@@ -2851,6 +2895,71 @@ function PaymentStatusStrip({
         </div>
       )}
     </section>
+  )
+}
+
+function ProfileActivitySignature({ stats }) {
+  const hasActivity = stats.sessions > 0 || stats.kilometers > 0
+
+  if (!hasActivity && stats.badges === 0) {
+    return (
+      <div className="rounded-[22px] border border-pr-gold/15 bg-gradient-to-r from-pr-gold/[0.08] to-white/[0.025] px-4 py-3.5 mt-5">
+        <p className="text-pr-gold text-sm font-bold">
+          🛼 Primeros pasos en Punta Rollers
+        </p>
+        <p className="text-white/35 text-[10px] mt-1">
+          Tus entrenamientos y logros aparecerán automáticamente acá.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-[24px] border border-white/[0.07] bg-gradient-to-br from-white/[0.045] to-black/20 p-3 mt-5">
+      <div className="grid grid-cols-3 divide-x divide-white/[0.07]">
+        <ProfileSignatureStat
+          icon="🛼"
+          value={stats.sessions}
+          label="Entrenamientos"
+        />
+        <ProfileSignatureStat
+          icon="📏"
+          value={stats.kilometers.toLocaleString('es-UY', {
+            minimumFractionDigits: stats.kilometers > 0 && stats.kilometers < 10 ? 1 : 0,
+            maximumFractionDigits: 1,
+          })}
+          label="Km recorridos"
+        />
+        <ProfileSignatureStat
+          icon="🏅"
+          value={stats.badges}
+          label="Insignias"
+        />
+      </div>
+
+      {stats.weeklySessions > 0 && (
+        <div className="border-t border-white/[0.06] mt-3 pt-3 flex items-center justify-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+          <p className="text-white/45 text-[10px] font-semibold">
+            Activo esta semana · {stats.weeklySessions} sesión{stats.weeklySessions === 1 ? '' : 'es'} registrada{stats.weeklySessions === 1 ? '' : 's'}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProfileSignatureStat({ icon, value, label }) {
+  return (
+    <div className="px-2 py-2 text-center min-w-0">
+      <p className="text-sm">{icon}</p>
+      <p className="font-display text-[24px] leading-none text-white mt-2 truncate">
+        {value}
+      </p>
+      <p className="text-white/28 text-[8px] uppercase tracking-[0.10em] mt-1.5 truncate">
+        {label}
+      </p>
+    </div>
   )
 }
 
