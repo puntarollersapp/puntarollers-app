@@ -358,31 +358,15 @@ function normalizeLegacyItem(item, profilesByAnyId) {
 
 function buildBirthdayPosts(profiles) {
   const today = new Date()
+  const currentMonth = today.getMonth() + 1
+  const currentDay = today.getDate()
 
   return (profiles || [])
-    .filter((profile) => {
-      if (!profile.fecha_nacimiento) return false
-
-      if (
-        profile.mostrar_cumpleanos === false ||
-        profile.cumpleanos_visible === false
-      ) {
-        return false
-      }
-
-      const birthDate = new Date(
-        `${String(profile.fecha_nacimiento).slice(
-          0,
-          10
-        )}T12:00:00`
-      )
-
-      return (
-        !Number.isNaN(birthDate.getTime()) &&
-        birthDate.getMonth() === today.getMonth() &&
-        birthDate.getDate() === today.getDate()
-      )
-    })
+    .filter(
+      (profile) =>
+        Number(profile.cumple_mes) === currentMonth &&
+        Number(profile.cumple_dia) === currentDay
+    )
     .map((profile) => {
       const name =
         getProfileName(profile) || 'un integrante PR'
@@ -516,7 +500,7 @@ export default function Activity() {
       activitiesResponse,
       legacyResponse,
     ] = await Promise.all([
-      supabase.from('profiles').select('*').limit(500),
+      supabase.from('profiles_feed').select('*').limit(500),
 
       supabase
         .from('pr_activities')
@@ -1243,4 +1227,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-}
+    }
