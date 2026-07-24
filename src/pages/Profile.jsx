@@ -128,6 +128,91 @@ function normalizeDocument(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+function getStravaActivityKey(item) {
+  const externalId =
+    item?.strava_activity_id ||
+    item?.strava_id ||
+    item?.external_id ||
+    item?.actividad_strava_id ||
+    item?.source_id
+
+  if (externalId) {
+    return `strava-${externalId}`
+  }
+
+  const date = String(
+    item?.fecha_inicio ||
+      item?.fecha ||
+      item?.created_at ||
+      ''
+  ).slice(0, 19)
+
+  const distance = Math.round(
+    Number(item?.distancia_metros) || 0
+  )
+
+  const duration = Math.round(
+    Number(item?.tiempo_movimiento_segundos) || 0
+  )
+
+  const name = String(
+    item?.nombre ||
+      item?.nombre_actividad ||
+      ''
+  )
+    .trim()
+    .toLowerCase()
+
+  return `${date}-${distance}-${duration}-${name}`
+}
+
+function getUniqueStravaActivities(items = []) {
+  const unique = new Map()
+
+  items.forEach((item) => {
+    if (!item || item.eliminada === true) return
+
+    const key = getStravaActivityKey(item)
+
+    if (!unique.has(key)) {
+      unique.set(key, item)
+    }
+  })
+
+  return [...unique.values()]
+}
+
+function calculatePerformanceKilometers(items = []) {
+  const takes = new Map()
+
+  items.forEach((item, index) => {
+    if (!item || item.eliminado === true) return
+
+    const distance = normalizePerformanceDistance(
+      item.distancia_km
+    )
+
+    if (!distance) return
+
+    const takeNumber = Number(item.numero_toma)
+    const key = Number.isFinite(takeNumber) && takeNumber > 0
+      ? `take-${takeNumber}`
+      : `fallback-${item.id || item.fecha || index}`
+
+    const currentDistance = takes.get(key) || 0
+
+    takes.set(
+      key,
+      Math.max(currentDistance, distance)
+    )
+  })
+
+  return [...takes.values()].reduce(
+    (total, distance) => total + distance,
+    0
+  )
+}
+
 function groupPerformanceTakes(items) {
   const groups = new Map()
 
@@ -566,10 +651,11 @@ export default function Profile() {
 
         supabase
           .from('pr_activities')
-          .select('distancia_metros, tiempo_movimiento_segundos')
+          .select('*')
           .eq('alumno_id', profileId)
           .eq('fuente', 'strava')
           .eq('eliminada', false)
+          .order('fecha_inicio', { ascending: false })
           .limit(1000),
       ])
 
@@ -689,8 +775,13 @@ export default function Profile() {
       }
 
       if (!lifetimeActivitiesResponse.error) {
-        const allActivities = lifetimeActivitiesResponse.data || []
-        const totals = allActivities.reduce(
+        const importedActivities =
+          lifetimeActivitiesResponse.data || []
+
+        const uniqueStravaActivities =
+          getUniqueStravaActivities(importedActivities)
+
+        const stravaTotals = uniqueStravaActivities.reduce(
           (accumulator, item) => ({
             sessions: accumulator.sessions + 1,
             kilometers:
@@ -703,7 +794,20 @@ export default function Profile() {
           { sessions: 0, kilometers: 0, activeSeconds: 0 }
         )
 
-        setLifetimeActivityStats(totals)
+        const performanceKilometers =
+          performanceTakesResponse.error
+            ? 0
+            : calculatePerformanceKilometers(
+                performanceTakesResponse.data || []
+              )
+
+        setLifetimeActivityStats({
+          sessions: stravaTotals.sessions,
+          kilometers:
+            stravaTotals.kilometers +
+            performanceKilometers,
+          activeSeconds: stravaTotals.activeSeconds,
+        })
       }
 
       setLoading(false)
