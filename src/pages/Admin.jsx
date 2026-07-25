@@ -4080,3 +4080,4 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
         </section>
       )}
     </div
+Vista previa truncada para archivo grande
