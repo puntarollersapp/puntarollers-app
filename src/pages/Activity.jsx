@@ -407,6 +407,117 @@ function normalizeLegacyItem(item, profilesByAnyId) {
   }
 }
 
+
+const ROLLER_EVENT_COLORS = {
+  street: {
+    card: 'from-[#2a0d0d] via-[#101014] to-[#27120b]',
+    border: 'border-red-400/25',
+    accent: 'text-red-200',
+    glow: 'bg-red-500/15',
+  },
+  violet: {
+    card: 'from-[#25103b] via-[#17101f] to-[#09090d]',
+    border: 'border-fuchsia-300/25',
+    accent: 'text-fuchsia-200',
+    glow: 'bg-fuchsia-500/15',
+  },
+  electric: {
+    card: 'from-[#0b2141] via-[#0d1724] to-[#08090d]',
+    border: 'border-cyan-300/25',
+    accent: 'text-cyan-200',
+    glow: 'bg-cyan-500/15',
+  },
+  gold: {
+    card: 'from-[#2b2008] via-[#15130d] to-[#08080b]',
+    border: 'border-amber-300/25',
+    accent: 'text-amber-200',
+    glow: 'bg-amber-500/15',
+  },
+  green: {
+    card: 'from-[#0b2c22] via-[#0d1814] to-[#08090b]',
+    border: 'border-emerald-300/25',
+    accent: 'text-emerald-200',
+    glow: 'bg-emerald-500/15',
+  },
+}
+
+function getRollerEventStatus(event) {
+  if (event.estado === 'Cancelado') return 'Cancelado'
+  if (!event.inicio) return 'Próximamente'
+
+  const start = new Date(event.inicio).getTime()
+  const end = event.fin ? new Date(event.fin).getTime() : start
+  const now = Date.now()
+
+  if (Number.isNaN(start)) return 'Próximamente'
+  if (now < start) return 'Publicado'
+  if (now <= end + 5 * 60000) return 'En curso'
+  return 'Finalizado'
+}
+
+function isVisibleRollerEvent(event) {
+  if (!event || event.visible_feed === false || event.estado === 'Cancelado') {
+    return false
+  }
+
+  if (!event.inicio) return true
+
+  const end = event.fin
+    ? new Date(event.fin).getTime()
+    : new Date(event.inicio).getTime()
+
+  if (Number.isNaN(end)) return true
+  return Date.now() <= end + 5 * 60000
+}
+
+function formatRollerEventRange(event) {
+  if (event.mes_referencia) return event.mes_referencia
+  if (!event.inicio) return 'Fecha a confirmar'
+
+  const start = new Date(event.inicio)
+  const end = event.fin ? new Date(event.fin) : null
+
+  const startText = start.toLocaleString('es-UY', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  if (!end || Number.isNaN(end.getTime())) return startText
+
+  const sameDay = start.toDateString() === end.toDateString()
+  const endText = end.toLocaleString('es-UY', {
+    weekday: sameDay ? undefined : 'long',
+    day: sameDay ? undefined : 'numeric',
+    month: sameDay ? undefined : 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  return `${startText} · hasta ${endText}`
+}
+
+function normalizeRollerEvent(event) {
+  return {
+    id: `roller-event-${event.id}`,
+    rawId: event.id,
+    type: 'Evento',
+    date: event.inicio || event.created_at || new Date().toISOString(),
+    title: event.titulo || 'Evento Punta Rollers',
+    description: event.descripcion || '',
+    eventLocation: event.lugar || '',
+    eventUrl: event.link || '',
+    eventColor: event.color || 'street',
+    eventStatus: getRollerEventStatus(event),
+    eventRange: formatRollerEventRange(event),
+    creatorName: event.creado_por_nombre || 'Equipo Punta Rollers',
+    featured: true,
+  }
+}
+
+
 function getBirthdayParts(profile = {}) {
   const directMonth = Number(profile.cumple_mes)
   const directDay = Number(profile.cumple_dia)
@@ -544,6 +655,7 @@ export default function Activity() {
 
   const [activities, setActivities] = useState([])
   const [legacyItems, setLegacyItems] = useState([])
+  const [events, setEvents] = useState([])
   const [profiles, setProfiles] = useState([])
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
@@ -627,6 +739,7 @@ export default function Activity() {
       profilesResponse,
       activitiesResponse,
       legacyResponse,
+      eventsResponse,
     ] = await Promise.all([
       supabase.from('profiles_feed').select('*').limit(500),
 
@@ -644,6 +757,13 @@ export default function Activity() {
         .order('fecha', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100),
+
+      supabase
+        .from('rollerfeed_events')
+        .select('*')
+        .neq('estado', 'Cancelado')
+        .eq('visible_feed', true)
+        .order('inicio', { ascending: true, nullsFirst: false }),
     ])
 
     if (profilesResponse.error) {
@@ -679,6 +799,16 @@ export default function Activity() {
             isVisibleEvent(item)
         )
       )
+    }
+
+    if (eventsResponse.error) {
+      setEvents([])
+      setMessage((current) =>
+        current ||
+        `No pudimos cargar los eventos: ${eventsResponse.error.message}`
+      )
+    } else {
+      setEvents((eventsResponse.data || []).filter(isVisibleRollerEvent))
     }
 
     setProfiles(profilesResponse.data || [])
@@ -752,9 +882,11 @@ export default function Activity() {
     )
 
     const birthdays = buildBirthdayPosts(profiles)
+    const eventPosts = events.map(normalizeRollerEvent)
 
     return [
       ...birthdays,
+      ...eventPosts,
       ...trainingPosts,
       ...communityPosts,
     ].sort(
@@ -765,6 +897,7 @@ export default function Activity() {
   }, [
     activities,
     legacyItems,
+    events,
     profiles,
     profilesByAnyId,
   ])
@@ -1102,6 +1235,10 @@ function FeedCard({ item }) {
     return <TrainingCard item={item} />
   }
 
+  if (item.type === 'Evento' && item.eventColor) {
+    return <EventCard item={item} />
+  }
+
   return <CommunityCard item={item} />
 }
 
@@ -1265,6 +1402,71 @@ function BirthdayCard({ item }) {
     </article>
   )
 }
+
+
+function EventCard({ item }) {
+  const color =
+    ROLLER_EVENT_COLORS[item.eventColor] || ROLLER_EVENT_COLORS.street
+
+  return (
+    <article
+      className={`relative overflow-hidden rounded-[32px] border ${color.border} bg-gradient-to-br ${color.card} p-5 shadow-[0_24px_70px_rgba(0,0,0,0.28)]`}
+    >
+      <div className={`absolute -right-14 -top-16 w-48 h-48 rounded-full ${color.glow} blur-3xl`} />
+      <div className="absolute left-0 top-0 h-full w-[3px] bg-white/20" />
+
+      <div className="relative">
+        <div className="flex items-center justify-between gap-3">
+          <p className={`text-[9px] font-bold uppercase tracking-[0.18em] ${color.accent}`}>
+            Evento Punta Rollers
+          </p>
+
+          <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/70 text-[9px] font-bold">
+            {item.eventStatus}
+          </span>
+        </div>
+
+        <h3 className="font-display text-[30px] leading-[0.98] text-white mt-4">
+          {item.title}
+        </h3>
+
+        <p className="text-white/58 text-xs leading-relaxed mt-4">
+          🗓️ {item.eventRange}
+        </p>
+
+        {item.eventLocation && (
+          <p className="text-white/58 text-xs mt-2">
+            📍 {item.eventLocation}
+          </p>
+        )}
+
+        {item.description && (
+          <p className="text-white/48 text-sm leading-relaxed mt-4">
+            {item.description}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.09]">
+          <p className="text-white/28 text-[9px]">
+            Publicado por {item.creatorName}
+          </p>
+
+          {item.eventUrl && (
+            <a
+              href={item.eventUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={`text-[10px] font-bold ${color.accent}`}
+            >
+              Más información →
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
 
 function CommunityCard({ item }) {
   const isBadge = item.type === 'Insignia'
