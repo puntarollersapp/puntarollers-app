@@ -592,7 +592,11 @@ function normalizeRollerEvent(event) {
     id: `roller-event-${event.id}`,
     rawId: event.id,
     type: 'Evento',
-    date: event.inicio || event.created_at || new Date().toISOString(),
+    date:
+      event.inicio ||
+      event.created_at ||
+      new Date().toISOString(),
+    eventStart: event.inicio || null,
     title: event.titulo || 'Evento Punta Rollers',
     description: event.descripcion || '',
     eventLocation: event.lugar || '',
@@ -1008,7 +1012,9 @@ export default function Activity() {
   const visibleItems = useMemo(() => {
     if (filter === 'Todos') {
       return feedItems.filter(
-        (item) => item.type !== 'Insignia'
+        (item) =>
+          item.type !== 'Insignia' &&
+          item.type !== 'Evento'
       )
     }
 
@@ -1018,17 +1024,21 @@ export default function Activity() {
 
     if (filter === 'Evento') {
       return [...filteredItems].sort((a, b) => {
-        const aTime = new Date(a.date || '').getTime()
-        const bTime = new Date(b.date || '').getTime()
-        const aValid = Number.isFinite(aTime)
-        const bValid = Number.isFinite(bTime)
+        const aHasConfirmedDate = Boolean(a.eventStart)
+        const bHasConfirmedDate = Boolean(b.eventStart)
 
-        if (aValid && bValid) return aTime - bTime
-        if (aValid) return -1
-        if (bValid) return 1
+        if (aHasConfirmedDate && bHasConfirmedDate) {
+          return (
+            new Date(a.eventStart).getTime() -
+            new Date(b.eventStart).getTime()
+          )
+        }
 
-        return String(a.eventRange || '').localeCompare(
-          String(b.eventRange || ''),
+        if (aHasConfirmedDate) return -1
+        if (bHasConfirmedDate) return 1
+
+        return String(a.title || '').localeCompare(
+          String(b.title || ''),
           'es-UY'
         )
       })
@@ -1529,7 +1539,9 @@ function BirthdayCard({ item }) {
 
 
 function getEventDateVisual(item) {
-  const rawDate = item?.date ? new Date(item.date) : null
+  const rawDate = item?.eventStart
+    ? new Date(item.eventStart)
+    : null
   const hasValidDate =
     rawDate && Number.isFinite(rawDate.getTime())
 
@@ -1577,8 +1589,10 @@ function getEventDateVisual(item) {
   return {
     eyebrow: 'PRÓXIMO',
     day: monthMatch ? monthMatch[2] : '—',
-    month: monthMatch ? monthMatch[1].toUpperCase() : 'FECHA',
-    year: '',
+    month: monthMatch
+      ? monthMatch[1].toUpperCase()
+      : 'FECHA',
+    year: monthMatch ? 'FECHAS A CONFIRMAR' : '',
     confirmed: false,
   }
 }
@@ -1646,8 +1660,8 @@ function EventCard({ item }) {
             {dateVisual.month}
           </p>
 
-          {dateVisual.year && dateVisual.day !== dateVisual.year && (
-            <p className="text-white/28 text-[9px] mt-1">
+          {dateVisual.year && (
+            <p className="text-white/28 text-[9px] mt-1 leading-relaxed">
               {dateVisual.year}
             </p>
           )}
@@ -1846,4 +1860,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-                                         }
+                }
