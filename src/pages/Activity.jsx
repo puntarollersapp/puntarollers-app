@@ -408,6 +408,53 @@ function normalizeLegacyItem(item, profilesByAnyId) {
 }
 
 
+
+const DEFAULT_ROLLER_EVENTS = [
+  {
+    titulo: 'Morning on Street by PR',
+    descripcion:
+      'Rodada exclusiva de 19 km hacia La Barra, ida y vuelta. Nos concentramos a las 10:00 en la Parada 2 y, al finalizar, nos vamos a almorzar todos juntos.',
+    inicio: '2026-07-26T13:00:00.000Z',
+    fin: '2026-07-26T15:00:00.000Z',
+    mes_referencia: '',
+    lugar: 'Parada 2, La Brava',
+    link: '',
+    color: 'street',
+    estado: 'Publicado',
+    visible_feed: true,
+    creado_por_nombre: 'Equipo Punta Rollers',
+  },
+  {
+    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
+    descripcion:
+      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeón mundial máster y especialista con más de 40 años de experiencia. Horarios y ubicación a confirmar.',
+    inicio: '2026-09-04T03:00:00.000Z',
+    fin: '2026-09-07T02:59:00.000Z',
+    mes_referencia:
+      'Viernes 4, sábado 5 y domingo 6 de septiembre · horario a confirmar',
+    lugar: 'Ubicación a confirmar',
+    link: '',
+    color: 'violet',
+    estado: 'Publicado',
+    visible_feed: true,
+    creado_por_nombre: 'Equipo Punta Rollers',
+  },
+  {
+    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
+    descripcion:
+      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clínica intensiva de patinaje. Próximamente anunciaremos las fechas, los horarios y la ubicación.',
+    inicio: null,
+    fin: null,
+    mes_referencia: 'Octubre 2026 · fechas a confirmar',
+    lugar: 'Ubicación a confirmar',
+    link: '',
+    color: 'electric',
+    estado: 'Próximamente',
+    visible_feed: true,
+    creado_por_nombre: 'Equipo Punta Rollers',
+  },
+]
+
 const ROLLER_EVENT_COLORS = {
   street: {
     card: 'from-[#2a0d0d] via-[#101014] to-[#27120b]',
@@ -760,10 +807,7 @@ export default function Activity() {
 
       supabase
         .from('rollerfeed_events')
-        .select('*')
-        .neq('estado', 'Cancelado')
-        .eq('visible_feed', true)
-        .order('inicio', { ascending: true, nullsFirst: false }),
+        .select('*'),
     ])
 
     if (profilesResponse.error) {
@@ -808,7 +852,38 @@ export default function Activity() {
         `No pudimos cargar los eventos: ${eventsResponse.error.message}`
       )
     } else {
-      setEvents((eventsResponse.data || []).filter(isVisibleRollerEvent))
+      let loadedEvents = eventsResponse.data || []
+
+      if (loadedEvents.length === 0) {
+        const seeded = await supabase
+          .from('rollerfeed_events')
+          .insert(
+            DEFAULT_ROLLER_EVENTS.map((event) => ({
+              ...event,
+              updated_at: new Date().toISOString(),
+            }))
+          )
+          .select('*')
+
+        if (seeded.error) {
+          setMessage((current) =>
+            current ||
+            `No pudimos restaurar los eventos: ${seeded.error.message}`
+          )
+        } else {
+          loadedEvents = seeded.data || []
+        }
+      }
+
+      setEvents(
+        loadedEvents
+          .filter(
+            (event) =>
+              event.estado !== 'Cancelado' &&
+              event.visible_feed !== false
+          )
+          .filter(isVisibleRollerEvent)
+      )
     }
 
     setProfiles(profilesResponse.data || [])
@@ -1604,4 +1679,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-    }
+                                         }
