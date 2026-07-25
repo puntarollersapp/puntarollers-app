@@ -1012,9 +1012,29 @@ export default function Activity() {
       )
     }
 
-    return feedItems.filter(
+    const filteredItems = feedItems.filter(
       (item) => item.type === filter
     )
+
+    if (filter === 'Evento') {
+      return [...filteredItems].sort((a, b) => {
+        const aTime = new Date(a.date || '').getTime()
+        const bTime = new Date(b.date || '').getTime()
+        const aValid = Number.isFinite(aTime)
+        const bValid = Number.isFinite(bTime)
+
+        if (aValid && bValid) return aTime - bTime
+        if (aValid) return -1
+        if (bValid) return 1
+
+        return String(a.eventRange || '').localeCompare(
+          String(b.eventRange || ''),
+          'es-UY'
+        )
+      })
+    }
+
+    return filteredItems
   }, [feedItems, filter])
 
   const communityStats = useMemo(() => {
@@ -1507,63 +1527,182 @@ function BirthdayCard({ item }) {
 }
 
 
+
+function getEventDateVisual(item) {
+  const rawDate = item?.date ? new Date(item.date) : null
+  const hasValidDate =
+    rawDate && Number.isFinite(rawDate.getTime())
+
+  if (hasValidDate) {
+    const today = new Date()
+    const todayStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    )
+    const eventStart = new Date(
+      rawDate.getFullYear(),
+      rawDate.getMonth(),
+      rawDate.getDate()
+    )
+    const daysUntil = Math.round(
+      (eventStart.getTime() - todayStart.getTime()) /
+        86400000
+    )
+
+    return {
+      eyebrow:
+        daysUntil === 0
+          ? 'HOY'
+          : daysUntil === 1
+            ? 'MAÑANA'
+            : rawDate
+                .toLocaleDateString('es-UY', { weekday: 'short' })
+                .replace('.', '')
+                .toUpperCase(),
+      day: rawDate.getDate(),
+      month: rawDate
+        .toLocaleDateString('es-UY', { month: 'long' })
+        .toUpperCase(),
+      year: rawDate.getFullYear(),
+      confirmed: true,
+    }
+  }
+
+  const range = String(item?.eventRange || '')
+  const monthMatch = range.match(
+    /(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(\d{4})/i
+  )
+
+  return {
+    eyebrow: 'PRÓXIMO',
+    day: monthMatch ? monthMatch[2] : '—',
+    month: monthMatch ? monthMatch[1].toUpperCase() : 'FECHA',
+    year: '',
+    confirmed: false,
+  }
+}
+
+function getEventTimeLabel(item) {
+  const range = String(item?.eventRange || '')
+  const timeMatches = range.match(/\d{1,2}:\d{2}/g)
+
+  if (timeMatches?.length >= 2) {
+    return `${timeMatches[0]} — ${timeMatches[1]}`
+  }
+
+  if (timeMatches?.length === 1) {
+    return timeMatches[0]
+  }
+
+  if (/3 días|4,\s*5\s*y\s*6/i.test(range)) {
+    return '3 DÍAS · 2 H POR JORNADA'
+  }
+
+  return item?.eventStatus === 'Próximamente'
+    ? 'HORARIO A CONFIRMAR'
+    : 'INFORMACIÓN DEL EVENTO'
+}
+
 function EventCard({ item }) {
   const color =
     ROLLER_EVENT_COLORS[item.eventColor] || ROLLER_EVENT_COLORS.street
+  const dateVisual = getEventDateVisual(item)
+  const timeLabel = getEventTimeLabel(item)
 
   return (
     <article
-      className={`relative overflow-hidden rounded-[32px] border ${color.border} bg-gradient-to-br ${color.card} p-5 shadow-[0_24px_70px_rgba(0,0,0,0.28)]`}
+      className={`group relative overflow-hidden rounded-[34px] border ${color.border} bg-gradient-to-br ${color.card} shadow-[0_26px_80px_rgba(0,0,0,0.38)]`}
     >
-      <div className={`absolute -right-14 -top-16 w-48 h-48 rounded-full ${color.glow} blur-3xl`} />
-      <div className="absolute left-0 top-0 h-full w-[3px] bg-white/20" />
+      <div className={`absolute -right-20 -top-24 h-64 w-64 rounded-full ${color.glow} blur-3xl`} />
+      <div className={`absolute -left-20 bottom-[-110px] h-56 w-56 rounded-full ${color.glow} blur-3xl opacity-60`} />
 
-      <div className="relative">
-        <div className="flex items-center justify-between gap-3">
-          <p className={`text-[9px] font-bold uppercase tracking-[0.18em] ${color.accent}`}>
-            Evento Punta Rollers
+      <div className="absolute inset-0 opacity-[0.16]">
+        <div className="absolute right-[-42px] top-[-28px] h-44 w-44 rounded-full border-[22px] border-white/20" />
+        <div className="absolute right-[18px] top-[34px] h-20 w-20 rounded-full border-[10px] border-white/15" />
+        <div className="absolute right-[-30px] bottom-[36px] h-px w-[72%] rotate-[-16deg] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+        <div className="absolute right-[-12px] bottom-[66px] h-px w-[60%] rotate-[-16deg] bg-gradient-to-r from-transparent via-white/45 to-transparent" />
+        <div className="absolute right-[8px] bottom-[96px] h-px w-[48%] rotate-[-16deg] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+      </div>
+
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+      <div className="absolute left-0 top-0 h-full w-[4px] bg-gradient-to-b from-white/55 via-white/15 to-transparent" />
+
+      <div className="relative grid grid-cols-[88px_minmax(0,1fr)]">
+        <aside className="border-r border-white/[0.09] bg-black/20 px-3 py-5 text-center">
+          <div className={`mx-auto mb-3 grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-black/25 ${color.accent}`}>
+            ◫
+          </div>
+
+          <p className={`text-[9px] font-black tracking-[0.14em] ${color.accent}`}>
+            {dateVisual.eyebrow}
           </p>
 
-          <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/70 text-[9px] font-bold">
-            {item.eventStatus}
-          </span>
-        </div>
-
-        <h3 className="font-display text-[30px] leading-[0.98] text-white mt-4">
-          {item.title}
-        </h3>
-
-        <p className="text-white/58 text-xs leading-relaxed mt-4">
-          🗓️ {item.eventRange}
-        </p>
-
-        {item.eventLocation && (
-          <p className="text-white/58 text-xs mt-2">
-            📍 {item.eventLocation}
-          </p>
-        )}
-
-        {item.description && (
-          <p className="text-white/48 text-sm leading-relaxed mt-4">
-            {item.description}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.09]">
-          <p className="text-white/28 text-[9px]">
-            Publicado por {item.creatorName}
+          <p className="font-display text-[34px] leading-none text-white mt-2">
+            {dateVisual.day}
           </p>
 
-          {item.eventUrl && (
-            <a
-              href={item.eventUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={`text-[10px] font-bold ${color.accent}`}
-            >
-              Más información →
-            </a>
+          <p className={`text-[10px] font-black tracking-[0.08em] mt-2 ${color.accent}`}>
+            {dateVisual.month}
+          </p>
+
+          {dateVisual.year && dateVisual.day !== dateVisual.year && (
+            <p className="text-white/28 text-[9px] mt-1">
+              {dateVisual.year}
+            </p>
           )}
+
+          <div className="my-4 h-px bg-white/[0.09]" />
+
+          <p className="text-white/50 text-[10px] leading-relaxed">
+            📍 {item.eventLocation || 'Ubicación a confirmar'}
+          </p>
+        </aside>
+
+        <div className="min-w-0 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <p className={`text-[9px] font-black uppercase tracking-[0.18em] ${color.accent}`}>
+              Evento Punta Rollers
+            </p>
+
+            <span className="shrink-0 rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-white/75 text-[9px] font-black uppercase tracking-wide backdrop-blur">
+              {item.eventStatus}
+            </span>
+          </div>
+
+          <h3 className="font-display text-[29px] leading-[0.98] text-white mt-4 max-w-[95%]">
+            {item.title}
+          </h3>
+
+          <div className={`inline-flex max-w-full items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 mt-4 ${color.accent}`}>
+            <span className="text-xs">◷</span>
+            <span className="truncate text-[10px] font-black uppercase tracking-[0.08em]">
+              {timeLabel}
+            </span>
+          </div>
+
+          {item.description && (
+            <p className="text-white/58 text-[13px] leading-[1.65] mt-4 pr-1">
+              {item.description}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.09]">
+            <p className="text-white/28 text-[9px]">
+              Publicado por {item.creatorName}
+            </p>
+
+            {item.eventUrl && (
+              <a
+                href={item.eventUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`text-[10px] font-black ${color.accent}`}
+              >
+                Más información →
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </article>
