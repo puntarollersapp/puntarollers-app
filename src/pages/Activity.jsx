@@ -455,6 +455,47 @@ const DEFAULT_ROLLER_EVENTS = [
   },
 ]
 
+
+function normalizeEventTitle(value) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('es-UY')
+}
+
+function getDefaultRollerEvents() {
+  return DEFAULT_ROLLER_EVENTS.map((event, index) => ({
+    id: `default-event-${index + 1}`,
+    created_at: event.inicio || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    _isFallback: true,
+    ...event,
+  }))
+}
+
+function mergeRollerEvents(databaseEvents = []) {
+  const byTitle = new Map(
+    (databaseEvents || []).map((event) => [
+      normalizeEventTitle(event.titulo),
+      event,
+    ])
+  )
+
+  const merged = getDefaultRollerEvents().map((fallback) => {
+    const databaseVersion = byTitle.get(
+      normalizeEventTitle(fallback.titulo)
+    )
+
+    if (databaseVersion) {
+      byTitle.delete(normalizeEventTitle(fallback.titulo))
+      return databaseVersion
+    }
+
+    return fallback
+  })
+
+  return [...merged, ...byTitle.values()]
+}
+
 const ROLLER_EVENT_COLORS = {
   street: {
     card: 'from-[#2a0d0d] via-[#101014] to-[#27120b]',
@@ -702,7 +743,7 @@ export default function Activity() {
 
   const [activities, setActivities] = useState([])
   const [legacyItems, setLegacyItems] = useState([])
-  const [events, setEvents] = useState([])
+  const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
@@ -846,34 +887,21 @@ export default function Activity() {
     }
 
     if (eventsResponse.error) {
-      setEvents([])
+      setEvents(
+        getDefaultRollerEvents()
+          .filter(
+            (event) =>
+              event.estado !== 'Cancelado' &&
+              event.visible_feed !== false
+          )
+          .filter(isVisibleRollerEvent)
+      )
       setMessage((current) =>
         current ||
-        `No pudimos cargar los eventos: ${eventsResponse.error.message}`
+        `Los eventos oficiales se cargaron desde el respaldo de la app. Supabase respondió: ${eventsResponse.error.message}`
       )
     } else {
-      let loadedEvents = eventsResponse.data || []
-
-      if (loadedEvents.length === 0) {
-        const seeded = await supabase
-          .from('rollerfeed_events')
-          .insert(
-            DEFAULT_ROLLER_EVENTS.map((event) => ({
-              ...event,
-              updated_at: new Date().toISOString(),
-            }))
-          )
-          .select('*')
-
-        if (seeded.error) {
-          setMessage((current) =>
-            current ||
-            `No pudimos restaurar los eventos: ${seeded.error.message}`
-          )
-        } else {
-          loadedEvents = seeded.data || []
-        }
-      }
+      const loadedEvents = mergeRollerEvents(eventsResponse.data || [])
 
       setEvents(
         loadedEvents
