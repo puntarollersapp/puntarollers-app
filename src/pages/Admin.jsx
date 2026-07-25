@@ -322,6 +322,12 @@ export default function Admin() {
       label: 'Acciones',
       show: canManageContent,
     },
+    {
+      id: 'eventos',
+      icon: '📅',
+      label: 'Eventos',
+      show: canManageContent,
+    },
     { id: 'cupos', icon: '🟢', label: 'Cupos', show: canFullAdmin },
     { id: 'config', icon: '⚙️', label: 'Config', show: canFullAdmin },
   ].filter((item) => item.show)
@@ -439,6 +445,10 @@ export default function Admin() {
             actionType={actionType}
             setActionType={setActionType}
           />
+        )}
+
+        {!loading && section === 'eventos' && canManageContent && (
+          <EventsPanel creator={user} setMsg={setMsg} />
         )}
 
         {!loading && section === 'pagos' && canFullAdmin && (
@@ -4676,6 +4686,494 @@ function BadgePicker({
   )
 }
 
+
+const EVENT_COLOR_OPTIONS = [
+  {
+    id: 'street',
+    label: 'Street · negro y rojo',
+    preview: 'from-red-600/35 via-zinc-950 to-orange-500/20',
+    card: 'from-[#2a0d0d] via-[#101014] to-[#27120b]',
+    border: 'border-red-400/25',
+    accent: 'text-red-200',
+  },
+  {
+    id: 'violet',
+    label: 'Clínica · violeta y fucsia',
+    preview: 'from-violet-600/35 via-fuchsia-500/20 to-zinc-950',
+    card: 'from-[#25103b] via-[#17101f] to-[#09090d]',
+    border: 'border-fuchsia-300/25',
+    accent: 'text-fuchsia-200',
+  },
+  {
+    id: 'electric',
+    label: 'Eléctrico · azul y celeste',
+    preview: 'from-blue-600/35 via-cyan-500/20 to-zinc-950',
+    card: 'from-[#0b2141] via-[#0d1724] to-[#08090d]',
+    border: 'border-cyan-300/25',
+    accent: 'text-cyan-200',
+  },
+  {
+    id: 'gold',
+    label: 'Premium · dorado y negro',
+    preview: 'from-amber-500/35 via-yellow-300/10 to-zinc-950',
+    card: 'from-[#2b2008] via-[#15130d] to-[#08080b]',
+    border: 'border-amber-300/25',
+    accent: 'text-amber-200',
+  },
+  {
+    id: 'green',
+    label: 'Energía · verde y esmeralda',
+    preview: 'from-emerald-600/35 via-lime-400/15 to-zinc-950',
+    card: 'from-[#0b2c22] via-[#0d1814] to-[#08090b]',
+    border: 'border-emerald-300/25',
+    accent: 'text-emerald-200',
+  },
+]
+
+function emptyEventForm() {
+  return {
+    id: '',
+    titulo: '',
+    descripcion: '',
+    inicio: '',
+    fin: '',
+    lugar: '',
+    link: '',
+    color: 'street',
+    estado: 'Publicado',
+    mesReferencia: '',
+  }
+}
+
+function eventLocalInputValue(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const offset = date.getTimezoneOffset()
+  return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16)
+}
+
+function eventStatus(event) {
+  if (event.estado === 'Cancelado') return 'Cancelado'
+  if (!event.inicio) return 'Próximamente'
+
+  const now = Date.now()
+  const start = new Date(event.inicio).getTime()
+  const end = event.fin ? new Date(event.fin).getTime() : start
+
+  if (Number.isNaN(start)) return 'Próximamente'
+  if (now < start) return 'Publicado'
+  if (now <= end + 5 * 60000) return 'En curso'
+  return 'Finalizado'
+}
+
+function formatEventRange(event) {
+  if (event.mes_referencia) return event.mes_referencia
+  if (!event.inicio) return 'Fecha a confirmar'
+
+  const start = new Date(event.inicio)
+  const end = event.fin ? new Date(event.fin) : null
+
+  const startText = start.toLocaleString('es-UY', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  if (!end || Number.isNaN(end.getTime())) return startText
+
+  const sameDay = start.toDateString() === end.toDateString()
+  const endText = end.toLocaleString('es-UY', {
+    weekday: sameDay ? undefined : 'long',
+    day: sameDay ? undefined : 'numeric',
+    month: sameDay ? undefined : 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  return `${startText} · hasta ${endText}`
+}
+
+function EventsPanel({ creator, setMsg }) {
+  const [events, setEvents] = useState([])
+  const [form, setForm] = useState(emptyEventForm())
+  const [loadingEvents, setLoadingEvents] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [openForm, setOpenForm] = useState(false)
+
+  const selectedColor =
+    EVENT_COLOR_OPTIONS.find((option) => option.id === form.color) ||
+    EVENT_COLOR_OPTIONS[0]
+
+  async function loadEvents() {
+    setLoadingEvents(true)
+
+    const { data, error } = await supabase
+      .from('rollerfeed_events')
+      .select('*')
+      .order('inicio', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setMsg(`No se pudieron cargar los eventos: ${error.message}`)
+      setEvents([])
+    } else {
+      setEvents(data || [])
+    }
+
+    setLoadingEvents(false)
+  }
+
+  useEffect(() => {
+    loadEvents()
+  }, [])
+
+  function editEvent(event) {
+    setForm({
+      id: event.id,
+      titulo: event.titulo || '',
+      descripcion: event.descripcion || '',
+      inicio: eventLocalInputValue(event.inicio),
+      fin: eventLocalInputValue(event.fin),
+      lugar: event.lugar || '',
+      link: event.link || '',
+      color: event.color || 'street',
+      estado: event.estado || 'Publicado',
+      mesReferencia: event.mes_referencia || '',
+    })
+    setOpenForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function resetForm() {
+    setForm(emptyEventForm())
+    setOpenForm(false)
+  }
+
+  async function saveEvent() {
+    try {
+      setSaving(true)
+
+      if (!form.titulo.trim()) {
+        throw new Error('Falta el nombre del evento.')
+      }
+
+      if (form.inicio && form.fin) {
+        const start = new Date(form.inicio).getTime()
+        const end = new Date(form.fin).getTime()
+        if (end <= start) {
+          throw new Error('La finalización debe ser posterior al inicio.')
+        }
+      }
+
+      const creatorName =
+        `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
+        'Equipo Punta Rollers'
+
+      const payload = {
+        titulo: form.titulo.trim(),
+        descripcion: form.descripcion.trim(),
+        inicio: form.inicio ? new Date(form.inicio).toISOString() : null,
+        fin: form.fin ? new Date(form.fin).toISOString() : null,
+        lugar: form.lugar.trim(),
+        link: form.link.trim(),
+        color: form.color,
+        estado: form.estado,
+        mes_referencia: form.mesReferencia.trim(),
+        visible_feed: form.estado !== 'Cancelado',
+        creado_por_nombre: creatorName,
+        updated_at: new Date().toISOString(),
+      }
+
+      const request = form.id
+        ? supabase.from('rollerfeed_events').update(payload).eq('id', form.id)
+        : supabase.from('rollerfeed_events').insert(payload)
+
+      const { error } = await request
+      if (error) throw new Error(error.message)
+
+      setMsg(form.id ? 'Evento actualizado correctamente.' : 'Evento publicado correctamente.')
+      resetForm()
+      await loadEvents()
+    } catch (error) {
+      setMsg(`No se pudo guardar el evento: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function removeEvent(event) {
+    const confirmed = window.confirm(
+      `¿Eliminar "${event.titulo}"? Esta acción lo quitará también del RollerFeed.`
+    )
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('rollerfeed_events')
+      .delete()
+      .eq('id', event.id)
+
+    if (error) {
+      setMsg(`No se pudo eliminar el evento: ${error.message}`)
+      return
+    }
+
+    setMsg('Evento eliminado correctamente.')
+    if (form.id === event.id) resetForm()
+    await loadEvents()
+  }
+
+  return (
+    <div className="space-y-4">
+      <section className={`${panel} overflow-hidden`}>
+        <button
+          type="button"
+          onClick={() => setOpenForm((value) => !value)}
+          className="w-full p-4 flex items-center justify-between text-left"
+        >
+          <div>
+            <p className="section-label">RollerFeed</p>
+            <h2 className="font-display text-2xl text-white mt-1">
+              {form.id ? 'Editar evento' : 'Nuevo evento'}
+            </h2>
+            <p className="text-white/35 text-xs mt-1">
+              Banners limpios, sin imágenes y con identidad propia.
+            </p>
+          </div>
+
+          <span className="w-10 h-10 rounded-full bg-pr-gold/10 text-pr-gold grid place-items-center">
+            {openForm ? '−' : '+'}
+          </span>
+        </button>
+
+        {openForm && (
+          <div className="px-4 pb-4 space-y-3 animate-fade-in">
+            <div className={`relative overflow-hidden rounded-[28px] border ${selectedColor.border} bg-gradient-to-br ${selectedColor.card} p-5`}>
+              <div className="absolute -right-10 -top-12 w-36 h-36 rounded-full bg-white/10 blur-3xl" />
+              <div className="relative">
+                <p className={`text-[9px] font-bold uppercase tracking-[0.18em] ${selectedColor.accent}`}>
+                  Vista previa · Evento PR
+                </p>
+                <h3 className="font-display text-[28px] leading-tight text-white mt-3">
+                  {form.titulo || 'Nombre del evento'}
+                </h3>
+                <p className="text-white/45 text-xs mt-3">
+                  {form.inicio
+                    ? formatEventRange({
+                        inicio: new Date(form.inicio).toISOString(),
+                        fin: form.fin ? new Date(form.fin).toISOString() : null,
+                        mes_referencia: form.mesReferencia,
+                      })
+                    : form.mesReferencia || 'Fecha a confirmar'}
+                </p>
+                {form.lugar && (
+                  <p className="text-white/55 text-xs mt-2">📍 {form.lugar}</p>
+                )}
+              </div>
+            </div>
+
+            <AdminInput
+              label="Nombre del evento"
+              value={form.titulo}
+              onChange={(value) => setForm({ ...form, titulo: value })}
+              placeholder="Ej: Morning on Street by PR"
+            />
+
+            <label className="block">
+              <span className="text-white/40 text-xs">Descripción</span>
+              <textarea
+                value={form.descripcion}
+                onChange={(event) =>
+                  setForm({ ...form, descripcion: event.target.value })
+                }
+                rows={5}
+                placeholder="Contá lo esencial del evento..."
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
+              />
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <AdminInput
+                label="Inicio"
+                value={form.inicio}
+                onChange={(value) => setForm({ ...form, inicio: value })}
+                type="datetime-local"
+              />
+              <AdminInput
+                label="Finalización"
+                value={form.fin}
+                onChange={(value) => setForm({ ...form, fin: value })}
+                type="datetime-local"
+              />
+            </div>
+
+            <p className="text-white/25 text-[10px] leading-relaxed">
+              Si la fecha todavía no está confirmada, dejá Inicio y Finalización vacíos y completá el mes o texto de referencia.
+            </p>
+
+            <AdminInput
+              label="Mes o fecha de referencia"
+              value={form.mesReferencia}
+              onChange={(value) => setForm({ ...form, mesReferencia: value })}
+              placeholder="Ej: Octubre 2026 · fechas a confirmar"
+            />
+
+            <AdminInput
+              label="Lugar"
+              value={form.lugar}
+              onChange={(value) => setForm({ ...form, lugar: value })}
+              placeholder="Ej: Parada 2, La Brava"
+            />
+
+            <AdminInput
+              label="Link opcional"
+              value={form.link}
+              onChange={(value) => setForm({ ...form, link: value })}
+              placeholder="https://..."
+              type="url"
+            />
+
+            <label className="block">
+              <span className="text-white/40 text-xs">Color del banner</span>
+              <select
+                value={form.color}
+                onChange={(event) => setForm({ ...form, color: event.target.value })}
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+              >
+                {EVENT_COLOR_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-white/40 text-xs">Estado manual</span>
+              <select
+                value={form.estado}
+                onChange={(event) => setForm({ ...form, estado: event.target.value })}
+                className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
+              >
+                <option value="Publicado">Publicado</option>
+                <option value="Próximamente">Próximamente</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] py-4 text-white/60 text-sm font-bold"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={saveEvent}
+                className="btn-gold w-full disabled:opacity-50"
+              >
+                {saving ? 'Guardando...' : form.id ? 'Guardar cambios' : 'Publicar evento'}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="section-label">Calendario PR</p>
+            <h2 className="font-display text-2xl text-white mt-1">
+              Eventos cargados
+            </h2>
+          </div>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-white/45 text-[10px] font-bold">
+            {events.length} eventos
+          </span>
+        </div>
+
+        {loadingEvents ? (
+          <div className={`${panel} p-4 text-white/40 text-sm`}>
+            Cargando eventos...
+          </div>
+        ) : events.length ? (
+          events.map((event) => {
+            const color =
+              EVENT_COLOR_OPTIONS.find((option) => option.id === event.color) ||
+              EVENT_COLOR_OPTIONS[0]
+            const status = eventStatus(event)
+
+            return (
+              <article
+                key={event.id}
+                className={`relative overflow-hidden rounded-[30px] border ${color.border} bg-gradient-to-br ${color.card} p-5`}
+              >
+                <div className="absolute -right-12 -top-14 w-40 h-40 rounded-full bg-white/[0.08] blur-3xl" />
+
+                <div className="relative">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`text-[9px] font-bold uppercase tracking-[0.17em] ${color.accent}`}>
+                      Evento PR
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/65 text-[9px] font-bold">
+                      {status}
+                    </span>
+                  </div>
+
+                  <h3 className="font-display text-[27px] leading-tight text-white mt-3">
+                    {event.titulo}
+                  </h3>
+
+                  <p className="text-white/45 text-xs mt-3 leading-relaxed">
+                    {formatEventRange(event)}
+                  </p>
+
+                  {event.lugar && (
+                    <p className="text-white/55 text-xs mt-2">📍 {event.lugar}</p>
+                  )}
+
+                  {event.descripcion && (
+                    <p className="text-white/45 text-sm leading-relaxed mt-4">
+                      {event.descripcion}
+                    </p>
+                  )}
+
+                  <div className="flex gap-2 mt-5 pt-4 border-t border-white/[0.08]">
+                    <button
+                      type="button"
+                      onClick={() => editEvent(event)}
+                      className="flex-1 rounded-2xl border border-white/10 bg-white/[0.06] py-3 text-white text-xs font-bold"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeEvent(event)}
+                      className="rounded-2xl border border-red-400/20 bg-red-400/[0.08] px-4 py-3 text-red-200 text-xs font-bold"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </article>
+            )
+          })
+        ) : (
+          <div className={`${panel} p-6 text-center`}>
+            <p className="text-white/50 text-sm">Todavía no hay eventos cargados.</p>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+
 function CuposPanel({ cupos, setCupos, onSave }) {
   return (
     <section className={`${panel} p-4 space-y-3`}>
@@ -4927,4 +5425,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-        }
+    }
