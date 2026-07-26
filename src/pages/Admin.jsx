@@ -29,58 +29,58 @@ const EMPTY_STATS = {
 
 const OFFICIAL_BADGES = [
   {
-    title: 'TravesÃ­a La Barra 19K',
+    title: 'Travesia La Barra 19K',
     image: '/insignias-pr/travesia-la-barra-19k.png',
     description:
-      'CompletÃ³ la travesÃ­a Morning on Street by PR de 19 kilÃ³metros hacia La Barra el 26 de julio de 2026.',
+      'Completo la travesia Morning on Street by PR de 19 kilometros hacia La Barra el 26 de julio de 2026.',
   },
   {
     title: 'Primer evento PR',
     image: '/insignias-pr/primer-evento-pr.png',
     description:
-      'ParticipÃ³ por primera vez en un evento junto a Punta Rollers.',
+      'Participo por primera vez en un evento junto a Punta Rollers.',
   },
   {
     title: 'Rodador frecuente',
     image: '/insignias-pr/rodador-frecuente.png',
     description:
-      'DemostrÃ³ constancia y compromiso asistiendo regularmente a las clases.',
+      'Demostro constancia y compromiso asistiendo regularmente a las clases.',
   },
   {
-    title: 'EspÃ­ritu PR',
+    title: 'Espiritu PR',
     image: '/insignias-pr/espiritu-pr.png',
     description:
-      'Representa los valores, la energÃ­a y el sentido de pertenencia de Punta Rollers.',
+      'Representa los valores, la energia y el sentido de pertenencia de Punta Rollers.',
   },
   {
     title: 'Primeros 6K',
     image: '/insignias-pr/primeros-6k.png',
     description:
-      'CompletÃ³ por primera vez una distancia de 6 kilÃ³metros.',
+      'Completo por primera vez una distancia de 6 kilometros.',
   },
   {
     title: 'Primeros 10K',
     image: '/insignias-pr/primeros-10k.png',
     description:
-      'CompletÃ³ por primera vez una distancia de 10 kilÃ³metros.',
+      'Completo por primera vez una distancia de 10 kilometros.',
   },
   {
     title: 'Ya frena en T',
     image: '/insignias-pr/frena-en-t.png',
     description:
-      'AprendiÃ³ y logrÃ³ aplicar correctamente el frenado en T.',
+      'Aprendio y logro aplicar correctamente el frenado en T.',
   },
   {
     title: 'Ya frena con taco',
     image: '/insignias-pr/frena-con-taco.png',
     description:
-      'AprendiÃ³ y logrÃ³ aplicar correctamente el frenado con taco.',
+      'Aprendio y logro aplicar correctamente el frenado con taco.',
   },
   {
-    title: 'Buen compaÃ±ero',
+    title: 'Buen companero',
     image: '/insignias-pr/buen-companero.png',
     description:
-      'Se destacÃ³ por acompaÃ±ar, ayudar y cuidar a sus compaÃ±eros.',
+      'Se destaco por acompanar, ayudar y cuidar a sus companeros.',
   },
   {
     title: 'Actitud positiva',
@@ -92,7 +92,7 @@ const OFFICIAL_BADGES = [
     title: 'Entrenador potencial',
     image: '/insignias-pr/entrenador-potencial.png',
     description:
-      'DemostrÃ³ liderazgo, responsabilidad y capacidad para acompaÃ±ar a otros.',
+      'Demostro liderazgo, responsabilidad y capacidad para acompanar a otros.',
   },
 ]
 
@@ -311,59 +311,59 @@ export default function Admin() {
   }
 
   const quickItems = [
-    { id: 'dashboard', icon: 'ðŸ“Š', label: 'Inicio', show: true },
+    { id: 'dashboard', icon: '', label: 'Inicio', show: true },
     {
       id: 'usuarios',
-      icon: 'ðŸ‘¥',
+      icon: '',
       label: canFullAdmin ? 'Usuarios' : 'Alumnos',
       show: true,
     },
-    { id: 'grupos', icon: 'ðŸ—‚ï¸', label: 'Grupos', show: canFullAdmin },
-    { id: 'pagos', icon: 'ðŸ’³', label: 'Pagos', show: canFullAdmin },
+    { id: 'grupos', icon: '', label: 'Grupos', show: canFullAdmin },
+    { id: 'pagos', icon: '', label: 'Pagos', show: canFullAdmin },
     {
       id: 'particulares',
-      icon: 'ðŸ›¼',
+      icon: '',
       label: 'Particulares',
       show: canFullAdmin,
     },
     {
       id: 'contactos',
-      icon: 'ðŸ“±',
+      icon: '',
       label: 'Contactos',
       show: canFullAdmin,
     },
     {
       id: 'tienda',
-      icon: 'ðŸ›ï¸',
+      icon: '',
       label: 'Tienda',
       show: canFullAdmin,
     },
     {
       id: 'performance',
-      icon: 'ðŸ',
+      icon: '',
       label: 'Performance',
       show: canManageContent,
     },
     {
       id: 'objetivos',
-      icon: 'ðŸŽ¯',
+      icon: '',
       label: 'Objetivos',
       show: canManageContent,
     },
     {
       id: 'acciones',
-      icon: 'âš¡',
+      icon: '',
       label: 'Acciones',
       show: canManageContent,
     },
     {
       id: 'eventos',
-      icon: 'ðŸ“…',
+      icon: '',
       label: 'Eventos',
       show: canManageContent,
     },
-    { id: 'cupos', icon: 'ðŸŸ¢', label: 'Cupos', show: canFullAdmin },
-    { id: 'config', icon: 'âš™ï¸', label: 'Config', show: canFullAdmin },
+    { id: 'cupos', icon: '', label: 'Cupos', show: canFullAdmin },
+    { id: 'config', icon: '', label: 'Config', show: canFullAdmin },
   ].filter((item) => item.show)
 
   return (
@@ -380,7 +380,7 @@ export default function Admin() {
               </h1>
               <p className="text-white/40 text-xs mt-1">
                 {canFullAdmin
-                  ? 'GestiÃ³n de usuarios, pagos, grupos, servicios y actividad.'
+                  ? 'Gestion de usuarios, pagos, grupos, servicios y actividad.'
                   : 'Seguimiento de alumnos, observaciones, insignias y participaciones.'}
               </p>
             </div>
@@ -404,7 +404,7 @@ export default function Admin() {
         <div className="grid grid-cols-2 gap-3">
           <Stat label="Alumnos" value={alumnos.length} />
           <Stat label="Usuarios" value={profiles.length} />
-          <Stat label="Activos 7 dÃ­as" value={active7} />
+          <Stat label="Activos 7 dias" value={active7} />
           <Stat label="Registros" value={adminActivity.length} />
         </div>
 
@@ -554,23 +554,23 @@ function DashboardPanel({
   return (
     <div className="space-y-4">
       <section className={`${panel} p-4`}>
-        <p className="section-label">Acciones rÃ¡pidas</p>
+        <p className="section-label">Acciones rapidas</p>
 
         <div className="grid grid-cols-2 gap-3 mt-3">
           {canFullAdmin && (
             <>
               <ActionButton
-                icon="âž•"
+                icon=""
                 label="Crear usuario"
                 onClick={() => setSection('usuarios')}
               />
               <ActionButton
-                icon="ðŸ’³"
+                icon=""
                 label="Registrar pago"
                 onClick={() => setSection('pagos')}
               />
               <ActionButton
-                icon="ðŸ—‚ï¸"
+                icon=""
                 label="Gestionar grupos"
                 onClick={() => setSection('grupos')}
               />
@@ -580,28 +580,28 @@ function DashboardPanel({
           {canManageContent && (
             <>
               <ActionButton
-                icon="ðŸ"
+                icon=""
                 label="Cargar toma"
                 onClick={() => setSection('performance')}
               />
               <ActionButton
-                icon="ðŸŽ¯"
+                icon=""
                 label="Crear objetivo"
                 onClick={() => setSection('objetivos')}
               />
               <ActionButton
-                icon="ðŸ“"
-                label="ObservaciÃ³n"
+                icon=""
+                label="Observacion"
                 onClick={() => goAction('Nota')}
               />
               <ActionButton
-                icon="ðŸ…"
+                icon=""
                 label="Insignia"
                 onClick={() => goAction('Insignia')}
               />
               <ActionButton
-                icon="ðŸŽ‰"
-                label="ParticipaciÃ³n"
+                icon=""
+                label="Participacion"
                 onClick={() => goAction('Evento')}
               />
             </>
@@ -623,7 +623,7 @@ function DashboardPanel({
                   {item.titulo}
                 </p>
                 <p className="text-white/35 text-xs">
-                  {item.tipo} Â· {formatDate(item.fecha)}
+                  {item.tipo}  {formatDate(item.fecha)}
                 </p>
                 {item.creado_por_nombre && (
                   <p className="text-white/25 text-[10px] mt-1">
@@ -635,7 +635,7 @@ function DashboardPanel({
           ) : (
             <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
               <p className="text-white/45 text-sm">
-                TodavÃ­a no hay actividad real cargada.
+                Todavia no hay actividad real cargada.
               </p>
             </div>
           )}
@@ -740,7 +740,7 @@ function UsersPanel({
 
   async function deleteSelectedStudents() {
     if (!bulkSelectedIds.length) {
-      setMsg('SeleccionÃ¡ al menos un alumno para eliminar.')
+      setMsg('Selecciona al menos un alumno para eliminar.')
       return
     }
 
@@ -749,7 +749,7 @@ function UsersPanel({
     )
 
     const confirmed = window.confirm(
-      `Â¿Eliminar definitivamente ${selectedProfiles.length} alumno/s? TambiÃ©n se eliminarÃ¡n sus accesos seguros y registros relacionados. Esta acciÃ³n no se puede deshacer.`
+      `Eliminar definitivamente ${selectedProfiles.length} alumno/s? Tambien se eliminaran sus accesos seguros y registros relacionados. Esta accion no se puede deshacer.`
     )
 
     if (!confirmed) return
@@ -797,7 +797,7 @@ function UsersPanel({
         setMsg(`Se eliminaron correctamente ${deleted} alumno/s.`)
       }
     } catch (error) {
-      setMsg(`No se pudo completar la eliminaciÃ³n mÃºltiple: ${error.message}`)
+      setMsg(`No se pudo completar la eliminacion multiple: ${error.message}`)
     } finally {
       setDeletingBulk(false)
     }
@@ -829,11 +829,11 @@ function UsersPanel({
                 Eliminar varios alumnos
               </h2>
               <p className="text-white/35 text-xs mt-1">
-                SeleccionÃ¡ Ãºnicamente los perfiles que ya no deben permanecer.
+                Selecciona unicamente los perfiles que ya no deben permanecer.
               </p>
             </div>
             <span className="w-9 h-9 rounded-full border border-red-400/20 bg-red-400/[0.08] text-red-200 grid place-items-center">
-              {bulkMode ? 'âˆ’' : 'ðŸ—‘ï¸'}
+              {bulkMode ? '' : ''}
             </span>
           </button>
 
@@ -902,14 +902,14 @@ function UsersPanel({
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Buscar por nombre, cÃ©dula, rol o grupo..."
+        placeholder="Buscar por nombre, cedula, rol o grupo..."
         className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm outline-none text-white"
       />
 
       {profiles.length === 0 && (
         <section className={`${panel} p-4`}>
           <p className="text-white font-semibold">No encontramos usuarios</p>
-          <p className="text-white/40 text-sm mt-1">ProbÃ¡ con otra bÃºsqueda.</p>
+          <p className="text-white/40 text-sm mt-1">Proba con otra busqueda.</p>
         </section>
       )}
 
@@ -929,7 +929,7 @@ function UsersPanel({
               >
                 <p className="font-semibold text-sm">
                   {profile.nombre} {profile.apellido}
-                  {profile.verificado ? ' âœ“' : ''}
+                  {profile.verificado ? ' ' : ''}
                 </p>
                 <p
                   className={`text-xs ${
@@ -938,7 +938,7 @@ function UsersPanel({
                       : 'text-white/35'
                   }`}
                 >
-                  {getRoleLabel(profile.role)} Â· {profile.estado}
+                  {getRoleLabel(profile.role)}  {profile.estado}
                 </p>
               </button>
             ))}
@@ -955,7 +955,7 @@ function UsersPanel({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-xl">ðŸ‘¤</span>
+                    <span className="text-xl"></span>
                   )}
                 </div>
 
@@ -975,7 +975,7 @@ function UsersPanel({
               </div>
 
               <p className="text-white/35 text-xs mt-3">
-                CI {selected.documento} Â· {selected.estado}
+                CI {selected.documento}  {selected.estado}
               </p>
             </div>
 
@@ -1082,7 +1082,7 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
 
       if (!/^\d{4,8}$/.test(pin)) {
         throw new Error(
-          'El PIN debe tener entre 4 y 8 nÃºmeros.'
+          'El PIN debe tener entre 4 y 8 numeros.'
         )
       }
 
@@ -1149,7 +1149,7 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
       if (!data?.success) {
         throw new Error(
           data?.error ||
-            'La funciÃ³n no confirmÃ³ la creaciÃ³n.'
+            'La funcion no confirmo la creacion.'
         )
       }
 
@@ -1180,7 +1180,7 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
         className="w-full p-4 flex items-center justify-between text-left"
       >
         <div>
-          <p className="section-label">AdministraciÃ³n</p>
+          <p className="section-label">Administracion</p>
           <h2 className="font-display text-2xl text-white mt-1">
             Crear usuario
           </h2>
@@ -1190,7 +1190,7 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
         </div>
 
         <span className="w-9 h-9 rounded-full bg-pr-gold/10 text-pr-gold grid place-items-center">
-          {open ? 'âˆ’' : '+'}
+          {open ? '' : '+'}
         </span>
       </button>
 
@@ -1316,7 +1316,7 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
           </button>
 
           <p className="text-white/30 text-xs">
-            La cuenta segura se crea automÃ¡ticamente. El usuario podrÃ¡ iniciar sesiÃ³n inmediatamente con su documento y PIN.
+            La cuenta segura se crea automaticamente. El usuario podra iniciar sesion inmediatamente con su documento y PIN.
           </p>
         </div>
       )}
@@ -1344,7 +1344,7 @@ function InfoTab({ profile, canFullAdmin }) {
             value={profile.accesoHabilitado ? 'Habilitado' : 'Inhabilitado'}
           />
           <Field
-            label="Ãšltimo pago"
+            label="Ultimo pago"
             value={profile.ultimoPago || 'Sin registrar'}
           />
           <Field
@@ -1364,13 +1364,13 @@ function InfoTab({ profile, canFullAdmin }) {
           label="Grupos WhatsApp"
           value={
             profile.gruposInfo?.length
-              ? profile.gruposInfo.map((group) => group.titulo).join(' Â· ')
+              ? profile.gruposInfo.map((group) => group.titulo).join('  ')
               : 'Sin grupos'
           }
         />
       )}
       <Field
-        label="Ãšltimo ingreso"
+        label="Ultimo ingreso"
         value={
           profile.ultimoIngreso
             ? formatDate(profile.ultimoIngreso)
@@ -1445,7 +1445,7 @@ function EditUserTab({
 
       if (!/^\d{4,8}$/.test(pin)) {
         throw new Error(
-          'El PIN debe tener entre 4 y 8 nÃºmeros.'
+          'El PIN debe tener entre 4 y 8 numeros.'
         )
       }
 
@@ -1499,7 +1499,7 @@ function EditUserTab({
       if (!data?.success) {
         throw new Error(
           data?.error ||
-            'La funciÃ³n no confirmÃ³ la actualizaciÃ³n.'
+            'La funcion no confirmo la actualizacion.'
         )
       }
 
@@ -1520,13 +1520,13 @@ function EditUserTab({
   async function deleteUser() {
     if (profile.id === currentUser?.id) {
       setMsg(
-        'No podÃ©s eliminar tu propia cuenta mientras estÃ¡s conectado.'
+        'No podes eliminar tu propia cuenta mientras estas conectado.'
       )
       return
     }
 
     const confirmed = window.confirm(
-      `Â¿Eliminar definitivamente a ${profile.nombre}? TambiÃ©n se eliminarÃ¡n su cuenta segura y sus registros relacionados.`
+      `Eliminar definitivamente a ${profile.nombre}? Tambien se eliminaran su cuenta segura y sus registros relacionados.`
     )
 
     if (!confirmed) {
@@ -1559,7 +1559,7 @@ function EditUserTab({
       if (!data?.success) {
         throw new Error(
           data?.error ||
-            'La funciÃ³n no confirmÃ³ la eliminaciÃ³n.'
+            'La funcion no confirmo la eliminacion.'
         )
       }
 
@@ -1750,14 +1750,14 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
       const link = form.link.trim()
       const nombreNormalizado = normalizeGroupKey(nombre)
 
-      if (!nombre) throw new Error('EscribÃ­ el nombre del grupo.')
+      if (!nombre) throw new Error('Escribi el nombre del grupo.')
 
       const duplicate = groups.find(
         (group) =>
           normalizeGroupKey(group.nombre) === nombreNormalizado &&
           group.id !== editingId
       )
-      if (duplicate) throw new Error('Ese grupo ya existe en el catÃ¡logo.')
+      if (duplicate) throw new Error('Ese grupo ya existe en el catalogo.')
 
       if (editingId) {
         const previous = groups.find((group) => group.id === editingId)
@@ -1832,7 +1832,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
 
   async function deleteGroup(group) {
     const confirmed = window.confirm(
-      `Â¿Eliminar â€œ${group.nombre}â€ del catÃ¡logo y quitarlo de todos los perfiles?`
+      `Eliminar ${group.nombre} del catalogo y quitarlo de todos los perfiles?`
     )
     if (!confirmed) return
 
@@ -1860,7 +1860,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
       const { error } = await supabase.from('pr_groups').delete().eq('id', group.id)
       if (error) throw new Error(error.message)
 
-      setMsg('Grupo eliminado del catÃ¡logo y de los perfiles.')
+      setMsg('Grupo eliminado del catalogo y de los perfiles.')
       await Promise.all([loadGroups(), reload()])
     } catch (error) {
       setMsg(`No se pudo eliminar el grupo: ${error.message}`)
@@ -1891,7 +1891,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
 
       const rows = [...imported.values()]
       if (!rows.length) {
-        setMsg('No hay grupos nuevos para importar. El catÃ¡logo ya estÃ¡ actualizado.')
+        setMsg('No hay grupos nuevos para importar. El catalogo ya esta actualizado.')
         return
       }
 
@@ -1926,11 +1926,11 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
 
   async function applyBulkChange() {
     if (!selectedGroup) {
-      setMsg('ElegÃ­ un grupo.')
+      setMsg('Elegi un grupo.')
       return
     }
     if (!selectedStudentIds.length) {
-      setMsg('SeleccionÃ¡ al menos un alumno.')
+      setMsg('Selecciona al menos un alumno.')
       return
     }
 
@@ -1990,7 +1990,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
       )
       await reload()
     } catch (error) {
-      setMsg(`No se pudo completar la acciÃ³n masiva: ${error.message}`)
+      setMsg(`No se pudo completar la accion masiva: ${error.message}`)
     } finally {
       setSaving(false)
     }
@@ -2000,12 +2000,12 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
     <div className="space-y-4">
       <section className={`${panel} p-4 space-y-3`}>
         <div>
-          <p className="section-label">CatÃ¡logo central</p>
+          <p className="section-label">Catalogo central</p>
           <h2 className="font-display text-2xl text-white mt-1">
             {editingId ? 'Editar grupo' : 'Crear grupo'}
           </h2>
           <p className="text-white/35 text-xs mt-1">
-            Un solo catÃ¡logo para todos los alumnos, sin repetir grupos.
+            Un solo catalogo para todos los alumnos, sin repetir grupos.
           </p>
         </div>
 
@@ -2013,7 +2013,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
           label="Nombre del grupo"
           value={form.nombre}
           onChange={(value) => setForm({ ...form, nombre: value })}
-          placeholder="Ej: Clases MiÃ©rcoles"
+          placeholder="Ej: Clases Miercoles"
         />
         <AdminInput
           label="Link de WhatsApp"
@@ -2051,7 +2051,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="section-label">Grupos creados</p>
-            <h2 className="font-display text-2xl text-white mt-1">CatÃ¡logo</h2>
+            <h2 className="font-display text-2xl text-white mt-1">Catalogo</h2>
           </div>
           <span className="rounded-full border border-pr-gold/20 bg-pr-gold/10 px-3 py-1 text-pr-gold text-xs font-bold">
             {groups.length}
@@ -2062,7 +2062,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
           <p className="text-white/40 text-sm mt-4">Cargando grupos...</p>
         ) : groups.length === 0 ? (
           <p className="text-white/40 text-sm mt-4">
-            TodavÃ­a no hay grupos. TocÃ¡ â€œImportar actualesâ€ o creÃ¡ el primero.
+            Todavia no hay grupos. Toca Importar actuales o crea el primero.
           </p>
         ) : (
           <div className="space-y-2 mt-4">
@@ -2088,7 +2088,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
                           {group.nombre}
                         </p>
                         <p className="text-white/35 text-[11px] mt-1">
-                          {members} alumno/s Â· {group.activo === false ? 'Inactivo' : 'Activo'}
+                          {members} alumno/s  {group.activo === false ? 'Inactivo' : 'Activo'}
                         </p>
                       </div>
                       <span className="text-pr-gold text-xs">Seleccionar</span>
@@ -2130,12 +2130,12 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
 
       <section className={`${panel} p-4 space-y-3`}>
         <div>
-          <p className="section-label">GestiÃ³n masiva</p>
+          <p className="section-label">Gestion masiva</p>
           <h2 className="font-display text-2xl text-white mt-1">
-            {selectedGroup?.nombre || 'ElegÃ­ un grupo'}
+            {selectedGroup?.nombre || 'Elegi un grupo'}
           </h2>
           <p className="text-white/35 text-xs mt-1">
-            Al asignar, solamente aparecen quienes todavÃ­a no lo tienen. Al quitar, solamente aparecen sus integrantes.
+            Al asignar, solamente aparecen quienes todavia no lo tienen. Al quitar, solamente aparecen sus integrantes.
           </p>
         </div>
 
@@ -2162,7 +2162,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
                 : 'border-white/10 bg-white/[0.04] text-white/45'
             }`}
           >
-            âž• Asignar
+             Asignar
           </button>
           <button
             type="button"
@@ -2173,7 +2173,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
                 : 'border-white/10 bg-white/[0.04] text-white/45'
             }`}
           >
-            âž– Quitar
+             Quitar
           </button>
         </div>
 
@@ -2188,7 +2188,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
           <>
             <div className="flex items-center justify-between gap-3">
               <p className="text-white/45 text-xs">
-                {mode === 'assign' ? 'Disponibles' : 'Integrantes'}: {candidates.length} Â· Seleccionados: {selectedStudentIds.length}
+                {mode === 'assign' ? 'Disponibles' : 'Integrantes'}: {candidates.length}  Seleccionados: {selectedStudentIds.length}
               </p>
               <button
                 type="button"
@@ -2206,7 +2206,7 @@ function GroupsManagerPanel({ profiles, reload, setMsg }) {
                   <p className="text-white/45 text-sm">
                     {mode === 'assign'
                       ? 'Todos los alumnos visibles ya tienen este grupo.'
-                      : 'Este grupo todavÃ­a no tiene integrantes visibles.'}
+                      : 'Este grupo todavia no tiene integrantes visibles.'}
                   </p>
                 </div>
               ) : (
@@ -2321,7 +2321,7 @@ function GroupsTab({ profile, reload, setMsg }) {
   return (
     <div className="space-y-3">
       <p className="text-white/45 text-sm">
-        CargÃ¡ uno o mÃ¡s grupos con su enlace de WhatsApp.
+        Carga uno o mas grupos con su enlace de WhatsApp.
       </p>
 
       {groups.map((group, index) => (
@@ -2330,10 +2330,10 @@ function GroupsTab({ profile, reload, setMsg }) {
           className="rounded-2xl bg-black/25 border border-white/5 p-3 space-y-2"
         >
           <AdminInput
-            label="TÃ­tulo del grupo"
+            label="Titulo del grupo"
             value={group.titulo}
             onChange={(value) => updateGroup(index, 'titulo', value)}
-            placeholder="Ej: MiÃ©rcoles principiantes"
+            placeholder="Ej: Miercoles principiantes"
           />
           <AdminInput
             label="Link de WhatsApp"
@@ -2377,8 +2377,8 @@ function ObservationTab({ creator, profile, reload, setMsg }) {
       creator={creator}
       profile={profile}
       tipo="Nota"
-      title="Nueva observaciÃ³n"
-      label="Guardar observaciÃ³n"
+      title="Nueva observacion"
+      label="Guardar observacion"
       reload={reload}
       setMsg={setMsg}
     />
@@ -2429,7 +2429,7 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
       setSaving(true)
       setMsg('Otorgando insignia...')
 
-      if (!selectedBadge) throw new Error('ElegÃ­ una insignia.')
+      if (!selectedBadge) throw new Error('Elegi una insignia.')
 
       const badgeKey = normalizePerformanceText(selectedBadge.title)
       if (assignedByTitle.has(badgeKey)) {
@@ -2476,7 +2476,7 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
       <div>
         <p className="section-label">Insignias oficiales</p>
         <h3 className="font-display text-2xl text-white mt-1">
-          ElegÃ­ una insignia
+          Elegi una insignia
         </h3>
         <p className="text-white/35 text-xs mt-1">
           Las insignias ya otorgadas aparecen bloqueadas para evitar duplicados entre profesores.
@@ -2507,7 +2507,7 @@ function BadgeTab({ creator, profile, reload, setMsg }) {
 
           <label className="block">
             <span className="text-white/40 text-xs">
-              DescripciÃ³n para el alumno
+              Descripcion para el alumno
             </span>
             <textarea
               value={description}
@@ -2548,8 +2548,8 @@ function ParticipationTab({ creator, profile, reload, setMsg }) {
       creator={creator}
       profile={profile}
       tipo="Evento"
-      title="Registrar participaciÃ³n"
-      label="Registrar participaciÃ³n"
+      title="Registrar participacion"
+      label="Registrar participacion"
       reload={reload}
       setMsg={setMsg}
     />
@@ -2574,7 +2574,7 @@ function ActivityCreateTab({
       setSaving(true)
       setMsg('Guardando actividad...')
 
-      if (!titulo.trim()) throw new Error('Falta el tÃ­tulo.')
+      if (!titulo.trim()) throw new Error('Falta el titulo.')
 
       const { error } = await supabase.from('actividad_pr').insert({
         alumno_id: profile.id,
@@ -2606,10 +2606,10 @@ function ActivityCreateTab({
   return (
     <div className="space-y-3">
       <p className="section-label">{title}</p>
-      <AdminInput label="TÃ­tulo" value={titulo} onChange={setTitulo} />
+      <AdminInput label="Titulo" value={titulo} onChange={setTitulo} />
 
       <label className="block">
-        <span className="text-white/40 text-xs">DescripciÃ³n</span>
+        <span className="text-white/40 text-xs">Descripcion</span>
         <textarea
           value={descripcion}
           onChange={(event) => setDescripcion(event.target.value)}
@@ -2693,10 +2693,10 @@ function ProfileActivityList({
   async function saveObservation(item) {
     try {
       setSaving(true)
-      setMsg?.('Guardando correcciÃ³n...')
+      setMsg?.('Guardando correccion...')
 
       if (!editTitle.trim()) {
-        throw new Error('El tÃ­tulo no puede quedar vacÃ­o.')
+        throw new Error('El titulo no puede quedar vacio.')
       }
 
       const editorName =
@@ -2717,7 +2717,7 @@ function ProfileActivityList({
       if (error) throw new Error(error.message)
 
       cancelEditing()
-      setMsg?.('ObservaciÃ³n corregida correctamente.')
+      setMsg?.('Observacion corregida correctamente.')
       await loadItems()
       await reload?.()
     } catch (error) {
@@ -2729,14 +2729,14 @@ function ProfileActivityList({
 
   async function deleteObservation(item) {
     const confirmed = window.confirm(
-      `Â¿Eliminar la observaciÃ³n "${item.titulo}"? DejarÃ¡ de mostrarse al alumno, pero quedarÃ¡ registrada internamente.`
+      `Eliminar la observacion "${item.titulo}"? Dejara de mostrarse al alumno, pero quedara registrada internamente.`
     )
 
     if (!confirmed) return
 
     try {
       setSaving(true)
-      setMsg?.('Eliminando observaciÃ³n...')
+      setMsg?.('Eliminando observacion...')
 
       const editorName =
         `${creator?.nombre || ''} ${creator?.apellido || ''}`.trim() ||
@@ -2754,7 +2754,7 @@ function ProfileActivityList({
       if (error) throw new Error(error.message)
 
       cancelEditing()
-      setMsg?.('ObservaciÃ³n eliminada correctamente.')
+      setMsg?.('Observacion eliminada correctamente.')
       await loadItems()
       await reload?.()
     } catch (error) {
@@ -2766,7 +2766,7 @@ function ProfileActivityList({
 
   async function deleteBadge(item) {
     const confirmed = window.confirm(
-      `Â¿Quitar la insignia "${item.titulo}" de este alumno? DejarÃ¡ de mostrarse inmediatamente en su perfil.`
+      `Quitar la insignia "${item.titulo}" de este alumno? Dejara de mostrarse inmediatamente en su perfil.`
     )
 
     if (!confirmed) return
@@ -2818,14 +2818,14 @@ function ProfileActivityList({
               {isEditing ? (
                 <div className="space-y-3">
                   <AdminInput
-                    label="TÃ­tulo"
+                    label="Titulo"
                     value={editTitle}
                     onChange={setEditTitle}
                   />
 
                   <label className="block">
                     <span className="text-white/40 text-xs">
-                      DescripciÃ³n
+                      Descripcion
                     </span>
                     <textarea
                       value={editDescription}
@@ -2853,7 +2853,7 @@ function ProfileActivityList({
                       onClick={() => saveObservation(item)}
                       className="btn-gold w-full disabled:opacity-50"
                     >
-                      {saving ? 'Guardando...' : 'Guardar correcciÃ³n'}
+                      {saving ? 'Guardando...' : 'Guardar correccion'}
                     </button>
                   </div>
                 </div>
@@ -2864,9 +2864,9 @@ function ProfileActivityList({
                   </p>
 
                   <p className="text-white/40 text-xs mt-1 leading-relaxed break-words">
-                    {item.tipo} Â· {formatDate(item.fecha)}
+                    {item.tipo}  {formatDate(item.fecha)}
                     {item.creado_por_nombre
-                      ? ` Â· ${item.creado_por_nombre}`
+                      ? `  ${item.creado_por_nombre}`
                       : ''}
                   </p>
 
@@ -2914,7 +2914,7 @@ function ProfileActivityList({
                       onClick={() => deleteBadge(item)}
                       className="mt-3 w-full rounded-2xl border border-red-400/40 bg-red-500/15 py-3.5 text-red-100 text-sm font-bold disabled:opacity-50"
                     >
-                      {saving ? 'Quitando insignia...' : 'ðŸ—‘ï¸ Quitar insignia'}
+                      {saving ? 'Quitando insignia...' : ' Quitar insignia'}
                     </button>
                   )}
                 </>
@@ -2925,7 +2925,7 @@ function ProfileActivityList({
       ) : (
         <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
           <p className="text-white/45 text-sm">
-            Sin registros todavÃ­a.
+            Sin registros todavia.
           </p>
         </div>
       )}
@@ -3109,7 +3109,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
 
   async function saveObjective() {
     if (!selectedStudentId) {
-      setMsg('SeleccionÃ¡ un alumno.')
+      setMsg('Selecciona un alumno.')
       return
     }
 
@@ -3121,17 +3121,17 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
     const targetSeconds = parsePerformanceTime(form.tiempoObjetivo)
 
     if (!form.titulo.trim()) {
-      setMsg('EscribÃ­ un tÃ­tulo para el objetivo.')
+      setMsg('Escribi un titulo para el objetivo.')
       return
     }
 
     if (!distance || distance <= 0) {
-      setMsg('RevisÃ¡ la distancia objetivo.')
+      setMsg('Revisa la distancia objetivo.')
       return
     }
 
     if (!targetSeconds) {
-      setMsg('IngresÃ¡ el tiempo objetivo como MM:SS o HH:MM:SS.')
+      setMsg('Ingresa el tiempo objetivo como MM:SS o HH:MM:SS.')
       return
     }
 
@@ -3207,7 +3207,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
 
       setMsg(
         nextStatus === 'Completado'
-          ? 'Objetivo marcado como completado. ðŸŽ‰'
+          ? 'Objetivo marcado como completado. '
           : 'Objetivo reactivado.'
       )
       await loadObjectives(selectedStudentId)
@@ -3218,7 +3218,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
 
   async function deleteObjective(objective) {
     const confirmed = window.confirm(
-      `Â¿Eliminar el objetivo "${objective.titulo}"? DejarÃ¡ de mostrarse al alumno.`
+      `Eliminar el objetivo "${objective.titulo}"? Dejara de mostrarse al alumno.`
     )
 
     if (!confirmed) return
@@ -3256,11 +3256,11 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
               Objetivos del entrenador
             </h2>
             <p className="text-white/40 text-xs mt-2 leading-relaxed">
-              DefinÃ­ una meta concreta para cada alumno. En el perfil verÃ¡ su objetivo y, en el prÃ³ximo paso, su progreso automÃ¡tico.
+              Defini una meta concreta para cada alumno. En el perfil vera su objetivo y, en el proximo paso, su progreso automatico.
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
-            ðŸŽ¯
+            
           </div>
         </div>
       </section>
@@ -3312,13 +3312,13 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
                   onClick={cancelEdit}
                   className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-white/60 text-xs"
                 >
-                  Cancelar ediciÃ³n
+                  Cancelar edicion
                 </button>
               )}
             </div>
 
             <AdminInput
-              label="TÃ­tulo del objetivo"
+              label="Titulo del objetivo"
               value={form.titulo}
               onChange={(value) => setForm({ ...form, titulo: value })}
               placeholder="Ej: Bajar de 21:00 en 6K"
@@ -3346,7 +3346,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
 
             {form.distancia === 'custom' && (
               <AdminInput
-                label="Distancia en kilÃ³metros"
+                label="Distancia en kilometros"
                 value={form.distanciaPersonalizada}
                 onChange={(value) =>
                   setForm({ ...form, distanciaPersonalizada: value })
@@ -3367,7 +3367,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
 
             <label className="block">
               <span className="text-white/40 text-xs">
-                IndicaciÃ³n del entrenador
+                Indicacion del entrenador
               </span>
               <textarea
                 value={form.indicacion}
@@ -3381,7 +3381,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
             </label>
 
             <AdminInput
-              label="Fecha lÃ­mite opcional"
+              label="Fecha limite opcional"
               value={form.fechaLimite}
               onChange={(value) => setForm({ ...form, fechaLimite: value })}
               type="date"
@@ -3455,7 +3455,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
                       </h4>
                     </div>
                     <span className="text-xl shrink-0">
-                      {objective.estado === 'Completado' ? 'ðŸ†' : 'ðŸŽ¯'}
+                      {objective.estado === 'Completado' ? '' : ''}
                     </span>
                   </div>
 
@@ -3483,7 +3483,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
                   <p className="text-white/30 text-[10px] mt-3">
                     Creado {formatDate(objective.creado_en)}
                     {objective.fecha_limite
-                      ? ` Â· LÃ­mite ${formatPerformanceDate(
+                      ? `  Limite ${formatPerformanceDate(
                           objective.fecha_limite
                         )}`
                       : ''}
@@ -3528,7 +3528,7 @@ function ObjectivesPanel({ creator, alumnos, setMsg }) {
             ) : (
               <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
                 <p className="text-white/45 text-sm">
-                  Este alumno todavÃ­a no tiene objetivos asignados.
+                  Este alumno todavia no tiene objetivos asignados.
                 </p>
               </div>
             )}
@@ -3567,7 +3567,7 @@ function buildAutomaticTakeFeedback(existingTakes, parsedRecords, takeNumber, ta
     const currentTime = formatEngineDuration(record.parsedSeconds)
 
     if (!previousSummary?.count) {
-      return `${distanceLabel}: primera referencia registrada en ${currentTime}. Esta marca serÃ¡ el punto de partida para medir su evoluciÃ³n.`
+      return `${distanceLabel}: primera referencia registrada en ${currentTime}. Esta marca sera el punto de partida para medir su evolucion.`
     }
 
     const previousBestSeconds = previousSummary.best?.tiempo_segundos || 0
@@ -3576,25 +3576,25 @@ function buildAutomaticTakeFeedback(existingTakes, parsedRecords, takeNumber, ta
     const latestDifference = previousLatestSeconds - record.parsedSeconds
 
     if (previousBestSeconds && record.parsedSeconds < previousBestSeconds) {
-      return `${distanceLabel}: nuevo rÃ©cord personal en ${currentTime}. MejorÃ³ ${formatEngineDuration(
+      return `${distanceLabel}: nuevo record personal en ${currentTime}. Mejoro ${formatEngineDuration(
         bestDifference
       )} respecto a su mejor marca anterior.`
     }
 
     if (latestDifference > 0) {
-      return `${distanceLabel}: completÃ³ la toma en ${currentTime} y mejorÃ³ ${formatEngineDuration(
+      return `${distanceLabel}: completo la toma en ${currentTime} y mejoro ${formatEngineDuration(
         latestDifference
       )} respecto a la toma anterior.`
     }
 
     if (Math.abs(updatedSummary?.latestChangePercent || 0) < 1.5) {
-      return `${distanceLabel}: completÃ³ la toma en ${currentTime}, manteniendo un rendimiento estable respecto al registro anterior.`
+      return `${distanceLabel}: completo la toma en ${currentTime}, manteniendo un rendimiento estable respecto al registro anterior.`
     }
 
-    return `${distanceLabel}: completÃ³ la toma en ${currentTime}. Aunque esta vez no mejorÃ³ su marca anterior, el registro suma informaciÃ³n Ãºtil para ajustar el entrenamiento.`
+    return `${distanceLabel}: completo la toma en ${currentTime}. Aunque esta vez no mejoro su marca anterior, el registro suma informacion util para ajustar el entrenamiento.`
   })
 
-  return `ActualizaciÃ³n automÃ¡tica PR:\n${messages.join('\n')}`
+  return `Actualizacion automatica PR:\n${messages.join('\n')}`
 }
 
 async function grantAutomaticPerformanceBadges({
@@ -3697,7 +3697,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     { id: crypto.randomUUID(), distance: '6', customDistance: '', time: '' },
   ])
   const [profileForm, setProfileForm] = useState({
-    perfilRodaje: 'En evoluciÃ³n',
+    perfilRodaje: 'En evolucion',
     tecnica: '',
     resistencia: '',
   })
@@ -3820,7 +3820,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
         nextResult.error ? fallbackNext : Number(nextResult.data) || fallbackNext
       )
       setProfileForm({
-        perfilRodaje: profileData?.perfil_rodaje || 'En evoluciÃ³n',
+        perfilRodaje: profileData?.perfil_rodaje || 'En evolucion',
         tecnica: profileData?.tecnica ? String(profileData.tecnica) : '',
         resistencia: profileData?.resistencia
           ? String(profileData.resistencia)
@@ -3891,7 +3891,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
   async function savePerformanceProfile() {
     if (!selectedStudentId) {
-      setMsg('SeleccionÃ¡ un alumno.')
+      setMsg('Selecciona un alumno.')
       return
     }
 
@@ -3931,12 +3931,12 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
   async function saveTake() {
     if (!selectedStudentId) {
-      setMsg('SeleccionÃ¡ un alumno.')
+      setMsg('Selecciona un alumno.')
       return
     }
 
     if (!takeDate) {
-      setMsg('SeleccionÃ¡ la fecha de la toma.')
+      setMsg('Selecciona la fecha de la toma.')
       return
     }
 
@@ -3965,12 +3965,12 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
           !record.normalizedDistance
       )
     ) {
-      setMsg('RevisÃ¡ las distancias cargadas.')
+      setMsg('Revisa las distancias cargadas.')
       return
     }
 
     if (parsedRecords.some((record) => !record.parsedSeconds)) {
-      setMsg('IngresÃ¡ todos los tiempos como MM:SS o HH:MM:SS.')
+      setMsg('Ingresa todos los tiempos como MM:SS o HH:MM:SS.')
       return
     }
 
@@ -3979,7 +3979,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     )
 
     if (uniqueDistances.size !== parsedRecords.length) {
-      setMsg('No podÃ©s repetir la misma distancia dentro de una toma.')
+      setMsg('No podes repetir la misma distancia dentro de una toma.')
       return
     }
 
@@ -4048,17 +4048,17 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
           creator,
         })
       } catch (badgeError) {
-        console.error('No se pudieron otorgar insignias automÃ¡ticas:', badgeError)
+        console.error('No se pudieron otorgar insignias automaticas:', badgeError)
       }
 
       resetTakeForm()
 
       const badgeMessage = automaticBadges.length
-        ? ` TambiÃ©n se otorgÃ³ automÃ¡ticamente: ${automaticBadges.join(', ')}.`
+        ? ` Tambien se otorgo automaticamente: ${automaticBadges.join(', ')}.`
         : ''
 
       setMsg(
-        `Toma ${nextTakeNumber} guardada para ${selectedStudent?.nombre} con ${rows.length} distancia/s. Se calcularon ritmo, velocidad, evoluciÃ³n, rÃ©cord personal y progreso de objetivos.${badgeMessage}`
+        `Toma ${nextTakeNumber} guardada para ${selectedStudent?.nombre} con ${rows.length} distancia/s. Se calcularon ritmo, velocidad, evolucion, record personal y progreso de objetivos.${badgeMessage}`
       )
       await loadPerformance(selectedStudentId)
     } catch (error) {
@@ -4071,13 +4071,13 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
   async function importLegacyObservation(candidate) {
     if (!candidate.records.length) {
       setMsg(
-        'No pude detectar distancia y tiempo en esta devoluciÃ³n. Revisaremos ese caso de forma manual.'
+        'No pude detectar distancia y tiempo en esta devolucion. Revisaremos ese caso de forma manual.'
       )
       return
     }
 
     const confirmed = window.confirm(
-      `Â¿Importar ${candidate.title} como Toma ${candidate.takeNumber} con ${candidate.records.length} distancia/s?`
+      `Importar ${candidate.title} como Toma ${candidate.takeNumber} con ${candidate.records.length} distancia/s?`
     )
 
     if (!confirmed) return
@@ -4137,7 +4137,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
   async function removeTakeGroup(group) {
     const confirmed = window.confirm(
-      `Â¿Eliminar completa la Toma ${group.numero_toma} de ${selectedStudent?.nombre}? Se quitarÃ¡n todas sus distancias.`
+      `Eliminar completa la Toma ${group.numero_toma} de ${selectedStudent?.nombre}? Se quitaran todas sus distancias.`
     )
 
     if (!confirmed) return
@@ -4173,11 +4173,11 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
               Tomas de rendimiento
             </h2>
             <p className="text-white/40 text-xs mt-2 leading-relaxed">
-              Cada toma representa una instancia completa y puede incluir una o varias distancias. El sistema calcula ritmo y velocidad automÃ¡ticamente.
+              Cada toma representa una instancia completa y puede incluir una o varias distancias. El sistema calcula ritmo y velocidad automaticamente.
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-xl shrink-0">
-            ðŸ
+            
           </div>
         </div>
       </section>
@@ -4220,7 +4220,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span>ðŸ‘¤</span>
+                <span></span>
               )}
             </div>
             <div className="min-w-0">
@@ -4228,7 +4228,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                 {selectedStudent.nombre} {selectedStudent.apellido}
               </p>
               <p className="text-pr-gold text-xs font-bold mt-1">
-                PrÃ³xima: Toma {nextTakeNumber}
+                Proxima: Toma {nextTakeNumber}
               </p>
             </div>
           </div>
@@ -4244,22 +4244,22 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
           <section className={`${panel} p-4 space-y-4`}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="section-label">Motor PR automÃ¡tico</p>
+                <p className="section-label">Motor PR automatico</p>
                 <h3 className="font-display text-2xl text-white mt-1">
-                  EvoluciÃ³n calculada
+                  Evolucion calculada
                 </h3>
                 <p className="text-white/40 text-xs mt-1 leading-relaxed">
-                  Se recalcula con todas las tomas vÃ¡lidas del alumno, incluso cuando una distancia fue registrada con pequeÃ±as diferencias.
+                  Se recalcula con todas las tomas validas del alumno, incluso cuando una distancia fue registrada con pequenas diferencias.
                 </p>
               </div>
               <span className="w-11 h-11 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 grid place-items-center text-lg shrink-0">
-                âš™ï¸
+                
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <PerformancePreview
-                label="Registros vÃ¡lidos"
+                label="Registros validos"
                 value={String(automaticPerformance.totalRecords)}
               />
               <PerformancePreview
@@ -4308,7 +4308,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                     }
                   />
                   <PerformancePreview
-                    label="Ãšltima marca"
+                    label="Ultima marca"
                     value={
                       automaticPrimarySummary.latest
                         ? formatEngineDuration(
@@ -4322,7 +4322,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
             ) : (
               <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
                 <p className="text-white/45 text-sm">
-                  TodavÃ­a no hay tomas vÃ¡lidas para calcular una evoluciÃ³n.
+                  Todavia no hay tomas validas para calcular una evolucion.
                 </p>
               </div>
             )}
@@ -4330,12 +4330,12 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
           <section className={`${panel} p-4 space-y-3`}>
             <div>
-              <p className="section-label">ImportaciÃ³n automÃ¡tica</p>
+              <p className="section-label">Importacion automatica</p>
               <h3 className="font-display text-2xl text-white mt-1">
                 Devoluciones anteriores
               </h3>
               <p className="text-white/40 text-xs mt-1 leading-relaxed">
-                Detectamos las observaciones de Toma 1 y Toma 2 que ya existen. No tenÃ©s que volver a escribirlas.
+                Detectamos las observaciones de Toma 1 y Toma 2 que ya existen. No tenes que volver a escribirlas.
               </p>
             </div>
 
@@ -4352,7 +4352,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                           {candidate.title}
                         </p>
                         <p className="text-pr-gold/70 text-[10px] mt-1 uppercase tracking-wider">
-                          Se importarÃ¡ como Toma {candidate.takeNumber}
+                          Se importara como Toma {candidate.takeNumber}
                         </p>
                       </div>
                       <span className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-white/45 text-[10px]">
@@ -4378,7 +4378,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                       </div>
                     ) : (
                       <p className="text-amber-200/80 text-xs mt-3 leading-relaxed">
-                        EncontrÃ© la devoluciÃ³n, pero no pude detectar con seguridad la distancia y el tiempo. Este caso requiere revisiÃ³n manual.
+                        Encontre la devolucion, pero no pude detectar con seguridad la distancia y el tiempo. Este caso requiere revision manual.
                       </p>
                     )}
 
@@ -4395,7 +4395,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                         ? 'Importando...'
                         : candidate.records.length
                         ? `Importar como Toma ${candidate.takeNumber}`
-                        : 'RevisiÃ³n manual pendiente'}
+                        : 'Revision manual pendiente'}
                     </button>
                   </div>
                 ))}
@@ -4417,7 +4417,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                   Toma {nextTakeNumber}
                 </h3>
                 <p className="text-white/35 text-xs mt-1">
-                  AgregÃ¡ todas las distancias realizadas en esta misma toma.
+                  Agrega todas las distancias realizadas en esta misma toma.
                 </p>
               </div>
               <span className="rounded-full border border-pr-gold/20 bg-pr-gold/10 px-3 py-1.5 text-pr-gold text-[10px] font-bold">
@@ -4487,7 +4487,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
                     {record.distance === 'custom' && (
                       <AdminInput
-                        label="Distancia en kilÃ³metros"
+                        label="Distancia en kilometros"
                         value={record.customDistance}
                         onChange={(value) =>
                           updateRecord(record.id, 'customDistance', value)
@@ -4534,13 +4534,13 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
             <label className="block">
               <span className="text-white/40 text-xs">
-                DevoluciÃ³n general de la Toma {nextTakeNumber}
+                Devolucion general de la Toma {nextTakeNumber}
               </span>
               <textarea
                 value={feedback}
                 onChange={(event) => setFeedback(event.target.value)}
                 rows="5"
-                placeholder="DevoluciÃ³n tÃ©cnica general para el alumno..."
+                placeholder="Devolucion tecnica general para el alumno..."
                 className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
               />
             </label>
@@ -4559,7 +4559,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
           <section className={`${panel} p-4 space-y-4`}>
             <div>
-              <p className="section-label">EvaluaciÃ³n tÃ©cnica</p>
+              <p className="section-label">Evaluacion tecnica</p>
               <h3 className="font-display text-2xl text-white mt-1">
                 Perfil de rodaje
               </h3>
@@ -4578,7 +4578,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                 className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
               >
                 <option value="Recreativo">Recreativo</option>
-                <option value="En evoluciÃ³n">En evoluciÃ³n</option>
+                <option value="En evolucion">En evolucion</option>
                 <option value="Competitivo">Competitivo</option>
                 <option value="Racing Team">Racing Team</option>
               </select>
@@ -4586,7 +4586,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
 
             <div className="grid grid-cols-2 gap-3">
               <PerformanceRating
-                label="TÃ©cnica"
+                label="Tecnica"
                 value={profileForm.tecnica}
                 onChange={(value) =>
                   setProfileForm({ ...profileForm, tecnica: value })
@@ -4607,7 +4607,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
               onClick={savePerformanceProfile}
               className="w-full rounded-2xl border border-pr-gold/25 bg-pr-gold/10 py-4 text-pr-gold text-sm font-bold disabled:opacity-50"
             >
-              {savingProfile ? 'Guardando perfil...' : 'Guardar perfil tÃ©cnico'}
+              {savingProfile ? 'Guardando perfil...' : 'Guardar perfil tecnico'}
             </button>
           </section>
 
@@ -4636,7 +4636,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                         Toma {group.numero_toma}
                       </p>
                       <p className="text-white/35 text-xs mt-1">
-                        {formatPerformanceDate(group.fecha)} Â·{' '}
+                        {formatPerformanceDate(group.fecha)} {' '}
                         {group.registros.length} distancia/s
                       </p>
                     </div>
@@ -4646,7 +4646,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                       className="w-9 h-9 rounded-full border border-red-400/15 bg-red-400/[0.07] text-red-200 text-xs grid place-items-center shrink-0"
                       aria-label={`Eliminar toma ${group.numero_toma}`}
                     >
-                      Ã—
+                      
                     </button>
                   </div>
 
@@ -4657,7 +4657,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                         className="rounded-2xl border border-white/5 bg-white/[0.025] p-3"
                       >
                         <p className="text-white font-display text-lg">
-                          {formatPerformanceDistance(take.distancia_km)} Â·{' '}
+                          {formatPerformanceDistance(take.distancia_km)} {' '}
                           {formatPerformanceDuration(take.tiempo_segundos)}
                         </p>
                         <div className="grid grid-cols-2 gap-2 mt-2">
@@ -4681,7 +4681,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                   {group.devolucion && (
                     <div className="rounded-2xl border border-pr-gold/10 bg-pr-gold/[0.04] p-3 mt-3">
                       <p className="text-white/30 text-[10px] uppercase tracking-wider">
-                        DevoluciÃ³n de la toma
+                        Devolucion de la toma
                       </p>
                       <p className="text-white/65 text-sm leading-relaxed mt-1 break-words">
                         {group.devolucion}
@@ -4693,7 +4693,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
             ) : (
               <div className="rounded-2xl bg-black/25 border border-white/5 p-4">
                 <p className="text-white/45 text-sm">
-                  Este alumno todavÃ­a no tiene tomas registradas en PR Performance.
+                  Este alumno todavia no tiene tomas registradas en PR Performance.
                 </p>
               </div>
             )}
@@ -4702,7 +4702,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
       ) : (
         <section className={`${panel} p-4`}>
           <p className="text-white/45 text-sm">
-            SeleccionÃ¡ un alumno para administrar su rendimiento.
+            Selecciona un alumno para administrar su rendimiento.
           </p>
         </section>
       )}
@@ -4745,7 +4745,7 @@ function inferLegacyTakeNumber(value) {
   const normalized = normalizePerformanceText(value)
 
   const numeric = normalized.match(
-    /(?:toma|devolucion|medicion|prueba)\s*(?:de\s+tiempo\s*)?(?:n[Â°Âºo]?\s*)?([1-9]\d*)/
+    /(?:toma|devolucion|medicion|prueba)\s*(?:de\s+tiempo\s*)?(?:n[oo]?\s*)?([1-9]\d*)/
   )
 
   if (numeric) return Number(numeric[1])
@@ -5025,10 +5025,10 @@ function ActionsPanel({
 
     try {
       setSaving(true)
-      setMsg('Guardando acciÃ³n...')
+      setMsg('Guardando accion...')
 
       if (selectedStudents.length === 0) {
-        throw new Error('SeleccionÃ¡ al menos un alumno.')
+        throw new Error('Selecciona al menos un alumno.')
       }
 
       const creatorName =
@@ -5038,7 +5038,7 @@ function ActionsPanel({
 
       if (actionType === 'Insignia') {
         if (!selectedBadges.length) {
-          throw new Error('SeleccionÃ¡ al menos una insignia.')
+          throw new Error('Selecciona al menos una insignia.')
         }
 
         if (!pendingBadgeRows.length) {
@@ -5066,7 +5066,7 @@ function ActionsPanel({
         setMsg(
           `${rows.length} insignia/s otorgada/s. ${
             skippedBadgeCombinations
-              ? `${skippedBadgeCombinations} asignaciÃ³n/es duplicada/s fueron omitidas.`
+              ? `${skippedBadgeCombinations} asignacion/es duplicada/s fueron omitidas.`
               : 'No hubo duplicados.'
           }`
         )
@@ -5074,7 +5074,7 @@ function ActionsPanel({
         return
       }
 
-      if (!titulo.trim()) throw new Error('Falta el tÃ­tulo.')
+      if (!titulo.trim()) throw new Error('Falta el titulo.')
 
       const rows = selectedStudents.map((id) => ({
         alumno_id: id,
@@ -5105,10 +5105,10 @@ function ActionsPanel({
   return (
     <div className="space-y-4">
       <section className={`${panel} p-4 space-y-3`}>
-        <p className="section-label">AcciÃ³n grupal o individual</p>
+        <p className="section-label">Accion grupal o individual</p>
 
         <label className="block">
-          <span className="text-white/40 text-xs">Tipo de acciÃ³n</span>
+          <span className="text-white/40 text-xs">Tipo de accion</span>
           <select
             value={actionType}
             onChange={(event) => {
@@ -5119,9 +5119,9 @@ function ActionsPanel({
             }}
             className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
           >
-            <option value="Nota">ObservaciÃ³n / Nota</option>
+            <option value="Nota">Observacion / Nota</option>
             <option value="Insignia">Insignia</option>
-            <option value="Evento">ParticipaciÃ³n / Evento</option>
+            <option value="Evento">Participacion / Evento</option>
           </select>
         </label>
 
@@ -5130,7 +5130,7 @@ function ActionsPanel({
             <div>
               <p className="text-white/40 text-xs">Insignias</p>
               <p className="text-white/30 text-[10px] mt-1">
-                PodÃ©s seleccionar varias. TocÃ¡ nuevamente para quitar una.
+                Podes seleccionar varias. Toca nuevamente para quitar una.
               </p>
             </div>
             <BadgePicker
@@ -5140,16 +5140,16 @@ function ActionsPanel({
             />
 
             <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] p-3">
-              <p className="section-label">Resumen de asignaciÃ³n</p>
+              <p className="section-label">Resumen de asignacion</p>
               <p className="text-white font-semibold mt-1">
-                {selectedStudents.length} alumno/s Ã— {selectedBadges.length} insignia/s
+                {selectedStudents.length} alumno/s  {selectedBadges.length} insignia/s
               </p>
               <p className="text-pr-gold text-sm font-bold mt-2">
-                {pendingBadgeRows.length} asignaciÃ³n/es nuevas
+                {pendingBadgeRows.length} asignacion/es nuevas
               </p>
               {skippedBadgeCombinations > 0 && (
                 <p className="text-amber-200/75 text-xs mt-1">
-                  {skippedBadgeCombinations} ya existen y se omitirÃ¡n automÃ¡ticamente.
+                  {skippedBadgeCombinations} ya existen y se omitiran automaticamente.
                 </p>
               )}
               {loadingBadges && (
@@ -5161,9 +5161,9 @@ function ActionsPanel({
           </>
         ) : (
           <>
-            <AdminInput label="TÃ­tulo" value={titulo} onChange={setTitulo} />
+            <AdminInput label="Titulo" value={titulo} onChange={setTitulo} />
             <label className="block">
-              <span className="text-white/40 text-xs">DescripciÃ³n</span>
+              <span className="text-white/40 text-xs">Descripcion</span>
               <textarea
                 value={descripcion}
                 onChange={(event) => setDescripcion(event.target.value)}
@@ -5227,7 +5227,7 @@ function ActionsPanel({
         {saving
           ? 'Guardando...'
           : actionType === 'Insignia'
-          ? `Otorgar ${pendingBadgeRows.length} asignaciÃ³n/es`
+          ? `Otorgar ${pendingBadgeRows.length} asignacion/es`
           : `Guardar ${actionType}`}
       </button>
     </div>
@@ -5275,7 +5275,7 @@ function BadgePicker({
               />
               {disabled && (
                 <span className="absolute top-2 right-2 w-8 h-8 rounded-full border border-emerald-300/20 bg-emerald-400/15 text-emerald-200 grid place-items-center font-bold">
-                  âœ“
+                  
                 </span>
               )}
             </div>
@@ -5301,7 +5301,7 @@ function BadgePicker({
                     }`
                   : selected
                   ? multi
-                    ? 'Seleccionada Â· tocar para quitar'
+                    ? 'Seleccionada  tocar para quitar'
                     : 'Seleccionada'
                   : 'Tocar para elegir'}
               </p>
@@ -5331,14 +5331,14 @@ const DEFAULT_ROLLER_EVENTS = [
     creado_por_nombre: 'Equipo Punta Rollers',
   },
   {
-    titulo: 'Primera ClÃ­nica de Patinaje con Miguel Flores',
+    titulo: 'Primera Clinica de Patinaje con Miguel Flores',
     descripcion:
-      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeÃ³n mundial mÃ¡ster y especialista con mÃ¡s de 40 aÃ±os de experiencia. Horarios y ubicaciÃ³n a confirmar.',
+      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeon mundial master y especialista con mas de 40 anos de experiencia. Horarios y ubicacion a confirmar.',
     inicio: '2026-09-04T03:00:00.000Z',
     fin: '2026-09-07T02:59:00.000Z',
     mes_referencia:
-      'Viernes 4, sÃ¡bado 5 y domingo 6 de septiembre Â· horario a confirmar',
-    lugar: 'UbicaciÃ³n a confirmar',
+      'Viernes 4, sabado 5 y domingo 6 de septiembre  horario a confirmar',
+    lugar: 'Ubicacion a confirmar',
     link: '',
     color: 'violet',
     estado: 'Publicado',
@@ -5346,16 +5346,16 @@ const DEFAULT_ROLLER_EVENTS = [
     creado_por_nombre: 'Equipo Punta Rollers',
   },
   {
-    titulo: 'Segunda ClÃ­nica de Patinaje con Miguel Flores',
+    titulo: 'Segunda Clinica de Patinaje con Miguel Flores',
     descripcion:
-      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clÃ­nica intensiva de patinaje. PrÃ³ximamente anunciaremos las fechas, los horarios y la ubicaciÃ³n.',
+      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clinica intensiva de patinaje. Proximamente anunciaremos las fechas, los horarios y la ubicacion.',
     inicio: null,
     fin: null,
-    mes_referencia: 'Octubre 2026 Â· fechas a confirmar',
-    lugar: 'UbicaciÃ³n a confirmar',
+    mes_referencia: 'Octubre 2026  fechas a confirmar',
+    lugar: 'Ubicacion a confirmar',
     link: '',
     color: 'electric',
-    estado: 'PrÃ³ximamente',
+    estado: 'Proximamente',
     visible_feed: true,
     creado_por_nombre: 'Equipo Punta Rollers',
   },
@@ -5405,7 +5405,7 @@ function mergeRollerEvents(databaseEvents = []) {
 const EVENT_COLOR_OPTIONS = [
   {
     id: 'street',
-    label: 'Street Â· negro y rojo',
+    label: 'Street  negro y rojo',
     preview: 'from-red-600/35 via-zinc-950 to-orange-500/20',
     card: 'from-[#2a0d0d] via-[#101014] to-[#27120b]',
     border: 'border-red-400/25',
@@ -5413,7 +5413,7 @@ const EVENT_COLOR_OPTIONS = [
   },
   {
     id: 'violet',
-    label: 'ClÃ­nica Â· violeta y fucsia',
+    label: 'Clinica  violeta y fucsia',
     preview: 'from-violet-600/35 via-fuchsia-500/20 to-zinc-950',
     card: 'from-[#25103b] via-[#17101f] to-[#09090d]',
     border: 'border-fuchsia-300/25',
@@ -5421,7 +5421,7 @@ const EVENT_COLOR_OPTIONS = [
   },
   {
     id: 'electric',
-    label: 'ElÃ©ctrico Â· azul y celeste',
+    label: 'Electrico  azul y celeste',
     preview: 'from-blue-600/35 via-cyan-500/20 to-zinc-950',
     card: 'from-[#0b2141] via-[#0d1724] to-[#08090d]',
     border: 'border-cyan-300/25',
@@ -5429,7 +5429,7 @@ const EVENT_COLOR_OPTIONS = [
   },
   {
     id: 'gold',
-    label: 'Premium Â· dorado y negro',
+    label: 'Premium  dorado y negro',
     preview: 'from-amber-500/35 via-yellow-300/10 to-zinc-950',
     card: 'from-[#2b2008] via-[#15130d] to-[#08080b]',
     border: 'border-amber-300/25',
@@ -5437,7 +5437,7 @@ const EVENT_COLOR_OPTIONS = [
   },
   {
     id: 'green',
-    label: 'EnergÃ­a Â· verde y esmeralda',
+    label: 'Energia  verde y esmeralda',
     preview: 'from-emerald-600/35 via-lime-400/15 to-zinc-950',
     card: 'from-[#0b2c22] via-[#0d1814] to-[#08090b]',
     border: 'border-emerald-300/25',
@@ -5470,13 +5470,13 @@ function eventLocalInputValue(value) {
 
 function eventStatus(event) {
   if (event.estado === 'Cancelado') return 'Cancelado'
-  if (!event.inicio) return 'PrÃ³ximamente'
+  if (!event.inicio) return 'Proximamente'
 
   const now = Date.now()
   const start = new Date(event.inicio).getTime()
   const end = event.fin ? new Date(event.fin).getTime() : start
 
-  if (Number.isNaN(start)) return 'PrÃ³ximamente'
+  if (Number.isNaN(start)) return 'Proximamente'
   if (now < start) return 'Publicado'
   if (now <= end + 5 * 60000) return 'En curso'
   return 'Finalizado'
@@ -5508,7 +5508,7 @@ function formatEventRange(event) {
     minute: '2-digit',
   })
 
-  return `${startText} Â· hasta ${endText}`
+  return `${startText}  hasta ${endText}`
 }
 
 function EventsPanel({ creator, setMsg }) {
@@ -5533,7 +5533,7 @@ function EventsPanel({ creator, setMsg }) {
       if (error) {
         setEvents(getDefaultRollerEvents())
         setMsg(
-          `Los eventos se muestran con la informaciÃ³n oficial guardada en la app. Supabase respondiÃ³: ${error.message}`
+          `Los eventos se muestran con la informacion oficial guardada en la app. Supabase respondio: ${error.message}`
         )
         return
       }
@@ -5555,7 +5555,7 @@ function EventsPanel({ creator, setMsg }) {
     } catch (error) {
       setEvents(getDefaultRollerEvents())
       setMsg(
-        `Los eventos se muestran con la informaciÃ³n oficial guardada en la app. No se pudo consultar Supabase: ${error.message}`
+        `Los eventos se muestran con la informacion oficial guardada en la app. No se pudo consultar Supabase: ${error.message}`
       )
     } finally {
       setLoadingEvents(false)
@@ -5600,7 +5600,7 @@ function EventsPanel({ creator, setMsg }) {
         const start = new Date(form.inicio).getTime()
         const end = new Date(form.fin).getTime()
         if (end <= start) {
-          throw new Error('La finalizaciÃ³n debe ser posterior al inicio.')
+          throw new Error('La finalizacion debe ser posterior al inicio.')
         }
       }
 
@@ -5646,13 +5646,13 @@ function EventsPanel({ creator, setMsg }) {
   async function removeEvent(event) {
     if (event._isFallback || String(event.id || '').startsWith('default-event-')) {
       setMsg(
-        'Este es un evento oficial de respaldo. PodÃ©s editarlo y, al guardar, se crearÃ¡ su versiÃ³n en Supabase.'
+        'Este es un evento oficial de respaldo. Podes editarlo y, al guardar, se creara su version en Supabase.'
       )
       return
     }
 
     const confirmed = window.confirm(
-      `Â¿Eliminar "${event.titulo}"? Esta acciÃ³n lo quitarÃ¡ tambiÃ©n del RollerFeed.`
+      `Eliminar "${event.titulo}"? Esta accion lo quitara tambien del RollerFeed.`
     )
     if (!confirmed) return
 
@@ -5685,12 +5685,12 @@ function EventsPanel({ creator, setMsg }) {
               {form.id ? 'Editar evento' : 'Nuevo evento'}
             </h2>
             <p className="text-white/35 text-xs mt-1">
-              Banners limpios, sin imÃ¡genes y con identidad propia.
+              Banners limpios, sin imagenes y con identidad propia.
             </p>
           </div>
 
           <span className="w-10 h-10 rounded-full bg-pr-gold/10 text-pr-gold grid place-items-center">
-            {openForm ? 'âˆ’' : '+'}
+            {openForm ? '' : '+'}
           </span>
         </button>
 
@@ -5700,7 +5700,7 @@ function EventsPanel({ creator, setMsg }) {
               <div className="absolute -right-10 -top-12 w-36 h-36 rounded-full bg-white/10 blur-3xl" />
               <div className="relative">
                 <p className={`text-[9px] font-bold uppercase tracking-[0.18em] ${selectedColor.accent}`}>
-                  Vista previa Â· Evento PR
+                  Vista previa  Evento PR
                 </p>
                 <h3 className="font-display text-[28px] leading-tight text-white mt-3">
                   {form.titulo || 'Nombre del evento'}
@@ -5715,7 +5715,7 @@ function EventsPanel({ creator, setMsg }) {
                     : form.mesReferencia || 'Fecha a confirmar'}
                 </p>
                 {form.lugar && (
-                  <p className="text-white/55 text-xs mt-2">ðŸ“ {form.lugar}</p>
+                  <p className="text-white/55 text-xs mt-2"> {form.lugar}</p>
                 )}
               </div>
             </div>
@@ -5728,14 +5728,14 @@ function EventsPanel({ creator, setMsg }) {
             />
 
             <label className="block">
-              <span className="text-white/40 text-xs">DescripciÃ³n</span>
+              <span className="text-white/40 text-xs">Descripcion</span>
               <textarea
                 value={form.descripcion}
                 onChange={(event) =>
                   setForm({ ...form, descripcion: event.target.value })
                 }
                 rows={5}
-                placeholder="ContÃ¡ lo esencial del evento..."
+                placeholder="Conta lo esencial del evento..."
                 className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white resize-none"
               />
             </label>
@@ -5748,7 +5748,7 @@ function EventsPanel({ creator, setMsg }) {
                 type="datetime-local"
               />
               <AdminInput
-                label="FinalizaciÃ³n"
+                label="Finalizacion"
                 value={form.fin}
                 onChange={(value) => setForm({ ...form, fin: value })}
                 type="datetime-local"
@@ -5756,14 +5756,14 @@ function EventsPanel({ creator, setMsg }) {
             </div>
 
             <p className="text-white/25 text-[10px] leading-relaxed">
-              Si la fecha todavÃ­a no estÃ¡ confirmada, dejÃ¡ Inicio y FinalizaciÃ³n vacÃ­os y completÃ¡ el mes o texto de referencia.
+              Si la fecha todavia no esta confirmada, deja Inicio y Finalizacion vacios y completa el mes o texto de referencia.
             </p>
 
             <AdminInput
               label="Mes o fecha de referencia"
               value={form.mesReferencia}
               onChange={(value) => setForm({ ...form, mesReferencia: value })}
-              placeholder="Ej: Octubre 2026 Â· fechas a confirmar"
+              placeholder="Ej: Octubre 2026  fechas a confirmar"
             />
 
             <AdminInput
@@ -5804,7 +5804,7 @@ function EventsPanel({ creator, setMsg }) {
                 className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
               >
                 <option value="Publicado">Publicado</option>
-                <option value="PrÃ³ximamente">PrÃ³ximamente</option>
+                <option value="Proximamente">Proximamente</option>
                 <option value="Cancelado">Cancelado</option>
               </select>
             </label>
@@ -5880,7 +5880,7 @@ function EventsPanel({ creator, setMsg }) {
                   </p>
 
                   {event.lugar && (
-                    <p className="text-white/55 text-xs mt-2">ðŸ“ {event.lugar}</p>
+                    <p className="text-white/55 text-xs mt-2"> {event.lugar}</p>
                   )}
 
                   {event.descripcion && (
@@ -5911,7 +5911,7 @@ function EventsPanel({ creator, setMsg }) {
           })
         ) : (
           <div className={`${panel} p-6 text-center`}>
-            <p className="text-white/50 text-sm">TodavÃ­a no hay eventos cargados.</p>
+            <p className="text-white/50 text-sm">Todavia no hay eventos cargados.</p>
           </div>
         )}
       </section>
@@ -5925,7 +5925,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
     <section className={`${panel} p-4 space-y-3`}>
       <p className="section-label">Cupos manuales de la Home</p>
       <CupoInput
-        label="MiÃ©rcoles Â· Clases mixtas"
+        label="Miercoles  Clases mixtas"
         value={cupos.miercoles.principiantes}
         onChange={(value) =>
           setCupos({
@@ -5935,7 +5935,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
         }
       />
       <CupoInput
-        label="SÃ¡bado Â· Adultos 09:00"
+        label="Sabado  Adultos 09:00"
         value={cupos.miercoles.avanzado}
         onChange={(value) =>
           setCupos({
@@ -5945,7 +5945,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
         }
       />
       <CupoInput
-        label="SÃ¡bado Â· PR Kids 19:00"
+        label="Sabado  PR Kids 19:00"
         value={cupos.sabado.kids}
         onChange={(value) =>
           setCupos({
@@ -5955,7 +5955,7 @@ function CuposPanel({ cupos, setCupos, onSave }) {
         }
       />
       <CupoInput
-        label="SÃ¡bado Â· Adultos 20:00"
+        label="Sabado  Adultos 20:00"
         value={cupos.sabado.adultos}
         onChange={(value) =>
           setCupos({
@@ -5975,7 +5975,7 @@ function ConfigPanel() {
   return (
     <section className={`${panel} p-4`}>
       <p className="section-label">
-        ConfiguraciÃ³n general
+        Configuracion general
       </p>
 
       <h2 className="font-display text-2xl text-white mt-1">
@@ -5983,8 +5983,8 @@ function ConfigPanel() {
       </h2>
 
       <p className="text-white/45 text-sm mt-2 leading-relaxed">
-        La migraciÃ³n de usuarios a Supabase Auth ya fue completada.
-        La gestiÃ³n diaria de cuentas, PIN, pagos, clases particulares
+        La migracion de usuarios a Supabase Auth ya fue completada.
+        La gestion diaria de cuentas, PIN, pagos, clases particulares
         y contactos permanece activa desde este panel.
       </p>
 
@@ -6071,7 +6071,7 @@ function List({ items }) {
         ))
       ) : (
         <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
-          <p className="text-white/45 text-sm">Sin registros todavÃ­a.</p>
+          <p className="text-white/45 text-sm">Sin registros todavia.</p>
         </div>
       )}
     </div>
@@ -6171,4 +6171,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-        }
+      }
