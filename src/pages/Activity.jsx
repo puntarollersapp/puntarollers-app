@@ -6,52 +6,63 @@ import { supabase } from '../lib/supabase'
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
   { key: 'Entrenamiento', label: 'Entrenos' },
-  { key: 'Cumpleaños', label: 'Cumples' },
+  { key: 'CumpleaÃ±os', label: 'Cumples' },
   { key: 'Insignia', label: 'Logros' },
   { key: 'Evento', label: 'Eventos' },
 ]
 
+const REACTION_OPTIONS = [
+  { key: 'aplauso', icon: 'ðŸ‘', label: 'Grande' },
+  { key: 'fuego', icon: 'ðŸ”¥', label: 'Motivador' },
+  { key: 'corazon', icon: 'â¤ï¸', label: 'Me encanta' },
+  { key: 'amor', icon: 'ðŸ˜', label: 'IncreÃ­ble' },
+]
+
+function getReactionOption(key) {
+  return REACTION_OPTIONS.find((item) => item.key === key) || REACTION_OPTIONS[0]
+}
+
 const EMPTY_STATES = {
   Todos: {
-    icon: '🛼',
-    title: 'La pista está tranquila',
+    icon: 'ðŸ›¼',
+    title: 'La pista estÃ¡ tranquila',
     description:
-      'Las próximas actividades públicas de la comunidad aparecerán acá.',
+      'Las prÃ³ximas actividades pÃºblicas de la comunidad aparecerÃ¡n acÃ¡.',
   },
   Entrenamiento: {
-    icon: '⚡',
-    title: 'Todavía no hay entrenamientos',
+    icon: 'âš¡',
+    title: 'TodavÃ­a no hay entrenamientos',
     description:
-      'Las actividades públicas sincronizadas con Strava aparecerán acá.',
+      'Las actividades pÃºblicas sincronizadas con Strava aparecerÃ¡n acÃ¡.',
   },
-  Cumpleaños: {
-    icon: '🎂',
-    title: 'No hay cumpleaños próximos',
+  CumpleaÃ±os: {
+    icon: 'ðŸŽ‚',
+    title: 'No hay cumpleaÃ±os prÃ³ximos',
     description:
-      'Mostraremos automáticamente los cumpleaños de hoy y de los próximos 5 días.',
+      'Mostraremos automÃ¡ticamente los cumpleaÃ±os de hoy y de los prÃ³ximos 5 dÃ­as.',
   },
   Insignia: {
-    icon: '🏅',
-    title: 'Todavía no hay logros publicados',
+    icon: 'ðŸ…',
+    title: 'TodavÃ­a no hay logros publicados',
     description:
-      'Las insignias otorgadas a la comunidad aparecerán acá.',
+      'Las insignias otorgadas a la comunidad aparecerÃ¡n acÃ¡.',
   },
   Evento: {
-    icon: '📅',
-    title: 'No hay eventos próximos',
+    icon: 'ðŸ“…',
+    title: 'No hay eventos prÃ³ximos',
     description:
-      'Las salidas, clínicas, competencias y encuentros publicados aparecerán acá.',
+      'Las salidas, clÃ­nicas, competencias y encuentros publicados aparecerÃ¡n acÃ¡.',
   },
 }
 
 const PRIVATE_LEGACY_TERMS = [
   'nota',
   'devolucion',
-  'devolución',
+  'devoluciÃ³n',
   'evaluacion',
-  'evaluación',
+  'evaluaciÃ³n',
   'observacion',
-  'observación',
+  'observaciÃ³n',
   'seguimiento',
   'ficha digital',
   'toma 1',
@@ -59,7 +70,7 @@ const PRIVATE_LEGACY_TERMS = [
   'toma 3',
   'toma de tiempo',
   'calificacion',
-  'calificación',
+  'calificaciÃ³n',
 ]
 
 function loadSavedUser() {
@@ -148,7 +159,7 @@ function formatRelativeDate(value) {
   if (minutes < 60) return `Hace ${minutes} min`
   if (hours < 24) return `Hace ${hours} h`
   if (days === 1) return 'Ayer'
-  if (days < 7) return `Hace ${days} días`
+  if (days < 7) return `Hace ${days} dÃ­as`
 
   return formatDate(value)
 }
@@ -192,7 +203,7 @@ function formatDistance(meters) {
 
 function formatSpeed(metersPerSecond) {
   const value = Number(metersPerSecond) || 0
-  if (!value) return '—'
+  if (!value) return 'â€”'
 
   return `${(value * 3.6).toFixed(1)} km/h`
 }
@@ -212,15 +223,15 @@ function isPublicTraining(activity) {
 function resolveLegacyType(item) {
   const type = lower(item?.tipo)
 
-  if (type === 'cumpleanos' || type === 'cumpleaños') {
-    return 'Cumpleaños'
+  if (type === 'cumpleanos' || type === 'cumpleaÃ±os') {
+    return 'CumpleaÃ±os'
   }
 
   if (type === 'entrenamiento') return 'Entrenamiento'
   if (type === 'insignia') return 'Insignia'
   if (type === 'evento') return 'Evento'
 
-  return 'Publicación'
+  return 'PublicaciÃ³n'
 }
 
 function isPublicLegacyItem(item) {
@@ -254,9 +265,9 @@ function isPublicLegacyItem(item) {
   const type = resolveLegacyType(item)
 
   return [
-    'Publicación',
+    'PublicaciÃ³n',
     'Entrenamiento',
-    'Cumpleaños',
+    'CumpleaÃ±os',
     'Insignia',
     'Evento',
   ].includes(type)
@@ -425,14 +436,14 @@ const DEFAULT_ROLLER_EVENTS = [
     creado_por_nombre: 'Equipo Punta Rollers',
   },
   {
-    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
+    titulo: 'Primera ClÃ­nica de Patinaje con Miguel Flores',
     descripcion:
-      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeón mundial máster y especialista con más de 40 años de experiencia. Horarios y ubicación a confirmar.',
+      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeÃ³n mundial mÃ¡ster y especialista con mÃ¡s de 40 aÃ±os de experiencia. Horarios y ubicaciÃ³n a confirmar.',
     inicio: '2026-09-04T03:00:00.000Z',
     fin: '2026-09-07T02:59:00.000Z',
     mes_referencia:
-      'Viernes 4, sábado 5 y domingo 6 de septiembre · horario a confirmar',
-    lugar: 'Ubicación a confirmar',
+      'Viernes 4, sÃ¡bado 5 y domingo 6 de septiembre Â· horario a confirmar',
+    lugar: 'UbicaciÃ³n a confirmar',
     link: '',
     color: 'violet',
     estado: 'Publicado',
@@ -440,16 +451,16 @@ const DEFAULT_ROLLER_EVENTS = [
     creado_por_nombre: 'Equipo Punta Rollers',
   },
   {
-    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
+    titulo: 'Segunda ClÃ­nica de Patinaje con Miguel Flores',
     descripcion:
-      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clínica intensiva de patinaje. Próximamente anunciaremos las fechas, los horarios y la ubicación.',
+      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clÃ­nica intensiva de patinaje. PrÃ³ximamente anunciaremos las fechas, los horarios y la ubicaciÃ³n.',
     inicio: null,
     fin: null,
-    mes_referencia: 'Octubre 2026 · fechas a confirmar',
-    lugar: 'Ubicación a confirmar',
+    mes_referencia: 'Octubre 2026 Â· fechas a confirmar',
+    lugar: 'UbicaciÃ³n a confirmar',
     link: '',
     color: 'electric',
-    estado: 'Próximamente',
+    estado: 'PrÃ³ximamente',
     visible_feed: true,
     creado_por_nombre: 'Equipo Punta Rollers',
   },
@@ -531,13 +542,13 @@ const ROLLER_EVENT_COLORS = {
 
 function getRollerEventStatus(event) {
   if (event.estado === 'Cancelado') return 'Cancelado'
-  if (!event.inicio) return 'Próximamente'
+  if (!event.inicio) return 'PrÃ³ximamente'
 
   const start = new Date(event.inicio).getTime()
   const end = event.fin ? new Date(event.fin).getTime() : start
   const now = Date.now()
 
-  if (Number.isNaN(start)) return 'Próximamente'
+  if (Number.isNaN(start)) return 'PrÃ³ximamente'
   if (now < start) return 'Publicado'
   if (now <= end + 5 * 60000) return 'En curso'
   return 'Finalizado'
@@ -584,7 +595,7 @@ function formatRollerEventRange(event) {
     minute: '2-digit',
   })
 
-  return `${startText} · hasta ${endText}`
+  return `${startText} Â· hasta ${endText}`
 }
 
 function normalizeRollerEvent(event) {
@@ -704,18 +715,18 @@ function buildBirthdayPosts(profiles) {
       const isTomorrow = upcoming.daysUntil === 1
 
       const title = isToday
-        ? `¡Hoy cumple años ${name}!`
+        ? `Â¡Hoy cumple aÃ±os ${name}!`
         : isTomorrow
-          ? `¡Mañana cumple años ${name}!`
-          : `En ${upcoming.daysUntil} días cumple años ${name}`
+          ? `Â¡MaÃ±ana cumple aÃ±os ${name}!`
+          : `En ${upcoming.daysUntil} dÃ­as cumple aÃ±os ${name}`
 
       const description = isToday
-        ? 'Toda la comunidad Punta Rollers le desea un día increíble. Celebremos juntos. 🎉'
-        : 'Se acerca una fecha especial para nuestra comunidad. 🎈'
+        ? 'Toda la comunidad Punta Rollers le desea un dÃ­a increÃ­ble. Celebremos juntos. ðŸŽ‰'
+        : 'Se acerca una fecha especial para nuestra comunidad. ðŸŽˆ'
 
       return {
         id: `birthday-${profile.id}-${upcoming.date.getFullYear()}`,
-        type: 'Cumpleaños',
+        type: 'CumpleaÃ±os',
         date: new Date(
           today.getFullYear(),
           today.getMonth(),
@@ -749,6 +760,9 @@ export default function Activity() {
   const [legacyItems, setLegacyItems] = useState([])
   const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
+  const [reactions, setReactions] = useState([])
+  const [reactionModalItem, setReactionModalItem] = useState(null)
+  const [savingReactionKey, setSavingReactionKey] = useState('')
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -832,6 +846,7 @@ export default function Activity() {
       activitiesResponse,
       legacyResponse,
       eventsResponse,
+      reactionsResponse,
     ] = await Promise.all([
       supabase.from('profiles_feed').select('*').limit(500),
 
@@ -853,6 +868,12 @@ export default function Activity() {
       supabase
         .from('rollerfeed_events')
         .select('*'),
+
+      supabase
+        .from('rollerfeed_reactions')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(2000),
     ])
 
     if (profilesResponse.error) {
@@ -902,7 +923,7 @@ export default function Activity() {
       )
       setMessage((current) =>
         current ||
-        `Los eventos oficiales se cargaron desde el respaldo de la app. Supabase respondió: ${eventsResponse.error.message}`
+        `Los eventos oficiales se cargaron desde el respaldo de la app. Supabase respondiÃ³: ${eventsResponse.error.message}`
       )
     } else {
       const loadedEvents = mergeRollerEvents(eventsResponse.data || [])
@@ -916,6 +937,16 @@ export default function Activity() {
           )
           .filter(isVisibleRollerEvent)
       )
+    }
+
+    if (reactionsResponse.error) {
+      setReactions([])
+      setMessage((current) =>
+        current ||
+        `Las reacciones todavÃ­a no estÃ¡n disponibles: ${reactionsResponse.error.message}`
+      )
+    } else {
+      setReactions(reactionsResponse.data || [])
     }
 
     setProfiles(profilesResponse.data || [])
@@ -946,12 +977,12 @@ export default function Activity() {
       if (syncResult.newActivities > 0) {
         setMessage(
           syncResult.newActivities === 1
-            ? '⚡ Se agregó 1 actividad nueva de Strava al RollerFeed.'
-            : `⚡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
+            ? 'âš¡ Se agregÃ³ 1 actividad nueva de Strava al RollerFeed.'
+            : `âš¡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
         )
       } else if (syncResult.error) {
         setMessage(
-          `El RollerFeed se cargó, pero Strava no pudo actualizarse: ${syncResult.errorMessage}`
+          `El RollerFeed se cargÃ³, pero Strava no pudo actualizarse: ${syncResult.errorMessage}`
         )
       }
     }
@@ -978,6 +1009,88 @@ export default function Activity() {
 
     return map
   }, [profiles])
+
+  const currentProfile = useMemo(
+    () => profilesByAnyId.get(String(profileId)) || {},
+    [profilesByAnyId, profileId]
+  )
+
+  const currentReactionProfileId = currentProfile?.id || profileId || ''
+
+  const reactionsByFeedKey = useMemo(() => {
+    const map = new Map()
+    reactions.forEach((reaction) => {
+      const key = String(reaction.feed_key || '')
+      if (!key) return
+      const current = map.get(key) || []
+      current.push(reaction)
+      map.set(key, current)
+    })
+    return map
+  }, [reactions])
+
+  function getItemReactions(item) {
+    return reactionsByFeedKey.get(String(item?.id || '')) || []
+  }
+
+  async function selectReaction(item, reactionKey) {
+    if (!item?.id || !currentReactionProfileId) {
+      setMessage('No pudimos identificar tu perfil para guardar la reacciÃ³n.')
+      return
+    }
+    if (savingReactionKey) return
+
+    const feedKey = String(item.id)
+    const requestKey = `${feedKey}-${reactionKey}`
+    const existing = reactions.find(
+      (reaction) =>
+        String(reaction.feed_key) === feedKey &&
+        String(reaction.profile_id) === String(currentReactionProfileId)
+    )
+
+    setSavingReactionKey(requestKey)
+    setMessage('')
+
+    try {
+      if (existing?.reaction === reactionKey) {
+        const { error } = await supabase
+          .from('rollerfeed_reactions')
+          .delete()
+          .eq('id', existing.id)
+        if (error) throw error
+        setReactions((current) => current.filter((reaction) => reaction.id !== existing.id))
+        return
+      }
+
+      const payload = {
+        feed_key: feedKey,
+        profile_id: String(currentReactionProfileId),
+        reaction: reactionKey,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { data, error } = await supabase
+        .from('rollerfeed_reactions')
+        .upsert(payload, { onConflict: 'feed_key,profile_id' })
+        .select('*')
+        .single()
+      if (error) throw error
+
+      setReactions((current) => [
+        ...current.filter(
+          (reaction) => !(
+            String(reaction.feed_key) === feedKey &&
+            String(reaction.profile_id) === String(currentReactionProfileId)
+          )
+        ),
+        data,
+      ])
+    } catch (error) {
+      setMessage(`No pudimos guardar tu reacciÃ³n: ${error?.message || 'error desconocido'}`)
+    } finally {
+      setSavingReactionKey('')
+    }
+  }
 
   const feedItems = useMemo(() => {
     const trainingPosts = activities.map((activity) =>
@@ -1093,7 +1206,7 @@ export default function Activity() {
     if (refreshing || syncing) return
 
     setRefreshing(true)
-    setMessage('Actualizando RollerFeed…')
+    setMessage('Actualizando RollerFeedâ€¦')
 
     const syncResult = await syncStrava()
 
@@ -1105,15 +1218,15 @@ export default function Activity() {
     if (syncResult.newActivities > 0) {
       setMessage(
         syncResult.newActivities === 1
-          ? '⚡ Se agregó 1 actividad nueva de Strava al RollerFeed.'
-          : `⚡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
+          ? 'âš¡ Se agregÃ³ 1 actividad nueva de Strava al RollerFeed.'
+          : `âš¡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
       )
       return
     }
 
     if (syncResult.error) {
       setMessage(
-        `El feed se actualizó, pero Strava respondió con un error: ${syncResult.errorMessage}`
+        `El feed se actualizÃ³, pero Strava respondiÃ³ con un error: ${syncResult.errorMessage}`
       )
       return
     }
@@ -1141,14 +1254,14 @@ export default function Activity() {
 
       setMessage(
         alreadyHasStravaActivity
-          ? 'El RollerFeed se actualizó, pero Strava no pudo sincronizar esta vez. Tu vinculación existe; volvé a intentar en unos segundos.'
-          : '✓ RollerFeed actualizado. Este perfil todavía no tiene Strava conectado.'
+          ? 'El RollerFeed se actualizÃ³, pero Strava no pudo sincronizar esta vez. Tu vinculaciÃ³n existe; volvÃ© a intentar en unos segundos.'
+          : 'âœ“ RollerFeed actualizado. Este perfil todavÃ­a no tiene Strava conectado.'
       )
       return
     }
 
     setMessage(
-      '✓ RollerFeed y Strava están al día. No encontramos actividades nuevas.'
+      'âœ“ RollerFeed y Strava estÃ¡n al dÃ­a. No encontramos actividades nuevas.'
     )
   }
 
@@ -1156,7 +1269,7 @@ export default function Activity() {
     EMPTY_STATES[filter] || EMPTY_STATES.Todos
 
   return (
-    <AppLayout title="RollerFeed ⚡️">
+    <AppLayout title="RollerFeed âš¡ï¸">
       <div className="pr-page space-y-5 animate-page-enter">
         <section className="relative overflow-hidden rounded-[34px] border border-orange-300/20 bg-gradient-to-br from-[#ff5a1f]/25 via-[#16100f] to-[#08080c] p-5 shadow-[0_28px_90px_rgba(249,115,22,0.14)]">
           <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
@@ -1167,12 +1280,12 @@ export default function Activity() {
                 <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5">
                   <span className="w-2 h-2 rounded-full bg-orange-400" />
                   <span className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.17em]">
-                    La comunidad está rodando
+                    La comunidad estÃ¡ rodando
                   </span>
                 </div>
 
                 <h1 className="font-display text-[38px] leading-none text-white mt-4">
-                  RollerFeed ⚡️
+                  RollerFeed âš¡ï¸
                 </h1>
 
                 <p className="text-white/48 text-sm mt-3 leading-relaxed max-w-[290px]">
@@ -1181,7 +1294,7 @@ export default function Activity() {
               </div>
 
               <div className="w-16 h-16 rounded-[23px] border border-orange-300/25 bg-orange-400/10 grid place-items-center text-3xl shrink-0">
-                🛼
+                ðŸ›¼
               </div>
             </div>
 
@@ -1211,7 +1324,7 @@ export default function Activity() {
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="section-label text-pr-gold">
-                  Tu última actividad
+                  Tu Ãºltima actividad
                 </p>
                 <p className="text-white text-sm font-semibold mt-2 truncate">
                   {myLatest.nombre || 'Entrenamiento'}
@@ -1220,7 +1333,7 @@ export default function Activity() {
                   {formatDistance(
                     myLatest.distancia_metros
                   )}{' '}
-                  ·{' '}
+                  Â·{' '}
                   {formatDuration(
                     myLatest.tiempo_movimiento_segundos
                   )}
@@ -1234,7 +1347,7 @@ export default function Activity() {
                   rel="noreferrer"
                   className="shrink-0 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 px-3 py-2.5 text-pr-gold text-[10px] font-bold"
                 >
-                  Ver actividad →
+                  Ver actividad â†’
                 </a>
               ) : (
                 <span className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-white/30 text-[10px] font-bold">
@@ -1277,9 +1390,9 @@ export default function Activity() {
 
               <h2 className="font-display text-[27px] text-white mt-1">
                 {filter === 'Todos'
-                  ? 'Lo último sobre ruedas'
-                  : filter === 'Cumpleaños'
-                    ? 'Cumpleaños'
+                  ? 'Lo Ãºltimo sobre ruedas'
+                  : filter === 'CumpleaÃ±os'
+                    ? 'CumpleaÃ±os'
                     : FEED_FILTERS.find(
                         (item) => item.key === filter
                       )?.label}
@@ -1293,8 +1406,8 @@ export default function Activity() {
               className="rounded-2xl border border-white/[0.08] bg-white/[0.035] px-3 py-2.5 text-white/45 text-[10px] font-bold disabled:opacity-50"
             >
               {refreshing || syncing
-                ? 'Actualizando…'
-                : '↻ Actualizar'}
+                ? 'Actualizandoâ€¦'
+                : 'â†» Actualizar'}
             </button>
           </div>
 
@@ -1313,7 +1426,16 @@ export default function Activity() {
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
               {visibleItems.map((item) => (
-                <FeedCard key={item.id} item={item} />
+                <FeedCard
+                  key={item.id}
+                  item={item}
+                  reactions={getItemReactions(item)}
+                  profilesByAnyId={profilesByAnyId}
+                  currentProfileId={currentReactionProfileId}
+                  savingReactionKey={savingReactionKey}
+                  onReact={selectReaction}
+                  onOpenReactions={() => setReactionModalItem(item)}
+                />
               ))}
             </div>
           ) : (
@@ -1332,6 +1454,15 @@ export default function Activity() {
             </div>
           )}
         </section>
+
+        {reactionModalItem && (
+          <ReactionsModal
+            item={reactionModalItem}
+            reactions={getItemReactions(reactionModalItem)}
+            profilesByAnyId={profilesByAnyId}
+            onClose={() => setReactionModalItem(null)}
+          />
+        )}
       </div>
     </AppLayout>
   )
@@ -1359,20 +1490,28 @@ function HeroStat({
   )
 }
 
-function FeedCard({ item }) {
-  if (item.type === 'Cumpleaños') {
-    return <BirthdayCard item={item} />
+function FeedCard({
+  item,
+  reactions,
+  profilesByAnyId,
+  currentProfileId,
+  savingReactionKey,
+  onReact,
+  onOpenReactions,
+}) {
+  const reactionProps = {
+    reactions,
+    profilesByAnyId,
+    currentProfileId,
+    savingReactionKey,
+    onReact,
+    onOpenReactions,
   }
 
-  if (item.type === 'Entrenamiento') {
-    return <TrainingCard item={item} />
-  }
-
-  if (item.type === 'Evento' && item.eventColor) {
-    return <EventCard item={item} />
-  }
-
-  return <CommunityCard item={item} />
+  if (item.type === 'CumpleaÃ±os') return <BirthdayCard item={item} {...reactionProps} />
+  if (item.type === 'Entrenamiento') return <TrainingCard item={item} {...reactionProps} />
+  if (item.type === 'Evento' && item.eventColor) return <EventCard item={item} {...reactionProps} />
+  return <CommunityCard item={item} {...reactionProps} />
 }
 
 function ProfileAvatar({
@@ -1406,14 +1545,14 @@ function ProfileAvatar({
 
       {verified && (
         <span className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full bg-sky-500 border-[2px] border-[#111117] grid place-items-center text-white text-[9px] font-bold">
-          ✓
+          âœ“
         </span>
       )}
     </div>
   )
 }
 
-function TrainingCard({ item }) {
+function TrainingCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
   return (
     <article
       className={`relative overflow-hidden rounded-[30px] border bg-gradient-to-br from-[#171217] via-[#101014] to-[#09090d] ${
@@ -1436,7 +1575,7 @@ function TrainingCard({ item }) {
             </p>
 
             <p className="text-white/30 text-[10px] mt-1">
-              {formatRelativeDate(item.date)} ·{' '}
+              {formatRelativeDate(item.date)} Â·{' '}
               {item.source === 'strava'
                 ? 'Strava'
                 : 'Punta Rollers'}
@@ -1444,7 +1583,7 @@ function TrainingCard({ item }) {
           </div>
 
           <span className="w-10 h-10 rounded-2xl border border-orange-300/15 bg-orange-400/10 grid place-items-center text-lg">
-            🛼
+            ðŸ›¼
           </span>
         </div>
 
@@ -1480,30 +1619,26 @@ function TrainingCard({ item }) {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-white/[0.06]">
-          <div className="flex items-center gap-2">
-            <Reaction icon="👏" value={0} />
-            <Reaction icon="🔥" value={0} />
-            <Reaction icon="❤️" value={0} />
-          </div>
-
-          {item.stravaUrl && (
-            <a
-              href={item.stravaUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-orange-200 text-[10px] font-bold"
-            >
-              Ver en Strava →
+        <ReactionPanel
+          item={item}
+          reactions={reactions}
+          profilesByAnyId={profilesByAnyId}
+          currentProfileId={currentProfileId}
+          savingReactionKey={savingReactionKey}
+          onReact={onReact}
+          onOpenReactions={onOpenReactions}
+          action={item.stravaUrl ? (
+            <a href={item.stravaUrl} target="_blank" rel="noreferrer" className="text-orange-200 text-[10px] font-bold">
+              Ver en Strava â†’
             </a>
-          )}
-        </div>
+          ) : null}
+        />
       </div>
     </article>
   )
 }
 
-function BirthdayCard({ item }) {
+function BirthdayCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
   return (
     <article className="relative overflow-hidden rounded-[32px] border border-fuchsia-300/25 bg-gradient-to-br from-fuchsia-500/[0.18] via-[#17101c] to-[#0b090d] p-5">
       <div className="flex items-start justify-between gap-4">
@@ -1515,14 +1650,14 @@ function BirthdayCard({ item }) {
         />
 
         <div className="w-14 h-14 rounded-[20px] border border-fuchsia-300/25 bg-fuchsia-400/15 grid place-items-center text-2xl">
-          🎂
+          ðŸŽ‚
         </div>
       </div>
 
       <p className="section-label text-fuchsia-200 mt-5">
         {item.daysUntil === 0
-          ? 'Celebración PR'
-          : 'Próximo cumpleaños'}
+          ? 'CelebraciÃ³n PR'
+          : 'PrÃ³ximo cumpleaÃ±os'}
       </p>
 
       <h3 className="font-display text-[29px] leading-tight text-white mt-2">
@@ -1532,6 +1667,8 @@ function BirthdayCard({ item }) {
       <p className="text-fuchsia-100/55 text-sm leading-relaxed mt-3">
         {item.description}
       </p>
+
+      <ReactionPanel item={item} reactions={reactions} profilesByAnyId={profilesByAnyId} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} onOpenReactions={onOpenReactions} />
     </article>
   )
 }
@@ -1567,7 +1704,7 @@ function getEventDateVisual(item) {
         daysUntil === 0
           ? 'HOY'
           : daysUntil === 1
-            ? 'MAÑANA'
+            ? 'MAÃ‘ANA'
             : rawDate
                 .toLocaleDateString('es-UY', { weekday: 'short' })
                 .replace('.', '')
@@ -1587,8 +1724,8 @@ function getEventDateVisual(item) {
   )
 
   return {
-    eyebrow: 'PRÓXIMO',
-    day: monthMatch ? monthMatch[2] : '—',
+    eyebrow: 'PRÃ“XIMO',
+    day: monthMatch ? monthMatch[2] : 'â€”',
     month: monthMatch
       ? monthMatch[1].toUpperCase()
       : 'FECHA',
@@ -1602,23 +1739,23 @@ function getEventTimeLabel(item) {
   const timeMatches = range.match(/\d{1,2}:\d{2}/g)
 
   if (timeMatches?.length >= 2) {
-    return `${timeMatches[0]} — ${timeMatches[1]}`
+    return `${timeMatches[0]} â€” ${timeMatches[1]}`
   }
 
   if (timeMatches?.length === 1) {
     return timeMatches[0]
   }
 
-  if (/3 días|4,\s*5\s*y\s*6/i.test(range)) {
-    return '3 DÍAS · 2 H POR JORNADA'
+  if (/3 dÃ­as|4,\s*5\s*y\s*6/i.test(range)) {
+    return '3 DÃAS Â· 2 H POR JORNADA'
   }
 
-  return item?.eventStatus === 'Próximamente'
+  return item?.eventStatus === 'PrÃ³ximamente'
     ? 'HORARIO A CONFIRMAR'
-    : 'INFORMACIÓN DEL EVENTO'
+    : 'INFORMACIÃ“N DEL EVENTO'
 }
 
-function EventCard({ item }) {
+function EventCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
   const color =
     ROLLER_EVENT_COLORS[item.eventColor] || ROLLER_EVENT_COLORS.street
   const dateVisual = getEventDateVisual(item)
@@ -1645,7 +1782,7 @@ function EventCard({ item }) {
       <div className="relative grid grid-cols-[88px_minmax(0,1fr)]">
         <aside className="border-r border-white/[0.09] bg-black/20 px-3 py-5 text-center">
           <div className={`mx-auto mb-3 grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-black/25 ${color.accent}`}>
-            ◫
+            â—«
           </div>
 
           <p className={`text-[9px] font-black tracking-[0.14em] ${color.accent}`}>
@@ -1669,7 +1806,7 @@ function EventCard({ item }) {
           <div className="my-4 h-px bg-white/[0.09]" />
 
           <p className="text-white/50 text-[10px] leading-relaxed">
-            📍 {item.eventLocation || 'Ubicación a confirmar'}
+            ðŸ“ {item.eventLocation || 'UbicaciÃ³n a confirmar'}
           </p>
         </aside>
 
@@ -1689,7 +1826,7 @@ function EventCard({ item }) {
           </h3>
 
           <div className={`inline-flex max-w-full items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 mt-4 ${color.accent}`}>
-            <span className="text-xs">◷</span>
+            <span className="text-xs">â—·</span>
             <span className="truncate text-[10px] font-black uppercase tracking-[0.08em]">
               {timeLabel}
             </span>
@@ -1713,26 +1850,30 @@ function EventCard({ item }) {
                 rel="noreferrer"
                 className={`text-[10px] font-black ${color.accent}`}
               >
-                Más información →
+                MÃ¡s informaciÃ³n â†’
               </a>
             )}
           </div>
         </div>
+      </div>
+
+      <div className="relative px-5 pb-5">
+        <ReactionPanel item={item} reactions={reactions} profilesByAnyId={profilesByAnyId} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} onOpenReactions={onOpenReactions} />
       </div>
     </article>
   )
 }
 
 
-function CommunityCard({ item }) {
+function CommunityCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
   const isBadge = item.type === 'Insignia'
   const isEvent = item.type === 'Evento'
 
   const icon = isBadge
-    ? '🏅'
+    ? 'ðŸ…'
     : isEvent
-      ? '📅'
-      : '📣'
+      ? 'ðŸ“…'
+      : 'ðŸ“£'
 
   return (
     <article className="rounded-[29px] border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.018] p-4">
@@ -1778,7 +1919,7 @@ function CommunityCard({ item }) {
         <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-2">
           {item.eventLocation && (
             <p className="text-white/45 text-xs">
-              📍 {item.eventLocation}
+              ðŸ“ {item.eventLocation}
             </p>
           )}
 
@@ -1789,7 +1930,7 @@ function CommunityCard({ item }) {
               rel="noreferrer"
               className="inline-flex text-pr-gold text-xs font-bold"
             >
-              Ver información →
+              Ver informaciÃ³n â†’
             </a>
           )}
         </div>
@@ -1801,6 +1942,8 @@ function CommunityCard({ item }) {
           {item.creatorName}
         </p>
       )}
+
+      <ReactionPanel item={item} reactions={reactions} profilesByAnyId={profilesByAnyId} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} onOpenReactions={onOpenReactions} />
     </article>
   )
 }
@@ -1827,14 +1970,74 @@ function Metric({
   )
 }
 
-function Reaction({ icon, value }) {
+function ReactionPanel({ item, reactions = [], profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions, action = null }) {
+  const myReaction = reactions.find((reaction) => String(reaction.profile_id) === String(currentProfileId))
+  const counts = REACTION_OPTIONS.reduce((result, option) => {
+    result[option.key] = reactions.filter((reaction) => reaction.reaction === option.key).length
+    return result
+  }, {})
+  const reactorProfiles = reactions.map((reaction) => findProfile(profilesByAnyId, reaction.profile_id)).filter((profile) => profile && Object.keys(profile).length > 0)
+  const names = reactorProfiles.map(getProfileName).filter(Boolean)
+  const summary = names.length === 0 ? '' : names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} y ${names[1]}` : `${names[0]}, ${names[1]} y ${names.length - 2} mÃ¡s`
+
   return (
-    <button
-      type="button"
-      className="rounded-full border border-white/[0.07] bg-white/[0.035] px-2.5 py-1.5 text-white/55 text-[10px] font-semibold"
-    >
-      {icon} {value}
-    </button>
+    <div className="mt-4 pt-4 border-t border-white/[0.07]">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          {REACTION_OPTIONS.map((option) => {
+            const selected = myReaction?.reaction === option.key
+            const saving = savingReactionKey === `${item.id}-${option.key}`
+            return (
+              <button key={option.key} type="button" disabled={Boolean(savingReactionKey)} onClick={() => onReact(item, option.key)} aria-label={option.label} title={option.label} className={`min-w-[42px] rounded-full border px-2 py-1.5 text-[11px] font-bold transition active:scale-95 disabled:opacity-60 ${selected ? 'border-orange-300/45 bg-orange-400/20 text-white' : 'border-white/[0.08] bg-white/[0.035] text-white/58'}`}>
+                {saving ? 'â€¦' : option.icon}{' '}{counts[option.key] || ''}
+              </button>
+            )
+          })}
+        </div>
+        {action}
+      </div>
+
+      {reactions.length > 0 && (
+        <button type="button" onClick={onOpenReactions} className="mt-3 flex w-full items-center gap-2 text-left">
+          <span className="flex -space-x-2">
+            {reactorProfiles.slice(0, 3).map((profile, index) => (
+              <span key={`${profile.id || index}-${index}`} className="h-7 w-7 overflow-hidden rounded-full border-2 border-[#101014] bg-pr-gold/15 grid place-items-center">
+                {getProfilePhoto(profile) ? <img src={getProfilePhoto(profile)} alt={getProfileName(profile)} className="h-full w-full object-cover" /> : <span className="text-[8px] font-black text-pr-gold">{getInitials(getProfileName(profile))}</span>}
+              </span>
+            ))}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[10px] text-white/42">{summary || `${reactions.length} reacciones`}</span>
+          <span className="text-white/20 text-xs">â€º</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ReactionsModal({ item, reactions = [], profilesByAnyId, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 px-3 pb-3 backdrop-blur-sm sm:items-center" onClick={onClose}>
+      <section className="w-full max-w-md overflow-hidden rounded-[30px] border border-white/[0.10] bg-[#111117] shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+          <div className="min-w-0"><p className="section-label text-orange-200">Reacciones</p><h3 className="mt-1 max-w-[260px] truncate font-display text-xl text-white">{item?.title || 'PublicaciÃ³n'}</h3></div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/55">Ã—</button>
+        </div>
+        <div className="max-h-[65vh] overflow-y-auto p-3">
+          {reactions.length > 0 ? reactions.map((reaction) => {
+            const profile = findProfile(profilesByAnyId, reaction.profile_id)
+            const name = getProfileName(profile) || 'Integrante PR'
+            const option = getReactionOption(reaction.reaction)
+            return (
+              <div key={reaction.id} className="flex items-center gap-3 rounded-[20px] px-2 py-3">
+                <ProfileAvatar photo={getProfilePhoto(profile)} name={name} verified={getProfileVerified(profile)} />
+                <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{name}</p><p className="mt-1 text-[10px] text-white/30">{option.label}</p></div>
+                <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-xl">{option.icon}</span>
+              </div>
+            )
+          }) : <div className="p-8 text-center"><p className="text-sm text-white/40">TodavÃ­a no hay reacciones.</p></div>}
+        </div>
+      </section>
+    </div>
   )
 }
 
@@ -1860,4 +2063,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-                }
+      }
