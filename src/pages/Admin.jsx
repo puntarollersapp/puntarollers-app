@@ -210,6 +210,67 @@ function getRoleColor(role) {
   return 'text-white/55 border-white/10 bg-white/[0.04]'
 }
 
+
+function parseSafeDate(value) {
+  if (!value) return null
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function startOfToday() {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+}
+
+function daysBetween(from, to) {
+  const dayMs = 24 * 60 * 60 * 1000
+  return Math.ceil((to.getTime() - from.getTime()) / dayMs)
+}
+
+function getUpcomingBirthday(profile, maxDays = 30) {
+  const birthDate = parseSafeDate(profile?.fechaNacimiento)
+  if (!birthDate) return null
+
+  const today = startOfToday()
+  let next = new Date(
+    today.getFullYear(),
+    birthDate.getMonth(),
+    birthDate.getDate()
+  )
+
+  if (next < today) {
+    next = new Date(
+      today.getFullYear() + 1,
+      birthDate.getMonth(),
+      birthDate.getDate()
+    )
+  }
+
+  const days = daysBetween(today, next)
+  if (days > maxDays) return null
+
+  return {
+    profile,
+    date: next,
+    days,
+  }
+}
+
+function getProfileDisplayName(profile) {
+  return `${profile?.nombre || ''} ${profile?.apellido || ''}`.trim() || 'Alumno PR'
+}
+
+function formatShortDate(value) {
+  const date = value instanceof Date ? value : parseSafeDate(value)
+  if (!date) return 'Sin fecha'
+
+  return date.toLocaleDateString('es-UY', {
+    day: '2-digit',
+    month: 'short',
+  })
+}
+
 export default function Admin() {
   const { user, logout } = useAuth()
 
@@ -221,6 +282,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [adminActivity, setAdminActivity] = useState([])
+  const [dashboardEvents, setDashboardEvents] = useState([])
   const [actionType, setActionType] = useState('Nota')
 
   const canFullAdmin = user?.role === 'admin'
@@ -275,8 +337,23 @@ export default function Admin() {
     if (!error) setAdminActivity(data || [])
   }
 
+  async function loadDashboardEvents() {
+    const { data, error } = await supabase
+      .from('rollerfeed_events')
+      .select('*')
+      .neq('estado', 'Cancelado')
+      .order('inicio', { ascending: true, nullsFirst: false })
+      .limit(12)
+
+    if (!error) setDashboardEvents(data || [])
+  }
+
   async function reloadAll() {
-    await Promise.all([loadProfiles(), loadAdminActivity()])
+    await Promise.all([
+      loadProfiles(),
+      loadAdminActivity(),
+      loadDashboardEvents(),
+    ])
   }
 
   useEffect(() => {
@@ -296,14 +373,31 @@ export default function Admin() {
 
   const alumnos = profiles.filter((profile) => profile.role === 'alumno')
 
-  const active7 = profiles.filter((profile) => {
-    if (!profile.ultimoIngreso) return false
+  const accessStats = useMemo(() => {
+    const now = Date.now()
+    const oneDay = 24 * 60 * 60 * 1000
 
-    const date = new Date(profile.ultimoIngreso)
-    if (Number.isNaN(date.getTime())) return false
+    const validLogins = profiles
+      .map((profile) => ({
+        profile,
+        date: parseSafeDate(profile.ultimoIngreso),
+      }))
+      .filter((item) => item.date)
 
-    return Date.now() - date.getTime() <= 7 * 24 * 60 * 60 * 1000
-  }).length
+    return {
+      today: validLogins.filter(
+        (item) => now - item.date.getTime() <= oneDay
+      ).length,
+      last7: validLogins.filter(
+        (item) => now - item.date.getTime() <= 7 * oneDay
+      ).length,
+      last30: validLogins.filter(
+        (item) => now - item.date.getTime() <= 30 * oneDay
+      ).length,
+      never: profiles.filter((profile) => !profile.ultimoIngreso).length,
+    }
+  }, [profiles])
+
 
   function saveCuposLocal() {
     saveCupos(cupos)
@@ -404,7 +498,7 @@ export default function Admin() {
         <div className="grid grid-cols-2 gap-3">
           <Stat label="Alumnos" value={alumnos.length} />
           <Stat label="Usuarios" value={profiles.length} />
-          <Stat label="Activos 7 dias" value={active7} />
+          <Stat label="Activos 7 días" value={accessStats.last7} />
           <Stat label="Registros" value={adminActivity.length} />
         </div>
 
@@ -430,6 +524,9 @@ export default function Admin() {
           <DashboardPanel
             setSection={setSection}
             adminActivity={adminActivity}
+            profiles={profiles}
+            dashboardEvents={dashboardEvents}
+            accessStats={accessStats}
             canFullAdmin={canFullAdmin}
             canManageContent={canManageContent}
             setActionType={setActionType}
@@ -542,6 +639,9 @@ export default function Admin() {
 function DashboardPanel({
   setSection,
   adminActivity,
+  profiles,
+  dashboardEvents,
+  accessStats,
   canFullAdmin,
   canManageContent,
   setActionType,
@@ -551,59 +651,268 @@ function DashboardPanel({
     setSection('acciones')
   }
 
+  const students = profiles.filter(
+    (profile) => profile.role === 'alumno'
+  )
+
+  const birthdays = students
+    .map((profile) => getUpcomingBirthday(profile, 30))
+    .filter(Boolean)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5)
+
+  const today = startOfToday()
+  const membershipAlerts = students
+    .map((profile) => {
+      const date = parseSafeDate(profile.mensualidadHasta)
+      if (!date) return null
+
+      const days = daysBetween(today, date)
+      if (days > 10) return null
+
+      return { profile, date, days }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 6)
+
+  const pendingCards = students.filter(
+    (profile) => !profile.prcardActiva
+  )
+
+  const upcomingEvents = dashboardEvents
+    .filter((event) => {
+      if (!event?.inicio) return true
+      const date = parseSafeDate(event.inicio)
+      return date && date.getTime() >= Date.now() - 5 * 60 * 1000
+    })
+    .slice(0, 4)
+
   return (
     <div className="space-y-4">
+      <section className="relative overflow-hidden rounded-[30px] border border-pr-gold/20 bg-gradient-to-br from-pr-gold/15 via-white/[0.035] to-orange-400/[0.06] p-5">
+        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-pr-gold/10 blur-3xl" />
+        <div className="relative">
+          <p className="section-label text-pr-gold">Centro de control</p>
+          <h2 className="font-display text-[30px] leading-none text-white mt-2">
+            Todo lo importante, de un vistazo
+          </h2>
+          <p className="text-white/40 text-xs leading-relaxed mt-3 max-w-[310px]">
+            Actividad, accesos, vencimientos, cumpleaños y próximos eventos de Punta Rollers.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-end justify-between gap-3 mb-3">
+          <div>
+            <p className="section-label">Actividad de la app</p>
+            <h3 className="font-display text-2xl text-white mt-1">
+              Ingresos registrados
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSection('usuarios')}
+            className="text-pr-gold text-[10px] font-bold"
+          >
+            Ver usuarios →
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <SmartStat value={accessStats.today} label="Últimas 24 h" icon="⚡" tone="orange" />
+          <SmartStat value={accessStats.last7} label="Últimos 7 días" icon="📅" tone="gold" />
+          <SmartStat value={accessStats.last30} label="Últimos 30 días" icon="📈" tone="blue" />
+          <SmartStat value={accessStats.never} label="Nunca ingresaron" icon="○" tone="muted" />
+        </div>
+      </section>
+
+      {canFullAdmin && (
+        <section className={`${panel} overflow-hidden`}>
+          <div className="p-4 border-b border-white/[0.06]">
+            <p className="section-label text-amber-200">Atención administrativa</p>
+            <h3 className="font-display text-2xl text-white mt-1">
+              Pendientes y vencimientos
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 p-4">
+            <button
+              type="button"
+              onClick={() => setSection('usuarios')}
+              className="rounded-[22px] border border-amber-300/15 bg-amber-400/[0.07] p-4 text-left"
+            >
+              <p className="font-display text-3xl text-amber-200">
+                {pendingCards.length}
+              </p>
+              <p className="text-white/55 text-xs mt-2">PRCard sin activar</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSection('pagos')}
+              className="rounded-[22px] border border-red-300/15 bg-red-400/[0.07] p-4 text-left"
+            >
+              <p className="font-display text-3xl text-red-200">
+                {membershipAlerts.length}
+              </p>
+              <p className="text-white/55 text-xs mt-2">Mensualidades a revisar</p>
+            </button>
+          </div>
+
+          {membershipAlerts.length > 0 && (
+            <div className="px-4 pb-4 space-y-2">
+              {membershipAlerts.map(({ profile, date, days }) => (
+                <div
+                  key={profile.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-black/20 p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-white text-sm font-semibold">
+                      {getProfileDisplayName(profile)}
+                    </p>
+                    <p className="text-white/30 text-[10px] mt-1">
+                      Mensualidad hasta {formatShortDate(date)}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold ${
+                    days < 0
+                      ? 'border-red-400/25 bg-red-400/10 text-red-200'
+                      : days <= 3
+                        ? 'border-amber-400/25 bg-amber-400/10 text-amber-200'
+                        : 'border-white/10 bg-white/[0.04] text-white/45'
+                  }`}>
+                    {days < 0
+                      ? `Venció hace ${Math.abs(days)} d`
+                      : days === 0
+                        ? 'Vence hoy'
+                        : `Faltan ${days} d`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       <section className={`${panel} p-4`}>
-        <p className="section-label">Acciones rapidas</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="section-label text-fuchsia-200">Comunidad</p>
+            <h3 className="font-display text-2xl text-white mt-1">
+              Próximos cumpleaños
+            </h3>
+          </div>
+          <span className="text-2xl">🎂</span>
+        </div>
+
+        <div className="space-y-2 mt-4">
+          {birthdays.length > 0 ? (
+            birthdays.map(({ profile, date, days }) => (
+              <div
+                key={profile.id}
+                className="flex items-center gap-3 rounded-2xl border border-fuchsia-300/10 bg-fuchsia-400/[0.05] p-3"
+              >
+                <div className="h-11 w-11 overflow-hidden rounded-2xl border border-white/10 bg-black/25 grid place-items-center shrink-0">
+                  {profile.foto ? (
+                    <img src={profile.foto} alt={profile.nombre} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-fuchsia-200 font-bold">
+                      {(profile.nombre || 'P').slice(0, 1)}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-white text-sm font-semibold">
+                    {getProfileDisplayName(profile)}
+                  </p>
+                  <p className="text-white/30 text-[10px] mt-1">
+                    {formatShortDate(date)}
+                  </p>
+                </div>
+                <span className="text-fuchsia-200 text-[10px] font-bold">
+                  {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl bg-black/20 p-3 text-white/35 text-xs">
+              No hay cumpleaños en los próximos 30 días.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className={`${panel} p-4`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="section-label text-cyan-200">Agenda PR</p>
+            <h3 className="font-display text-2xl text-white mt-1">
+              Próximos eventos
+            </h3>
+          </div>
+          {canManageContent && (
+            <button
+              type="button"
+              onClick={() => setSection('eventos')}
+              className="text-cyan-200 text-[10px] font-bold"
+            >
+              Gestionar →
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-2 mt-4">
+          {upcomingEvents.length > 0 ? (
+            upcomingEvents.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-2xl border border-cyan-300/10 bg-cyan-400/[0.045] p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-semibold">
+                      {event.titulo || 'Evento Punta Rollers'}
+                    </p>
+                    <p className="text-white/30 text-[10px] mt-1">
+                      {event.inicio ? formatShortDate(event.inicio) : event.mes_referencia || 'Fecha a confirmar'}
+                      {event.lugar ? ` · ${event.lugar}` : ''}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-2 py-1 text-cyan-100 text-[9px]">
+                    {event.estado || 'Publicado'}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl bg-black/20 p-3 text-white/35 text-xs">
+              No hay eventos próximos cargados.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className={`${panel} p-4`}>
+        <p className="section-label">Acciones rápidas</p>
 
         <div className="grid grid-cols-2 gap-3 mt-3">
           {canFullAdmin && (
             <>
-              <ActionButton
-                icon=""
-                label="Crear usuario"
-                onClick={() => setSection('usuarios')}
-              />
-              <ActionButton
-                icon=""
-                label="Registrar pago"
-                onClick={() => setSection('pagos')}
-              />
-              <ActionButton
-                icon=""
-                label="Gestionar grupos"
-                onClick={() => setSection('grupos')}
-              />
+              <ActionButton icon="＋" label="Crear usuario" onClick={() => setSection('usuarios')} />
+              <ActionButton icon="$" label="Registrar pago" onClick={() => setSection('pagos')} />
+              <ActionButton icon="◉" label="Gestionar grupos" onClick={() => setSection('grupos')} />
             </>
           )}
 
           {canManageContent && (
             <>
-              <ActionButton
-                icon=""
-                label="Cargar toma"
-                onClick={() => setSection('performance')}
-              />
-              <ActionButton
-                icon=""
-                label="Crear objetivo"
-                onClick={() => setSection('objetivos')}
-              />
-              <ActionButton
-                icon=""
-                label="Observacion"
-                onClick={() => goAction('Nota')}
-              />
-              <ActionButton
-                icon=""
-                label="Insignia"
-                onClick={() => goAction('Insignia')}
-              />
-              <ActionButton
-                icon=""
-                label="Participacion"
-                onClick={() => goAction('Evento')}
-              />
+              <ActionButton icon="⏱" label="Cargar toma" onClick={() => setSection('performance')} />
+              <ActionButton icon="◎" label="Crear objetivo" onClick={() => setSection('objetivos')} />
+              <ActionButton icon="✎" label="Observación" onClick={() => goAction('Nota')} />
+              <ActionButton icon="★" label="Insignia" onClick={() => goAction('Insignia')} />
+              <ActionButton icon="✓" label="Participación" onClick={() => goAction('Evento')} />
             </>
           )}
         </div>
@@ -622,8 +931,8 @@ function DashboardPanel({
                 <p className="text-white text-sm font-semibold">
                   {item.titulo}
                 </p>
-                <p className="text-white/35 text-xs">
-                  {item.tipo}  {formatDate(item.fecha)}
+                <p className="text-white/35 text-xs mt-1">
+                  {item.tipo} · {formatDate(item.fecha)}
                 </p>
                 {item.creado_por_nombre && (
                   <p className="text-white/25 text-[10px] mt-1">
@@ -635,12 +944,33 @@ function DashboardPanel({
           ) : (
             <div className="rounded-2xl bg-black/25 border border-white/5 p-3">
               <p className="text-white/45 text-sm">
-                Todavia no hay actividad real cargada.
+                Todavía no hay actividad real cargada.
               </p>
             </div>
           )}
         </div>
       </section>
+    </div>
+  )
+}
+
+function SmartStat({ value, label, icon, tone = 'gold' }) {
+  const tones = {
+    orange: 'border-orange-300/15 bg-orange-400/[0.07] text-orange-200',
+    gold: 'border-pr-gold/20 bg-pr-gold/[0.07] text-pr-gold',
+    blue: 'border-sky-300/15 bg-sky-400/[0.07] text-sky-200',
+    muted: 'border-white/[0.08] bg-white/[0.03] text-white/55',
+  }
+
+  return (
+    <div className={`rounded-[24px] border p-4 ${tones[tone] || tones.gold}`}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-display text-[32px] leading-none text-white">
+          {value}
+        </p>
+        <span className="text-lg">{icon}</span>
+      </div>
+      <p className="text-[10px] mt-3 opacity-75">{label}</p>
     </div>
   )
 }
@@ -6171,4 +6501,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-      }
+    }
