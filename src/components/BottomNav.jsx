@@ -36,6 +36,14 @@ const Icon = ({ type }) => {
         <path d="M4 15.5h2.2" />
       </>
     ),
+    music: (
+      <>
+        <path d="M9 18V6l10-2v12" />
+        <path d="M9 10l10-2" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="16" cy="16" r="3" />
+      </>
+    ),
     services: (
       <>
         <rect x="3" y="3" width="7" height="7" rx="2" />
@@ -87,6 +95,12 @@ export default function BottomNav() {
       featured: true,
     },
     {
+      path: '/app/musica',
+      label: 'PR Music',
+      icon: 'music',
+      music: true,
+    },
+    {
       path: '/app/servicios',
       label: 'Servicios',
       icon: 'services',
@@ -115,10 +129,10 @@ export default function BottomNav() {
       }}
     >
       <div
-        className={`grid items-end px-2 pt-2 pb-1 ${
+        className={`grid items-end px-1.5 pt-2 pb-1 ${
           isAdmin
-            ? 'grid-cols-6'
-            : 'grid-cols-5'
+            ? 'grid-cols-7'
+            : 'grid-cols-6'
         }`}
       >
         {nav.map((item) => {
@@ -150,7 +164,7 @@ export default function BottomNav() {
                 </span>
 
                 <span
-                  className={`mt-[35px] text-[9px] font-extrabold tracking-[-0.01em] transition-colors ${
+                  className={`mt-[35px] text-[8px] sm:text-[9px] font-extrabold tracking-[-0.01em] transition-colors ${
                     active
                       ? 'text-orange-300'
                       : 'text-white/55'
@@ -166,11 +180,47 @@ export default function BottomNav() {
             )
           }
 
+          if (item.music) {
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                aria-label="Abrir PR Music"
+                className="relative min-w-0 flex flex-col items-center gap-1 px-0.5 py-1.5 rounded-xl active:scale-95 transition-all"
+              >
+                {active && (
+                  <span className="absolute -top-2 w-7 h-[2px] rounded-full bg-violet-300 shadow-[0_0_12px_rgba(196,181,253,.95)]" />
+                )}
+
+                <span
+                  className={`relative grid h-7 w-7 place-items-center rounded-xl border transition-all duration-300 ${
+                    active
+                      ? 'text-white border-violet-300/60 bg-gradient-to-br from-violet-500/80 via-fuchsia-500/70 to-cyan-400/65 shadow-[0_0_18px_rgba(168,85,247,.45)]'
+                      : 'text-violet-200/65 border-violet-300/15 bg-violet-400/[0.07]'
+                  }`}
+                >
+                  <Icon type={item.icon} />
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(103,232,249,.95)]" />
+                </span>
+
+                <span
+                  className={`text-[8px] sm:text-[9px] font-semibold truncate max-w-full ${
+                    active
+                      ? 'text-violet-200'
+                      : 'text-white/35'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            )
+          }
+
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`relative min-w-0 flex flex-col items-center gap-1 px-1 py-1.5 rounded-xl active:scale-95 transition-all ${
+              className={`relative min-w-0 flex flex-col items-center gap-1 px-0.5 py-1.5 rounded-xl active:scale-95 transition-all ${
                 active
                   ? 'text-pr-gold'
                   : 'text-white/28'
@@ -182,7 +232,7 @@ export default function BottomNav() {
 
               <Icon type={item.icon} />
 
-              <span className="text-[9px] font-semibold truncate max-w-full">
+              <span className="text-[8px] sm:text-[9px] font-semibold truncate max-w-full">
                 {item.label}
               </span>
             </Link>
