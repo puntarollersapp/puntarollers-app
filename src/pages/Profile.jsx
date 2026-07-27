@@ -832,6 +832,11 @@ export default function Profile({ mode = 'profile' }) {
     [activity]
   )
 
+  const featuredBadge = badges[0] || null
+  const featuredBadgeImage = featuredBadge
+    ? getBadgeImage(featuredBadge.titulo)
+    : ''
+
   const events = useMemo(
     () =>
       activity.filter(
@@ -1216,7 +1221,7 @@ export default function Profile({ mode = 'profile' }) {
     ? 'Actividad deportiva'
     : isBadgesPage
       ? 'Insignias'
-      : 'Mi perfil'
+      : 'Perfil'
 
   return (
     <AppLayout title={pageTitle}>
@@ -1433,6 +1438,34 @@ export default function Profile({ mode = 'profile' }) {
                         </span>
                       )}
                     </div>
+
+                    {featuredBadge && (
+                      <Link
+                        to="/app/insignias"
+                        className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-pr-gold/20 bg-gradient-to-r from-pr-gold/[0.12] to-white/[0.025] px-3 py-2 active:scale-[0.98] transition-transform"
+                      >
+                        <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full border border-pr-gold/20 bg-black/30">
+                          {featuredBadgeImage ? (
+                            <img
+                              src={featuredBadgeImage}
+                              alt={featuredBadge.titulo}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm">🏅</span>
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[8px] font-bold uppercase tracking-[0.15em] text-pr-gold/55">
+                            Insignia destacada
+                          </span>
+                          <span className="block truncate text-[10px] font-bold text-pr-gold/90">
+                            {featuredBadge.titulo}
+                          </span>
+                        </span>
+                        <span className="ml-1 text-[10px] text-pr-gold/45">→</span>
+                      </Link>
+                    )}
                   </div>
 
                   <button
@@ -1497,6 +1530,14 @@ export default function Profile({ mode = 'profile' }) {
                 </div>
 
                 <ProfileActivitySignature stats={headerStats} />
+
+                <p className="mt-3 text-center text-[10px] font-semibold leading-relaxed text-white/30">
+                  Miembro desde {profile.miembroDesde || '2026'}
+                  <span className="mx-1.5 text-pr-gold/35">•</span>
+                  {headerStats.kilometers.toFixed(1)} km recorridos
+                  <span className="mx-1.5 text-pr-gold/35">•</span>
+                  {headerStats.sessions} entrenamiento{headerStats.sessions === 1 ? '' : 's'}
+                </p>
 
                 {!hidePaymentSection && (
                   <PaymentStatusStrip
@@ -1593,6 +1634,20 @@ export default function Profile({ mode = 'profile' }) {
                 </Link>
               </div>
 
+              <Link
+                to="/app/entrenamiento"
+                className="mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-[22px] border border-red-400/15 bg-gradient-to-r from-red-500/[0.11] via-red-500/[0.05] to-white/[0.02] px-4 py-3.5 active:scale-[0.98] transition-transform"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-red-400/20 bg-red-500/10 text-lg">🛼</span>
+                  <div className="min-w-0">
+                    <p className="font-display text-base text-white">Actividad deportiva</p>
+                    <p className="mt-0.5 truncate text-[9px] text-white/32">Metas, evolución y rendimiento</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-red-300/70">Abrir →</span>
+              </Link>
+
               <div className="mt-4">
                 <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/24">Tus grupos</p>
                 {profile.gruposInfo?.length ? (
@@ -1603,11 +1658,11 @@ export default function Profile({ mode = 'profile' }) {
                         href={group.link || '#'}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-400/[0.07] px-3.5 text-[10px] font-bold text-emerald-100/80 active:scale-[0.97]"
+                        className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border border-emerald-300/15 bg-emerald-400/[0.06] px-3 py-1.5 text-[9px] font-bold text-emerald-100/75 active:scale-[0.97] transition-transform"
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,.85)]" />
-                        {group.titulo}
-                        <span className="text-emerald-200/35">↗</span>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,.75)]" />
+                        <span className="truncate">{group.titulo}</span>
+                        <span className="shrink-0 text-emerald-200/30">↗</span>
                       </a>
                     ))}
                   </div>
@@ -1623,26 +1678,6 @@ export default function Profile({ mode = 'profile' }) {
                 history={privateLessons.historial}
               />
             )}
-
-            <Accordion
-              title="Mis servicios PR"
-              subtitle="Accesos activos"
-              open={open === 'servicios'}
-              onClick={() => setOpen(open === 'servicios' ? '' : 'servicios')}
-            >
-              <Service
-                title="PR Card"
-                active={profile.prcardActiva}
-                href="/app/prcard"
-                action="Ver mi PRCard"
-              />
-              <Service
-                title="PR Tracking"
-                active={profile.trackingActivo}
-                href="/app/tracking"
-                action="Ver información"
-              />
-            </Accordion>
 
             {form.esTesoreria && (
               <Accordion
