@@ -1,5 +1,5 @@
 const BADGE_IMAGES = {
-  'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k.png',
+  'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k-1.png',
   'primer evento pr': '/insignias-pr/primer-evento-pr.png',
   'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
   'espiritu pr': '/insignias-pr/espiritu-pr.png',
