@@ -11,6 +11,7 @@ import PRCardPage from './pages/PRCard'
 import ActivityPage from './pages/Activity'
 import ServicesPage from './pages/Services'
 import ContentPage from './pages/Content'
+import MusicPage from './pages/Music'
 import StorePage from './pages/Store'
 import Admin from './pages/Admin'
 import Alianza from './pages/Alianza'
@@ -167,6 +168,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <ContentPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/musica"
+          element={
+            <PrivateRoute>
+              <MusicPage />
             </PrivateRoute>
           }
         />
