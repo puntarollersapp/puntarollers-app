@@ -36,12 +36,12 @@ const Icon = ({ type }) => {
         <path d="M4 15.5h2.2" />
       </>
     ),
-    services: (
+    music: (
       <>
-        <rect x="3" y="3" width="7" height="7" rx="2" />
-        <rect x="14" y="3" width="7" height="7" rx="2" />
-        <rect x="3" y="14" width="7" height="7" rx="2" />
-        <rect x="14" y="14" width="7" height="7" rx="2" />
+        <path d="M9 18V6l10-2v12" />
+        <path d="M9 10l10-2" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="16" cy="16" r="3" />
       </>
     ),
     profile: (
@@ -87,9 +87,10 @@ export default function BottomNav() {
       featured: true,
     },
     {
-      path: '/app/servicios',
-      label: 'Servicios',
-      icon: 'services',
+      path: '/app/musica',
+      label: 'PR Music',
+      icon: 'music',
+      music: true,
     },
     {
       path: '/app/perfil',
@@ -143,7 +144,6 @@ export default function BottomNav() {
                   }`}
                 >
                   <Icon type={item.icon} />
-
                   <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#101016] border border-orange-300/30 grid place-items-center text-[10px]">
                     ⚡
                   </span>
@@ -170,17 +170,30 @@ export default function BottomNav() {
             <Link
               key={item.path}
               to={item.path}
+              aria-label={item.music ? 'Abrir PR Music' : undefined}
               className={`relative min-w-0 flex flex-col items-center gap-1 px-1 py-1.5 rounded-xl active:scale-95 transition-all ${
                 active
-                  ? 'text-pr-gold'
-                  : 'text-white/28'
+                  ? item.music
+                    ? 'text-violet-300'
+                    : 'text-pr-gold'
+                  : item.music
+                    ? 'text-violet-200/55'
+                    : 'text-white/28'
               }`}
             >
               {active && (
-                <span className="absolute -top-2 w-7 h-[2px] rounded-full bg-pr-gold shadow-[0_0_12px_rgba(201,168,76,.8)]" />
+                <span
+                  className={`absolute -top-2 w-7 h-[2px] rounded-full ${
+                    item.music
+                      ? 'bg-violet-300 shadow-[0_0_12px_rgba(196,181,253,.9)]'
+                      : 'bg-pr-gold shadow-[0_0_12px_rgba(201,168,76,.8)]'
+                  }`}
+                />
               )}
 
-              <Icon type={item.icon} />
+              <span className={item.music && active ? 'drop-shadow-[0_0_8px_rgba(196,181,253,.8)]' : ''}>
+                <Icon type={item.icon} />
+              </span>
 
               <span className="text-[9px] font-semibold truncate max-w-full">
                 {item.label}
