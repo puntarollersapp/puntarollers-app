@@ -13,6 +13,52 @@ const MOODS = [
   { id: 'distance', label: 'Fondo', emoji: '⚡' },
 ]
 
+
+const MOOD_RECOMMENDATIONS = {
+  all: 0,
+  happy: 2,
+  motivated: 3,
+  competition: 0,
+  night: 1,
+  low: 4,
+  calm: 6,
+  friends: 5,
+  distance: 6,
+}
+
+const TEST_QUESTIONS = [
+  {
+    id: 'goal',
+    eyebrow: 'Pregunta 1 de 3',
+    title: '¿Qué necesitás de la música hoy?',
+    options: [
+      { id: 'activate', label: 'Activarme', emoji: '⚡' },
+      { id: 'enjoy', label: 'Disfrutar', emoji: '😊' },
+      { id: 'release', label: 'Descargar', emoji: '💥' },
+    ],
+  },
+  {
+    id: 'company',
+    eyebrow: 'Pregunta 2 de 3',
+    title: '¿Cómo vas a rodar?',
+    options: [
+      { id: 'class', label: 'En clase', emoji: '🛼' },
+      { id: 'friends', label: 'Con amigos', emoji: '🤝' },
+      { id: 'solo', label: 'A solas', emoji: '🌙' },
+    ],
+  },
+  {
+    id: 'vibe',
+    eyebrow: 'Pregunta 3 de 3',
+    title: '¿Qué vibra te representa?',
+    options: [
+      { id: 'party', label: 'Fiesta', emoji: '🔥' },
+      { id: 'nostalgia', label: 'Nostalgia', emoji: '💿' },
+      { id: 'emotion', label: 'Emoción', emoji: '❤️' },
+    ],
+  },
+]
+
 const PLAYLISTS = [
   {
     id: '05gmyPhOhHGAhvzvH8mJ93',
@@ -398,6 +444,9 @@ export default function MusicPage() {
   const [selectedId, setSelectedId] = useState(PLAYLISTS[dailyIndex].label)
   const [selectedMood, setSelectedMood] = useState('all')
   const [playerVisible, setPlayerVisible] = useState(false)
+  const [testStep, setTestStep] = useState(0)
+  const [testAnswers, setTestAnswers] = useState({})
+  const [testResult, setTestResult] = useState(null)
 
   const orderedPlaylists = useMemo(() => {
     if (selectedMood === 'all') {
@@ -422,6 +471,43 @@ export default function MusicPage() {
   function selectPlaylist(label) {
     setSelectedId(label)
     setPlayerVisible(false)
+  }
+
+  function selectMood(moodId) {
+    const playlistIndex = MOOD_RECOMMENDATIONS[moodId] ?? 0
+    setSelectedMood(moodId)
+    selectPlaylist(PLAYLISTS[playlistIndex].label)
+  }
+
+  function answerTest(questionId, answerId) {
+    const nextAnswers = { ...testAnswers, [questionId]: answerId }
+    setTestAnswers(nextAnswers)
+
+    if (testStep < TEST_QUESTIONS.length - 1) {
+      setTestStep((current) => current + 1)
+      return
+    }
+
+    let resultIndex = 0
+
+    if (nextAnswers.vibe === 'party') resultIndex = 3
+    if (nextAnswers.vibe === 'nostalgia') resultIndex = 2
+    if (nextAnswers.vibe === 'emotion') resultIndex = 4
+    if (nextAnswers.company === 'class') resultIndex = 0
+    if (nextAnswers.company === 'solo' && nextAnswers.goal === 'release') resultIndex = 6
+    if (nextAnswers.company === 'solo' && nextAnswers.vibe === 'emotion') resultIndex = 4
+    if (nextAnswers.company === 'friends' && nextAnswers.vibe === 'nostalgia') resultIndex = 1
+    if (nextAnswers.goal === 'enjoy' && nextAnswers.company === 'friends') resultIndex = 5
+
+    const result = PLAYLISTS[resultIndex]
+    setTestResult(result)
+    selectPlaylist(result.label)
+  }
+
+  function resetTest() {
+    setTestStep(0)
+    setTestAnswers({})
+    setTestResult(null)
   }
 
   function showPlayer() {
@@ -544,9 +630,122 @@ export default function MusicPage() {
                 mood={mood}
                 selected={selectedMood === mood.id}
                 accent={selectedPlaylist.accent}
-                onClick={() => setSelectedMood(mood.id)}
+                onClick={() => selectMood(mood.id)}
               />
             ))}
+          </div>
+        </section>
+
+        <section className="mx-4 mt-7">
+          <div
+            className="relative overflow-hidden rounded-[32px] border border-white/[0.09] p-5 shadow-[0_24px_70px_rgba(0,0,0,.34)]"
+            style={{
+              background: `radial-gradient(circle at 92% 10%, ${selectedPlaylist.glow}, transparent 34%), linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.018))`,
+            }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="section-label">Test PR Music</p>
+                <h2 className="mt-1 font-display text-2xl font-bold text-white">
+                  Encontrá tu sesión ideal
+                </h2>
+                <p className="mt-2 text-xs leading-relaxed text-white/42">
+                  Tres respuestas rápidas y te recomendamos una playlist para tu próxima rodada.
+                </p>
+              </div>
+              <span
+                className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl border text-xl"
+                style={{
+                  borderColor: `${selectedPlaylist.accent}35`,
+                  background: selectedPlaylist.accentSoft,
+                }}
+              >
+                🎚️
+              </span>
+            </div>
+
+            {!testResult ? (
+              <div className="mt-5">
+                <div className="mb-4 flex gap-2">
+                  {TEST_QUESTIONS.map((question, index) => (
+                    <span
+                      key={question.id}
+                      className="h-1.5 flex-1 rounded-full transition-all"
+                      style={{
+                        background:
+                          index <= testStep ? selectedPlaylist.accent : 'rgba(255,255,255,.09)',
+                        boxShadow:
+                          index <= testStep ? `0 0 10px ${selectedPlaylist.accent}` : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <p
+                  className="text-[9px] font-black uppercase tracking-[0.17em]"
+                  style={{ color: selectedPlaylist.accent }}
+                >
+                  {TEST_QUESTIONS[testStep].eyebrow}
+                </p>
+                <h3 className="mt-1 font-display text-lg font-bold text-white">
+                  {TEST_QUESTIONS[testStep].title}
+                </h3>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {TEST_QUESTIONS[testStep].options.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => answerTest(TEST_QUESTIONS[testStep].id, option.id)}
+                      className="min-h-[88px] rounded-[20px] border border-white/[0.08] bg-black/15 px-2 py-3 text-center transition-all active:scale-[0.96]"
+                    >
+                      <span className="block text-xl" aria-hidden="true">{option.emoji}</span>
+                      <span className="mt-2 block text-[11px] font-bold text-white/72">
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5 rounded-[24px] border border-white/[0.08] bg-black/20 p-4">
+                <p
+                  className="text-[9px] font-black uppercase tracking-[0.18em]"
+                  style={{ color: testResult.accent }}
+                >
+                  Tu resultado
+                </p>
+                <div className="mt-3 flex items-center gap-3">
+                  <PlaylistArtwork
+                    playlist={testResult}
+                    index={PLAYLISTS.findIndex((item) => item.label === testResult.label)}
+                    compact
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-display text-xl font-bold text-white">{testResult.label}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-white/44">{testResult.recommendation}</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={showPlayer}
+                    disabled={!testResult.id}
+                    className="min-h-11 rounded-2xl text-xs font-extrabold disabled:opacity-50"
+                    style={{ color: '#09090c', background: testResult.accent }}
+                  >
+                    Reproducir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetTest}
+                    className="min-h-11 rounded-2xl border border-white/[0.09] bg-white/[0.035] text-xs font-bold text-white/55"
+                  >
+                    Hacerlo otra vez
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -761,4 +960,4 @@ export default function MusicPage() {
       </div>
     </AppLayout>
   )
-}
+                    }
