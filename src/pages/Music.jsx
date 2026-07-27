@@ -1,70 +1,196 @@
 import { useMemo, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 
+const MOODS = [
+  { id: 'all', label: 'Para hoy', emoji: '✨' },
+  { id: 'happy', label: 'Feliz', emoji: '😊' },
+  { id: 'motivated', label: 'Motivado', emoji: '🔥' },
+  { id: 'competition', label: 'Competencia', emoji: '🏁' },
+  { id: 'night', label: 'Noche', emoji: '🌙' },
+  { id: 'low', label: 'Bajón', emoji: '💔' },
+  { id: 'calm', label: 'Tranquilo', emoji: '😌' },
+  { id: 'friends', label: 'Con amigos', emoji: '🛼' },
+  { id: 'distance', label: 'Fondo', emoji: '⚡' },
+]
+
 const PLAYLISTS = [
   {
     id: '05gmyPhOhHGAhvzvH8mJ93',
-    label: 'PR Session 01',
-    eyebrow: 'Sesión destacada',
-    description: 'Una selección oficial para activar el cuerpo, encontrar el ritmo y empezar a rodar.',
+    label: 'PR Session',
+    shortLabel: 'PR Session',
+    eyebrow: 'La banda sonora de Punta Rollers',
+    description:
+      'Una playlist colaborativa creada con los alumnos de PR. Cada uno sumó canciones que lo representan, lo motivan o simplemente quiere escuchar durante las clases.',
+    when:
+      'Para los días de clase, entrenamientos grupales y momentos en los que querés sentir que rodás acompañado.',
+    energy: 4,
+    distance: '6–20 km',
+    mood: 'Comunidad, energía y pertenencia',
+    moods: ['all', 'happy', 'motivated', 'competition', 'friends', 'distance'],
     accent: '#f0cf70',
+    accent2: '#ff8f5a',
     accentSoft: 'rgba(240, 207, 112, 0.18)',
-    glow: 'rgba(240, 207, 112, 0.22)',
+    glow: 'rgba(240, 207, 112, 0.25)',
+    icon: '💙',
+    badge: 'Creada entre todos',
+    recommendation: 'Hoy puede sonar la canción de alguien que rueda a tu lado.',
   },
   {
     id: '5Mq85OCh1KA3azpMnTJgSq',
-    label: 'PR Session 02',
-    eyebrow: 'Energía PR',
-    description: 'Música para acompañar entrenamientos con movimiento, actitud y energía de equipo.',
-    accent: '#ff7a59',
-    accentSoft: 'rgba(255, 122, 89, 0.18)',
-    glow: 'rgba(255, 122, 89, 0.22)',
+    label: 'MTV Hits 1 · OldSchool Eras',
+    shortLabel: 'MTV Hits',
+    eyebrow: 'La época dorada de la tele musical',
+    description:
+      'Himnos que alguna vez descubrimos mirando videoclips, esperando nuestro tema favorito y creyendo que MTV nunca iba a cambiar.',
+    when:
+      'Cuando querés entrenar con actitud, nostalgia y una energía que te hace sentir protagonista de tu propio videoclip.',
+    energy: 4,
+    distance: '8–18 km',
+    mood: 'Nostalgia, actitud y libertad',
+    moods: ['all', 'happy', 'motivated', 'night', 'friends'],
+    accent: '#9c7cff',
+    accent2: '#5b8cff',
+    accentSoft: 'rgba(156, 124, 255, 0.18)',
+    glow: 'rgba(156, 124, 255, 0.24)',
+    icon: '📺',
+    badge: 'Old school',
+    recommendation: 'Subí el volumen: hoy la pista se convierte en videoclip.',
   },
   {
     id: '5rVVCmRXRAcuNZXQBg0tgJ',
-    label: 'PR Session 03',
-    eyebrow: 'Modo entrenamiento',
-    description: 'Elegí tu ritmo, ajustá los patines y dejá que la música marque la sesión.',
+    label: 'Así Sonaban los 2000s',
+    shortLabel: 'Los 2000s',
+    eyebrow: 'Volver sin pedir permiso',
+    description:
+      'Pop, hits y recuerdos de una década que sonaba en el MP3, el cyber, los cumpleaños y cada salida con amigos.',
+    when:
+      'Cuando necesitás levantar el ánimo, cantar sin vergüenza y sumar kilómetros con una sonrisa.',
+    energy: 4,
+    distance: '6–16 km',
+    mood: 'Diversión, recuerdos y buen humor',
+    moods: ['all', 'happy', 'motivated', 'friends'],
     accent: '#65d7ff',
+    accent2: '#48f0c4',
     accentSoft: 'rgba(101, 215, 255, 0.17)',
-    glow: 'rgba(101, 215, 255, 0.22)',
+    glow: 'rgba(101, 215, 255, 0.24)',
+    icon: '💿',
+    badge: 'Pura nostalgia',
+    recommendation: 'Poné play y volvé a esa época en la que todo parecía más simple.',
   },
   {
     id: '4y73FZYgyEVOmzxIfRZiM5',
-    label: 'PR Session 04',
-    eyebrow: 'Sobre ruedas',
-    description: 'Una banda sonora para salir, compartir kilómetros y disfrutar cada vuelta.',
-    accent: '#a98cff',
-    accentSoft: 'rgba(169, 140, 255, 0.18)',
-    glow: 'rgba(169, 140, 255, 0.22)',
+    label: 'Reggaetón del Viejito 👌',
+    shortLabel: 'Reggaetón',
+    eyebrow: 'Perreo con memoria',
+    description:
+      'Reggaetón de antes, del que sabíamos de principio a fin y que todavía activa algo apenas suena el primer segundo.',
+    when:
+      'Para entrar en calor, entrenar con ritmo, compartir una rodada o convertir una clase en una fiesta.',
+    energy: 5,
+    distance: '5–15 km',
+    mood: 'Ritmo, seguridad y picardía',
+    moods: ['all', 'happy', 'motivated', 'competition', 'night', 'friends'],
+    accent: '#ff7a59',
+    accent2: '#ffcf4a',
+    accentSoft: 'rgba(255, 122, 89, 0.18)',
+    glow: 'rgba(255, 122, 89, 0.25)',
+    icon: '🔥',
+    badge: 'Energía alta',
+    recommendation: 'Ideal para una rodada donde nadie se queda quieto.',
   },
   {
     id: '0HV6hNSFb71KfobG6UJXZF',
-    label: 'PR Session 05',
-    eyebrow: 'Subí la intensidad',
-    description: 'Una sesión para esos entrenamientos en los que necesitás sostener la motivación.',
+    label: 'Millennials Dramáticos',
+    shortLabel: 'Dramáticos',
+    eyebrow: 'Sentirlo todo también cuenta',
+    description:
+      'Canciones para cantar como si hubieras protagonizado cinco novelas, tres despedidas y un mensaje que nunca llegó.',
+    when:
+      'Cuando alguien no respondió, necesitás descargar la cabeza o querés transformar el drama en kilómetros.',
+    energy: 3,
+    distance: '6–12 km',
+    mood: 'Catarsis, emoción y liberación',
+    moods: ['all', 'low', 'night', 'calm'],
     accent: '#ff5f83',
+    accent2: '#c45cff',
     accentSoft: 'rgba(255, 95, 131, 0.18)',
-    glow: 'rgba(255, 95, 131, 0.22)',
+    glow: 'rgba(255, 95, 131, 0.25)',
+    icon: '💔',
+    badge: 'Catarsis millennial',
+    recommendation: 'Que duela la canción, no las piernas.',
   },
   {
     id: '77sFrL35HvQQOA1MlrDbbM',
-    label: 'PR Session 06',
-    eyebrow: 'Rodada colectiva',
-    description: 'Música elegida para acompañar la conexión, la calle y el espíritu de comunidad.',
+    label: 'Millennials · Latin Era',
+    shortLabel: 'Latin Era',
+    eyebrow: 'Latinoamérica en modo recuerdo',
+    description:
+      'Pop latino, baladas y canciones que marcaron una generación entera entre radios, novelas, fiestas y discos grabados.',
+    when:
+      'Cuando querés cantar, recordar y rodar con una energía cercana, cálida y completamente nuestra.',
+    energy: 3,
+    distance: '7–16 km',
+    mood: 'Calidez, alegría y conexión',
+    moods: ['all', 'happy', 'calm', 'friends', 'night'],
     accent: '#55e6b1',
+    accent2: '#54a8ff',
     accentSoft: 'rgba(85, 230, 177, 0.17)',
-    glow: 'rgba(85, 230, 177, 0.22)',
+    glow: 'rgba(85, 230, 177, 0.24)',
+    icon: '🌎',
+    badge: 'Latin memories',
+    recommendation: 'Una rodada para cantar fuerte y pensar menos.',
   },
   {
     id: '6SvoXxfxviMF6CvBF479o3',
-    label: 'PR Session 07',
-    eyebrow: 'Última vuelta',
-    description: 'La sesión ideal para cerrar el entrenamiento arriba y volver con ganas de más.',
+    label: 'Nostalgia PR',
+    shortLabel: 'Nostalgia PR',
+    eyebrow: 'Recuerdos que también ruedan',
+    description:
+      'Una mezcla emocional para volver a canciones, etapas y momentos que todavía viven en algún rincón de nosotros.',
+    when:
+      'Para rodar al atardecer, despejarte después de un día largo o regalarte una salida sin presión.',
+    energy: 2,
+    distance: '8–15 km',
+    mood: 'Calma, memoria y aire libre',
+    moods: ['all', 'low', 'calm', 'night', 'distance'],
     accent: '#ffb84d',
+    accent2: '#ff7f8d',
     accentSoft: 'rgba(255, 184, 77, 0.18)',
-    glow: 'rgba(255, 184, 77, 0.22)',
+    glow: 'rgba(255, 184, 77, 0.24)',
+    icon: '🌅',
+    badge: 'Para bajar un cambio',
+    recommendation: 'Hoy no hace falta correr: alcanza con seguir rodando.',
   },
+  {
+    id: '',
+    label: '❤️🎸 Rock Para El Alma',
+    shortLabel: 'Rock Para El Alma',
+    eyebrow: 'Respirar, sentir y seguir',
+    description:
+      'Rock para esos días en los que necesitás bajar un cambio, ordenar la cabeza y dejar que la ruta haga el resto.',
+    when:
+      'Cuando querés rodar solo, mirar el atardecer, pensar con calma o recomponerte después de un día pesado.',
+    energy: 3,
+    distance: '8–15 km',
+    mood: 'Introspección, fuerza y libertad',
+    moods: ['all', 'low', 'calm', 'night', 'distance'],
+    accent: '#ef6f6c',
+    accent2: '#ffb054',
+    accentSoft: 'rgba(239, 111, 108, 0.18)',
+    glow: 'rgba(239, 111, 108, 0.24)',
+    icon: '🎸',
+    badge: 'Rock & corazón',
+    recommendation: 'Respirá. No todo entrenamiento consiste en ir más rápido.',
+  },
+]
+
+const DAILY_PHRASES = [
+  'Cada entrenamiento tiene una banda sonora.',
+  'Ajustá el casco. Elegí tu canción. Salí a rodar.',
+  'Hoy puede ser un gran día para sumar kilómetros.',
+  'La música cambia el ritmo. Vos cambiás la historia.',
+  'Ponete los patines. La música hace el resto.',
+  'No hace falta correr para avanzar.',
 ]
 
 function spotifyUrl(id) {
@@ -75,15 +201,20 @@ function spotifyEmbedUrl(id) {
   return `https://open.spotify.com/embed/playlist/${id}?utm_source=generator&theme=0`
 }
 
+function getDayIndex(length) {
+  const now = new Date()
+  const seed = Number(
+    `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(
+      now.getDate()
+    ).padStart(2, '0')}`
+  )
+
+  return seed % length
+}
+
 function PlayIcon({ size = 22 }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.3-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z" />
     </svg>
   )
@@ -133,7 +264,7 @@ function Equalizer({ accent }) {
   const heights = [38, 62, 48, 78, 55, 88, 44, 70, 34, 58, 82, 46]
 
   return (
-    <div className="flex h-16 items-end justify-center gap-1" aria-hidden="true">
+    <div className="flex h-14 items-end justify-center gap-1" aria-hidden="true">
       {heights.map((height, index) => (
         <span
           key={`${height}-${index}`}
@@ -149,24 +280,37 @@ function Equalizer({ accent }) {
   )
 }
 
-function SessionArtwork({ playlist, index, compact = false }) {
+function EnergyDots({ value, accent }) {
+  return (
+    <div className="flex items-center gap-1.5" aria-label={`Energía ${value} de 5`}>
+      {[1, 2, 3, 4, 5].map((item) => (
+        <span
+          key={item}
+          className="h-1.5 w-5 rounded-full"
+          style={{
+            background: item <= value ? accent : 'rgba(255,255,255,.1)',
+            boxShadow: item <= value ? `0 0 10px ${accent}` : 'none',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function PlaylistArtwork({ playlist, index, compact = false }) {
   return (
     <div
       className={`relative flex-shrink-0 overflow-hidden border border-white/10 ${
-        compact ? 'h-[72px] w-[72px] rounded-[21px]' : 'aspect-square w-full rounded-[30px]'
+        compact ? 'h-[76px] w-[76px] rounded-[22px]' : 'aspect-square w-full rounded-[30px]'
       }`}
       style={{
-        background: `radial-gradient(circle at 28% 18%, ${playlist.accentSoft}, transparent 35%), linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.018) 55%, ${playlist.accentSoft})`,
+        background: `radial-gradient(circle at 20% 18%, ${playlist.accentSoft}, transparent 34%), radial-gradient(circle at 82% 78%, ${playlist.accent2}30, transparent 34%), linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.018) 55%, ${playlist.accentSoft})`,
         boxShadow: `0 24px 70px ${playlist.glow}`,
       }}
     >
-      <div
-        className="absolute -right-[18%] -top-[18%] h-[68%] w-[68%] rounded-full border border-white/10"
-        style={{ boxShadow: `inset 0 0 45px ${playlist.glow}` }}
-      />
+      <div className="absolute -right-[18%] -top-[18%] h-[68%] w-[68%] rounded-full border border-white/10" />
       <div className="absolute -bottom-[28%] -left-[22%] h-[75%] w-[75%] rounded-full border border-white/[0.07]" />
       <div className="absolute inset-[17%] rounded-full border border-white/[0.08]" />
-      <div className="absolute inset-[30%] rounded-full border border-white/[0.12]" />
 
       <div className="absolute inset-0 flex flex-col justify-between p-4">
         <div className="flex items-start justify-between">
@@ -180,19 +324,19 @@ function SessionArtwork({ playlist, index, compact = false }) {
           >
             PR
           </span>
-          <span className="font-display text-[11px] font-bold text-white/36">
-            {String(index + 1).padStart(2, '0')}
+          <span className="font-display text-lg" aria-hidden="true">
+            {playlist.icon}
           </span>
         </div>
 
         {!compact && (
           <div>
             <Equalizer accent={playlist.accent} />
-            <p className="mt-3 font-display text-xl font-bold leading-none text-white">
-              MUSIC
+            <p className="mt-2 font-display text-lg font-bold leading-tight text-white">
+              {playlist.shortLabel}
             </p>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.22em] text-white/35">
-              Official session
+            <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.2em] text-white/35">
+              PR Music · {String(index + 1).padStart(2, '0')}
             </p>
           </div>
         )}
@@ -201,49 +345,90 @@ function SessionArtwork({ playlist, index, compact = false }) {
   )
 }
 
-function SessionSelector({ playlist, index, selected, onSelect }) {
+function MoodChip({ mood, selected, accent, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className="flex min-h-11 flex-shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-bold transition-all active:scale-[0.96]"
+      style={{
+        color: selected ? '#09090c' : 'rgba(255,255,255,.58)',
+        background: selected ? accent : 'rgba(255,255,255,.035)',
+        borderColor: selected ? accent : 'rgba(255,255,255,.08)',
+        boxShadow: selected ? `0 10px 26px ${accent}35` : 'none',
+      }}
+    >
+      <span aria-hidden="true">{mood.emoji}</span>
+      {mood.label}
+    </button>
+  )
+}
+
+function PlaylistSelector({ playlist, index, selected, onSelect }) {
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`w-[112px] flex-shrink-0 rounded-[24px] border p-2.5 text-left transition-all active:scale-[0.97] ${
+      className={`w-[132px] flex-shrink-0 rounded-[25px] border p-2.5 text-left transition-all duration-300 active:scale-[0.97] ${
         selected
           ? 'border-white/20 bg-white/[0.085] shadow-[0_15px_40px_rgba(0,0,0,.28)]'
           : 'border-white/[0.065] bg-white/[0.025]'
       }`}
     >
-      <SessionArtwork playlist={playlist} index={index} compact />
+      <PlaylistArtwork playlist={playlist} index={index} compact />
       <p
-        className="mt-2.5 text-[9px] font-bold uppercase tracking-[0.14em]"
+        className="mt-2.5 text-[9px] font-bold uppercase tracking-[0.13em]"
         style={{ color: selected ? playlist.accent : 'rgba(255,255,255,.28)' }}
       >
-        Session {String(index + 1).padStart(2, '0')}
+        {playlist.badge}
       </p>
-      <p className="mt-1 truncate font-display text-sm font-bold text-white/88">
-        Escuchar
+      <p className="mt-1 line-clamp-2 min-h-[36px] font-display text-sm font-bold leading-tight text-white/88">
+        {playlist.shortLabel}
       </p>
     </button>
   )
 }
 
 export default function MusicPage() {
-  const [selectedId, setSelectedId] = useState(PLAYLISTS[0].id)
+  const dailyIndex = useMemo(() => getDayIndex(PLAYLISTS.length), [])
+  const dailyPhrase = useMemo(() => DAILY_PHRASES[getDayIndex(DAILY_PHRASES.length)], [])
+
+  const [selectedId, setSelectedId] = useState(PLAYLISTS[dailyIndex].label)
+  const [selectedMood, setSelectedMood] = useState('all')
   const [playerVisible, setPlayerVisible] = useState(false)
 
+  const orderedPlaylists = useMemo(() => {
+    if (selectedMood === 'all') {
+      return PLAYLISTS
+    }
+
+    return [...PLAYLISTS].sort((a, b) => {
+      const aMatches = a.moods.includes(selectedMood) ? 1 : 0
+      const bMatches = b.moods.includes(selectedMood) ? 1 : 0
+      return bMatches - aMatches
+    })
+  }, [selectedMood])
+
   const selectedIndex = useMemo(
-    () => PLAYLISTS.findIndex((playlist) => playlist.id === selectedId),
+    () => PLAYLISTS.findIndex((playlist) => playlist.label === selectedId),
     [selectedId]
   )
 
   const selectedPlaylist = PLAYLISTS[selectedIndex] || PLAYLISTS[0]
+  const dailyPlaylist = PLAYLISTS[dailyIndex]
 
-  function selectPlaylist(id) {
-    setSelectedId(id)
+  function selectPlaylist(label) {
+    setSelectedId(label)
     setPlayerVisible(false)
   }
 
   function showPlayer() {
+    if (!selectedPlaylist.id) {
+      return
+    }
+
     setPlayerVisible(true)
     window.setTimeout(() => {
       document
@@ -254,26 +439,20 @@ export default function MusicPage() {
 
   return (
     <AppLayout title="PR Music" showBack>
-      <div className="overflow-hidden pb-10">
+      <div className="overflow-hidden pb-12">
         <section
-          className="relative mx-4 mt-4 overflow-hidden rounded-[34px] border border-white/[0.08] px-5 pb-6 pt-5 shadow-[0_28px_90px_rgba(0,0,0,.42)]"
+          className="relative mx-4 mt-4 overflow-hidden rounded-[36px] border border-white/[0.08] px-5 pb-6 pt-5 shadow-[0_28px_90px_rgba(0,0,0,.42)] transition-all duration-500"
           style={{
-            background: `radial-gradient(circle at 78% 12%, ${selectedPlaylist.glow}, transparent 30%), radial-gradient(circle at 4% 92%, ${selectedPlaylist.accentSoft}, transparent 34%), linear-gradient(150deg, rgba(255,255,255,.07), rgba(255,255,255,.018) 48%, rgba(0,0,0,.18))`,
+            background: `radial-gradient(circle at 82% 8%, ${selectedPlaylist.glow}, transparent 32%), radial-gradient(circle at 5% 94%, ${selectedPlaylist.accentSoft}, transparent 36%), linear-gradient(150deg, rgba(255,255,255,.075), rgba(255,255,255,.018) 48%, rgba(0,0,0,.2))`,
           }}
         >
-          <div
-            className="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/[0.05]"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute -right-8 -top-8 h-40 w-40 rounded-full border border-white/[0.06]"
-            aria-hidden="true"
-          />
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/[0.05]" />
+          <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full border border-white/[0.06]" />
 
           <div className="relative">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="section-label">El sonido oficial de PR</p>
+                <p className="section-label">El sonido de nuestra comunidad</p>
                 <h1 className="mt-1 font-display text-[38px] font-extrabold leading-none text-white">
                   PR <span style={{ color: selectedPlaylist.accent }}>MUSIC</span>
                 </h1>
@@ -291,34 +470,32 @@ export default function MusicPage() {
               </div>
             </div>
 
-            <p className="mt-4 max-w-[320px] text-sm leading-relaxed text-white/50">
-              El ritmo también es parte del entrenamiento. Elegí una sesión y llevá la energía de Punta Rollers con vos.
+            <p className="mt-4 max-w-[325px] text-sm leading-relaxed text-white/52">
+              {dailyPhrase}
             </p>
 
             <div className="mt-6 grid grid-cols-[128px_1fr] items-center gap-5">
-              <SessionArtwork
-                playlist={selectedPlaylist}
-                index={selectedIndex}
-              />
+              <PlaylistArtwork playlist={selectedPlaylist} index={selectedIndex} />
 
               <div className="min-w-0">
                 <p
-                  className="text-[10px] font-black uppercase tracking-[0.18em]"
+                  className="text-[10px] font-black uppercase tracking-[0.17em]"
                   style={{ color: selectedPlaylist.accent }}
                 >
                   {selectedPlaylist.eyebrow}
                 </p>
-                <h2 className="mt-1 font-display text-2xl font-bold leading-tight text-white">
+                <h2 className="mt-1 font-display text-[22px] font-bold leading-tight text-white">
                   {selectedPlaylist.label}
                 </h2>
-                <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-white/42">
+                <p className="mt-2 line-clamp-4 text-xs leading-relaxed text-white/44">
                   {selectedPlaylist.description}
                 </p>
 
                 <button
                   type="button"
                   onClick={showPlayer}
-                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl px-4 text-xs font-extrabold transition-transform active:scale-[0.96]"
+                  disabled={!selectedPlaylist.id}
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl px-4 text-xs font-extrabold transition-transform active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-55"
                   style={{
                     color: '#09090c',
                     background: selectedPlaylist.accent,
@@ -326,56 +503,165 @@ export default function MusicPage() {
                   }}
                 >
                   <PlayIcon size={15} />
-                  Reproducir ahora
+                  {selectedPlaylist.id ? 'Reproducir ahora' : 'Próximamente'}
                 </button>
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-white/[0.07] pt-4">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/24">
-                  Colección actual
+            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/[0.07] pt-4">
+              <div className="rounded-[20px] border border-white/[0.07] bg-black/15 px-4 py-3">
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/27">
+                  Distancia sugerida
                 </p>
-                <p className="mt-0.5 font-display text-base font-bold text-white/85">
-                  7 sesiones oficiales
+                <p className="mt-1 font-display text-base font-bold text-white/88">
+                  {selectedPlaylist.distance}
                 </p>
               </div>
-
-              <span className="rounded-full border border-white/[0.08] bg-black/20 px-3 py-1.5 text-[10px] font-semibold text-white/38">
-                Powered by Spotify
-              </span>
+              <div className="rounded-[20px] border border-white/[0.07] bg-black/15 px-4 py-3">
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/27">
+                  Energía
+                </p>
+                <div className="mt-2">
+                  <EnergyDots value={selectedPlaylist.energy} accent={selectedPlaylist.accent} />
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="mt-7">
+          <div className="px-5">
+            <p className="section-label">Elegí según tu energía</p>
+            <h2 className="mt-1 font-display text-2xl font-bold text-white">
+              ¿Cómo te sentís hoy?
+            </h2>
+          </div>
+
+          <div className="mt-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {MOODS.map((mood) => (
+              <MoodChip
+                key={mood.id}
+                mood={mood}
+                selected={selectedMood === mood.id}
+                accent={selectedPlaylist.accent}
+                onClick={() => setSelectedMood(mood.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-4 mt-7">
+          <button
+            type="button"
+            onClick={() => selectPlaylist(dailyPlaylist.label)}
+            className="relative w-full overflow-hidden rounded-[30px] border border-white/[0.08] p-5 text-left shadow-[0_20px_60px_rgba(0,0,0,.3)] active:scale-[0.99]"
+            style={{
+              background: `radial-gradient(circle at 92% 14%, ${dailyPlaylist.glow}, transparent 33%), linear-gradient(140deg, ${dailyPlaylist.accentSoft}, rgba(255,255,255,.025) 55%, rgba(0,0,0,.16))`,
+            }}
+          >
+            <div className="relative flex items-center gap-4">
+              <PlaylistArtwork playlist={dailyPlaylist} index={dailyIndex} compact />
+              <div className="min-w-0 flex-1">
+                <p
+                  className="text-[9px] font-black uppercase tracking-[0.18em]"
+                  style={{ color: dailyPlaylist.accent }}
+                >
+                  🎧 Recomendación de hoy
+                </p>
+                <h3 className="mt-1 font-display text-xl font-bold text-white">
+                  {dailyPlaylist.label}
+                </h3>
+                <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-white/42">
+                  {dailyPlaylist.recommendation}
+                </p>
+              </div>
+              <span
+                className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full"
+                style={{
+                  color: '#08090c',
+                  background: dailyPlaylist.accent,
+                  boxShadow: `0 10px 24px ${dailyPlaylist.glow}`,
+                }}
+              >
+                <PlayIcon size={15} />
+              </span>
+            </div>
+          </button>
+        </section>
+
+        <section className="mt-8">
           <div className="mb-3 flex items-end justify-between gap-3 px-5">
             <div>
-              <p className="section-label">Tu próxima banda sonora</p>
+              <p className="section-label">La colección oficial</p>
               <h2 className="mt-1 font-display text-2xl font-bold text-white">
-                Elegí una sesión
+                Elegí tu banda sonora
               </h2>
             </div>
             <p className="pb-0.5 text-[10px] text-white/24">Deslizá →</p>
           </div>
 
           <div className="flex gap-3 overflow-x-auto px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {PLAYLISTS.map((playlist, index) => (
-              <SessionSelector
-                key={playlist.id}
-                playlist={playlist}
-                index={index}
-                selected={playlist.id === selectedPlaylist.id}
-                onSelect={() => selectPlaylist(playlist.id)}
-              />
-            ))}
+            {orderedPlaylists.map((playlist) => {
+              const originalIndex = PLAYLISTS.findIndex((item) => item.label === playlist.label)
+
+              return (
+                <PlaylistSelector
+                  key={playlist.label}
+                  playlist={playlist}
+                  index={originalIndex}
+                  selected={playlist.label === selectedPlaylist.label}
+                  onSelect={() => selectPlaylist(playlist.label)}
+                />
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="px-4 pt-5">
+          <div
+            className="rounded-[30px] border border-white/[0.08] bg-white/[0.03] p-5 shadow-[0_24px_70px_rgba(0,0,0,.3)]"
+            style={{ boxShadow: `0 24px 70px ${selectedPlaylist.glow}` }}
+          >
+            <div className="flex items-start gap-3">
+              <span
+                className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-2xl border text-xl"
+                style={{
+                  borderColor: `${selectedPlaylist.accent}32`,
+                  background: selectedPlaylist.accentSoft,
+                }}
+              >
+                {selectedPlaylist.icon}
+              </span>
+              <div>
+                <p
+                  className="text-[9px] font-black uppercase tracking-[0.18em]"
+                  style={{ color: selectedPlaylist.accent }}
+                >
+                  ¿Cuándo escucharla?
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                  {selectedPlaylist.when}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 border-t border-white/[0.07] pt-4">
+              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/27">
+                Estado recomendado
+              </p>
+              <p className="mt-1 font-display text-base font-bold text-white/88">
+                {selectedPlaylist.mood}
+              </p>
+            </div>
           </div>
         </section>
 
         <section id="pr-music-player" className="scroll-mt-20 px-4 pt-5">
           <div
-            className="overflow-hidden rounded-[30px] border border-white/[0.08] bg-white/[0.03] shadow-[0_24px_70px_rgba(0,0,0,.34)]"
-            style={{ boxShadow: playerVisible ? `0 24px 70px ${selectedPlaylist.glow}` : undefined }}
+            className="overflow-hidden rounded-[30px] border border-white/[0.08] bg-white/[0.03]"
+            style={{
+              boxShadow: playerVisible ? `0 24px 70px ${selectedPlaylist.glow}` : undefined,
+            }}
           >
             <div className="flex items-center gap-3 border-b border-white/[0.07] p-4">
               <div
@@ -398,18 +684,20 @@ export default function MusicPage() {
                 </h3>
               </div>
 
-              <a
-                href={spotifyUrl(selectedPlaylist.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.035] text-white/45 active:scale-95"
-                aria-label="Abrir playlist en Spotify"
-              >
-                <ExternalIcon />
-              </a>
+              {selectedPlaylist.id && (
+                <a
+                  href={spotifyUrl(selectedPlaylist.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.035] text-white/45 active:scale-95"
+                  aria-label="Abrir playlist en Spotify"
+                >
+                  <ExternalIcon />
+                </a>
+              )}
             </div>
 
-            {playerVisible ? (
+            {playerVisible && selectedPlaylist.id ? (
               <div className="p-3">
                 <div className="overflow-hidden rounded-[22px] bg-black/25">
                   <iframe
@@ -438,23 +726,27 @@ export default function MusicPage() {
                   <PlayIcon size={23} />
                 </div>
                 <p className="mt-4 font-display text-xl font-bold text-white">
-                  Tu sesión está pronta
+                  {selectedPlaylist.id ? 'Tu playlist está pronta' : 'Playlist en preparación'}
                 </p>
-                <p className="mt-2 max-w-[280px] text-xs leading-relaxed text-white/38">
-                  Tocá reproducir para cargar Spotify dentro de la app y escuchar esta playlist.
+                <p className="mt-2 max-w-[285px] text-xs leading-relaxed text-white/38">
+                  {selectedPlaylist.id
+                    ? 'Tocá reproducir para cargar Spotify dentro de la app.'
+                    : 'El diseño ya está listo. Solo falta incorporar el enlace de Spotify de esta playlist.'}
                 </p>
-                <button
-                  type="button"
-                  onClick={showPlayer}
-                  className="mt-5 rounded-2xl border px-5 py-3 text-xs font-extrabold active:scale-[0.97]"
-                  style={{
-                    color: selectedPlaylist.accent,
-                    borderColor: `${selectedPlaylist.accent}35`,
-                    background: selectedPlaylist.accentSoft,
-                  }}
-                >
-                  Cargar reproductor
-                </button>
+                {selectedPlaylist.id && (
+                  <button
+                    type="button"
+                    onClick={showPlayer}
+                    className="mt-5 rounded-2xl border px-5 py-3 text-xs font-extrabold active:scale-[0.97]"
+                    style={{
+                      color: selectedPlaylist.accent,
+                      borderColor: `${selectedPlaylist.accent}35`,
+                      background: selectedPlaylist.accentSoft,
+                    }}
+                  >
+                    Cargar reproductor
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -463,10 +755,10 @@ export default function MusicPage() {
         <div className="mx-7 mt-6 flex items-center gap-3 rounded-[22px] border border-white/[0.055] bg-white/[0.02] px-4 py-3.5">
           <span className="text-lg" aria-hidden="true">🎧</span>
           <p className="text-[10px] leading-relaxed text-white/28">
-            Las canciones, portadas y cambios de cada playlist se actualizan automáticamente desde Spotify.
+            Las canciones y los cambios de cada playlist se actualizan automáticamente desde Spotify.
           </p>
         </div>
       </div>
     </AppLayout>
   )
-                }
+}
