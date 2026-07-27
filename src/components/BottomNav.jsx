@@ -28,10 +28,14 @@ const Icon = ({ type }) => {
     ),
     training: (
       <>
-        <path d="M4 17.5h10.5a4.5 4.5 0 0 0 4.5-4.5V9.5" />
-        <path d="m7 13 3.5-3.5 2.7 2.7L18 7.5" />
-        <circle cx="7" cy="20" r="1.5" />
-        <circle cx="14" cy="20" r="1.5" />
+        <path d="M6.2 4.8h5.4l1.2 5.2 4.1 2.2c1.1.6 1.8 1.8 1.8 3.1v.4H5.2l-.8-2.6 2.3-1.7-.5-6.6Z" />
+        <path d="M7 8.2h5.2" />
+        <path d="M8.4 11.2h5.1" />
+        <path d="M5.2 15.7h13.5" />
+        <circle cx="6.7" cy="19.2" r="1.35" />
+        <circle cx="10.6" cy="19.2" r="1.35" />
+        <circle cx="14.5" cy="19.2" r="1.35" />
+        <circle cx="18.4" cy="19.2" r="1.35" />
       </>
     ),
     rollerfeed: (
@@ -78,7 +82,7 @@ export default function BottomNav() {
   const nav = [
     { path: '/app/dashboard', label: 'Inicio', icon: 'home' },
     { path: '/app/perfil', label: 'Perfil', icon: 'profile' },
-    { path: '/app/entrenamiento', label: 'Entrena', icon: 'training' },
+    { path: '/app/entrenamiento', label: 'Actividad', icon: 'training', training: true },
     {
       path: '/app/actividad',
       label: 'RollerFeed',
@@ -153,29 +157,37 @@ export default function BottomNav() {
               aria-label={item.music ? 'Abrir PR Music' : undefined}
               className={`relative flex min-w-0 flex-col items-center gap-1 rounded-xl px-0.5 py-1.5 transition-all active:scale-95 ${
                 active
-                  ? item.music
-                    ? 'text-violet-300'
-                    : 'text-pr-gold'
-                  : item.music
-                    ? 'text-violet-200/55'
-                    : 'text-white/28'
+                  ? item.training
+                    ? 'text-red-400'
+                    : item.music
+                      ? 'text-violet-300'
+                      : 'text-pr-gold'
+                  : item.training
+                    ? 'text-red-400/65'
+                    : item.music
+                      ? 'text-violet-200/55'
+                      : 'text-white/28'
               }`}
             >
               {active && (
                 <span
                   className={`absolute -top-2 h-[2px] w-7 rounded-full ${
-                    item.music
-                      ? 'bg-violet-300 shadow-[0_0_12px_rgba(196,181,253,.9)]'
-                      : 'bg-pr-gold shadow-[0_0_12px_rgba(201,168,76,.8)]'
+                    item.training
+                      ? 'bg-red-400 shadow-[0_0_12px_rgba(248,113,113,.95)]'
+                      : item.music
+                        ? 'bg-violet-300 shadow-[0_0_12px_rgba(196,181,253,.9)]'
+                        : 'bg-pr-gold shadow-[0_0_12px_rgba(201,168,76,.8)]'
                   }`}
                 />
               )}
 
               <span
                 className={
-                  item.music && active
-                    ? 'drop-shadow-[0_0_8px_rgba(196,181,253,.8)]'
-                    : ''
+                  item.training && active
+                    ? 'drop-shadow-[0_0_9px_rgba(248,113,113,.9)]'
+                    : item.music && active
+                      ? 'drop-shadow-[0_0_8px_rgba(196,181,253,.8)]'
+                      : ''
                 }
               >
                 <Icon type={item.icon} />
