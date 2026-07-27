@@ -1213,7 +1213,7 @@ export default function Profile({ mode = 'profile' }) {
   const isTrainingPage = mode === 'training'
   const isBadgesPage = mode === 'badges'
   const pageTitle = isTrainingPage
-    ? 'Entrenamiento'
+    ? 'Actividad deportiva'
     : isBadgesPage
       ? 'Insignias'
       : 'Mi perfil'
