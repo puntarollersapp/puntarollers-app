@@ -3,8 +3,8 @@ import { useAuth } from '../lib/auth'
 
 const Icon = ({ type }) => {
   const common = {
-    width: 22,
-    height: 22,
+    width: 21,
+    height: 21,
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
@@ -20,11 +20,18 @@ const Icon = ({ type }) => {
         <path d="M5 10.5V20h5v-6h4v6h5v-9.5" />
       </>
     ),
-    card: (
+    profile: (
       <>
-        <rect x="3" y="5" width="18" height="14" rx="3" />
-        <path d="M3 10h18" />
-        <path d="M7 15h3" />
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+      </>
+    ),
+    training: (
+      <>
+        <path d="M4 17.5h10.5a4.5 4.5 0 0 0 4.5-4.5V9.5" />
+        <path d="m7 13 3.5-3.5 2.7 2.7L18 7.5" />
+        <circle cx="7" cy="20" r="1.5" />
+        <circle cx="14" cy="20" r="1.5" />
       </>
     ),
     rollerfeed: (
@@ -44,10 +51,11 @@ const Icon = ({ type }) => {
         <circle cx="16" cy="16" r="3" />
       </>
     ),
-    profile: (
+    badges: (
       <>
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+        <circle cx="12" cy="9" r="5" />
+        <path d="m8.5 13-1 8 4.5-2.5 4.5 2.5-1-8" />
+        <path d="m10.2 9 1.2 1.2 2.5-2.7" />
       </>
     ),
     admin: (
@@ -65,68 +73,42 @@ export default function BottomNav() {
   const { pathname } = useLocation()
   const { user } = useAuth()
 
-  const isAdmin =
-    user?.role === 'admin' ||
-    user?.role === 'profesor'
+  const isAdmin = user?.role === 'admin' || user?.role === 'profesor'
 
   const nav = [
-    {
-      path: '/app/dashboard',
-      label: 'Inicio',
-      icon: 'home',
-    },
-    {
-      path: '/app/prcard',
-      label: 'PRCard',
-      icon: 'card',
-    },
+    { path: '/app/dashboard', label: 'Inicio', icon: 'home' },
+    { path: '/app/perfil', label: 'Perfil', icon: 'profile' },
+    { path: '/app/entrenamiento', label: 'Entrena', icon: 'training' },
     {
       path: '/app/actividad',
       label: 'RollerFeed',
       icon: 'rollerfeed',
       featured: true,
     },
-    {
-      path: '/app/musica',
-      label: 'PR Music',
-      icon: 'music',
-      music: true,
-    },
-    {
-      path: '/app/perfil',
-      label: 'Perfil',
-      icon: 'profile',
-    },
+    { path: '/app/musica', label: 'PR Music', icon: 'music', music: true },
+    { path: '/app/insignias', label: 'Insignias', icon: 'badges' },
   ]
 
   if (isAdmin) {
-    nav.push({
-      path: '/admin',
-      label: 'Admin',
-      icon: 'admin',
-    })
+    nav.push({ path: '/admin', label: 'Admin', icon: 'admin' })
   }
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-[520px] border-t border-white/[0.07] bg-[#09090e]/95 backdrop-blur-2xl shadow-[0_-14px_40px_rgba(0,0,0,0.32)]"
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[520px] -translate-x-1/2 border-t border-white/[0.07] bg-[#09090e]/95 shadow-[0_-14px_40px_rgba(0,0,0,0.32)] backdrop-blur-2xl"
       style={{
-        paddingBottom:
-          'max(env(safe-area-inset-bottom, 0px), 8px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
       }}
     >
       <div
-        className={`grid items-end px-2 pt-2 pb-1 ${
-          isAdmin
-            ? 'grid-cols-6'
-            : 'grid-cols-5'
+        className={`grid items-end px-1 pt-2 pb-1 ${
+          isAdmin ? 'grid-cols-7' : 'grid-cols-6'
         }`}
       >
         {nav.map((item) => {
           const active =
             pathname === item.path ||
-            (item.path === '/admin' &&
-              pathname.startsWith('/admin'))
+            (item.path === '/admin' && pathname.startsWith('/admin'))
 
           if (item.featured) {
             return (
@@ -134,33 +116,31 @@ export default function BottomNav() {
                 key={item.path}
                 to={item.path}
                 aria-label="Abrir RollerFeed"
-                className="relative flex flex-col items-center justify-end min-w-0 active:scale-95 transition-transform"
+                className="relative flex min-w-0 flex-col items-center justify-end transition-transform active:scale-95"
               >
                 <span
-                  className={`absolute -top-[29px] w-[62px] h-[62px] rounded-[22px] border grid place-items-center transition-all duration-300 ${
+                  className={`absolute -top-[29px] grid h-[62px] w-[62px] place-items-center rounded-[22px] border transition-all duration-300 ${
                     active
-                      ? 'text-black border-orange-200/70 bg-gradient-to-br from-[#ffd45e] via-[#ff9f43] to-[#ff641f] shadow-[0_0_0_5px_rgba(255,134,40,0.09),0_10px_34px_rgba(255,101,31,0.42)]'
-                      : 'text-white border-orange-300/30 bg-gradient-to-br from-[#ff8a2a] via-[#f36a22] to-[#d94b17] shadow-[0_0_0_5px_rgba(255,110,30,0.06),0_10px_30px_rgba(255,93,24,0.25)]'
+                      ? 'border-orange-200/70 bg-gradient-to-br from-[#ffd45e] via-[#ff9f43] to-[#ff641f] text-black shadow-[0_0_0_5px_rgba(255,134,40,0.09),0_10px_34px_rgba(255,101,31,0.42)]'
+                      : 'border-orange-300/30 bg-gradient-to-br from-[#ff8a2a] via-[#f36a22] to-[#d94b17] text-white shadow-[0_0_0_5px_rgba(255,110,30,0.06),0_10px_30px_rgba(255,93,24,0.25)]'
                   }`}
                 >
                   <Icon type={item.icon} />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#101016] border border-orange-300/30 grid place-items-center text-[10px]">
+                  <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full border border-orange-300/30 bg-[#101016] text-[10px]">
                     ⚡
                   </span>
                 </span>
 
                 <span
-                  className={`mt-[35px] text-[9px] font-extrabold tracking-[-0.01em] transition-colors ${
-                    active
-                      ? 'text-orange-300'
-                      : 'text-white/55'
+                  className={`mt-[35px] max-w-full truncate text-[8px] font-extrabold tracking-[-0.02em] transition-colors ${
+                    active ? 'text-orange-300' : 'text-white/55'
                   }`}
                 >
                   {item.label}
                 </span>
 
                 {active && (
-                  <span className="mt-1 w-5 h-[2px] rounded-full bg-orange-300 shadow-[0_0_10px_rgba(251,146,60,0.95)]" />
+                  <span className="mt-1 h-[2px] w-5 rounded-full bg-orange-300 shadow-[0_0_10px_rgba(251,146,60,0.95)]" />
                 )}
               </Link>
             )
@@ -171,7 +151,7 @@ export default function BottomNav() {
               key={item.path}
               to={item.path}
               aria-label={item.music ? 'Abrir PR Music' : undefined}
-              className={`relative min-w-0 flex flex-col items-center gap-1 px-1 py-1.5 rounded-xl active:scale-95 transition-all ${
+              className={`relative flex min-w-0 flex-col items-center gap-1 rounded-xl px-0.5 py-1.5 transition-all active:scale-95 ${
                 active
                   ? item.music
                     ? 'text-violet-300'
@@ -183,7 +163,7 @@ export default function BottomNav() {
             >
               {active && (
                 <span
-                  className={`absolute -top-2 w-7 h-[2px] rounded-full ${
+                  className={`absolute -top-2 h-[2px] w-7 rounded-full ${
                     item.music
                       ? 'bg-violet-300 shadow-[0_0_12px_rgba(196,181,253,.9)]'
                       : 'bg-pr-gold shadow-[0_0_12px_rgba(201,168,76,.8)]'
@@ -191,11 +171,17 @@ export default function BottomNav() {
                 />
               )}
 
-              <span className={item.music && active ? 'drop-shadow-[0_0_8px_rgba(196,181,253,.8)]' : ''}>
+              <span
+                className={
+                  item.music && active
+                    ? 'drop-shadow-[0_0_8px_rgba(196,181,253,.8)]'
+                    : ''
+                }
+              >
                 <Icon type={item.icon} />
               </span>
 
-              <span className="text-[9px] font-semibold truncate max-w-full">
+              <span className="max-w-full truncate text-[7.5px] font-semibold tracking-[-0.02em] sm:text-[8.5px]">
                 {item.label}
               </span>
             </Link>
