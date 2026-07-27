@@ -7,11 +7,11 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
+import MusicPage from './pages/Music'
 import PRCardPage from './pages/PRCard'
 import ActivityPage from './pages/Activity'
 import ServicesPage from './pages/Services'
 import ContentPage from './pages/Content'
-import MusicPage from './pages/Music'
 import StorePage from './pages/Store'
 import Admin from './pages/Admin'
 import Alianza from './pages/Alianza'
@@ -119,6 +119,33 @@ function AppRoutes() {
         />
 
         <Route
+          path="/app/entrenamiento"
+          element={
+            <PrivateRoute>
+              <Profile mode="training" />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/insignias"
+          element={
+            <PrivateRoute>
+              <Profile mode="badges" />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/musica"
+          element={
+            <PrivateRoute>
+              <MusicPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
           path="/app/strava/callback"
           element={
             <PrivateRoute>
@@ -168,15 +195,6 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <ContentPage />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/app/musica"
-          element={
-            <PrivateRoute>
-              <MusicPage />
             </PrivateRoute>
           }
         />
