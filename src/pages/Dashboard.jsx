@@ -45,6 +45,12 @@ const quickAccess = [
     to: '/app/contenido',
   },
   {
+    icon: 'music',
+    label: 'PR Music',
+    desc: 'Playlists para rodar',
+    to: '/app/musica',
+  },
+  {
     icon: 'bag',
     label: 'Tienda PR',
     desc: 'Uniformes y más',
@@ -99,6 +105,14 @@ function QIcon({ type }) {
         />
 
         <path d="m10 9 5 3-5 3Z" />
+      </>
+    ),
+
+    music: (
+      <>
+        <path d="M9 18V5l11-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="17" cy="16" r="3" />
       </>
     ),
 
