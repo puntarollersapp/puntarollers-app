@@ -160,10 +160,19 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                  <MetricCard value="10" label="años de experiencia" />
-                  <MetricCard value="2" label="sedes activas" />
-                  <MetricCard value="360°" label="experiencia PR" />
+                <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm sm:p-7">
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
+                  <div className="relative">
+                    <p className="text-5xl font-extrabold leading-none tracking-[-0.04em] text-white sm:text-6xl">
+                      10
+                    </p>
+                    <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.2em] text-orange-200/80">
+                      Años formando patinadores
+                    </p>
+                    <p className="mt-4 max-w-sm text-sm leading-6 text-white/45">
+                      Más de una década construyendo una comunidad sobre ruedas.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -553,19 +562,6 @@ function SectionHeading({ eyebrow, title, description }) {
           {description}
         </p>
       )}
-    </div>
-  )
-}
-
-function MetricCard({ value, label }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm">
-      <p className="text-2xl font-extrabold tracking-tight text-white">
-        {value}
-      </p>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-        {label}
-      </p>
     </div>
   )
 }
