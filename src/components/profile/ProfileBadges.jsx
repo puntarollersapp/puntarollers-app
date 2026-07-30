@@ -23,7 +23,19 @@ function normalizeBadgeTitle(value) {
 }
 
 function getBadgeImage(title) {
-  return BADGE_IMAGES[normalizeBadgeTitle(title)] || ''
+  const normalizedTitle = normalizeBadgeTitle(title)
+
+  if (
+    normalizedTitle.includes('travesia') &&
+    normalizedTitle.includes('la barra') &&
+    (normalizedTitle.includes('19k') ||
+      normalizedTitle.includes('19 km') ||
+      normalizedTitle.includes('19 kilometros'))
+  ) {
+    return '/insignias-pr/travesia-la-barra-19k-1.png?v=3'
+  }
+
+  return BADGE_IMAGES[normalizedTitle] || ''
 }
 
 function formatDate(value) {
