@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
 const tabs = [
-  { id: 'explorar', label: 'Explorar', icon: '⌕' },
+  { id: 'explorar', label: 'Descubrir', icon: '✨' },
   { id: 'solicitudes', label: 'Solicitudes', icon: '🤝' },
   { id: 'amigos', label: 'Amigos', icon: '👥' },
 ]
@@ -40,7 +40,7 @@ function Avatar({ profile, size = 'normal' }) {
 function StatusPill({ children, tone = 'neutral' }) {
   const tones = {
     neutral: 'border-white/10 bg-white/[0.04] text-white/45',
-    gold: 'border-pr-gold/20 bg-pr-gold/10 text-pr-gold',
+    gold: 'border-sky-300/20 bg-sky-400/10 text-sky-200',
     sky: 'border-sky-300/20 bg-sky-400/10 text-sky-200',
     green: 'border-emerald-300/20 bg-emerald-400/10 text-emerald-200',
     red: 'border-red-300/20 bg-red-400/10 text-red-200',
@@ -58,7 +58,7 @@ function StatusPill({ children, tone = 'neutral' }) {
 function EmptyState({ icon, title, description }) {
   return (
     <div className="rounded-[28px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
-      <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] border border-pr-gold/15 bg-pr-gold/[0.08] text-3xl">
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] border border-sky-300/15 bg-sky-300/[0.08] text-3xl">
         {icon}
       </div>
       <h3 className="mt-4 font-display text-2xl text-white">{title}</h3>
@@ -127,7 +127,7 @@ function ProfileCard({
                   type="button"
                   disabled={busy}
                   onClick={() => onAcceptRequest(profile.request_id)}
-                  className="rounded-2xl bg-pr-gold py-3 text-xs font-black text-black disabled:opacity-40"
+                  className="rounded-2xl bg-gradient-to-r from-sky-300 to-cyan-300 py-3 text-xs font-black text-black disabled:opacity-40"
                 >
                   Aceptar
                 </button>
@@ -161,7 +161,7 @@ function ProfileCard({
                 type="button"
                 disabled={busy}
                 onClick={() => onSendRequest(profile.id)}
-                className="w-full rounded-2xl bg-pr-gold py-3 text-xs font-black text-black disabled:opacity-40"
+                className="w-full rounded-2xl bg-gradient-to-r from-sky-300 to-cyan-300 py-3 text-xs font-black text-black disabled:opacity-40"
               >
                 Enviar solicitud
               </button>
@@ -316,17 +316,17 @@ export default function CommunityPage() {
   return (
     <AppLayout title="Comunidad" showBack>
       <div className="pr-page space-y-5 animate-page-enter pb-12">
-        <section className="relative overflow-hidden rounded-[34px] border border-sky-300/15 bg-gradient-to-br from-sky-500/[0.12] via-[#11131a] to-[#08080d] p-5 shadow-[0_28px_90px_rgba(14,165,233,0.1)]">
+        <section className="relative overflow-hidden rounded-[34px] border border-sky-300/20 bg-gradient-to-br from-[#102738] via-[#11131a] to-[#08080d] p-5 shadow-[0_28px_90px_rgba(14,165,233,0.1)]">
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-400/10 blur-3xl" />
 
           <div className="relative flex items-start justify-between gap-4">
             <div>
-              <p className="section-label">Punta Rollers conecta</p>
+              <p className="section-label">TU RED SOCIAL SOBRE RUEDAS</p>
               <h1 className="mt-1 font-display text-[34px] leading-none text-white">
                 Comunidad
               </h1>
               <p className="mt-3 max-w-[295px] text-sm leading-relaxed text-white/42">
-                Encontrá compañeros, conectá con ellos y compartí tu experiencia sin exponer tus datos privados.
+                Conectá con quienes comparten pista, salidas y kilómetros con vos. Una comunidad creada para sentirse cerca, también fuera de clase.
               </p>
             </div>
 
@@ -341,7 +341,7 @@ export default function CommunityPage() {
               <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">Amigos</p>
             </div>
             <div className="rounded-[20px] border border-white/[0.07] bg-black/20 p-3 text-center">
-              <p className="font-display text-2xl text-pr-gold">{requestCount}</p>
+              <p className="font-display text-2xl text-sky-200">{requestCount}</p>
               <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">Solicitudes</p>
             </div>
             <div className="rounded-[20px] border border-white/[0.07] bg-black/20 p-3 text-center">
@@ -351,8 +351,32 @@ export default function CommunityPage() {
           </div>
         </section>
 
+        {!loading && friends.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-end justify-between px-1">
+              <div>
+                <p className="section-label">Tu círculo PR</p>
+                <h2 className="mt-1 font-display text-2xl text-white">Tus amigos</h2>
+              </div>
+              <button type="button" onClick={() => setActiveTab('amigos')} className="text-[10px] font-bold text-sky-200">Ver todos</button>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {friends.map((friend) => (
+                <button key={`friend-bubble-${friend.id}`} type="button" onClick={() => setActiveTab('amigos')} className="w-[76px] shrink-0 text-center">
+                  <div className="mx-auto h-[66px] w-[66px] rounded-full bg-gradient-to-br from-sky-300 via-cyan-300 to-violet-400 p-[2px]">
+                    <div className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-[#090a10] bg-[#12131a]">
+                      {friend.foto ? <img src={friend.foto} alt={fullName(friend)} className="h-full w-full object-cover" /> : <span className="text-2xl">🛼</span>}
+                    </div>
+                  </div>
+                  <p className="mt-2 truncate text-[10px] font-bold text-white/70">{friend.nombre}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {message && (
-          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-sm text-pr-gold">
+          <div className="rounded-2xl border border-sky-300/20 bg-sky-400/10 p-3 text-sm text-sky-200">
             {message}
           </div>
         )}
@@ -366,7 +390,7 @@ export default function CommunityPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative min-h-14 rounded-[21px] px-2 text-[10px] font-bold transition-all ${
                   activeTab === tab.id
-                    ? 'bg-pr-gold text-black'
+                    ? 'bg-gradient-to-r from-sky-300 to-cyan-300 text-[#071018]'
                     : 'text-white/42'
                 }`}
               >
@@ -484,4 +508,4 @@ export default function CommunityPage() {
       </div>
     </AppLayout>
   )
-      }
+            }
