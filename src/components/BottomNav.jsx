@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const Icon = ({ type }) => {
   const common = {
@@ -24,6 +26,14 @@ const Icon = ({ type }) => {
       <>
         <circle cx="12" cy="8" r="4" />
         <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+      </>
+    ),
+    community: (
+      <>
+        <circle cx="8" cy="8.5" r="3" />
+        <circle cx="17" cy="9.5" r="2.4" />
+        <path d="M2.8 20a5.2 5.2 0 0 1 10.4 0" />
+        <path d="M13.3 16.2a4.2 4.2 0 0 1 7.7 2.3" />
       </>
     ),
     training: (
@@ -76,12 +86,41 @@ const Icon = ({ type }) => {
 export default function BottomNav() {
   const { pathname } = useLocation()
   const { user } = useAuth()
+  const [requestCount, setRequestCount] = useState(0)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRequestCount() {
+      if (!user?.id) return
+
+      const { data, error } = await supabase.rpc('community_get_dashboard')
+      if (!active || error) return
+
+      const incoming = Array.isArray(data?.incoming_requests)
+        ? data.incoming_requests
+        : []
+
+      setRequestCount(incoming.length)
+    }
+
+    loadRequestCount()
+    const intervalId = window.setInterval(loadRequestCount, 60000)
+    window.addEventListener('focus', loadRequestCount)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', loadRequestCount)
+    }
+  }, [user?.id])
 
   const isAdmin = user?.role === 'admin' || user?.role === 'profesor'
 
   const nav = [
     { path: '/app/dashboard', label: 'Inicio', icon: 'home' },
     { path: '/app/perfil', label: 'Perfil', icon: 'profile' },
+    { path: '/app/comunidad', label: 'Comunidad', icon: 'community', community: true, badge: requestCount },
     { path: '/app/entrenamiento', label: 'Actividad', icon: 'training', training: true },
     {
       path: '/app/actividad',
@@ -106,7 +145,7 @@ export default function BottomNav() {
     >
       <div
         className={`grid items-end px-1 pt-2 pb-1 ${
-          isAdmin ? 'grid-cols-7' : 'grid-cols-6'
+          isAdmin ? 'grid-cols-8' : 'grid-cols-7'
         }`}
       >
         {nav.map((item) => {
@@ -193,7 +232,13 @@ export default function BottomNav() {
                 <Icon type={item.icon} />
               </span>
 
-              <span className="max-w-full truncate text-[7.5px] font-semibold tracking-[-0.02em] sm:text-[8.5px]">
+              {item.badge > 0 && (
+                <span className="absolute right-[8%] top-0 grid h-4 min-w-4 place-items-center rounded-full border border-[#09090e] bg-red-500 px-1 text-[7px] font-black text-white">
+                  {item.badge > 9 ? '9+' : item.badge}
+                </span>
+              )}
+
+              <span className="max-w-full truncate text-[6.7px] font-semibold tracking-[-0.03em] sm:text-[8px]">
                 {item.label}
               </span>
             </Link>
