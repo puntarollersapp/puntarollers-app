@@ -763,6 +763,14 @@ export default function Activity() {
   const [reactions, setReactions] = useState([])
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [energy, setEnergy] = useState(() => {
+    try {
+      return localStorage.getItem('pr_rollerfeed_energy') || ''
+    } catch {
+      return ''
+    }
+  })
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -1202,6 +1210,120 @@ export default function Activity() {
     )
   }, [activities, profileId, profilesByAnyId])
 
+
+  const firstName = useMemo(() => {
+    const fullName = getProfileName(currentProfile)
+    return fullName ? fullName.split(' ')[0] : 'roller'
+  }, [currentProfile])
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Buenos días'
+    if (hour < 19) return 'Buenas tardes'
+    return 'Buenas noches'
+  }, [])
+
+  const todaySnapshot = useMemo(() => {
+    const now = new Date()
+    const start = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime()
+    const end = start + 86400000
+
+    const todayActivities = activities.filter((activity) => {
+      const raw =
+        activity.fecha_inicio ||
+        activity.created_at ||
+        activity.creado_en
+      const time = new Date(raw || 0).getTime()
+      return Number.isFinite(time) && time >= start && time < end
+    })
+
+    const todayKilometers = todayActivities.reduce(
+      (sum, activity) =>
+        sum + (Number(activity.distancia_metros) || 0),
+      0
+    ) / 1000
+
+    const todaySkaters = new Set(
+      todayActivities
+        .map((activity) => activity.alumno_id)
+        .filter(Boolean)
+        .map(String)
+    ).size
+
+    const birthdays = feedItems.filter(
+      (item) =>
+        item.type === 'Cumpleaños' &&
+        Number(item.daysUntil) === 0
+    )
+
+    const badges = feedItems.filter((item) => {
+      if (item.type !== 'Insignia') return false
+      const time = new Date(item.date || 0).getTime()
+      return Number.isFinite(time) && time >= start && time < end
+    })
+
+    const upcomingEvent =
+      feedItems
+        .filter(
+          (item) =>
+            item.type === 'Evento' &&
+            item.eventStatus !== 'Finalizado' &&
+            item.eventStatus !== 'Cancelado'
+        )
+        .sort((a, b) => {
+          if (!a.eventStart && !b.eventStart) return 0
+          if (!a.eventStart) return 1
+          if (!b.eventStart) return -1
+          return (
+            new Date(a.eventStart).getTime() -
+            new Date(b.eventStart).getTime()
+          )
+        })[0] || null
+
+    return {
+      activities: todayActivities.length,
+      kilometers: todayKilometers,
+      skaters: todaySkaters,
+      birthdays,
+      badges: badges.length,
+      upcomingEvent,
+    }
+  }, [activities, feedItems])
+
+  const vueltaDelDia = useMemo(() => {
+    const preferred = feedItems.find(
+      (item) =>
+        item.featured &&
+        item.type !== 'Evento' &&
+        item.type !== 'Cumpleaños'
+    )
+
+    if (preferred) return preferred
+
+    return (
+      feedItems.find(
+        (item) =>
+          item.type === 'Entrenamiento' ||
+          item.type === 'Publicación' ||
+          item.type === 'Insignia'
+      ) || null
+    )
+  }, [feedItems])
+
+  function chooseEnergy(value) {
+    setEnergy(value)
+
+    try {
+      localStorage.setItem('pr_rollerfeed_energy', value)
+    } catch {
+      // El EnergyTómetro sigue funcionando aunque el navegador bloquee localStorage.
+    }
+  }
+
   async function refreshFeed() {
     if (refreshing || syncing) return
 
@@ -1270,35 +1392,43 @@ export default function Activity() {
 
   return (
     <AppLayout title="RollerFeed ⚡️">
-      <div className="pr-page space-y-5 animate-page-enter">
-        <section className="relative overflow-hidden rounded-[34px] border border-orange-300/20 bg-gradient-to-br from-[#ff5a1f]/25 via-[#16100f] to-[#08080c] p-5 shadow-[0_28px_90px_rgba(249,115,22,0.14)]">
-          <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
+      <div className="pr-page space-y-5 animate-page-enter pb-28">
+        <section className="relative overflow-hidden rounded-[36px] border border-orange-300/20 bg-gradient-to-br from-[#ff6a24]/28 via-[#111827] to-[#05070d] p-5 shadow-[0_30px_100px_rgba(249,115,22,0.16)]">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
 
           <div className="relative">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5">
-                  <span className="w-2 h-2 rounded-full bg-orange-400" />
-                  <span className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.17em]">
+                  <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_16px_rgba(251,146,60,0.9)]" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em] text-orange-100">
                     La comunidad está rodando
                   </span>
                 </div>
 
-                <h1 className="font-display text-[38px] leading-none text-white mt-4">
-                  RollerFeed ⚡️
+                <p className="mt-5 text-[12px] font-semibold text-white/45">
+                  {greeting}, {firstName}
+                </p>
+
+                <h1 className="mt-1 font-display text-[40px] leading-[0.98] text-white">
+                  ¿Qué está pasando
+                  <span className="block text-orange-300">
+                    hoy en PR?
+                  </span>
                 </h1>
 
-                <p className="text-white/48 text-sm mt-3 leading-relaxed max-w-[290px]">
-                  Entrenamientos, logros, eventos y momentos que nos hacen sentir parte de Punta Rollers.
+                <p className="mt-3 max-w-[285px] text-sm leading-relaxed text-white/48">
+                  Entrenos, cumpleaños, eventos y logros de tu comunidad en un solo lugar.
                 </p>
               </div>
 
-              <div className="w-16 h-16 rounded-[23px] border border-orange-300/25 bg-orange-400/10 grid place-items-center text-3xl shrink-0">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-[24px] border border-orange-300/25 bg-orange-400/10 text-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                 🛼
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5 mt-5">
+            <div className="mt-5 grid grid-cols-3 gap-2.5">
               <HeroStat
                 value={communityStats.activities}
                 label="Actividades"
@@ -1319,21 +1449,148 @@ export default function Activity() {
           </div>
         </section>
 
+        <TodayInPRCard
+          snapshot={todaySnapshot}
+          onSelectFilter={setFilter}
+        />
+
+        <section className="rounded-[30px] border border-white/[0.08] bg-gradient-to-br from-white/[0.05] to-white/[0.02] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="section-label text-orange-200">
+                EnergyTómetro
+              </p>
+              <h2 className="mt-1 font-display text-[23px] text-white">
+                ¿Cómo llegás hoy?
+              </h2>
+            </div>
+
+            {energy && (
+              <span className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5 text-[10px] font-bold text-orange-100">
+                Guardado ✓
+              </span>
+            )}
+          </div>
+
+          <div className="mt-4 grid grid-cols-5 gap-2">
+            {[
+              { key: 'full', icon: '🤩', label: 'A full' },
+              { key: 'bien', icon: '🙂', label: 'Bien' },
+              { key: 'normal', icon: '😐', label: 'Normal' },
+              { key: 'cansado', icon: '😴', label: 'Cansado' },
+              { key: 'cafe', icon: '☕', label: 'Café' },
+            ].map((option) => {
+              const selected = energy === option.key
+
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => chooseEnergy(option.key)}
+                  className={`rounded-[20px] border px-1 py-3 text-center transition active:scale-95 ${
+                    selected
+                      ? 'border-orange-300/50 bg-orange-400/20 shadow-[0_10px_35px_rgba(249,115,22,0.14)]'
+                      : 'border-white/[0.07] bg-black/20'
+                  }`}
+                >
+                  <span className="block text-[22px]">
+                    {option.icon}
+                  </span>
+                  <span className={`mt-1 block text-[8px] font-bold ${
+                    selected ? 'text-orange-100' : 'text-white/35'
+                  }`}>
+                    {option.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3 flex items-end justify-between gap-4">
+            <div>
+              <p className="section-label">Momentos</p>
+              <h2 className="mt-1 font-display text-[26px] text-white">
+                Entrá directo a lo que te importa
+              </h2>
+            </div>
+          </div>
+
+          <div className="-mx-[18px] overflow-x-auto px-[18px]">
+            <div className="flex min-w-max gap-3 pb-1">
+              {[
+                { key: 'Todos', icon: '🟠', label: 'Punta Rollers' },
+                { key: 'Cumpleaños', icon: '🎂', label: 'Cumples' },
+                { key: 'Evento', icon: '🏁', label: 'Eventos' },
+                { key: 'Insignia', icon: '🏅', label: 'Logros' },
+                { key: 'Entrenamiento', icon: '⚡', label: 'Entrenos' },
+              ].map((moment) => (
+                <button
+                  key={moment.key}
+                  type="button"
+                  onClick={() => setFilter(moment.key)}
+                  className="w-[76px] text-center"
+                >
+                  <span className={`mx-auto grid h-16 w-16 place-items-center rounded-full border-2 text-2xl transition ${
+                    filter === moment.key
+                      ? 'border-orange-300 bg-orange-400/20 shadow-[0_10px_35px_rgba(249,115,22,0.18)]'
+                      : 'border-white/[0.10] bg-white/[0.035]'
+                  }`}>
+                    {moment.icon}
+                  </span>
+                  <span className="mt-2 block text-[9px] font-bold text-white/50">
+                    {moment.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {vueltaDelDia && filter === 'Todos' && (
+          <section>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="section-label text-orange-200">
+                  Selección de la comunidad
+                </p>
+                <h2 className="mt-1 font-display text-[27px] text-white">
+                  🛼 Vuelta del día
+                </h2>
+              </div>
+
+              <span className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-orange-100">
+                Hoy
+              </span>
+            </div>
+
+            <div className="rounded-[34px] border border-orange-300/30 bg-gradient-to-br from-orange-400/[0.12] via-[#11131a] to-[#08090d] p-[2px] shadow-[0_24px_70px_rgba(249,115,22,0.10)]">
+              <FeedCard
+                item={vueltaDelDia}
+                reactions={getItemReactions(vueltaDelDia)}
+                profilesByAnyId={profilesByAnyId}
+                currentProfileId={currentReactionProfileId}
+                savingReactionKey={savingReactionKey}
+                onReact={selectReaction}
+                onOpenReactions={() => setReactionModalItem(vueltaDelDia)}
+              />
+            </div>
+          </section>
+        )}
+
         {myLatest && (
-          <section className="rounded-[26px] border border-pr-gold/20 bg-gradient-to-r from-pr-gold/10 via-white/[0.025] to-orange-400/[0.06] p-4">
+          <section className="rounded-[27px] border border-pr-gold/20 bg-gradient-to-r from-pr-gold/10 via-white/[0.025] to-orange-400/[0.06] p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="section-label text-pr-gold">
                   Tu última actividad
                 </p>
-                <p className="text-white text-sm font-semibold mt-2 truncate">
+                <p className="mt-2 truncate text-sm font-semibold text-white">
                   {myLatest.nombre || 'Entrenamiento'}
                 </p>
-                <p className="text-white/35 text-[10px] mt-1">
-                  {formatDistance(
-                    myLatest.distancia_metros
-                  )}{' '}
-                  ·{' '}
+                <p className="mt-1 text-[10px] text-white/35">
+                  {formatDistance(myLatest.distancia_metros)} ·{' '}
                   {formatDuration(
                     myLatest.tiempo_movimiento_segundos
                   )}
@@ -1345,12 +1602,12 @@ export default function Activity() {
                   href={myLatest.strava_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 px-3 py-2.5 text-pr-gold text-[10px] font-bold"
+                  className="shrink-0 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 px-3 py-2.5 text-[10px] font-bold text-pr-gold"
                 >
                   Ver actividad →
                 </a>
               ) : (
-                <span className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-white/30 text-[10px] font-bold">
+                <span className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-[10px] font-bold text-white/30">
                   Actividad guardada
                 </span>
               )}
@@ -1358,8 +1615,8 @@ export default function Activity() {
           </section>
         )}
 
-        <section className="overflow-x-auto -mx-[18px] px-[18px]">
-          <div className="flex gap-2 min-w-max">
+        <section className="-mx-[18px] overflow-x-auto px-[18px]">
+          <div className="flex min-w-max gap-2">
             {FEED_FILTERS.map((item) => {
               const active = filter === item.key
 
@@ -1368,10 +1625,10 @@ export default function Activity() {
                   key={item.key}
                   type="button"
                   onClick={() => setFilter(item.key)}
-                  className={`px-4 py-2.5 rounded-full text-xs font-semibold border transition ${
+                  className={`rounded-full border px-4 py-2.5 text-xs font-semibold transition ${
                     active
-                      ? 'bg-gradient-to-r from-pr-gold to-orange-300 text-black border-pr-gold'
-                      : 'bg-white/[0.03] text-white/45 border-white/[0.07]'
+                      ? 'border-orange-300 bg-gradient-to-r from-orange-400 to-orange-300 text-black'
+                      : 'border-white/[0.07] bg-white/[0.03] text-white/45'
                   }`}
                 >
                   {item.label}
@@ -1382,13 +1639,11 @@ export default function Activity() {
         </section>
 
         <section>
-          <div className="flex items-end justify-between gap-4 mb-3">
+          <div className="mb-3 flex items-end justify-between gap-4">
             <div>
-              <p className="section-label">
-                Comunidad PR
-              </p>
+              <p className="section-label">Comunidad PR</p>
 
-              <h2 className="font-display text-[27px] text-white mt-1">
+              <h2 className="mt-1 font-display text-[28px] text-white">
                 {filter === 'Todos'
                   ? 'Lo último sobre ruedas'
                   : filter === 'Cumpleaños'
@@ -1403,7 +1658,7 @@ export default function Activity() {
               type="button"
               disabled={refreshing || syncing}
               onClick={refreshFeed}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.035] px-3 py-2.5 text-white/45 text-[10px] font-bold disabled:opacity-50"
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.035] px-3 py-2.5 text-[10px] font-bold text-white/45 disabled:opacity-50"
             >
               {refreshing || syncing
                 ? 'Actualizando…'
@@ -1412,7 +1667,7 @@ export default function Activity() {
           </div>
 
           {message && (
-            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-amber-100 text-xs leading-relaxed mb-3">
+            <div className="mb-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-xs leading-relaxed text-amber-100">
               {message}
             </div>
           )}
@@ -1425,35 +1680,53 @@ export default function Activity() {
             </div>
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
-              {visibleItems.map((item) => (
-                <FeedCard
-                  key={item.id}
-                  item={item}
-                  reactions={getItemReactions(item)}
-                  profilesByAnyId={profilesByAnyId}
-                  currentProfileId={currentReactionProfileId}
-                  savingReactionKey={savingReactionKey}
-                  onReact={selectReaction}
-                  onOpenReactions={() => setReactionModalItem(item)}
-                />
-              ))}
+              {visibleItems
+                .filter(
+                  (item) =>
+                    filter !== 'Todos' ||
+                    !vueltaDelDia ||
+                    item.id !== vueltaDelDia.id
+                )
+                .map((item) => (
+                  <FeedCard
+                    key={item.id}
+                    item={item}
+                    reactions={getItemReactions(item)}
+                    profilesByAnyId={profilesByAnyId}
+                    currentProfileId={currentReactionProfileId}
+                    savingReactionKey={savingReactionKey}
+                    onReact={selectReaction}
+                    onOpenReactions={() => setReactionModalItem(item)}
+                  />
+                ))}
             </div>
           ) : (
             <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
-              <div className="w-16 h-16 rounded-[22px] grid place-items-center mx-auto bg-orange-400/10 border border-orange-300/20 text-3xl">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] border border-orange-300/20 bg-orange-400/10 text-3xl">
                 {emptyState.icon}
               </div>
 
-              <h3 className="font-display text-2xl text-white mt-4">
+              <h3 className="mt-4 font-display text-2xl text-white">
                 {emptyState.title}
               </h3>
 
-              <p className="text-white/35 text-sm mt-2 leading-relaxed">
+              <p className="mt-2 text-sm leading-relaxed text-white/35">
                 {emptyState.description}
               </p>
             </div>
           )}
         </section>
+
+        <button
+          type="button"
+          onClick={() => setShareModalOpen(true)}
+          className="fixed bottom-[88px] right-4 z-40 flex items-center gap-3 rounded-full border border-orange-200/35 bg-gradient-to-r from-orange-500 to-orange-300 px-5 py-3.5 text-sm font-black text-black shadow-[0_18px_50px_rgba(249,115,22,0.38)] active:scale-95"
+        >
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-black/15 text-xl">
+            +
+          </span>
+          Compartí tu día
+        </button>
 
         {reactionModalItem && (
           <ReactionsModal
@@ -1463,8 +1736,196 @@ export default function Activity() {
             onClose={() => setReactionModalItem(null)}
           />
         )}
+
+        {shareModalOpen && (
+          <ShareDayModal
+            onClose={() => setShareModalOpen(false)}
+            onChoose={(option) => {
+              setShareModalOpen(false)
+              setMessage(
+                `${option} ya tiene su entrada visual preparada. En la próxima etapa la conectamos a publicación real sin tocar Strava, cumpleaños ni eventos.`
+              )
+            }}
+          />
+        )}
       </div>
     </AppLayout>
+  )
+}
+
+
+function TodayInPRCard({ snapshot, onSelectFilter }) {
+  const event = snapshot.upcomingEvent
+  const birthdayCount = snapshot.birthdays.length
+
+  return (
+    <section className="relative overflow-hidden rounded-[32px] border border-blue-300/15 bg-gradient-to-br from-[#0c2343] via-[#111827] to-[#080a10] p-5 shadow-[0_24px_75px_rgba(15,23,42,0.35)]">
+      <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-500/15 blur-3xl" />
+
+      <div className="relative">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="section-label text-orange-200">
+              Resumen inteligente
+            </p>
+            <h2 className="mt-1 font-display text-[29px] text-white">
+              Hoy en Punta Rollers
+            </h2>
+          </div>
+
+          <span className="grid h-12 w-12 place-items-center rounded-[19px] border border-white/[0.08] bg-white/[0.04] text-2xl">
+            ⚡
+          </span>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-2.5">
+          <TodayItem
+            icon="🔥"
+            value={snapshot.activities}
+            label="entrenos hoy"
+            onClick={() => onSelectFilter('Entrenamiento')}
+          />
+          <TodayItem
+            icon="🛼"
+            value={snapshot.skaters}
+            label="patinadores"
+            onClick={() => onSelectFilter('Entrenamiento')}
+          />
+          <TodayItem
+            icon="🎂"
+            value={birthdayCount}
+            label={birthdayCount === 1 ? 'cumpleaños' : 'cumpleaños'}
+            onClick={() => onSelectFilter('Cumpleaños')}
+          />
+          <TodayItem
+            icon="🏅"
+            value={snapshot.badges}
+            label="logros nuevos"
+            onClick={() => onSelectFilter('Insignia')}
+          />
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-4 rounded-[23px] border border-orange-300/15 bg-orange-400/[0.08] p-4">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-orange-200">
+              Próximo evento
+            </p>
+            <p className="mt-1 truncate text-sm font-bold text-white">
+              {event?.title || 'Próximamente en Punta Rollers'}
+            </p>
+            <p className="mt-1 truncate text-[10px] text-white/35">
+              {event?.eventRange || 'Todavía no hay una fecha publicada'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onSelectFilter('Evento')}
+            className="shrink-0 rounded-2xl border border-orange-300/20 bg-orange-400/10 px-3 py-2.5 text-[10px] font-bold text-orange-100"
+          >
+            Ver →
+          </button>
+        </div>
+
+        {snapshot.kilometers > 0 && (
+          <p className="mt-3 text-center text-[10px] text-white/30">
+            La comunidad ya recorrió{' '}
+            <span className="font-bold text-orange-200">
+              {snapshot.kilometers.toLocaleString('es-UY', {
+                maximumFractionDigits: 1,
+              })} km
+            </span>{' '}
+            hoy.
+          </p>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function TodayItem({ icon, value, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-[22px] border border-white/[0.07] bg-black/20 p-3 text-left transition active:scale-[0.98]"
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/[0.05] text-xl">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block font-display text-[22px] leading-none text-white">
+          {value}
+        </span>
+        <span className="mt-1 block truncate text-[9px] font-semibold text-white/35">
+          {label}
+        </span>
+      </span>
+    </button>
+  )
+}
+
+function ShareDayModal({ onClose, onChoose }) {
+  const options = [
+    { icon: '📸', title: 'Una foto', subtitle: 'Compartí un momento' },
+    { icon: '🎥', title: 'Un video', subtitle: 'Mostrá la acción' },
+    { icon: '🛼', title: 'Una actividad', subtitle: 'Elegí un entreno' },
+    { icon: '🏅', title: 'Una insignia', subtitle: 'Celebrá tu logro' },
+    { icon: '😊', title: 'Un momento', subtitle: 'Contá cómo estuvo tu día' },
+  ]
+
+  return (
+    <div
+      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/80 px-3 pb-3 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <section
+        className="w-full max-w-md overflow-hidden rounded-[32px] border border-white/[0.10] bg-[#0d111b] shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+          <div>
+            <p className="section-label text-orange-200">
+              RollerFeed
+            </p>
+            <h3 className="mt-1 font-display text-[26px] text-white">
+              ¿Qué querés compartir?
+            </h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/55"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5 p-4">
+          {options.map((option, index) => (
+            <button
+              key={option.title}
+              type="button"
+              onClick={() => onChoose(option.title)}
+              className={`rounded-[24px] border p-4 text-left transition active:scale-[0.98] ${
+                index === options.length - 1
+                  ? 'col-span-2 border-orange-300/25 bg-orange-400/10'
+                  : 'border-white/[0.08] bg-white/[0.035]'
+              }`}
+            >
+              <span className="text-2xl">{option.icon}</span>
+              <span className="mt-3 block text-sm font-bold text-white">
+                {option.title}
+              </span>
+              <span className="mt-1 block text-[10px] text-white/35">
+                {option.subtitle}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
   )
 }
 
@@ -2063,4 +2524,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-    }
+      }
