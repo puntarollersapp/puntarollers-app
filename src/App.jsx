@@ -21,6 +21,7 @@ import Uniformes from './pages/Uniformes'
 import Tracking from './pages/Tracking'
 import Terminos from './pages/Terminos'
 import StravaCallback from './pages/StravaCallback'
+import CommunityPage from './pages/Community'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -204,6 +205,16 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <StorePage />
+            </PrivateRoute>
+          }
+        />
+
+
+        <Route
+          path="/app/comunidad"
+          element={
+            <PrivateRoute>
+              <CommunityPage />
             </PrivateRoute>
           }
         />
