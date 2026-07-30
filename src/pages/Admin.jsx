@@ -31,7 +31,7 @@ const EMPTY_STATS = {
 const OFFICIAL_BADGES = [
   {
     title: 'Travesia La Barra 19K',
-    image: '/insignias-pr/travesia-la-barra-19k.png',
+    image: '/insignias-pr/travesia-la-barra-19k-1.png?v=2',
     description:
       'Completo la travesia Morning on Street by PR de 19 kilometros hacia La Barra el 26 de julio de 2026.',
   },
@@ -6174,4 +6174,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-    }
+                  }
