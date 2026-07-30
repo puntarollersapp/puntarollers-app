@@ -61,7 +61,7 @@ const TEST_QUESTIONS = [
 
 const PLAYLISTS = [
   {
-    id: '05gmyPhOhHGAhvzvH8mJ93',
+    id: '5rVVCmRXRAcuNZXQBg0tgJ',
     label: 'PR Session',
     shortLabel: 'PR Session',
     eyebrow: 'La banda sonora de Punta Rollers',
@@ -103,7 +103,7 @@ const PLAYLISTS = [
     recommendation: 'Subí el volumen: hoy la pista se convierte en videoclip.',
   },
   {
-    id: '5rVVCmRXRAcuNZXQBg0tgJ',
+    id: '05gmyPhOhHGAhvzvH8mJ93',
     label: 'Así Sonaban los 2000s',
     shortLabel: 'Los 2000s',
     eyebrow: 'Volver sin pedir permiso',
@@ -960,4 +960,4 @@ export default function MusicPage() {
       </div>
     </AppLayout>
   )
-                    }
+}
