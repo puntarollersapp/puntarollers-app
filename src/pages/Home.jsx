@@ -116,6 +116,21 @@ export default function Home() {
                 >
                   Ver mi actividad
                 </Link>
+
+                <Link
+                  to="/app/comunidad"
+                  className="relative overflow-hidden rounded-2xl border border-sky-300/20 bg-gradient-to-r from-sky-400/15 via-cyan-300/[0.07] to-white/[0.025] p-4 text-left shadow-[0_18px_50px_rgba(14,165,233,0.1)] active:scale-[0.99]"
+                >
+                  <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/10 blur-2xl" />
+                  <div className="relative flex items-center gap-4">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] border border-sky-300/20 bg-sky-300/10 text-2xl">👥</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white">Entrar a Comunidad</p>
+                      <p className="mt-1 text-xs leading-relaxed text-white/40">Amigos, solicitudes y personas de Punta Rollers.</p>
+                    </div>
+                    <span className="text-sky-200/70">→</span>
+                  </div>
+                </Link>
               </>
             ) : (
               <Link
