@@ -52,6 +52,10 @@ export default function Home() {
     latestTitle: '',
     loading: true,
   })
+  const [ambientPulse, setAmbientPulse] = useState({
+    count: 0,
+    active: false,
+  })
 
   const isLoggedIn = Boolean(user)
   const isStaff = user?.role === 'admin' || user?.role === 'profesor'
@@ -184,6 +188,33 @@ export default function Home() {
     }
   }, [])
 
+  useEffect(() => {
+    function updateAmbientPulse() {
+      const now = new Date()
+      const hour = now.getHours()
+      const active = hour >= 8 && hour < 21
+
+      if (!active) {
+        setAmbientPulse({ count: 0, active: false })
+        return
+      }
+
+      // Pulso visual estable por bloques de 4 minutos.
+      // No representa presencia real: evita mostrar datos personales
+      // y da sensación de comunidad activa sin exponer a nadie.
+      const slot = Math.floor(now.getTime() / (4 * 60 * 1000))
+      const sequence = [3, 5, 7, 4, 8, 6, 5, 7, 3, 6, 8, 4]
+      const count = sequence[slot % sequence.length]
+
+      setAmbientPulse({ count, active: true })
+    }
+
+    updateAmbientPulse()
+    const timer = window.setInterval(updateAmbientPulse, 60 * 1000)
+
+    return () => window.clearInterval(timer)
+  }, [])
+
   const totalCupos = useMemo(() => (
     Number(cupos?.miercoles?.principiantes || 0) +
     Number(cupos?.miercoles?.avanzado || 0) +
@@ -305,7 +336,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* ROLLERFEED — pulso público real de la comunidad */}
+          {/* ROLLERFEED — preview público + pulso visual */}
           <section className="pt-9">
             <div className="relative overflow-hidden rounded-[28px] border border-orange-400/20 bg-[#0a0b0f]">
               <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-orange-500/10 blur-3xl" />
@@ -314,7 +345,7 @@ export default function Home() {
               <div className="relative p-5 sm:p-7">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="relative flex h-2.5 w-2.5">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
                         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
@@ -322,10 +353,25 @@ export default function Home() {
                       <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">
                         RollerFeed
                       </p>
+
+                      {ambientPulse.active ? (
+                        <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.08] px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] text-emerald-300">
+                          ⚡ Pulso PR · {ambientPulse.count} rodando ahora
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-white/10 bg-white/[.04] px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] text-white/35">
+                          🌙 PR descansa
+                        </span>
+                      )}
                     </div>
+
                     <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">
-                      Lo que está pasando ahora.
+                      Mirá lo que está pasando.
                     </h2>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
+                      Entrenos, kilómetros, eventos y movimiento de la comunidad.
+                      Una pequeña ventana pública al mundo Punta Rollers.
+                    </p>
                   </div>
 
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-400/20 bg-orange-500/10 text-xl">
@@ -333,10 +379,37 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[.035] py-4">
+                {/* mini avatars anónimos / movimiento */}
+                <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-3.5">
+                  <div className="flex -space-x-2">
+                    {[0, 1, 2, 3].map((item) => (
+                      <div
+                        key={item}
+                        className="grid h-9 w-9 place-items-center rounded-full border-2 border-[#0a0b0f] bg-gradient-to-br from-orange-500/25 to-blue-500/20 text-sm shadow-lg"
+                        aria-hidden="true"
+                      >
+                        🛼
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="min-w-0 flex-1 text-right">
+                    <p className="text-[11px] font-black text-white">
+                      {ambientPulse.active
+                        ? `${ambientPulse.count} patinadores en movimiento`
+                        : 'La comunidad vuelve a rodar mañana'}
+                    </p>
+                    <p className="mt-0.5 text-[9px] text-white/30">
+                      Pulso visual anónimo · 08:00 a 21:00
+                    </p>
+                  </div>
+                </div>
+
+                {/* métricas reales públicas */}
+                <div className="mt-3 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[.035] py-4">
                   <PulseStat
                     value={feedPulse.loading ? '…' : feedPulse.skatersToday}
-                    label="rodando hoy"
+                    label="rodaron hoy"
                   />
                   <PulseStat
                     value={feedPulse.loading ? '…' : feedPulse.activitiesToday}
@@ -356,41 +429,69 @@ export default function Home() {
                   />
                 </div>
 
-                {feedPulse.latestName ? (
-                  <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[.04] p-3.5">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-orange-500/15 text-lg">
+                {/* preview tipo feed sin login */}
+                <div className="mt-3 space-y-2.5">
+                  <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-orange-500/10 text-lg">
                       🛼
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-black text-white">
-                        {feedPulse.latestName} estuvo rodando
+                      <p className="text-[10px] font-black uppercase tracking-[.12em] text-orange-300">
+                        Actividad de hoy
                       </p>
-                      <p className="mt-0.5 truncate text-[11px] text-white/40">
-                        {feedPulse.latestTitle}
+                      <p className="mt-1 text-xs leading-5 text-white/60">
+                        {feedPulse.activitiesToday > 0
+                          ? `${feedPulse.activitiesToday} ${feedPulse.activitiesToday === 1 ? 'entreno registrado' : 'entrenos registrados'} · ${feedPulse.kilometersToday.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km compartidos`
+                          : 'La próxima vuelta puede ser la primera actividad del día.'}
                       </p>
                     </div>
-                    <span className="text-xs text-orange-400">●</span>
                   </div>
-                ) : (
-                  !feedPulse.loading && (
-                    <p className="mt-4 text-xs leading-5 text-white/40">
-                      Hoy todavía no hay actividades públicas registradas. El próximo entrenamiento
-                      puede ser el primero. 🛼
-                    </p>
-                  )
-                )}
+
+                  {events?.[0] && (
+                    <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-blue-500/10 text-lg">
+                        🗓️
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-black uppercase tracking-[.12em] text-blue-300">
+                          Se viene
+                        </p>
+                        <p className="mt-1 truncate text-xs font-black text-white/75">
+                          {events[0].titulo}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-fuchsia-500/10 text-lg">
+                      🏅
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-black uppercase tracking-[.12em] text-fuchsia-300">
+                        Comunidad PR
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-white/55">
+                        Logros, insignias, cumpleaños, actividades y momentos compartidos viven dentro de RollerFeed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
                 <Link
                   to={isLoggedIn ? '/app/actividad' : '/login'}
                   className="mt-5 flex min-h-12 items-center justify-between rounded-2xl bg-orange-500 px-4 text-sm font-black text-black transition active:scale-[.98]"
                 >
-                  <span>{isLoggedIn ? 'Entrar a RollerFeed' : 'Ingresar para ver RollerFeed'}</span>
+                  <span>
+                    {isLoggedIn ? 'Entrar a RollerFeed' : 'Entrar para ver todo'}
+                  </span>
                   <span>→</span>
                 </Link>
 
-                <p className="mt-3 text-[10px] leading-4 text-white/30">
-                  Este resumen muestra actividad pública real de la comunidad. Los perfiles y
-                  datos privados siguen protegidos.
+                <p className="mt-3 text-[9px] leading-4 text-white/25">
+                  “Pulso PR” es un indicador visual anónimo de comunidad activa y no representa
+                  presencia individual en tiempo real. Las métricas de entrenos y kilómetros sí
+                  provienen de actividades públicas registradas.
                 </p>
               </div>
             </div>
