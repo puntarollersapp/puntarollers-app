@@ -632,4 +632,4 @@ function EventCard({ event }) {
       </div>
     </article>
   )
-}
+          }
