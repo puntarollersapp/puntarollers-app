@@ -444,6 +444,171 @@ export default function PublicRollerFeed() {
             </div>
           )}
 
+          {/* APP EXPERIENCE TEASER */}
+          <section className="pt-6">
+            <div className="relative overflow-hidden rounded-[30px] border border-orange-400/20 bg-[#0a0b0f]">
+              <div className="absolute -right-20 -top-24 h-60 w-60 rounded-full bg-orange-500/12 blur-3xl" />
+              <div className="absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
+
+              <div className="relative p-5 sm:p-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">
+                      ⚙️ Ecosistema privado PR
+                    </p>
+                    <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">
+                      Nuestros alumnos no solo vienen a clase.
+                      <span className="block text-orange-500">
+                        Tienen su propia app de evolución.
+                      </span>
+                    </h2>
+                  </div>
+
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-orange-400/20 bg-orange-500/10 text-2xl">
+                    🛼
+                  </div>
+                </div>
+
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-white/52">
+                  Cada alumno de Punta Rollers cuenta con un espacio enlazado a su perfil para
+                  acompañar kilómetros, entrenamientos, clases, insignias, objetivos y evolución.
+                  Parte de ese movimiento es lo que estás viendo acá, pero de forma pública y
+                  anonimizada.
+                </p>
+
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <FeatureMini icon="📏" title="Kilómetros" text="Historial y progreso" />
+                  <FeatureMini icon="🔥" title="Entrenos" text="Actividad y constancia" />
+                  <FeatureMini icon="🎓" title="Clases" text="Seguimiento PR" />
+                  <FeatureMini icon="🏅" title="Insignias" text="Logros desbloqueados" />
+                </div>
+
+                <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[.025] p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[.16em] text-sky-300">
+                        📈 Vista demo de progreso
+                      </p>
+                      <h3 className="mt-1 text-lg font-black">
+                        Camino a Shifter Marathon
+                      </h3>
+                      <p className="mt-1 text-[11px] leading-5 text-white/35">
+                        Datos ilustrativos para mostrar cómo se visualiza la evolución dentro de la app.
+                      </p>
+                    </div>
+
+                    <span className="rounded-full border border-sky-300/15 bg-sky-300/[.08] px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] text-sky-200">
+                      Demo
+                    </span>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-black/20 py-4">
+                    <DemoStat value="18,4 km" label="esta semana" />
+                    <DemoStat value="+22%" label="vs. anterior" />
+                    <DemoStat value="4" label="entrenos" />
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="flex items-end justify-between gap-2">
+                      {[
+                        { label: 'S1', value: 38 },
+                        { label: 'S2', value: 52 },
+                        { label: 'S3', value: 67 },
+                        { label: 'S4', value: 81 },
+                        { label: 'S5', value: 92 },
+                      ].map((bar) => (
+                        <div key={bar.label} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                          <div className="flex h-28 w-full items-end rounded-xl bg-white/[.03] p-1.5">
+                            <div
+                              className="w-full rounded-lg bg-gradient-to-t from-orange-500 to-amber-300 shadow-[0_6px_20px_rgba(249,115,22,.18)]"
+                              style={{ height: `${bar.value}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] font-black text-white/30">{bar.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-white/[.035] p-3">
+                      <p className="text-[9px] font-black uppercase tracking-[.14em] text-white/30">
+                        Objetivo
+                      </p>
+                      <p className="mt-1 text-sm font-black text-white">
+                        Mejorar resistencia
+                      </p>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full w-[72%] rounded-full bg-orange-500" />
+                      </div>
+                      <p className="mt-2 text-[10px] text-white/35">72% completado</p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white/[.035] p-3">
+                      <p className="text-[9px] font-black uppercase tracking-[.14em] text-white/30">
+                        Constancia
+                      </p>
+                      <p className="mt-1 text-sm font-black text-white">
+                        4 semanas activas
+                      </p>
+                      <div className="mt-3 flex gap-1.5">
+                        {[0, 1, 2, 3, 4, 5, 6].map((day, index) => (
+                          <span
+                            key={day}
+                            className={`h-2.5 flex-1 rounded-full ${
+                              index < 5 ? 'bg-emerald-400' : 'bg-white/10'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[10px] text-white/35">Ritmo en crecimiento</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-[22px] border border-violet-400/15 bg-violet-500/[.06] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-violet-500/10 text-lg">
+                      🔒
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white">
+                        La información individual es privada.
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-white/42">
+                        Para ver perfiles, objetivos, resultados, tiempos, devoluciones y evolución de
+                        alumnos tenés que iniciar sesión con una cuenta creada por Punta Rollers.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Link
+                    to="/login"
+                    className="flex min-h-12 items-center justify-between rounded-2xl bg-orange-500 px-4 text-sm font-black text-black transition active:scale-[.98]"
+                  >
+                    <span>Soy alumno PR · Ingresar</span>
+                    <span>→</span>
+                  </Link>
+
+                  <Link
+                    to="/"
+                    className="flex min-h-12 items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 text-sm font-black text-white transition active:scale-[.98]"
+                  >
+                    <span>Conocer Punta Rollers</span>
+                    <span>↗</span>
+                  </Link>
+                </div>
+
+                <p className="mt-3 text-[9px] leading-4 text-white/22">
+                  La gráfica y los indicadores de esta tarjeta son una demostración visual y no representan
+                  datos reales de ningún alumno.
+                </p>
+              </div>
+            </div>
+          </section>
+
           <section className="pt-8">
             <div className="mb-4 flex items-end justify-between gap-3">
               <div>
@@ -516,6 +681,28 @@ export default function PublicRollerFeed() {
         </div>
       </main>
     </PublicLayout>
+  )
+}
+
+
+function FeatureMini({ icon, title, text }) {
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-white/[.035] p-3">
+      <span className="text-xl">{icon}</span>
+      <p className="mt-2 text-xs font-black text-white">{title}</p>
+      <p className="mt-1 text-[10px] leading-4 text-white/35">{text}</p>
+    </div>
+  )
+}
+
+function DemoStat({ value, label }) {
+  return (
+    <div className="px-2 text-center">
+      <p className="text-sm font-black text-white sm:text-base">{value}</p>
+      <p className="mt-1 text-[8px] font-black uppercase tracking-[.12em] text-white/25">
+        {label}
+      </p>
+    </div>
   )
 }
 
@@ -621,4 +808,4 @@ function PublicFeedCard({ item, fallbackEmoji }) {
       </div>
     </article>
   )
-                }
+               }
