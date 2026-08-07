@@ -44,6 +44,14 @@ export default function Home() {
   const [day, setDay] = useState('miercoles')
   const [cupos, setCupos] = useState(getCupos())
   const [events, setEvents] = useState(DEFAULT_EVENTS)
+  const [feedPulse, setFeedPulse] = useState({
+    activitiesToday: 0,
+    kilometersToday: 0,
+    skatersToday: 0,
+    latestName: '',
+    latestTitle: '',
+    loading: true,
+  })
 
   const isLoggedIn = Boolean(user)
   const isStaff = user?.role === 'admin' || user?.role === 'profesor'
@@ -84,6 +92,96 @@ export default function Home() {
     }
     loadEvents()
     return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadRollerFeedPulse() {
+      try {
+        const start = new Date()
+        start.setHours(0, 0, 0, 0)
+
+        const [activitiesResponse, profilesResponse] = await Promise.all([
+          supabase
+            .from('pr_activities')
+            .select('*')
+            .eq('eliminada', false)
+            .gte('fecha_inicio', start.toISOString())
+            .order('fecha_inicio', { ascending: false })
+            .limit(60),
+
+          supabase
+            .from('profiles_feed')
+            .select('*')
+            .limit(500),
+        ])
+
+        if (!active) return
+
+        const publicActivities = (activitiesResponse.data || []).filter(
+          (activity) =>
+            activity &&
+            activity.eliminada !== true &&
+            activity.es_privada !== true &&
+            activity.privada !== true &&
+            activity.privado !== true &&
+            activity.visible_feed !== false
+        )
+
+        const profiles = profilesResponse.data || []
+        const profilesById = new Map()
+
+        profiles.forEach((profile) => {
+          if (profile?.id) profilesById.set(String(profile.id), profile)
+          if (profile?.auth_user_id) profilesById.set(String(profile.auth_user_id), profile)
+        })
+
+        const kilometersToday =
+          publicActivities.reduce(
+            (sum, activity) => sum + (Number(activity.distancia_metros) || 0),
+            0
+          ) / 1000
+
+        const skatersToday = new Set(
+          publicActivities
+            .map((activity) => activity.alumno_id)
+            .filter(Boolean)
+            .map(String)
+        ).size
+
+        const latest = publicActivities[0]
+        const latestProfile = latest?.alumno_id
+          ? profilesById.get(String(latest.alumno_id))
+          : null
+
+        const latestName =
+          latestProfile?.nombre_completo ||
+          latestProfile?.display_name ||
+          [latestProfile?.nombre, latestProfile?.apellido].filter(Boolean).join(' ') ||
+          latest?.alumno_nombre ||
+          latest?.nombre_alumno ||
+          ''
+
+        setFeedPulse({
+          activitiesToday: publicActivities.length,
+          kilometersToday,
+          skatersToday,
+          latestName,
+          latestTitle: latest?.nombre || 'Entrenamiento sobre ruedas',
+          loading: false,
+        })
+      } catch (_) {
+        if (!active) return
+        setFeedPulse((current) => ({ ...current, loading: false }))
+      }
+    }
+
+    loadRollerFeedPulse()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   const totalCupos = useMemo(() => (
@@ -172,6 +270,132 @@ export default function Home() {
             <p className="mt-3 text-center text-[11px] leading-5 text-white/35">Las cuentas de la app son creadas por el equipo Punta Rollers. Las inscripciones no crean usuarios automáticamente.</p>
           </section>
 
+
+          {/* QUIÉNES SOMOS — inmediatamente después de clases */}
+          <section className="pt-9">
+            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0c10]">
+              <div className="p-5 sm:p-7">
+                <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">
+                  🧡 ¿Quiénes somos?
+                </p>
+                <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">
+                  Una escuela. Una comunidad.
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
+                  Hace 10 años acompañamos a niños, adolescentes, adultos y adultos mayores
+                  en su camino sobre ruedas. Clases, calle, pista, eventos, competencia y
+                  experiencias compartidas.
+                </p>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <Place emoji="🌊" title="Parada 2" text="Punta del Este · Aire libre" />
+                  <Place emoji="🏟️" title="Pista cerrada" text="Maldonado · Indoor" />
+                </div>
+
+                <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-white">Equipo Punta Rollers</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/40">
+                      Claudio Facelli · David Almeida · Lucía Bernales
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-2xl">🛼</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ROLLERFEED — pulso público real de la comunidad */}
+          <section className="pt-9">
+            <div className="relative overflow-hidden rounded-[28px] border border-orange-400/20 bg-[#0a0b0f]">
+              <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-orange-500/10 blur-3xl" />
+              <div className="absolute -bottom-20 -left-16 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl" />
+
+              <div className="relative p-5 sm:p-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                      </span>
+                      <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">
+                        RollerFeed
+                      </p>
+                    </div>
+                    <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">
+                      Lo que está pasando ahora.
+                    </h2>
+                  </div>
+
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-400/20 bg-orange-500/10 text-xl">
+                    ⚡
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[.035] py-4">
+                  <PulseStat
+                    value={feedPulse.loading ? '…' : feedPulse.skatersToday}
+                    label="rodando hoy"
+                  />
+                  <PulseStat
+                    value={feedPulse.loading ? '…' : feedPulse.activitiesToday}
+                    label="actividades"
+                  />
+                  <PulseStat
+                    value={
+                      feedPulse.loading
+                        ? '…'
+                        : feedPulse.kilometersToday > 0
+                          ? feedPulse.kilometersToday.toLocaleString('es-UY', {
+                              maximumFractionDigits: 1,
+                            })
+                          : '0'
+                    }
+                    label="km hoy"
+                  />
+                </div>
+
+                {feedPulse.latestName ? (
+                  <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[.04] p-3.5">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-orange-500/15 text-lg">
+                      🛼
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-black text-white">
+                        {feedPulse.latestName} estuvo rodando
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-white/40">
+                        {feedPulse.latestTitle}
+                      </p>
+                    </div>
+                    <span className="text-xs text-orange-400">●</span>
+                  </div>
+                ) : (
+                  !feedPulse.loading && (
+                    <p className="mt-4 text-xs leading-5 text-white/40">
+                      Hoy todavía no hay actividades públicas registradas. El próximo entrenamiento
+                      puede ser el primero. 🛼
+                    </p>
+                  )
+                )}
+
+                <Link
+                  to={isLoggedIn ? '/app/actividad' : '/login'}
+                  className="mt-5 flex min-h-12 items-center justify-between rounded-2xl bg-orange-500 px-4 text-sm font-black text-black transition active:scale-[.98]"
+                >
+                  <span>{isLoggedIn ? 'Entrar a RollerFeed' : 'Ingresar para ver RollerFeed'}</span>
+                  <span>→</span>
+                </Link>
+
+                <p className="mt-3 text-[10px] leading-4 text-white/30">
+                  Este resumen muestra actividad pública real de la comunidad. Los perfiles y
+                  datos privados siguen protegidos.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* QUICK 4 BLOCKS */}
           <section id="explorar" className="scroll-mt-8 pt-11">
             <SectionTitle emoji="✨" eyebrow="Universo PR" title="Mucho más que clases." text="Todo lo que ya forma parte de Punta Rollers, sin convertir el Home en un chorizo infinito." />
@@ -198,20 +422,6 @@ export default function Home() {
               <GalleryTile href={GALLERY_LINKS.clases} emoji="📷" title="Clases" />
               <GalleryTile href={GALLERY_LINKS.rolleadas} emoji="🎉" title="Rolleadas" />
               <GalleryTile href={GALLERY_LINKS.contenido} emoji="🎬" title="Videos" />
-            </div>
-          </section>
-
-          {/* WHO WE ARE compact */}
-          <section className="pt-11">
-            <div className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-5 sm:p-7">
-              <p className="text-xs font-black uppercase tracking-[.2em] text-orange-400">🧡 Punta Rollers</p>
-              <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">Una escuela. Una comunidad.</h2>
-              <p className="mt-3 text-sm leading-6 text-white/55">10 años acompañando a niños, adolescentes, adultos y adultos mayores. Dos profesores en simultáneo, aire libre, pista cerrada, calle, eventos, competencia y clases personalizadas.</p>
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <Place emoji="🌊" title="Parada 2" text="Punta del Este · Aire libre" />
-                <Place emoji="🏟️" title="Pista cerrada" text="Maldonado · Indoor" />
-              </div>
-              <p className="mt-5 text-xs leading-5 text-white/40">Dirigida por Claudio Facelli, junto a David Almeida y Lucía Bernales.</p>
             </div>
           </section>
 
@@ -286,6 +496,18 @@ function LinkMini({ to, emoji, title, text }) {
 
 function GalleryTile({ href, emoji, title }) {
   return <a href={href} target="_blank" rel="noreferrer" className="flex aspect-[.9] flex-col justify-between rounded-[22px] border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-3 active:scale-[.98]"><span className="text-3xl">{emoji}</span><div><p className="text-xs font-black sm:text-sm">{title}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-orange-400">Abrir ↗</p></div></a>
+}
+
+
+function PulseStat({ value, label }) {
+  return (
+    <div className="px-2 text-center">
+      <p className="text-xl font-black text-white sm:text-2xl">{value}</p>
+      <p className="mt-1 text-[8px] font-black uppercase tracking-[.12em] text-white/30 sm:text-[9px]">
+        {label}
+      </p>
+    </div>
+  )
 }
 
 function Place({ emoji, title, text }) {
