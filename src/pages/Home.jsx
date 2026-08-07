@@ -13,34 +13,30 @@ const GALLERY_LINKS = {
     'https://drive.google.com/drive/folders/1hnBU-O1sjZC88O6EqMa_1dKAE5HybkW_',
 }
 
-const QUICK_LINKS = [
+const EXPLORE_LINKS = [
   {
     to: '/cuponeras',
-    eyebrow: 'Beneficios',
+    kicker: 'Beneficios',
     title: 'Cuponeras',
-    subtitle: 'Todo lo que incluye tu experiencia PR.',
-    icon: 'ticket',
+    description: 'Cómo funcionan tus clases personalizadas y beneficios PR.',
   },
   {
     to: '/pasaporte-kids',
-    eyebrow: 'PR Kids',
+    kicker: 'PR Kids',
     title: 'Pasaporte Kids',
-    subtitle: 'Progreso, logros y recorrido infantil.',
-    icon: 'passport',
+    description: 'Un recorrido pensado para acompañar cada logro de los más chicos.',
   },
   {
     to: '/uniformes',
-    eyebrow: 'Identidad',
+    kicker: 'Identidad',
     title: 'Uniformes',
-    subtitle: 'Remeras y buzos oficiales.',
-    icon: 'shirt',
+    description: 'Remeras y buzos oficiales para sentirte parte dentro y fuera de pista.',
   },
   {
     to: '/tracking',
-    eyebrow: 'Seguridad',
+    kicker: 'Tecnología',
     title: 'PR Tracking',
-    subtitle: 'Tecnología NFC para tus elementos.',
-    icon: 'tracking',
+    description: 'Identificación NFC para patines, cascos y elementos personales.',
   },
 ]
 
@@ -50,22 +46,18 @@ export default function Home() {
   const [cupos, setCupos] = useState(getCupos())
 
   const isLoggedIn = Boolean(user)
-  const isStaff =
-    user?.role === 'admin' || user?.role === 'profesor'
-  const privateDestination = isStaff
-    ? '/admin'
-    : '/app/dashboard'
+  const isStaff = user?.role === 'admin' || user?.role === 'profesor'
+  const privateDestination = isStaff ? '/admin' : '/app/dashboard'
 
   useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.replace('#', '')
+    if (!window.location.hash) return
 
-      setTimeout(() => {
-        document.getElementById(id)?.scrollIntoView({
-          behavior: 'smooth',
-        })
-      }, 200)
-    }
+    const id = window.location.hash.replace('#', '')
+    const timeoutId = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    }, 200)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   useEffect(() => {
@@ -82,430 +74,255 @@ export default function Home() {
 
   return (
     <PublicLayout>
-      <main className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[700px] overflow-hidden">
-          <div className="absolute -left-28 top-12 h-72 w-72 rounded-full bg-blue-700/20 blur-[100px]" />
-          <div className="absolute -right-32 top-48 h-80 w-80 rounded-full bg-orange-500/10 blur-[110px]" />
-          <div className="absolute left-1/2 top-0 h-px w-[88%] -translate-x-1/2 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-        </div>
+      <main className="overflow-hidden bg-[#090a0d] text-white">
+        <Hero
+          isLoggedIn={isLoggedIn}
+          privateDestination={privateDestination}
+        />
 
-        <div className="relative mx-auto w-full max-w-6xl space-y-20 px-4 pb-10 pt-5 sm:px-6 sm:pt-8 lg:px-8">
-          <section className="animate-fade-up">
-            <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#080d1a]/95 px-5 pb-6 pt-5 shadow-[0_32px_100px_rgba(0,0,0,0.45)] sm:px-8 sm:pb-8 sm:pt-7 lg:px-12 lg:py-11">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_12%,rgba(249,115,22,0.16),transparent_28%),radial-gradient(circle_at_12%_88%,rgba(37,99,235,0.2),transparent_34%)]" />
-              <div className="pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full border border-orange-400/15" />
-              <div className="pointer-events-none absolute -right-5 -top-5 h-28 w-28 rounded-full border border-white/10" />
+        {isLoggedIn && (
+          <LoggedInStrip
+            user={user}
+            isStaff={isStaff}
+            privateDestination={privateDestination}
+          />
+        )}
 
-              <div className="relative grid items-end gap-8 lg:grid-cols-[1.2fr_.8fr]">
-                <div>
-                  <div className="mb-8 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg">
-                        <img
-                          src="/logo.png"
-                          alt="Punta Rollers"
-                          className="h-full w-full object-contain p-1.5"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-300/80">
-                          PuntaRollers.app
-                        </p>
-                        <p className="mt-0.5 text-xs text-white/40">
-                          Escuela · Comunidad · Evolución
-                        </p>
-                      </div>
-                    </div>
-                    <span className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45 sm:inline-flex">
-                      Punta del Este · Uruguay
-                    </span>
-                  </div>
-
-                  <span className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.8)]" />
-                    10 años sobre ruedas
-                  </span>
-
-                  <h1 className="mt-5 max-w-3xl text-[42px] font-extrabold leading-[0.95] tracking-[-0.035em] text-white sm:text-6xl lg:text-7xl">
-                    No es solo patinar,
-                    <span className="mt-2 block bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300 bg-clip-text text-transparent">
-                      es pertenecer.
-                    </span>
-                  </h1>
-
-                  <p className="mt-5 max-w-xl text-sm leading-7 text-white/55 sm:text-base">
-                    Escuela y comunidad de patín en línea. Clases,
-                    eventos, beneficios y evolución deportiva en un
-                    mismo ecosistema.
-                  </p>
-
-                  <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                    <Link
-                      to={isLoggedIn ? privateDestination : '/login'}
-                      className="group inline-flex min-h-[54px] items-center justify-center gap-3 rounded-2xl bg-orange-500 px-5 text-sm font-extrabold text-[#07101f] shadow-[0_16px_40px_rgba(249,115,22,0.22)] transition duration-200 hover:bg-orange-400 active:scale-[0.98] sm:min-w-[210px]"
-                    >
-                      {isLoggedIn
-                        ? 'Entrar a mi espacio'
-                        : 'Ingresar a Punta Rollers'}
-                      <Icon name="arrow" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-
-                    <a
-                      href="#inscripciones"
-                      className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-5 text-sm font-bold text-white/85 backdrop-blur transition hover:border-white/20 hover:bg-white/[0.07] active:scale-[0.98] sm:min-w-[180px]"
-                    >
-                      Ver clases
-                      <Icon name="calendar" className="h-4 w-4 text-white/50" />
-                    </a>
-                  </div>
-                </div>
-
-                <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm sm:p-7">
-                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
-                  <div className="relative">
-                    <p className="text-5xl font-extrabold leading-none tracking-[-0.04em] text-white sm:text-6xl">
-                      10
-                    </p>
-                    <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.2em] text-orange-200/80">
-                      Años formando patinadores
-                    </p>
-                    <p className="mt-4 max-w-sm text-sm leading-6 text-white/45">
-                      Más de una década construyendo una comunidad sobre ruedas.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {isLoggedIn && (
-            <section className="animate-fade-up stagger-1">
-              <SectionHeading
-                eyebrow="Tu espacio"
-                title={`Hola, ${user.nombre}`}
-                description="Tu sesión sigue activa mientras recorrés la experiencia pública de Punta Rollers."
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+          <section className="border-b border-white/10 py-16 sm:py-20">
+            <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+              <SectionLead
+                eyebrow="Quiénes somos"
+                title="Una escuela que se convirtió en comunidad."
               />
 
-              <div className="mt-5 overflow-hidden rounded-[28px] border border-blue-400/15 bg-gradient-to-br from-blue-950/80 via-[#0b1425] to-[#0a0d15] p-5 shadow-[0_22px_70px_rgba(0,0,0,0.35)] sm:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-4">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-blue-300/15 bg-blue-400/10 text-blue-200">
-                      <Icon name="user" className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-300/60">
-                        Sesión iniciada
-                      </p>
-                      <p className="mt-1 truncate text-lg font-bold text-white">
-                        {user.nombre}
-                      </p>
-                      <p className="mt-1 text-xs text-white/40">
-                        {isStaff
-                          ? 'Acceso de administración y gestión habilitado.'
-                          : 'Tu perfil, actividad y comunidad están disponibles.'}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.65)]" />
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <PrivateAccessLink
-                    to={privateDestination}
-                    icon={isStaff ? 'settings' : 'home'}
-                    title={isStaff ? 'Administración' : 'Mi espacio'}
-                    subtitle={isStaff ? 'Gestionar Punta Rollers' : 'Ir al dashboard'}
-                    featured
+              <div className="space-y-6 text-[15px] leading-7 text-white/55 sm:text-base sm:leading-8">
+                <p className="text-white/80">
+                  Punta Rollers lleva 10 años acompañando a niños, adolescentes,
+                  adultos y adultos mayores en todo su proceso de aprendizaje.
+                </p>
+                <p>
+                  Entrenamos con dos profesores en simultáneo, clases al aire libre,
+                  pista cerrada, salidas de calle, eventos, preparación competitiva y
+                  clases personalizadas para todos los niveles.
+                </p>
+                <div className="grid gap-5 border-t border-white/10 pt-6 sm:grid-cols-2">
+                  <EditorialFact
+                    number="01"
+                    title="Equipo PR"
+                    text="Claudio Facelli, David Almeida y Lucía Bernales sostienen la experiencia deportiva y humana de la escuela."
                   />
-                  <PrivateAccessLink
-                    to="/app/perfil"
-                    icon="user"
-                    title="Mi perfil"
-                    subtitle="Identidad y progreso"
-                  />
-                  <PrivateAccessLink
-                    to="/app/actividad"
-                    icon="activity"
-                    title="Actividad"
-                    subtitle="Tu recorrido deportivo"
+                  <EditorialFact
+                    number="02"
+                    title="Nuestra identidad"
+                    text="Técnica, pertenencia, evolución y recuerdos compartidos. No es solo patinar: es pertenecer."
                   />
                 </div>
-
-                <Link
-                  to="/app/comunidad"
-                  className="group mt-3 flex items-center gap-4 rounded-2xl border border-sky-300/15 bg-sky-400/[0.07] p-4 transition hover:bg-sky-400/[0.11] active:scale-[0.99]"
-                >
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-300/10 text-sky-200">
-                    <Icon name="community" className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-white">
-                      Entrar a Comunidad
-                    </p>
-                    <p className="mt-0.5 text-xs text-white/40">
-                      Amigos, solicitudes y personas de Punta Rollers.
-                    </p>
-                  </div>
-                  <Icon name="arrow" className="h-4 w-4 text-sky-200/70 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </section>
-          )}
-
-          <section className="animate-fade-up stagger-1">
-            <SectionHeading
-              eyebrow="Quiénes somos"
-              title="Una escuela. Una comunidad."
-              description="Aprender, avanzar y compartir el camino sobre ruedas."
-            />
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
-              <article className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.035] p-6 sm:p-8">
-                <div className="absolute right-0 top-0 h-36 w-36 rounded-bl-full bg-blue-600/[0.08]" />
-                <div className="relative">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-orange-300/15 bg-orange-400/10 text-orange-300">
-                    <Icon name="skate" className="h-6 w-6" />
-                  </div>
-                  <h2 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-4xl">
-                    Punta Rollers acompaña cada etapa de tu evolución.
-                  </h2>
-                  <p className="mt-4 text-sm leading-7 text-white/55">
-                    Somos una escuela con 10 años de experiencia
-                    acompañando a niños, adolescentes, adultos y adultos
-                    mayores en todo el proceso de aprendizaje.
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-white/45">
-                    Trabajamos con dos profesores en simultáneo, clases al
-                    aire libre, pista cerrada, salidas de calle, eventos,
-                    entrenamientos competitivos y clases personalizadas
-                    para todos los niveles y edades.
-                  </p>
-                </div>
-              </article>
-
-              <div className="grid gap-4">
-                <InfoCard
-                  icon="team"
-                  eyebrow="Equipo PR"
-                  title="Personas que sostienen la experiencia"
-                >
-                  Creada y dirigida por Claudio Facelli, acompañado por
-                  David Almeida, profesor, y Lucía Bernales, tesorera y
-                  administrativa.
-                </InfoCard>
-                <InfoCard
-                  icon="spark"
-                  eyebrow="Nuestra identidad"
-                  title="Más que una clase"
-                >
-                  Técnica, comunidad, desafíos y recuerdos compartidos.
-                  No es solo patinar: es pertenecer.
-                </InfoCard>
               </div>
             </div>
           </section>
 
-          <section className="animate-fade-up stagger-2">
-            <SectionHeading
+          <section className="border-b border-white/10 py-16 sm:py-20">
+            <SectionHeader
               eyebrow="Dónde estamos"
-              title="Dos espacios, una misma energía."
+              title="Dos espacios. La misma energía."
+              description="Elegimos cada espacio según la experiencia y el tipo de entrenamiento."
             />
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <LocationCard
-                icon="pin"
-                type="Aire libre"
+            <div className="mt-9 divide-y divide-white/10 border-y border-white/10">
+              <LocationRow
+                index="01"
                 title="Parada 2"
-                location="Punta del Este"
-                detail="Clases junto al mar y experiencia urbana."
+                city="Punta del Este"
+                type="Aire libre"
+                description="Clases junto al mar, salidas de calle y entrenamiento urbano."
               />
-              <LocationCard
-                icon="arena"
-                type="Indoor"
+              <LocationRow
+                index="02"
                 title="Pista cerrada"
-                location="Maldonado"
-                detail="Entrenamiento protegido y grupos organizados."
+                city="Maldonado"
+                type="Indoor"
+                description="Entrenamientos organizados, PR Kids y grupos de adultos en un entorno protegido."
               />
             </div>
           </section>
 
-          <section className="animate-fade-up stagger-3">
-            <SectionHeading
-              eyebrow="Horarios y cupos"
-              title="Elegí tu momento para rodar."
-              description="Los cupos disponibles se actualizan desde Administración."
-            />
+          <section className="border-b border-white/10 py-16 sm:py-20">
+            <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+              <SectionLead
+                eyebrow="Horarios y cupos"
+                title="Elegí cuándo salir a rodar."
+                description="Los cupos se actualizan desde Administración."
+              />
 
-            <div className="mt-5 rounded-[28px] border border-white/10 bg-[#0b101c]/90 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.3)] sm:p-6">
-              <div className="grid grid-cols-2 rounded-2xl border border-white/10 bg-black/25 p-1.5">
-                <Tab
-                  active={day === 'miercoles'}
-                  onClick={() => setDay('miercoles')}
-                >
-                  Miércoles
-                </Tab>
-                <Tab
-                  active={day === 'sabado'}
-                  onClick={() => setDay('sabado')}
-                >
-                  Sábado
-                </Tab>
-              </div>
+              <div>
+                <div className="mb-7 flex gap-6 border-b border-white/10">
+                  <DayTab
+                    active={day === 'miercoles'}
+                    onClick={() => setDay('miercoles')}
+                  >
+                    Miércoles
+                  </DayTab>
+                  <DayTab
+                    active={day === 'sabado'}
+                    onClick={() => setDay('sabado')}
+                  >
+                    Sábado
+                  </DayTab>
+                </div>
 
-              <div className="mt-4 space-y-3">
-                {day === 'miercoles' && (
-                  <ScheduleCard
-                    title="Clases mixtas"
-                    detail="Principiantes, intermedios y avanzados"
-                    time="19:30 - 20:30"
-                    location="Parada 2 · Aire libre"
-                    cupos={`${cupos.miercoles.principiantes} disponibles`}
-                  />
-                )}
+                <div className="divide-y divide-white/10">
+                  {day === 'miercoles' && (
+                    <ScheduleRow
+                      title="Clases mixtas"
+                      detail="Principiantes, intermedios y avanzados"
+                      time="19:30 — 20:30"
+                      location="Parada 2 · Aire libre"
+                      cupos={`${cupos.miercoles.principiantes} disponibles`}
+                    />
+                  )}
 
-                {day === 'sabado' && (
-                  <>
-                    <ScheduleCard
-                      title="Adultos mixtos"
-                      detail="Clase al aire libre"
-                      time="09:00 - 10:00"
-                      location="Parada 2 · Punta del Este"
-                      cupos={`${cupos.miercoles.avanzado} disponibles`}
-                    />
-                    <ScheduleCard
-                      title="PR Kids"
-                      detail="Pista cerrada"
-                      time="19:00 - 20:00"
-                      location="Maldonado · Indoor"
-                      cupos={`${cupos.sabado.kids} disponibles`}
-                    />
-                    <ScheduleCard
-                      title="Adultos mixtos"
-                      detail="Pista cerrada"
-                      time="20:00 - 21:00"
-                      location="Maldonado · Indoor"
-                      cupos={`${cupos.sabado.adultos} disponibles`}
-                    />
-                  </>
-                )}
+                  {day === 'sabado' && (
+                    <>
+                      <ScheduleRow
+                        title="Adultos mixtos"
+                        detail="Clase al aire libre"
+                        time="09:00 — 10:00"
+                        location="Parada 2 · Punta del Este"
+                        cupos={`${cupos.miercoles.avanzado} disponibles`}
+                      />
+                      <ScheduleRow
+                        title="PR Kids"
+                        detail="Pista cerrada"
+                        time="19:00 — 20:00"
+                        location="Maldonado · Indoor"
+                        cupos={`${cupos.sabado.kids} disponibles`}
+                      />
+                      <ScheduleRow
+                        title="Adultos mixtos"
+                        detail="Pista cerrada"
+                        time="20:00 — 21:00"
+                        location="Maldonado · Indoor"
+                        cupos={`${cupos.sabado.adultos} disponibles`}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </section>
 
           <section
             id="inscripciones"
-            className="scroll-mt-8 animate-fade-up stagger-4"
+            className="scroll-mt-8 border-b border-white/10 py-16 sm:py-20"
           >
-            <SectionHeading
+            <SectionHeader
               eyebrow="Inscripciones"
               title="Tu próxima vuelta empieza acá."
-              description="Elegí el grupo correcto y completá tu inscripción oficial."
+              description="Elegí el grupo y completá tu inscripción oficial."
             />
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <BannerLink
+            <div className="mt-8 grid gap-5 sm:grid-cols-2">
+              <ImageLink
                 href="https://form.jotform.com/Claudinio/inscripcioneskids"
                 image="/banner-kids.png"
                 alt="Inscripciones PR Kids"
-                label="Inscripciones PR Kids"
+                label="PR Kids"
               />
-              <BannerLink
+              <ImageLink
                 href="https://form.jotform.com/Claudinio/Inscripciones2026"
                 image="/banner-adultos.png"
                 alt="Inscripciones adultos"
-                label="Inscripciones adultos"
+                label="Adultos"
               />
             </div>
           </section>
 
           <section
             id="explorar"
-            className="scroll-mt-8 animate-fade-up stagger-5"
+            className="scroll-mt-8 border-b border-white/10 py-16 sm:py-20"
           >
-            <SectionHeading
-              eyebrow="Explorar Punta Rollers"
-              title="Todo el universo PR, conectado."
-              description="Servicios, identidad, progreso y seguridad en un solo lugar."
-            />
+            <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+              <SectionLead
+                eyebrow="Explorar Punta Rollers"
+                title="Todo lo que acompaña a la pista."
+                description="Beneficios, identidad, tecnología y progreso."
+              />
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {QUICK_LINKS.map((item, index) => (
-                <ExploreCard key={item.to} {...item} index={index} />
-              ))}
-
-              <Link
-                to="/terminos"
-                className="group flex items-center gap-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-5 transition hover:border-orange-300/20 hover:bg-white/[0.05] active:scale-[0.99] sm:col-span-2"
-              >
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/65">
-                  <Icon name="document" className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.19em] text-white/35">
-                    Información importante
-                  </p>
-                  <p className="mt-1 text-base font-bold text-white">
-                    Reglas y condiciones
-                  </p>
-                  <p className="mt-1 text-xs text-white/40">
-                    Conocé el funcionamiento del club.
-                  </p>
-                </div>
-                <Icon name="arrow" className="h-4 w-4 text-white/30 transition-transform group-hover:translate-x-1 group-hover:text-orange-300" />
-              </Link>
+              <div className="divide-y divide-white/10 border-y border-white/10">
+                {EXPLORE_LINKS.map((item, index) => (
+                  <ExploreRow key={item.to} item={item} index={index + 1} />
+                ))}
+                <Link
+                  to="/terminos"
+                  className="group grid gap-3 py-6 transition sm:grid-cols-[70px_1fr_auto] sm:items-center"
+                >
+                  <span className="text-xs font-bold tracking-[0.22em] text-white/20">
+                    05
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/60">
+                      Información
+                    </p>
+                    <h3 className="mt-1 text-xl font-bold text-white">
+                      Reglas y condiciones
+                    </h3>
+                    <p className="mt-1 text-sm text-white/38">
+                      Funcionamiento general del club y sus servicios.
+                    </p>
+                  </div>
+                  <span className="hidden text-2xl text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300 sm:block">
+                    →
+                  </span>
+                </Link>
+              </div>
             </div>
           </section>
 
-          <section className="animate-fade-up stagger-6">
-            <SectionHeading
+          <section className="border-b border-white/10 py-16 sm:py-20">
+            <SectionHeader
               eyebrow="Galería"
-              title="Momentos que quedan."
+              title="Lo que pasa sobre ruedas también queda."
               description="Clases, rolleadas y contenido de nuestra comunidad."
             />
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <GalleryCard
+            <div className="mt-8 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-3">
+              <GalleryLink
                 href={GALLERY_LINKS.clases}
-                icon="camera"
                 number="01"
                 title="Clases"
                 subtitle="Fotos de cada jornada"
               />
-              <GalleryCard
+              <GalleryLink
                 href={GALLERY_LINKS.rolleadas}
-                icon="celebration"
                 number="02"
                 title="Rolleadas"
                 subtitle="Eventos y salidas"
               />
-              <GalleryCard
+              <GalleryLink
                 href={GALLERY_LINKS.contenido}
-                icon="video"
                 number="03"
                 title="Contenido"
-                subtitle="Material de Punta Rollers"
-                className="sm:col-span-2"
-                wide
+                subtitle="Material Punta Rollers"
               />
             </div>
           </section>
 
-          <section className="animate-fade-up">
-            <SectionHeading
+          <section className="border-b border-white/10 py-16 sm:py-20">
+            <SectionHeader
               eyebrow="Plataformas PR"
-              title="La experiencia sigue fuera de la pista."
-              description="Herramientas propias creadas para ampliar la comunidad Punta Rollers."
+              title="La experiencia sigue fuera de esta pantalla."
             />
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <BannerLink
+            <div className="mt-8 grid gap-5 sm:grid-cols-2">
+              <ImageLink
                 href="https://puntarollerscard.com/"
                 image="/banner-prcard.png"
                 alt="Punta Rollers Card"
                 label="Punta Rollers Card"
                 external
               />
-              <BannerLink
+              <ImageLink
                 href="https://rollermap.vercel.app/"
                 image="/banner-rollermap.png"
                 alt="RollerMap"
@@ -515,29 +332,27 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="animate-fade-up">
-            <div className="relative overflow-hidden rounded-[30px] border border-blue-400/15 bg-gradient-to-br from-[#0c1830] via-[#0a1221] to-[#080b12] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.38)] sm:p-8">
-              <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-500/15 blur-3xl" />
-              <div className="relative grid items-center gap-6 sm:grid-cols-[1fr_auto]">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.21em] text-blue-300/60">
-                    Comunidad
-                  </p>
-                  <h2 className="mt-3 text-3xl font-bold leading-tight text-white sm:text-4xl">
-                    Alianza Rollers
-                  </h2>
-                  <p className="mt-3 max-w-xl text-sm leading-7 text-white/50">
-                    Una comunidad nacional en expansión, conectando
-                    personas, escuelas e iniciativas sobre ruedas.
-                  </p>
-                </div>
+          <section className="py-16 sm:py-20">
+            <div className="grid overflow-hidden border-y border-white/10 lg:grid-cols-[1.1fr_.9fr]">
+              <div className="py-9 lg:border-r lg:border-white/10 lg:pr-12">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-300/70">
+                  Comunidad
+                </p>
+                <h2 className="mt-3 max-w-xl text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-white sm:text-5xl">
+                  El patín también se construye con gente alrededor.
+                </h2>
+              </div>
 
+              <div className="border-t border-white/10 py-9 lg:border-t-0 lg:pl-12">
+                <p className="max-w-md text-sm leading-7 text-white/45">
+                  Alianza Rollers conecta la comunidad y amplía el movimiento a nivel nacional.
+                </p>
                 <Link
                   to="/alianza"
-                  className="group inline-flex min-h-[52px] items-center justify-center gap-3 rounded-2xl border border-blue-300/20 bg-blue-400/10 px-5 text-sm font-bold text-blue-100 transition hover:bg-blue-400/15 active:scale-[0.98]"
+                  className="group mt-7 inline-flex items-center gap-3 text-sm font-bold text-orange-300"
                 >
-                  Conocer Alianza
-                  <Icon name="arrow" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  Conocer Alianza Rollers
+                  <span className="transition group-hover:translate-x-1">→</span>
                 </Link>
               </div>
             </div>
@@ -548,17 +363,144 @@ export default function Home() {
   )
 }
 
-function SectionHeading({ eyebrow, title, description }) {
+function Hero({ isLoggedIn, privateDestination }) {
   return (
-    <div className="max-w-2xl">
-      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-300/65">
+    <section className="relative border-b border-white/10 bg-[#07090d]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute right-[-12%] top-[-16%] h-[520px] w-[520px] rounded-full bg-orange-500/[0.10] blur-[130px]" />
+        <div className="absolute bottom-[-35%] left-[-12%] h-[480px] w-[480px] rounded-full bg-blue-600/[0.12] blur-[140px]" />
+      </div>
+
+      <div className="relative mx-auto grid min-h-[620px] w-full max-w-6xl content-between px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8 lg:min-h-[680px] lg:px-8">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="Punta Rollers"
+              className="h-11 w-11 rounded-xl object-contain"
+            />
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.17em] text-white">
+                Punta Rollers
+              </p>
+              <p className="mt-0.5 text-[10px] text-white/35">
+                Punta del Este · Uruguay
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to={isLoggedIn ? privateDestination : '/login'}
+            className="text-xs font-bold text-white/60 transition hover:text-orange-300"
+          >
+            {isLoggedIn ? 'Mi espacio →' : 'Ingresar →'}
+          </Link>
+        </div>
+
+        <div className="max-w-4xl pb-4 pt-20 sm:pt-28">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="h-px w-12 bg-orange-400" />
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-300">
+              10 años sobre ruedas
+            </span>
+          </div>
+
+          <h1 className="text-[54px] font-extrabold leading-[0.86] tracking-[-0.055em] text-white sm:text-7xl lg:text-[96px]">
+            No es solo
+            <span className="block text-orange-400">patinar.</span>
+            <span className="block text-white/95">Es pertenecer.</span>
+          </h1>
+
+          <div className="mt-8 grid gap-6 border-t border-white/10 pt-6 sm:grid-cols-[1fr_auto] sm:items-end">
+            <p className="max-w-xl text-sm leading-7 text-white/45 sm:text-base">
+              Escuela, comunidad, evolución deportiva, eventos y beneficios.
+              Todo Punta Rollers en un mismo lugar.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                to={isLoggedIn ? privateDestination : '/login'}
+                className="inline-flex min-h-[52px] items-center justify-center bg-orange-500 px-6 text-sm font-black text-black transition hover:bg-orange-400 active:scale-[0.98]"
+              >
+                {isLoggedIn ? 'Entrar a mi espacio' : 'Ingresar a Punta Rollers'}
+              </Link>
+              <a
+                href="#inscripciones"
+                className="inline-flex min-h-[52px] items-center justify-center border border-white/15 px-6 text-sm font-bold text-white/75 transition hover:border-white/30 hover:text-white"
+              >
+                Ver clases
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-t border-white/10 pt-5 text-left">
+          <HeroStat value="10+" label="años" />
+          <HeroStat value="2" label="sedes" />
+          <HeroStat value="1" label="comunidad" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function HeroStat({ value, label }) {
+  return (
+    <div>
+      <p className="text-2xl font-extrabold text-white sm:text-3xl">{value}</p>
+      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
+        {label}
+      </p>
+    </div>
+  )
+}
+
+function LoggedInStrip({ user, isStaff, privateDestination }) {
+  return (
+    <section className="border-b border-white/10 bg-[#0d0f14]">
+      <div className="mx-auto grid w-full max-w-6xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/65">
+            Sesión iniciada
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-white">Hola, {user.nombre}</h2>
+          <p className="mt-1 text-xs text-white/35">
+            {isStaff
+              ? 'Tu panel de administración está disponible.'
+              : 'Tu perfil, actividad y comunidad están a un toque.'}
+          </p>
+        </div>
+
+        <nav className="flex flex-wrap gap-x-5 gap-y-3 text-xs font-bold text-white/55">
+          <Link className="hover:text-orange-300" to={privateDestination}>
+            {isStaff ? 'Administración' : 'Mi espacio'} →
+          </Link>
+          <Link className="hover:text-orange-300" to="/app/perfil">
+            Perfil →
+          </Link>
+          <Link className="hover:text-orange-300" to="/app/actividad">
+            Actividad →
+          </Link>
+          <Link className="hover:text-sky-300" to="/app/comunidad">
+            Comunidad →
+          </Link>
+        </nav>
+      </div>
+    </section>
+  )
+}
+
+function SectionHeader({ eyebrow, title, description }) {
+  return (
+    <div className="max-w-3xl">
+      <p className="text-[10px] font-black uppercase tracking-[0.23em] text-orange-300/65">
         {eyebrow}
       </p>
-      <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-4xl">
+      <h2 className="mt-3 text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-white sm:text-5xl">
         {title}
       </h2>
       {description && (
-        <p className="mt-2 text-sm leading-6 text-white/42">
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/40">
           {description}
         </p>
       )}
@@ -566,323 +508,154 @@ function SectionHeading({ eyebrow, title, description }) {
   )
 }
 
-function PrivateAccessLink({ to, icon, title, subtitle, featured = false }) {
+function SectionLead({ eyebrow, title, description }) {
   return (
-    <Link
-      to={to}
-      className={`group rounded-2xl border p-4 transition active:scale-[0.98] ${
-        featured
-          ? 'border-orange-300/20 bg-orange-400/10 hover:bg-orange-400/15'
-          : 'border-white/10 bg-white/[0.035] hover:bg-white/[0.06]'
-      }`}
-    >
-      <div
-        className={`grid h-10 w-10 place-items-center rounded-xl ${
-          featured
-            ? 'bg-orange-400/15 text-orange-200'
-            : 'bg-white/[0.05] text-white/65'
-        }`}
-      >
-        <Icon name={icon} className="h-5 w-5" />
-      </div>
-      <p className="mt-3 text-sm font-bold text-white">{title}</p>
-      <p className="mt-1 text-[11px] text-white/35">{subtitle}</p>
-    </Link>
-  )
-}
-
-function InfoCard({ icon, eyebrow, title, children }) {
-  return (
-    <article className="rounded-[24px] border border-white/10 bg-white/[0.025] p-5">
-      <div className="flex items-start gap-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-blue-300/10 bg-blue-400/[0.07] text-blue-200">
-          <Icon name={icon} className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-300/50">
-            {eyebrow}
-          </p>
-          <h3 className="mt-1 text-lg font-bold leading-tight text-white">
-            {title}
-          </h3>
-        </div>
-      </div>
-      <p className="mt-4 text-sm leading-6 text-white/45">{children}</p>
-    </article>
-  )
-}
-
-function LocationCard({ icon, type, title, location, detail }) {
-  return (
-    <article className="group relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.03] p-5 transition hover:border-blue-300/20 hover:bg-white/[0.045] sm:p-6">
-      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-500/[0.07] blur-2xl" />
-      <div className="relative flex items-start justify-between gap-4">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl border border-blue-300/10 bg-blue-400/[0.08] text-blue-200">
-          <Icon name={icon} className="h-5 w-5" />
-        </div>
-        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[9px] font-bold uppercase tracking-[0.17em] text-white/40">
-          {type}
-        </span>
-      </div>
-      <h3 className="relative mt-5 text-2xl font-bold text-white">
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.23em] text-orange-300/65">
+        {eyebrow}
+      </p>
+      <h2 className="mt-3 text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-white sm:text-5xl">
         {title}
-      </h3>
-      <p className="relative mt-1 text-sm font-semibold text-orange-300/80">
-        {location}
-      </p>
-      <p className="relative mt-3 text-xs leading-5 text-white/40">
-        {detail}
-      </p>
-    </article>
+      </h2>
+      {description && (
+        <p className="mt-4 text-sm leading-7 text-white/38">{description}</p>
+      )}
+    </div>
   )
 }
 
-function ScheduleCard({ title, detail, time, location, cupos }) {
+function EditorialFact({ number, title, text }) {
   return (
-    <article className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-base font-bold text-white">{title}</p>
-          {detail && (
-            <p className="mt-1 text-xs text-white/38">{detail}</p>
-          )}
+    <div>
+      <p className="text-[10px] font-black tracking-[0.2em] text-orange-300/50">
+        {number}
+      </p>
+      <h3 className="mt-2 text-base font-bold text-white">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-white/38">{text}</p>
+    </div>
+  )
+}
+
+function LocationRow({ index, title, city, type, description }) {
+  return (
+    <article className="grid gap-4 py-7 sm:grid-cols-[70px_1fr_auto] sm:items-center">
+      <span className="text-xs font-bold tracking-[0.2em] text-white/18">{index}</span>
+      <div>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 className="text-2xl font-bold text-white">{title}</h3>
+          <span className="text-xs font-bold uppercase tracking-[0.13em] text-orange-300/65">
+            {type}
+          </span>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/[0.08] px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          {cupos}
-        </span>
+        <p className="mt-1 text-sm font-semibold text-white/50">{city}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/35">{description}</p>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-2 rounded-xl bg-black/20 px-3 py-2 text-[11px] font-semibold text-white/65">
-          <Icon name="clock" className="h-3.5 w-3.5 text-orange-300/70" />
-          {time}
-        </span>
-        <span className="inline-flex items-center gap-2 rounded-xl bg-black/20 px-3 py-2 text-[11px] font-semibold text-white/45">
-          <Icon name="pin" className="h-3.5 w-3.5 text-blue-300/70" />
-          {location}
-        </span>
-      </div>
+      <span className="hidden text-3xl text-white/10 sm:block">↗</span>
     </article>
   )
 }
 
-function Tab({ active, children, onClick }) {
+function DayTab({ active, onClick, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`min-h-[44px] rounded-xl px-4 text-sm font-bold transition ${
-        active
-          ? 'bg-orange-500 text-[#07101f] shadow-[0_10px_25px_rgba(249,115,22,0.2)]'
-          : 'text-white/40 hover:text-white/70'
+      className={`relative pb-3 text-sm font-bold transition ${
+        active ? 'text-white' : 'text-white/30 hover:text-white/55'
       }`}
     >
       {children}
+      {active && <span className="absolute inset-x-0 -bottom-px h-[2px] bg-orange-400" />}
     </button>
   )
 }
 
-function BannerLink({ href, image, alt, label, external = false }) {
+function ScheduleRow({ title, detail, time, location, cupos }) {
+  return (
+    <article className="grid gap-4 py-6 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div>
+        <h3 className="text-lg font-bold text-white">{title}</h3>
+        <p className="mt-1 text-sm text-white/35">{detail}</p>
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-white/45">
+          <span>{time}</span>
+          <span className="text-white/18">•</span>
+          <span>{location}</span>
+        </div>
+      </div>
+      <div className="sm:text-right">
+        <span className="inline-flex items-center gap-2 text-xs font-bold text-emerald-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          {cupos}
+        </span>
+      </div>
+    </article>
+  )
+}
+
+function ImageLink({ href, image, alt, label, external = true }) {
   return (
     <a
       href={href}
       target={external ? '_blank' : undefined}
       rel={external ? 'noreferrer' : undefined}
-      className="group relative block overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.025] shadow-[0_20px_55px_rgba(0,0,0,0.26)] transition hover:-translate-y-0.5 hover:border-orange-300/20 active:scale-[0.99]"
+      className="group relative block overflow-hidden border border-white/10 bg-[#0d1016]"
     >
       <img
         src={image}
         alt={alt}
-        className="aspect-[16/7] w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+        className="aspect-[16/7] w-full object-cover transition duration-500 group-hover:scale-[1.015]"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
       <span className="sr-only">{label}</span>
     </a>
   )
 }
 
-function ExploreCard({ to, icon, eyebrow, title, subtitle, index }) {
+function ExploreRow({ item, index }) {
   return (
     <Link
-      to={to}
-      className="group relative min-h-[184px] overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.03] p-5 transition hover:-translate-y-0.5 hover:border-orange-300/20 hover:bg-white/[0.045] active:scale-[0.99]"
+      to={item.to}
+      className="group grid gap-3 py-6 transition sm:grid-cols-[70px_1fr_auto] sm:items-center"
     >
-      <span className="absolute right-4 top-3 text-5xl font-extrabold text-white/[0.025]">
-        0{index + 1}
+      <span className="text-xs font-bold tracking-[0.22em] text-white/20">
+        {String(index).padStart(2, '0')}
       </span>
-      <div className="relative flex h-full flex-col">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl border border-orange-300/10 bg-orange-400/[0.08] text-orange-200">
-          <Icon name={icon} className="h-5 w-5" />
-        </div>
-        <div className="mt-auto pt-6">
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-orange-300/55">
-            {eyebrow}
-          </p>
-          <div className="mt-1 flex items-center justify-between gap-3">
-            <h3 className="text-lg font-bold text-white">{title}</h3>
-            <Icon name="arrow" className="h-4 w-4 text-white/25 transition-transform group-hover:translate-x-1 group-hover:text-orange-300" />
-          </div>
-          <p className="mt-2 text-xs leading-5 text-white/38">
-            {subtitle}
-          </p>
-        </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/60">
+          {item.kicker}
+        </p>
+        <h3 className="mt-1 text-xl font-bold text-white">{item.title}</h3>
+        <p className="mt-1 max-w-xl text-sm leading-6 text-white/38">
+          {item.description}
+        </p>
       </div>
+      <span className="hidden text-2xl text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300 sm:block">
+        →
+      </span>
     </Link>
   )
 }
 
-function GalleryCard({ href, icon, number, title, subtitle, className = '', wide = false }) {
+function GalleryLink({ href, number, title, subtitle }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noreferrer"
-      className={`group relative overflow-hidden rounded-[26px] border border-white/10 bg-[#0b101b] p-5 transition hover:border-blue-300/20 hover:bg-[#0d1422] active:scale-[0.99] ${className}`}
+      className="group min-h-[210px] bg-[#0b0d11] p-6 transition hover:bg-[#10131a] sm:min-h-[245px]"
     >
-      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-500/[0.08] blur-2xl" />
-      <div className={`relative ${wide ? 'sm:flex sm:items-center sm:justify-between' : ''}`}>
+      <div className="flex h-full flex-col justify-between">
+        <span className="text-xs font-bold tracking-[0.2em] text-white/18">{number}</span>
         <div>
-          <div className="flex items-center justify-between gap-4">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl border border-blue-300/10 bg-blue-400/[0.08] text-blue-200">
-              <Icon name={icon} className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] font-bold tracking-[0.18em] text-white/20">
-              {number}
+          <h3 className="text-2xl font-bold text-white">{title}</h3>
+          <div className="mt-2 flex items-center justify-between gap-4">
+            <p className="text-sm text-white/35">{subtitle}</p>
+            <span className="text-xl text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300">
+              ↗
             </span>
           </div>
-          <h3 className="mt-6 text-xl font-bold text-white">{title}</h3>
-          <p className="mt-1 text-xs text-white/38">{subtitle}</p>
         </div>
-        {wide && (
-          <div className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-blue-200/70 sm:mt-0">
-            Abrir galería
-            <Icon name="external" className="h-4 w-4" />
-          </div>
-        )}
       </div>
     </a>
-  )
-}
-
-function Icon({ name, className = 'h-5 w-5' }) {
-  const paths = {
-    arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
-    calendar: (
-      <>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M16 3v4M8 3v4M3 10h18" />
-      </>
-    ),
-    user: (
-      <>
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21a8 8 0 0 1 16 0" />
-      </>
-    ),
-    settings: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.06.06-2.12 2.12-.06-.06a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.1 1.65V21h-3v-.61A1.8 1.8 0 0 0 10.4 18.7a1.8 1.8 0 0 0-1.98.36l-.06.06-2.12-2.12.06-.06A1.8 1.8 0 0 0 6.66 15a1.8 1.8 0 0 0-1.65-1.1H4v-3h.61A1.8 1.8 0 0 0 6.3 9.8a1.8 1.8 0 0 0-.36-1.98l-.06-.06L8 5.64l.06.06a1.8 1.8 0 0 0 1.98.36A1.8 1.8 0 0 0 11.1 4.4V4h3v.61a1.8 1.8 0 0 0 1.1 1.65 1.8 1.8 0 0 0 1.98-.36l.06-.06 2.12 2.12-.06.06a1.8 1.8 0 0 0-.36 1.98 1.8 1.8 0 0 0 1.65 1.1H21v3h-.61A1.8 1.8 0 0 0 19.4 15Z" />
-      </>
-    ),
-    home: (
-      <>
-        <path d="m3 11 9-8 9 8" />
-        <path d="M5 10v11h14V10M9 21v-7h6v7" />
-      </>
-    ),
-    activity: <path d="M3 12h4l2-7 4 14 2-7h6" />,
-    community: (
-      <>
-        <circle cx="9" cy="8" r="3" />
-        <circle cx="17" cy="9" r="2.5" />
-        <path d="M3 20a6 6 0 0 1 12 0M14 15a5 5 0 0 1 7 5" />
-      </>
-    ),
-    skate: (
-      <>
-        <path d="M4 14h11a4 4 0 0 0 4-4V7h-6l-2-3H7v7H4a2 2 0 0 0 0 4Z" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="16" cy="18" r="2" />
-      </>
-    ),
-    team: (
-      <>
-        <circle cx="8" cy="8" r="3" />
-        <circle cx="17" cy="9" r="2.5" />
-        <path d="M2 20a6 6 0 0 1 12 0M14 15a5 5 0 0 1 8 4" />
-      </>
-    ),
-    spark: <path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" />,
-    pin: (
-      <>
-        <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </>
-    ),
-    arena: (
-      <>
-        <path d="M3 20V9l9-5 9 5v11" />
-        <path d="M7 20v-7h10v7M3 9h18" />
-      </>
-    ),
-    clock: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </>
-    ),
-    ticket: <path d="M3 7a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4V7ZM13 7v10" />,
-    passport: (
-      <>
-        <rect x="5" y="3" width="14" height="18" rx="2" />
-        <circle cx="12" cy="11" r="3" />
-        <path d="M9 11h6M12 8v6M9 17h6" />
-      </>
-    ),
-    shirt: <path d="m8 4-5 3 2 5 3-1v10h8V11l3 1 2-5-5-3a4 4 0 0 1-8 0Z" />,
-    tracking: (
-      <>
-        <path d="M12 3a9 9 0 0 0-9 9M12 21a9 9 0 0 0 9-9" />
-        <path d="M12 7a5 5 0 0 0-5 5M12 17a5 5 0 0 0 5-5" />
-        <circle cx="12" cy="12" r="1.5" />
-      </>
-    ),
-    document: (
-      <>
-        <path d="M6 3h9l4 4v14H6V3Z" />
-        <path d="M14 3v5h5M9 13h6M9 17h6" />
-      </>
-    ),
-    camera: (
-      <>
-        <path d="M4 7h3l2-3h6l2 3h3v13H4V7Z" />
-        <circle cx="12" cy="13" r="4" />
-      </>
-    ),
-    celebration: <path d="m4 20 4-14 10 10-14 4ZM9 8l7-4M13 12l7-2M16 15l4 3" />,
-    video: (
-      <>
-        <rect x="3" y="5" width="14" height="14" rx="2" />
-        <path d="m17 10 4-2v8l-4-2v-4Z" />
-      </>
-    ),
-    external: <path d="M14 4h6v6M20 4l-9 9M19 13v7H4V5h7" />,
-  }
-
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      {paths[name] || paths.arrow}
-    </svg>
   )
 }
