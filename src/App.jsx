@@ -22,6 +22,7 @@ import Tracking from './pages/Tracking'
 import Terminos from './pages/Terminos'
 import StravaCallback from './pages/StravaCallback'
 import CommunityPage from './pages/Community'
+import PublicRollerFeed from './pages/PublicRollerFeed'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -90,6 +91,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/rollerfeed" element={<PublicRollerFeed />} />
 
         <Route path="/alianza" element={<Alianza />} />
         <Route path="/cuponeras" element={<Cuponeras />} />
