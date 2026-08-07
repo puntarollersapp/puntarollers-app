@@ -382,15 +382,17 @@ export default function Home() {
                 {/* mini avatars anónimos / movimiento */}
                 <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-3.5">
                   <div className="flex -space-x-2">
-                    {[0, 1, 2, 3].map((item) => (
-                      <div
-                        key={item}
-                        className="grid h-9 w-9 place-items-center rounded-full border-2 border-[#0a0b0f] bg-gradient-to-br from-orange-500/25 to-blue-500/20 text-sm shadow-lg"
-                        aria-hidden="true"
-                      >
-                        🛼
-                      </div>
-                    ))}
+                    {['👩🏻‍🦰', '👨🏽‍🦱', '👩🏼', '👨🏻', '👩🏽‍🦱', '👨🏼‍🦰']
+                      .slice(0, Math.min(4, Math.max(3, ambientPulse.count || 3)))
+                      .map((emoji, item) => (
+                        <div
+                          key={`${emoji}-${item}`}
+                          className="grid h-9 w-9 place-items-center rounded-full border-2 border-[#0a0b0f] bg-gradient-to-br from-orange-500/25 to-blue-500/20 text-base shadow-lg"
+                          aria-hidden="true"
+                        >
+                          {emoji}
+                        </div>
+                      ))}
                   </div>
 
                   <div className="min-w-0 flex-1 text-right">
@@ -479,19 +481,17 @@ export default function Home() {
                 </div>
 
                 <Link
-                  to={isLoggedIn ? '/app/actividad' : '/login'}
+                  to="/rollerfeed"
                   className="mt-5 flex min-h-12 items-center justify-between rounded-2xl bg-orange-500 px-4 text-sm font-black text-black transition active:scale-[.98]"
                 >
-                  <span>
-                    {isLoggedIn ? 'Entrar a RollerFeed' : 'Entrar para ver todo'}
-                  </span>
+                  <span>Chusmear RollerFeed</span>
                   <span>→</span>
                 </Link>
 
                 <p className="mt-3 text-[9px] leading-4 text-white/25">
                   “Pulso PR” es un indicador visual anónimo de comunidad activa y no representa
-                  presencia individual en tiempo real. Las métricas de entrenos y kilómetros sí
-                  provienen de actividades públicas registradas.
+                  presencia individual en tiempo real. RollerFeed público muestra únicamente contenido
+                  marcado como visible/público; los datos privados de cada alumno siguen protegidos.
                 </p>
               </div>
             </div>
@@ -632,4 +632,4 @@ function EventCard({ event }) {
       </div>
     </article>
   )
-          }
+              }
