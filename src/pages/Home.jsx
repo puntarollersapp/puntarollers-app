@@ -1,49 +1,49 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { getCupos } from '../data/cupos'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const GALLERY_LINKS = {
-  clases:
-    'https://drive.google.com/drive/folders/1Bn4Yy6IDiy8lJYyKf12z99Qyx5GllSST',
-  rolleadas:
-    'https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ',
-  contenido:
-    'https://drive.google.com/drive/folders/1hnBU-O1sjZC88O6EqMa_1dKAE5HybkW_',
+  clases: 'https://drive.google.com/drive/folders/1Bn4Yy6IDiy8lJYyKf12z99Qyx5GllSST',
+  rolleadas: 'https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ',
+  contenido: 'https://drive.google.com/drive/folders/1hnBU-O1sjZC88O6EqMa_1dKAE5HybkW_',
 }
 
-const EXPLORE_LINKS = [
+const DEFAULT_EVENTS = [
   {
-    to: '/cuponeras',
-    kicker: 'Beneficios',
-    title: 'Cuponeras',
-    description: 'Cómo funcionan tus clases personalizadas y beneficios PR.',
+    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
+    inicio: '2026-09-04T03:00:00.000Z',
+    mes_referencia: '4, 5 y 6 de septiembre · horario a confirmar',
+    lugar: 'Ubicación a confirmar',
+    estado: 'Publicado',
+    visible_feed: true,
+    color: 'violet',
   },
   {
-    to: '/pasaporte-kids',
-    kicker: 'PR Kids',
-    title: 'Pasaporte Kids',
-    description: 'Un recorrido pensado para acompañar cada logro de los más chicos.',
+    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
+    inicio: '2026-10-28T03:00:00.000Z',
+    mes_referencia: '28, 29 y 30 de octubre · horario a confirmar',
+    lugar: 'Ubicación a confirmar',
+    estado: 'Próximamente',
+    visible_feed: true,
+    color: 'electric',
   },
-  {
-    to: '/uniformes',
-    kicker: 'Identidad',
-    title: 'Uniformes',
-    description: 'Remeras y buzos oficiales para sentirte parte dentro y fuera de pista.',
-  },
-  {
-    to: '/tracking',
-    kicker: 'Tecnología',
-    title: 'PR Tracking',
-    description: 'Identificación NFC para patines, cascos y elementos personales.',
-  },
+]
+
+const MINI_LINKS = [
+  { to: '/pasaporte-kids', icon: '📕', title: 'Pasaporte Kids', text: 'Progreso y aventuras PR Kids' },
+  { to: '/cuponeras', icon: '🎟️', title: 'Cuponeras', text: 'Beneficios de tu experiencia PR' },
+  { to: '/uniformes', icon: '👕', title: 'Uniformes', text: 'La identidad oficial del equipo' },
+  { to: '/tracking', icon: '📍', title: 'PR Tracking', text: 'Protegé tus elementos con NFC' },
 ]
 
 export default function Home() {
   const { user } = useAuth()
   const [day, setDay] = useState('miercoles')
   const [cupos, setCupos] = useState(getCupos())
+  const [events, setEvents] = useState(DEFAULT_EVENTS)
 
   const isLoggedIn = Boolean(user)
   const isStaff = user?.role === 'admin' || user?.role === 'profesor'
@@ -51,310 +51,185 @@ export default function Home() {
 
   useEffect(() => {
     if (!window.location.hash) return
-
     const id = window.location.hash.replace('#', '')
-    const timeoutId = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-    }, 200)
-
-    return () => window.clearTimeout(timeoutId)
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 180)
   }, [])
 
   useEffect(() => {
-    const refreshCupos = () => setCupos(getCupos())
-
-    window.addEventListener('focus', refreshCupos)
-    window.addEventListener('storage', refreshCupos)
-
+    const refresh = () => setCupos(getCupos())
+    window.addEventListener('focus', refresh)
+    window.addEventListener('storage', refresh)
     return () => {
-      window.removeEventListener('focus', refreshCupos)
-      window.removeEventListener('storage', refreshCupos)
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('storage', refresh)
     }
   }, [])
 
+  useEffect(() => {
+    let active = true
+    async function loadEvents() {
+      try {
+        const { data, error } = await supabase.from('rollerfeed_events').select('*')
+        if (error || !active) return
+        const visible = (data || [])
+          .filter((event) => event.visible_feed !== false && event.estado !== 'Cancelado')
+          .filter((event) => !event.inicio || new Date(event.inicio).getTime() >= Date.now() - 86400000)
+          .sort((a, b) => {
+            if (!a.inicio) return 1
+            if (!b.inicio) return -1
+            return new Date(a.inicio) - new Date(b.inicio)
+          })
+        if (visible.length) setEvents(visible)
+      } catch (_) {}
+    }
+    loadEvents()
+    return () => { active = false }
+  }, [])
+
+  const totalCupos = useMemo(() => (
+    Number(cupos?.miercoles?.principiantes || 0) +
+    Number(cupos?.miercoles?.avanzado || 0) +
+    Number(cupos?.sabado?.kids || 0) +
+    Number(cupos?.sabado?.adultos || 0)
+  ), [cupos])
+
   return (
     <PublicLayout>
-      <main className="overflow-hidden bg-[#090a0d] text-white">
-        <Hero
-          isLoggedIn={isLoggedIn}
-          privateDestination={privateDestination}
-        />
+      <main className="overflow-hidden bg-[#050508] text-white">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
 
-        {isLoggedIn && (
-          <LoggedInStrip
-            user={user}
-            isStaff={isStaff}
-            privateDestination={privateDestination}
-          />
-        )}
-
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-          <section className="border-b border-white/10 py-16 sm:py-20">
-            <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-              <SectionLead
-                eyebrow="Quiénes somos"
-                title="Una escuela que se convirtió en comunidad."
-              />
-
-              <div className="space-y-6 text-[15px] leading-7 text-white/55 sm:text-base sm:leading-8">
-                <p className="text-white/80">
-                  Punta Rollers lleva 10 años acompañando a niños, adolescentes,
-                  adultos y adultos mayores en todo su proceso de aprendizaje.
-                </p>
-                <p>
-                  Entrenamos con dos profesores en simultáneo, clases al aire libre,
-                  pista cerrada, salidas de calle, eventos, preparación competitiva y
-                  clases personalizadas para todos los niveles.
-                </p>
-                <div className="grid gap-5 border-t border-white/10 pt-6 sm:grid-cols-2">
-                  <EditorialFact
-                    number="01"
-                    title="Equipo PR"
-                    text="Claudio Facelli, David Almeida y Lucía Bernales sostienen la experiencia deportiva y humana de la escuela."
-                  />
-                  <EditorialFact
-                    number="02"
-                    title="Nuestra identidad"
-                    text="Técnica, pertenencia, evolución y recuerdos compartidos. No es solo patinar: es pertenecer."
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="border-b border-white/10 py-16 sm:py-20">
-            <SectionHeader
-              eyebrow="Dónde estamos"
-              title="Dos espacios. La misma energía."
-              description="Elegimos cada espacio según la experiencia y el tipo de entrenamiento."
-            />
-
-            <div className="mt-9 divide-y divide-white/10 border-y border-white/10">
-              <LocationRow
-                index="01"
-                title="Parada 2"
-                city="Punta del Este"
-                type="Aire libre"
-                description="Clases junto al mar, salidas de calle y entrenamiento urbano."
-              />
-              <LocationRow
-                index="02"
-                title="Pista cerrada"
-                city="Maldonado"
-                type="Indoor"
-                description="Entrenamientos organizados, PR Kids y grupos de adultos en un entorno protegido."
-              />
-            </div>
-          </section>
-
-          <section className="border-b border-white/10 py-16 sm:py-20">
-            <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
-              <SectionLead
-                eyebrow="Horarios y cupos"
-                title="Elegí cuándo salir a rodar."
-                description="Los cupos se actualizan desde Administración."
-              />
-
-              <div>
-                <div className="mb-7 flex gap-6 border-b border-white/10">
-                  <DayTab
-                    active={day === 'miercoles'}
-                    onClick={() => setDay('miercoles')}
-                  >
-                    Miércoles
-                  </DayTab>
-                  <DayTab
-                    active={day === 'sabado'}
-                    onClick={() => setDay('sabado')}
-                  >
-                    Sábado
-                  </DayTab>
-                </div>
-
-                <div className="divide-y divide-white/10">
-                  {day === 'miercoles' && (
-                    <ScheduleRow
-                      title="Clases mixtas"
-                      detail="Principiantes, intermedios y avanzados"
-                      time="19:30 — 20:30"
-                      location="Parada 2 · Aire libre"
-                      cupos={`${cupos.miercoles.principiantes} disponibles`}
-                    />
-                  )}
-
-                  {day === 'sabado' && (
-                    <>
-                      <ScheduleRow
-                        title="Adultos mixtos"
-                        detail="Clase al aire libre"
-                        time="09:00 — 10:00"
-                        location="Parada 2 · Punta del Este"
-                        cupos={`${cupos.miercoles.avanzado} disponibles`}
-                      />
-                      <ScheduleRow
-                        title="PR Kids"
-                        detail="Pista cerrada"
-                        time="19:00 — 20:00"
-                        location="Maldonado · Indoor"
-                        cupos={`${cupos.sabado.kids} disponibles`}
-                      />
-                      <ScheduleRow
-                        title="Adultos mixtos"
-                        detail="Pista cerrada"
-                        time="20:00 — 21:00"
-                        location="Maldonado · Indoor"
-                        cupos={`${cupos.sabado.adultos} disponibles`}
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section
-            id="inscripciones"
-            className="scroll-mt-8 border-b border-white/10 py-16 sm:py-20"
-          >
-            <SectionHeader
-              eyebrow="Inscripciones"
-              title="Tu próxima vuelta empieza acá."
-              description="Elegí el grupo y completá tu inscripción oficial."
-            />
-
-            <div className="mt-8 grid gap-5 sm:grid-cols-2">
-              <ImageLink
-                href="https://form.jotform.com/Claudinio/inscripcioneskids"
-                image="/banner-kids.png"
-                alt="Inscripciones PR Kids"
-                label="PR Kids"
-              />
-              <ImageLink
-                href="https://form.jotform.com/Claudinio/Inscripciones2026"
-                image="/banner-adultos.png"
-                alt="Inscripciones adultos"
-                label="Adultos"
-              />
-            </div>
-          </section>
-
-          <section
-            id="explorar"
-            className="scroll-mt-8 border-b border-white/10 py-16 sm:py-20"
-          >
-            <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
-              <SectionLead
-                eyebrow="Explorar Punta Rollers"
-                title="Todo lo que acompaña a la pista."
-                description="Beneficios, identidad, tecnología y progreso."
-              />
-
-              <div className="divide-y divide-white/10 border-y border-white/10">
-                {EXPLORE_LINKS.map((item, index) => (
-                  <ExploreRow key={item.to} item={item} index={index + 1} />
-                ))}
-                <Link
-                  to="/terminos"
-                  className="group grid gap-3 py-6 transition sm:grid-cols-[70px_1fr_auto] sm:items-center"
-                >
-                  <span className="text-xs font-bold tracking-[0.22em] text-white/20">
-                    05
-                  </span>
+          {/* HERO */}
+          <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#090a0d] shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_10%,rgba(249,115,22,.19),transparent_34%),radial-gradient(circle_at_5%_100%,rgba(37,99,235,.15),transparent_38%)]" />
+            <div className="relative p-5 sm:p-8 lg:p-11">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img src="/logo.png" alt="Punta Rollers" className="h-12 w-12 rounded-2xl object-contain" />
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/60">
-                      Información
-                    </p>
-                    <h3 className="mt-1 text-xl font-bold text-white">
-                      Reglas y condiciones
-                    </h3>
-                    <p className="mt-1 text-sm text-white/38">
-                      Funcionamiento general del club y sus servicios.
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">Punta Rollers</p>
+                    <p className="text-xs text-white/45">Punta del Este · Uruguay</p>
                   </div>
-                  <span className="hidden text-2xl text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300 sm:block">
-                    →
-                  </span>
+                </div>
+                <Link to={isLoggedIn ? privateDestination : '/login'} className="rounded-full border border-white/10 bg-white/[.06] px-4 py-2 text-xs font-bold text-white transition active:scale-95">
+                  {isLoggedIn ? 'Mi espacio' : 'Ingresar'}
                 </Link>
               </div>
-            </div>
-          </section>
 
-          <section className="border-b border-white/10 py-16 sm:py-20">
-            <SectionHeader
-              eyebrow="Galería"
-              title="Lo que pasa sobre ruedas también queda."
-              description="Clases, rolleadas y contenido de nuestra comunidad."
-            />
-
-            <div className="mt-8 grid gap-px overflow-hidden border border-white/10 bg-white/10 sm:grid-cols-3">
-              <GalleryLink
-                href={GALLERY_LINKS.clases}
-                number="01"
-                title="Clases"
-                subtitle="Fotos de cada jornada"
-              />
-              <GalleryLink
-                href={GALLERY_LINKS.rolleadas}
-                number="02"
-                title="Rolleadas"
-                subtitle="Eventos y salidas"
-              />
-              <GalleryLink
-                href={GALLERY_LINKS.contenido}
-                number="03"
-                title="Contenido"
-                subtitle="Material Punta Rollers"
-              />
-            </div>
-          </section>
-
-          <section className="border-b border-white/10 py-16 sm:py-20">
-            <SectionHeader
-              eyebrow="Plataformas PR"
-              title="La experiencia sigue fuera de esta pantalla."
-            />
-
-            <div className="mt-8 grid gap-5 sm:grid-cols-2">
-              <ImageLink
-                href="https://puntarollerscard.com/"
-                image="/banner-prcard.png"
-                alt="Punta Rollers Card"
-                label="Punta Rollers Card"
-                external
-              />
-              <ImageLink
-                href="https://rollermap.vercel.app/"
-                image="/banner-rollermap.png"
-                alt="RollerMap"
-                label="RollerMap"
-                external
-              />
-            </div>
-          </section>
-
-          <section className="py-16 sm:py-20">
-            <div className="grid overflow-hidden border-y border-white/10 lg:grid-cols-[1.1fr_.9fr]">
-              <div className="py-9 lg:border-r lg:border-white/10 lg:pr-12">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-300/70">
-                  Comunidad
-                </p>
-                <h2 className="mt-3 max-w-xl text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-white sm:text-5xl">
-                  El patín también se construye con gente alrededor.
-                </h2>
+              <div className="mt-10 max-w-2xl sm:mt-14">
+                <p className="text-xs font-black uppercase tracking-[.22em] text-orange-400">10 años sobre ruedas</p>
+                <h1 className="mt-3 text-[43px] font-black leading-[.94] tracking-[-.045em] sm:text-6xl lg:text-7xl">
+                  No es solo<br />patinar. <span className="text-orange-500">Es pertenecer.</span>
+                </h1>
+                <p className="mt-5 max-w-xl text-sm leading-6 text-white/60 sm:text-base">Escuela, entrenamientos y una comunidad que comparte cada kilómetro. Todo Punta Rollers, en un mismo lugar.</p>
+                <a href="#clases" className="mt-7 inline-flex min-h-12 items-center gap-3 rounded-2xl bg-orange-500 px-5 text-sm font-black text-black shadow-[0_12px_35px_rgba(249,115,22,.22)] active:scale-[.98]">Ver horarios y cupos <span>→</span></a>
               </div>
 
-              <div className="border-t border-white/10 py-9 lg:border-t-0 lg:pl-12">
-                <p className="max-w-md text-sm leading-7 text-white/45">
-                  Alianza Rollers conecta la comunidad y amplía el movimiento a nivel nacional.
-                </p>
-                <Link
-                  to="/alianza"
-                  className="group mt-7 inline-flex items-center gap-3 text-sm font-bold text-orange-300"
-                >
-                  Conocer Alianza Rollers
-                  <span className="transition group-hover:translate-x-1">→</span>
-                </Link>
+              <div className="mt-9 grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 pt-5">
+                <HeroStat value="10" label="años juntos" />
+                <HeroStat value={totalCupos} label="cupos hoy" />
+                <HeroStat value="2" label="sedes PR" />
               </div>
+            </div>
+          </section>
+
+          {/* LOGGED USER */}
+          {isLoggedIn && (
+            <section className="mt-5 flex items-center gap-3 rounded-2xl border border-orange-400/20 bg-orange-500/[.08] p-4">
+              <span className="text-2xl">👋</span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-black">Hola, {user.nombre}</p>
+                <p className="text-xs text-white/45">Tu sesión está activa.</p>
+              </div>
+              <Link to={privateDestination} className="rounded-xl bg-orange-500 px-4 py-2 text-xs font-black text-black">Entrar</Link>
+            </section>
+          )}
+
+          {/* CLASES + CUPOS: PRIORIDAD */}
+          <section id="clases" className="scroll-mt-8 pt-10">
+            <SectionTitle emoji="🛼" eyebrow="Clases PR" title="Elegí cuándo rodar." text="Horarios, ubicación y cupos reales. Todo a mano." />
+
+            <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-white/[.05] p-1.5">
+              <DayButton active={day === 'miercoles'} onClick={() => setDay('miercoles')}>Miércoles</DayButton>
+              <DayButton active={day === 'sabado'} onClick={() => setDay('sabado')}>Sábado</DayButton>
+            </div>
+
+            <div className="mt-3 space-y-3">
+              {day === 'miercoles' ? (
+                <ClassRow emoji="🌊" title="Clases mixtas" subtitle="Principiantes · Intermedios · Avanzados" time="19:30 — 20:30" location="Parada 2 · Punta del Este" seats={cupos.miercoles.principiantes} />
+              ) : (
+                <>
+                  <ClassRow emoji="☀️" title="Adultos mixtos" subtitle="Clase al aire libre" time="09:00 — 10:00" location="Parada 2 · Punta del Este" seats={cupos.miercoles.avanzado} />
+                  <ClassRow emoji="🧒" title="PR Kids" subtitle="Pista cerrada" time="19:00 — 20:00" location="Maldonado · Indoor" seats={cupos.sabado.kids} />
+                  <ClassRow emoji="⚡" title="Adultos mixtos" subtitle="Pista cerrada" time="20:00 — 21:00" location="Maldonado · Indoor" seats={cupos.sabado.adultos} />
+                </>
+              )}
+            </div>
+
+            <div id="inscripciones" className="mt-4 grid grid-cols-2 gap-3 scroll-mt-8">
+              <ActionLink href="https://form.jotform.com/Claudinio/inscripcioneskids" emoji="🎒" title="PR Kids" label="Inscripción" />
+              <ActionLink href="https://form.jotform.com/Claudinio/Inscripciones2026" emoji="🛼" title="Adultos" label="Inscripción" />
+            </div>
+            <p className="mt-3 text-center text-[11px] leading-5 text-white/35">Las cuentas de la app son creadas por el equipo Punta Rollers. Las inscripciones no crean usuarios automáticamente.</p>
+          </section>
+
+          {/* QUICK 4 BLOCKS */}
+          <section id="explorar" className="scroll-mt-8 pt-11">
+            <SectionTitle emoji="✨" eyebrow="Universo PR" title="Mucho más que clases." text="Todo lo que ya forma parte de Punta Rollers, sin convertir el Home en un chorizo infinito." />
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {MINI_LINKS.map((item) => <MiniCard key={item.to} {...item} />)}
+            </div>
+          </section>
+
+          {/* PLATAFORMAS 4 compact */}
+          <section className="pt-11">
+            <SectionTitle emoji="📲" eyebrow="Ecosistema PR" title="Todo conectado." />
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <ExternalMini href="https://puntarollerscard.com/" emoji="💳" title="PR Card" text="Beneficios y comercios" />
+              <ExternalMini href="https://rollermap.vercel.app/" emoji="🗺️" title="RollerMap" text="Lugares para rodar" />
+              <LinkMini to="/alianza" emoji="🤝" title="Alianza Rollers" text="La red que nos conecta" />
+              <LinkMini to="/terminos" emoji="📋" title="Reglas PR" text="Cómo funciona el club" />
+            </div>
+          </section>
+
+          {/* GALLERY */}
+          <section className="pt-11">
+            <SectionTitle emoji="📸" eyebrow="Somos esto" title="Fotos, rolleadas y recuerdos." text="La comunidad también se guarda." />
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+              <GalleryTile href={GALLERY_LINKS.clases} emoji="📷" title="Clases" />
+              <GalleryTile href={GALLERY_LINKS.rolleadas} emoji="🎉" title="Rolleadas" />
+              <GalleryTile href={GALLERY_LINKS.contenido} emoji="🎬" title="Videos" />
+            </div>
+          </section>
+
+          {/* WHO WE ARE compact */}
+          <section className="pt-11">
+            <div className="rounded-[28px] border border-white/10 bg-[#0b0c10] p-5 sm:p-7">
+              <p className="text-xs font-black uppercase tracking-[.2em] text-orange-400">🧡 Punta Rollers</p>
+              <h2 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">Una escuela. Una comunidad.</h2>
+              <p className="mt-3 text-sm leading-6 text-white/55">10 años acompañando a niños, adolescentes, adultos y adultos mayores. Dos profesores en simultáneo, aire libre, pista cerrada, calle, eventos, competencia y clases personalizadas.</p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <Place emoji="🌊" title="Parada 2" text="Punta del Este · Aire libre" />
+                <Place emoji="🏟️" title="Pista cerrada" text="Maldonado · Indoor" />
+              </div>
+              <p className="mt-5 text-xs leading-5 text-white/40">Dirigida por Claudio Facelli, junto a David Almeida y Lucía Bernales.</p>
+            </div>
+          </section>
+
+          {/* EVENTS AT BOTTOM */}
+          <section className="pt-11">
+            <SectionTitle emoji="🗓️" eyebrow="Agenda PR" title="Próximos eventos." text="Se ven sin iniciar sesión y se actualizan desde el sistema de eventos." />
+            <div className="mt-5 flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {events.slice(0, 5).map((event, index) => <EventCard key={event.id || `${event.titulo}-${index}`} event={event} />)}
+            </div>
+          </section>
+
+          {/* FINAL */}
+          <section className="pb-5 pt-11">
+            <div className="border-t border-white/10 pt-7 text-center">
+              <img src="/logo.png" alt="Punta Rollers" className="mx-auto h-14 w-14 object-contain" />
+              <p className="mt-3 text-lg font-black">No es solo patinar.</p>
+              <p className="text-lg font-black text-orange-500">Es pertenecer.</p>
+              <p className="mt-3 text-xs text-white/30">Punta del Este · Maldonado · Uruguay</p>
             </div>
           </section>
         </div>
@@ -363,299 +238,75 @@ export default function Home() {
   )
 }
 
-function Hero({ isLoggedIn, privateDestination }) {
-  return (
-    <section className="relative border-b border-white/10 bg-[#07090d]">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute right-[-12%] top-[-16%] h-[520px] w-[520px] rounded-full bg-orange-500/[0.10] blur-[130px]" />
-        <div className="absolute bottom-[-35%] left-[-12%] h-[480px] w-[480px] rounded-full bg-blue-600/[0.12] blur-[140px]" />
-      </div>
-
-      <div className="relative mx-auto grid min-h-[620px] w-full max-w-6xl content-between px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8 lg:min-h-[680px] lg:px-8">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="Punta Rollers"
-              className="h-11 w-11 rounded-xl object-contain"
-            />
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.17em] text-white">
-                Punta Rollers
-              </p>
-              <p className="mt-0.5 text-[10px] text-white/35">
-                Punta del Este · Uruguay
-              </p>
-            </div>
-          </div>
-
-          <Link
-            to={isLoggedIn ? privateDestination : '/login'}
-            className="text-xs font-bold text-white/60 transition hover:text-orange-300"
-          >
-            {isLoggedIn ? 'Mi espacio →' : 'Ingresar →'}
-          </Link>
-        </div>
-
-        <div className="max-w-4xl pb-4 pt-20 sm:pt-28">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="h-px w-12 bg-orange-400" />
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-300">
-              10 años sobre ruedas
-            </span>
-          </div>
-
-          <h1 className="text-[54px] font-extrabold leading-[0.86] tracking-[-0.055em] text-white sm:text-7xl lg:text-[96px]">
-            No es solo
-            <span className="block text-orange-400">patinar.</span>
-            <span className="block text-white/95">Es pertenecer.</span>
-          </h1>
-
-          <div className="mt-8 grid gap-6 border-t border-white/10 pt-6 sm:grid-cols-[1fr_auto] sm:items-end">
-            <p className="max-w-xl text-sm leading-7 text-white/45 sm:text-base">
-              Escuela, comunidad, evolución deportiva, eventos y beneficios.
-              Todo Punta Rollers en un mismo lugar.
-            </p>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                to={isLoggedIn ? privateDestination : '/login'}
-                className="inline-flex min-h-[52px] items-center justify-center bg-orange-500 px-6 text-sm font-black text-black transition hover:bg-orange-400 active:scale-[0.98]"
-              >
-                {isLoggedIn ? 'Entrar a mi espacio' : 'Ingresar a Punta Rollers'}
-              </Link>
-              <a
-                href="#inscripciones"
-                className="inline-flex min-h-[52px] items-center justify-center border border-white/15 px-6 text-sm font-bold text-white/75 transition hover:border-white/30 hover:text-white"
-              >
-                Ver clases
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 border-t border-white/10 pt-5 text-left">
-          <HeroStat value="10+" label="años" />
-          <HeroStat value="2" label="sedes" />
-          <HeroStat value="1" label="comunidad" />
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function HeroStat({ value, label }) {
-  return (
-    <div>
-      <p className="text-2xl font-extrabold text-white sm:text-3xl">{value}</p>
-      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
-        {label}
-      </p>
-    </div>
-  )
+  return <div className="px-3 first:pl-0"><p className="text-xl font-black text-white sm:text-2xl">{value}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-[.12em] text-white/35">{label}</p></div>
 }
 
-function LoggedInStrip({ user, isStaff, privateDestination }) {
-  return (
-    <section className="border-b border-white/10 bg-[#0d0f14]">
-      <div className="mx-auto grid w-full max-w-6xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300/65">
-            Sesión iniciada
-          </p>
-          <h2 className="mt-1 text-xl font-bold text-white">Hola, {user.nombre}</h2>
-          <p className="mt-1 text-xs text-white/35">
-            {isStaff
-              ? 'Tu panel de administración está disponible.'
-              : 'Tu perfil, actividad y comunidad están a un toque.'}
-          </p>
-        </div>
-
-        <nav className="flex flex-wrap gap-x-5 gap-y-3 text-xs font-bold text-white/55">
-          <Link className="hover:text-orange-300" to={privateDestination}>
-            {isStaff ? 'Administración' : 'Mi espacio'} →
-          </Link>
-          <Link className="hover:text-orange-300" to="/app/perfil">
-            Perfil →
-          </Link>
-          <Link className="hover:text-orange-300" to="/app/actividad">
-            Actividad →
-          </Link>
-          <Link className="hover:text-sky-300" to="/app/comunidad">
-            Comunidad →
-          </Link>
-        </nav>
-      </div>
-    </section>
-  )
+function SectionTitle({ emoji, eyebrow, title, text }) {
+  return <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">{emoji} {eyebrow}</p><h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">{title}</h2>{text && <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">{text}</p>}</div>
 }
 
-function SectionHeader({ eyebrow, title, description }) {
-  return (
-    <div className="max-w-3xl">
-      <p className="text-[10px] font-black uppercase tracking-[0.23em] text-orange-300/65">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-white sm:text-5xl">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/40">
-          {description}
-        </p>
-      )}
-    </div>
-  )
+function DayButton({ active, onClick, children }) {
+  return <button type="button" onClick={onClick} className={`min-h-11 rounded-xl text-sm font-black transition ${active ? 'bg-white text-black shadow-lg' : 'text-white/45'}`}>{children}</button>
 }
 
-function SectionLead({ eyebrow, title, description }) {
+function ClassRow({ emoji, title, subtitle, time, location, seats }) {
+  const low = Number(seats) <= 2
   return (
-    <div>
-      <p className="text-[10px] font-black uppercase tracking-[0.23em] text-orange-300/65">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-4xl font-bold leading-[0.98] tracking-[-0.035em] text-white sm:text-5xl">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-4 text-sm leading-7 text-white/38">{description}</p>
-      )}
-    </div>
-  )
-}
-
-function EditorialFact({ number, title, text }) {
-  return (
-    <div>
-      <p className="text-[10px] font-black tracking-[0.2em] text-orange-300/50">
-        {number}
-      </p>
-      <h3 className="mt-2 text-base font-bold text-white">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-white/38">{text}</p>
-    </div>
-  )
-}
-
-function LocationRow({ index, title, city, type, description }) {
-  return (
-    <article className="grid gap-4 py-7 sm:grid-cols-[70px_1fr_auto] sm:items-center">
-      <span className="text-xs font-bold tracking-[0.2em] text-white/18">{index}</span>
-      <div>
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h3 className="text-2xl font-bold text-white">{title}</h3>
-          <span className="text-xs font-bold uppercase tracking-[0.13em] text-orange-300/65">
-            {type}
-          </span>
-        </div>
-        <p className="mt-1 text-sm font-semibold text-white/50">{city}</p>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/35">{description}</p>
-      </div>
-      <span className="hidden text-3xl text-white/10 sm:block">↗</span>
-    </article>
-  )
-}
-
-function DayTab({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`relative pb-3 text-sm font-bold transition ${
-        active ? 'text-white' : 'text-white/30 hover:text-white/55'
-      }`}
-    >
-      {children}
-      {active && <span className="absolute inset-x-0 -bottom-px h-[2px] bg-orange-400" />}
-    </button>
-  )
-}
-
-function ScheduleRow({ title, detail, time, location, cupos }) {
-  return (
-    <article className="grid gap-4 py-6 sm:grid-cols-[1fr_auto] sm:items-center">
-      <div>
-        <h3 className="text-lg font-bold text-white">{title}</h3>
-        <p className="mt-1 text-sm text-white/35">{detail}</p>
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-white/45">
-          <span>{time}</span>
-          <span className="text-white/18">•</span>
-          <span>{location}</span>
-        </div>
-      </div>
-      <div className="sm:text-right">
-        <span className="inline-flex items-center gap-2 text-xs font-bold text-emerald-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          {cupos}
-        </span>
-      </div>
-    </article>
-  )
-}
-
-function ImageLink({ href, image, alt, label, external = true }) {
-  return (
-    <a
-      href={href}
-      target={external ? '_blank' : undefined}
-      rel={external ? 'noreferrer' : undefined}
-      className="group relative block overflow-hidden border border-white/10 bg-[#0d1016]"
-    >
-      <img
-        src={image}
-        alt={alt}
-        className="aspect-[16/7] w-full object-cover transition duration-500 group-hover:scale-[1.015]"
-      />
-      <span className="sr-only">{label}</span>
-    </a>
-  )
-}
-
-function ExploreRow({ item, index }) {
-  return (
-    <Link
-      to={item.to}
-      className="group grid gap-3 py-6 transition sm:grid-cols-[70px_1fr_auto] sm:items-center"
-    >
-      <span className="text-xs font-bold tracking-[0.22em] text-white/20">
-        {String(index).padStart(2, '0')}
-      </span>
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/60">
-          {item.kicker}
-        </p>
-        <h3 className="mt-1 text-xl font-bold text-white">{item.title}</h3>
-        <p className="mt-1 max-w-xl text-sm leading-6 text-white/38">
-          {item.description}
-        </p>
-      </div>
-      <span className="hidden text-2xl text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300 sm:block">
-        →
-      </span>
-    </Link>
-  )
-}
-
-function GalleryLink({ href, number, title, subtitle }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="group min-h-[210px] bg-[#0b0d11] p-6 transition hover:bg-[#10131a] sm:min-h-[245px]"
-    >
-      <div className="flex h-full flex-col justify-between">
-        <span className="text-xs font-bold tracking-[0.2em] text-white/18">{number}</span>
-        <div>
-          <h3 className="text-2xl font-bold text-white">{title}</h3>
-          <div className="mt-2 flex items-center justify-between gap-4">
-            <p className="text-sm text-white/35">{subtitle}</p>
-            <span className="text-xl text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300">
-              ↗
-            </span>
+    <article className="rounded-[22px] border border-white/10 bg-[#0b0c10] p-4">
+      <div className="flex items-start gap-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/[.06] text-xl">{emoji}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div><h3 className="text-sm font-black">{title}</h3><p className="mt-0.5 text-[11px] text-white/40">{subtitle}</p></div>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${low ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{seats} cupos</span>
           </div>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/55"><span>🕐 {time}</span><span>📍 {location}</span></div>
         </div>
       </div>
-    </a>
+    </article>
+  )
+}
+
+function ActionLink({ href, emoji, title, label }) {
+  return <a href={href} target="_blank" rel="noreferrer" className="rounded-[22px] border border-orange-400/20 bg-orange-500/[.08] p-4 transition active:scale-[.98]"><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] font-bold text-orange-300">{label} →</p></a>
+}
+
+function MiniCard({ to, icon, title, text }) {
+  return <Link to={to} className="group min-h-[145px] rounded-[24px] border border-white/10 bg-[#0b0c10] p-4 transition active:scale-[.98]"><div className="text-3xl">{icon}</div><p className="mt-4 text-sm font-black">{title}</p><p className="mt-1 text-[11px] leading-4 text-white/40">{text}</p><span className="mt-3 block text-xs font-black text-orange-400">Ver →</span></Link>
+}
+
+function ExternalMini({ href, emoji, title, text }) {
+  return <a href={href} target="_blank" rel="noreferrer" className="rounded-[22px] border border-white/10 bg-white/[.035] p-4 active:scale-[.98]"><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] text-white/40">{text}</p></a>
+}
+
+function LinkMini({ to, emoji, title, text }) {
+  return <Link to={to} className="rounded-[22px] border border-white/10 bg-white/[.035] p-4 active:scale-[.98]"><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] text-white/40">{text}</p></Link>
+}
+
+function GalleryTile({ href, emoji, title }) {
+  return <a href={href} target="_blank" rel="noreferrer" className="flex aspect-[.9] flex-col justify-between rounded-[22px] border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-3 active:scale-[.98]"><span className="text-3xl">{emoji}</span><div><p className="text-xs font-black sm:text-sm">{title}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-orange-400">Abrir ↗</p></div></a>
+}
+
+function Place({ emoji, title, text }) {
+  return <div className="rounded-2xl bg-white/[.045] p-3"><span className="text-xl">{emoji}</span><p className="mt-2 text-xs font-black">{title}</p><p className="mt-1 text-[10px] leading-4 text-white/40">{text}</p></div>
+}
+
+function EventCard({ event }) {
+  const date = event.inicio ? new Date(event.inicio) : null
+  const day = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('es-UY', { day: '2-digit' }).format(date) : 'PR'
+  const month = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('es-UY', { month: 'short' }).format(date).replace('.', '').toUpperCase() : 'EVENTO'
+  return (
+    <article className="min-w-[82%] snap-start overflow-hidden rounded-[24px] border border-white/10 bg-[#0b0c10] sm:min-w-[360px]">
+      <div className="h-1.5 bg-gradient-to-r from-orange-500 via-fuchsia-500 to-blue-500" />
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-orange-500 text-center text-black"><div><p className="text-xl font-black leading-none">{day}</p><p className="mt-1 text-[9px] font-black">{month}</p></div></div>
+          <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[.18em] text-orange-400">Evento Punta Rollers</p><h3 className="mt-1 text-base font-black leading-5">{event.titulo}</h3></div>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-white/50">{event.mes_referencia || 'Próximamente más información'}</p>
+        <p className="mt-2 text-xs text-white/35">📍 {event.lugar || 'Ubicación a confirmar'}</p>
+      </div>
+    </article>
   )
 }
