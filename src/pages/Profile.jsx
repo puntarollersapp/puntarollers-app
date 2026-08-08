@@ -1336,6 +1336,25 @@ export default function Profile() {
               </div>
             </Link>
 
+            <Link
+              to="/app/avatar"
+              className="mt-3 flex w-full items-center justify-between gap-3 rounded-[22px] border border-white/[.08] bg-gradient-to-r from-white/[.045] via-white/[.025] to-orange-400/[.04] px-4 py-3.5 transition active:scale-[.99]"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-300/15 bg-orange-400/[.08] text-xl">
+                  🛼
+                  <span className="absolute -right-1 -top-1 rounded-full border border-[#111016] bg-orange-400 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-wider text-black">
+                    NEW
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-white">Crear mi patinador</p>
+                  <p className="mt-0.5 truncate text-[10px] text-white/35">Avatar PR · patines · energía Strava</p>
+                </div>
+              </div>
+              <span className="shrink-0 text-orange-300">→</span>
+            </Link>
+
             {!hidePaymentSection && (
               <PaymentStatusStrip
                 status={paymentStatus}
