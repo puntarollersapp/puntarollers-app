@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import BottomNav from '../components/BottomNav'
 import MessagePopup from '../components/MessagePopup'
@@ -142,6 +142,7 @@ export default function AppLayout({
   showBack = false,
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, logout, updateUser } =
     useAuth()
 
@@ -150,6 +151,10 @@ export default function AppLayout({
 
   const [checkingAccess, setCheckingAccess] =
     useState(Boolean(user?.id))
+
+  const [dmUnread, setDmUnread] = useState(0)
+  const [dmToast, setDmToast] = useState(null)
+  const dmSeenRef = useState(() => ({ total: null }))[0]
 
   useEffect(() => {
     let active = true
@@ -224,6 +229,43 @@ export default function AppLayout({
       active = false
     }
   }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return undefined
+    let active = true
+
+    async function checkDirectMessages() {
+      const { data, error } = await supabase.rpc('pr_dm_inbox')
+      if (!active || error || !Array.isArray(data)) return
+      const total = data.reduce((sum, item) => sum + Number(item.unread_count || 0), 0)
+      const previous = dmSeenRef.total
+      setDmUnread(total)
+
+      if (previous !== null && total > previous && !location.pathname.startsWith('/app/mensajes')) {
+        const newest = data.find((item) => Number(item.unread_count || 0) > 0)
+        if (newest) {
+          setDmToast({
+            id: newest.id,
+            name: [newest.other_profile?.nombre, newest.other_profile?.apellido].filter(Boolean).join(' ') || 'PR Chat',
+            text: newest.last_message || 'Nuevo mensaje',
+          })
+          window.setTimeout(() => setDmToast(null), 6000)
+
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
+            try {
+              const notification = new Notification(`💬 ${newest.other_profile?.nombre || 'PR Chat'}`, { body: newest.last_message || 'Tenés un mensaje nuevo' })
+              notification.onclick = () => { window.focus(); navigate(`/app/mensajes?chat=${newest.id}`); notification.close() }
+            } catch { /* aviso visual sigue funcionando */ }
+          }
+        }
+      }
+      dmSeenRef.total = total
+    }
+
+    checkDirectMessages()
+    const timer = window.setInterval(checkDirectMessages, 5000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [user?.id, location.pathname])
 
   const accessBlocked = useMemo(() => {
     if (!accessProfile) {
@@ -316,6 +358,34 @@ export default function AppLayout({
 
       {!checkingAccess &&
         !accessBlocked && <BottomNav />}
+
+      {dmToast && (
+        <button
+          type="button"
+          onClick={() => { navigate(`/app/mensajes?chat=${dmToast.id}`); setDmToast(null) }}
+          className="fixed left-1/2 top-[82px] z-[90] w-[calc(100%-28px)] max-w-[480px] -translate-x-1/2 rounded-[22px] border border-orange-300/20 bg-[#141117]/95 p-3.5 text-left shadow-[0_20px_70px_rgba(0,0,0,.55)] backdrop-blur-xl animate-page-enter"
+        >
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-orange-500 text-xl">💬</div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2"><p className="truncate text-xs font-black text-white">{dmToast.name}</p><span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-black text-white">NUEVO</span></div>
+              <p className="mt-1 truncate text-[10px] text-white/42">{dmToast.text}</p>
+            </div>
+            <span className="text-orange-300">→</span>
+          </div>
+        </button>
+      )}
+
+      {dmUnread > 0 && !location.pathname.startsWith('/app/mensajes') && (
+        <button
+          type="button"
+          onClick={() => navigate('/app/mensajes')}
+          aria-label={`${dmUnread} mensajes sin leer`}
+          className="fixed bottom-[88px] right-4 z-[70] grid h-12 min-w-12 place-items-center rounded-full border-2 border-[#09090e] bg-orange-500 px-3 text-xs font-black text-black shadow-xl"
+        >
+          💬 <span className="ml-1">{dmUnread > 99 ? '99+' : dmUnread}</span>
+        </button>
+      )}
 
       <MessagePopup />
       <InstallPrompt />
