@@ -657,15 +657,28 @@ export default function PublicRollerFeed() {
                 ))}
               </div>
             ) : items.length ? (
-              <div className="space-y-3">
-                {items.map((item, index) => (
-                  <PublicFeedCard
-                    key={item.id}
-                    item={item}
-                    fallbackEmoji={people[index % people.length]}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="space-y-3">
+                  {items.slice(0, 4).map((item, index) => (
+                    <PublicFeedCard
+                      key={item.id}
+                      item={item}
+                      fallbackEmoji={people[index % people.length]}
+                    />
+                  ))}
+                </div>
+
+                {items.length > 4 && (
+                  <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[.025] px-4 py-3 text-center">
+                    <p className="text-xs font-black text-white/65">
+                      ⚡ Y hay mucho más movimiento dentro de PR
+                    </p>
+                    <p className="mt-1 text-[10px] text-white/30">
+                      Acá te mostramos solo una selección de lo último.
+                    </p>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="rounded-[24px] border border-white/10 bg-[#0b0c10] p-6 text-center">
                 <p className="text-3xl">🛼</p>
@@ -826,4 +839,4 @@ function PublicFeedCard({ item, fallbackEmoji }) {
       </div>
     </article>
   )
-    }
+}
