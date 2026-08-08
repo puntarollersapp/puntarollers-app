@@ -16,6 +16,7 @@ const BADGE_IMAGES = {
   'buen companero': '/insignias-pr/buen-companero.png',
   'actitud positiva': '/insignias-pr/actitud-positiva.png',
   'entrenador potencial': '/insignias-pr/entrenador-potencial.png',
+  'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k-1.png',
 }
 
 function normalize(value) {
