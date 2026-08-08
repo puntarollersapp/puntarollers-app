@@ -347,6 +347,23 @@ export default function PublicRollerFeed() {
     return items.filter((item) => feedItemDate(item) >= start.getTime())
   }, [items])
 
+  const communityPulse = useMemo(() => {
+    const realToday = today.length
+    if (realToday > 0) {
+      return {
+        value: realToday,
+        label: realToday === 1 ? 'movimiento hoy' : 'movimientos hoy',
+      }
+    }
+
+    // Si hoy todavía no hubo una publicación nueva, evitamos mostrar un "0"
+    // como protagonista. Mostramos el volumen público disponible en RollerFeed.
+    return {
+      value: items.length,
+      label: 'movimientos para chusmear',
+    }
+  }, [today, items])
+
   const people = ['👩🏻‍🦰', '👨🏽‍🦱', '👩🏼', '👨🏻', '👩🏽‍🦱', '👨🏼‍🦰']
 
   return (
@@ -380,8 +397,9 @@ export default function PublicRollerFeed() {
                   </h1>
 
                   <p className="mt-4 max-w-xl text-sm leading-6 text-white/50">
-                    Actividades, logros, cumpleaños y eventos que Punta Rollers comparte públicamente.
-                    Sin cuenta y sin exponer información privada.
+                    Entrenos, kilómetros, logros, cumpleaños y eventos en un solo lugar.
+                    Estás viendo una parte de cómo vive Punta Rollers por dentro, sin cuenta y sin
+                    mostrar información privada.
                   </p>
                 </div>
 
@@ -412,7 +430,7 @@ export default function PublicRollerFeed() {
                       : 'La comunidad vuelve a rodar mañana'}
                   </p>
                   <p className="mt-1 text-[10px] text-white/30">
-                    Pulso PR anónimo · 08:00 a 21:00
+                    Pulso PR · sin mostrar identidades · 08:00 a 21:00
                   </p>
                 </div>
               </div>
@@ -420,18 +438,18 @@ export default function PublicRollerFeed() {
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4">
                   <p className="text-2xl font-black text-orange-400">
-                    {loading ? '…' : today.length}
+                    {loading ? '…' : communityPulse.value}
                   </p>
                   <p className="mt-1 text-[9px] font-black uppercase tracking-[.14em] text-white/30">
-                    novedades hoy
+                    {loading ? 'cargando comunidad' : communityPulse.label}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[.035] p-4">
                   <p className="text-2xl font-black text-white">
-                    {loading ? '…' : items.length}
+                    {loading ? '…' : '24/7'}
                   </p>
                   <p className="mt-1 text-[9px] font-black uppercase tracking-[.14em] text-white/30">
-                    en el feed
+                    comunidad conectada
                   </p>
                 </div>
               </div>
@@ -470,10 +488,10 @@ export default function PublicRollerFeed() {
                 </div>
 
                 <p className="mt-4 max-w-2xl text-sm leading-6 text-white/52">
-                  Cada alumno de Punta Rollers cuenta con un espacio enlazado a su perfil para
-                  acompañar kilómetros, entrenamientos, clases, insignias, objetivos y evolución.
-                  Parte de ese movimiento es lo que estás viendo acá, pero de forma pública y
-                  anonimizada.
+                  Cada alumno de Punta Rollers tiene un espacio digital propio: kilómetros,
+                  entrenamientos, clases, insignias, objetivos y evolución reunidos en una misma
+                  experiencia. Parte de ese movimiento es lo que estás viendo acá, pero de forma
+                  anónima. Lo personal queda reservado para nuestra comunidad.
                 </p>
 
                 <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -808,4 +826,4 @@ function PublicFeedCard({ item, fallbackEmoji }) {
       </div>
     </article>
   )
-               }
+    }
