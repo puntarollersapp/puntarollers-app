@@ -25,6 +25,7 @@ import CommunityPage from './pages/Community'
 import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
 import MiEvolucion from './pages/MiEvolucion'
+import RollerAvatar from './pages/RollerAvatar'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -119,6 +120,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/avatar"
+          element={
+            <PrivateRoute>
+              <RollerAvatar />
             </PrivateRoute>
           }
         />
