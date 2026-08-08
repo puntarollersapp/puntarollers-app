@@ -136,10 +136,15 @@ function makeProfileId(role, documento) {
   return `alumno-${document}`
 }
 
+function isStudentParticipant(profile) {
+  return profile?.role === 'alumno' || profile?.participaComoAlumno === true || profile?.participa_como_alumno === true
+}
+
 function normalizeProfile(profile) {
   return {
     id: profile.id,
     role: profile.role || 'alumno',
+    participaComoAlumno: Boolean(profile.participa_como_alumno),
     nombre: profile.nombre || '',
     apellido: profile.apellido || '',
     documento: profile.documento || '',
@@ -295,7 +300,7 @@ export default function Admin() {
       .includes(query.toLowerCase())
   )
 
-  const alumnos = profiles.filter((profile) => profile.role === 'alumno')
+  const alumnos = profiles.filter(isStudentParticipant)
 
   const active7 = profiles.filter((profile) => {
     if (!profile.ultimoIngreso) return false
@@ -667,7 +672,7 @@ function UsersPanel({
   const [deletingBulk, setDeletingBulk] = useState(false)
 
   const selectableStudents = profiles.filter(
-    (profile) => profile.role === 'alumno'
+    (profile) => isStudentParticipant(profile)
   )
 
   const allVisibleStudentsSelected =
@@ -682,32 +687,32 @@ function UsersPanel({
     {
       id: 'grupos',
       label: 'grupos',
-      show: canFullAdmin && selected?.role === 'alumno',
+      show: canFullAdmin && isStudentParticipant(selected),
     },
     {
       id: 'observaciones',
       label: 'observaciones',
-      show: canManageContent && selected?.role === 'alumno',
+      show: canManageContent && isStudentParticipant(selected),
     },
     {
       id: 'insignias',
       label: 'insignias',
-      show: canManageContent && selected?.role === 'alumno',
+      show: canManageContent && isStudentParticipant(selected),
     },
     {
       id: 'participaciones',
       label: 'participaciones',
-      show: canManageContent && selected?.role === 'alumno',
+      show: canManageContent && isStudentParticipant(selected),
     },
     {
       id: 'servicios',
       label: 'servicios',
-      show: canFullAdmin && selected?.role === 'alumno',
+      show: canFullAdmin && isStudentParticipant(selected),
     },
     {
       id: 'actividad',
       label: 'actividad',
-      show: selected?.role === 'alumno',
+      show: isStudentParticipant(selected),
     },
   ].filter((item) => item.show)
 
@@ -1340,7 +1345,7 @@ function InfoTab({ profile, canFullAdmin }) {
         <Field label="PIN actual" value={profile.pin || 'Sin PIN'} />
       )}
       <Field label="Estado" value={profile.estado} />
-      {profile.role === 'alumno' && (
+      {isStudentParticipant(profile) && (
         <>
           <Field
             label="Acceso"
@@ -1362,7 +1367,7 @@ function InfoTab({ profile, canFullAdmin }) {
         value={profile.instagram || 'Sin cargar'}
       />
       <Field label="Ciudad" value={profile.ciudad || 'Sin cargar'} />
-      {profile.role === 'alumno' && (
+      {isStudentParticipant(profile) && (
         <Field
           label="Grupos WhatsApp"
           value={
@@ -4939,7 +4944,7 @@ function ActionsPanel({
   setActionType,
 }) {
   const [selectedStudents, setSelectedStudents] = useState(
-    selected?.role === 'alumno' ? [selected.id] : []
+    isStudentParticipant(selected) ? [selected.id] : []
   )
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
@@ -6174,4 +6179,4 @@ function formatDate(value) {
   } catch {
     return value
   }
-                  }
+        }
