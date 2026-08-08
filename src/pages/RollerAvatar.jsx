@@ -5,9 +5,9 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
 const DEFAULT_AVATAR = {
-  skin: '#D3A07C',
-  hair: '#181411',
-  hairStyle: 'texture',
+  skin: '#D7A27F',
+  hair: '#171310',
+  hairStyle: 'soft',
   face: 'relaxed',
   top: 'pr-black',
   helmet: 'orange',
@@ -18,26 +18,26 @@ const DEFAULT_AVATAR = {
   wheelColor: '#FF6B1A',
 }
 
-const SKINS = ['#F2D4C0','#E9BC98','#D3A07C','#B77A58','#89583F','#5C3B2E']
-const HAIR_COLORS = ['#171310','#3A251B','#72472E','#B67C46','#C7A36F','#D9D9D9']
+const SKINS = ['#F3D7C4','#EDC3A3','#D7A27F','#B97955','#8C583E','#5B392D']
+const HAIR_COLORS = ['#171310','#3C261B','#73472D','#B77C46','#C7A26E','#DEDEDE']
 const HAIRS = [
-  ['texture','Textura'],['crop','Corto'],['wave','Ondas'],['fade','Fade'],['long','Largo'],['bun','Rodete']
+  ['soft','Soft'],['crop','Corto'],['wave','Ondas'],['fade','Fade'],['long','Largo'],['bun','Rodete']
 ]
 const FACES = [['relaxed','Relax'],['focus','Focus'],['smile','Sonrisa'],['cool','Cool']]
 const TOPS = [
-  { id:'pr-black', label:'PR Black', body:'#101116', detail:'#E8BC52' },
-  { id:'racing', label:'Racing', body:'#111217', detail:'#FF6B1A' },
-  { id:'pr-red', label:'PR Red', body:'#A71F27', detail:'#FFFFFF' },
-  { id:'pr-blue', label:'PR Blue', body:'#185A87', detail:'#FFFFFF' },
-  { id:'pr-pink', label:'PR Pink', body:'#A63B75', detail:'#FFFFFF' },
-  { id:'pr-white', label:'PR White', body:'#F0F0F0', detail:'#171717' },
+  { id:'pr-black', label:'PR Black', body:'#101116', detail:'#F0C55A' },
+  { id:'racing', label:'Racing', body:'#151519', detail:'#FF6B1A' },
+  { id:'pr-red', label:'PR Red', body:'#A61F27', detail:'#FFFFFF' },
+  { id:'pr-blue', label:'PR Blue', body:'#195B88', detail:'#FFFFFF' },
+  { id:'pr-pink', label:'PR Pink', body:'#A53B75', detail:'#FFFFFF' },
+  { id:'pr-white', label:'PR White', body:'#F1F1F1', detail:'#171717' },
 ]
 const HELMETS = [
-  ['orange','PR Orange','#FF6B1A'],['black','Carbon','#17191D'],['white','Ice','#EFEFEF'],
+  ['orange','PR Orange','#FF6B1A'],['black','Carbon','#181A1F'],['white','Ice','#F0F0F0'],
   ['blue','Electric','#2563EB'],['pink','Pink','#D9468A'],['none','Sin casco','transparent']
 ]
 const PROTECTION = [
-  ['black','Carbon','#17191D'],['orange','Orange','#FF6B1A'],['white','Ice','#EFEFEF'],['none','Minimal','transparent']
+  ['black','Carbon','#181A1F'],['orange','Orange','#FF6B1A'],['white','Ice','#F0F0F0'],['none','Minimal','transparent']
 ]
 const SKATES = [
   { id:'fitness', type:'4w', label:'Fitness 4', desc:'Bota alta · control', wheels:4, low:false },
@@ -85,228 +85,308 @@ export default function RollerAvatar(){
 
   const energy=useMemo(()=>clamp(Math.min(82,stats.km/3)+Math.min(18,stats.sessions*.8)),[stats])
   const level=stats.km>=500?'Leyenda PR':stats.km>=250?'Motor PR':stats.km>=100?'Ritmo PR':stats.km>=25?'En movimiento':'Primeras vueltas'
-  const patch=(x)=>setAvatar(v=>({...v,...x}))
+  const patch=x=>setAvatar(v=>({...v,...x}))
 
   async function save(){
     try{
-      setSaving(true);setMessage('Guardando…')
+      setSaving(true);setMessage('Guardando tu patinador…')
       const {error}=await supabase.from('profiles').update({pr_avatar:avatar,updated_at:new Date().toISOString()}).eq('id',profileId)
       if(error)throw error
       const next={...base,pr_avatar:avatar}
-      localStorage.setItem('pr_user',JSON.stringify(next));updateUser?.({pr_avatar:avatar})
-      setMessage('✓ Tu patinador quedó guardado.')
+      localStorage.setItem('pr_user',JSON.stringify(next))
+      updateUser?.({pr_avatar:avatar})
+      setMessage('✓ Tu patinador PR quedó guardado.')
     }catch(e){setMessage(`No pudimos guardar: ${e.message}`)}finally{setSaving(false)}
   }
 
   return <AppLayout title="Mi patinador">
     <div className="pr-page space-y-4 animate-page-enter pb-9">
-      <section className="overflow-hidden rounded-[32px] border border-orange-300/18 bg-[#08090c] shadow-[0_30px_90px_rgba(0,0,0,.45)]">
-        <div className="relative p-5 pb-4">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_0%,rgba(249,115,22,.14),transparent_60%)]"/>
-          <div className="relative flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[8px] font-black uppercase tracking-[.21em] text-orange-300">PR Roller Studio</p>
-              <h1 className="mt-3 font-display text-[34px] leading-[.94] text-white">Diseñá tu<br/>identidad PR.</h1>
-              <p className="mt-2 text-[11px] leading-5 text-white/36">Más deportivo. Más adulto. Más vos.</p>
+      <section className="overflow-hidden rounded-[34px] border border-orange-300/18 bg-[#09090d] shadow-[0_32px_100px_rgba(0,0,0,.5)]">
+
+        <div className="relative min-h-[590px] overflow-hidden bg-gradient-to-b from-[#19131a] via-[#0b0b10] to-[#07070a]">
+          <LockerRoom energy={energy}/>
+
+          <div className="absolute left-4 top-4 z-30">
+            <p className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300">PR Roller Locker</p>
+            <p className="mt-1 text-[10px] font-semibold text-white/36">Tu identidad sobre ruedas</p>
+          </div>
+
+          <button disabled={saving} onClick={save}
+            className="absolute right-4 top-4 z-30 rounded-[18px] bg-gradient-to-b from-[#ffd965] to-[#f9b949] px-4 py-3 text-[11px] font-black uppercase tracking-[.04em] text-black shadow-[0_12px_32px_rgba(249,185,73,.25)] disabled:opacity-50">
+            {saving?'Guardando…':'✓ Guardar'}
+          </button>
+
+          <div className="absolute left-4 top-[65px] z-30 rounded-[17px] border border-white/[.08] bg-black/35 px-3 py-2 backdrop-blur-md">
+            <p className="text-[7px] font-black uppercase tracking-[.14em] text-white/28">Energía PR</p>
+            <p className="mt-1 font-display text-[25px] leading-none text-white">{Math.round(energy)}<span className="text-[10px] text-white/22">%</span></p>
+          </div>
+
+          <div className="absolute right-4 top-[65px] z-30 rounded-[17px] border border-orange-300/14 bg-black/35 px-3 py-2 text-right backdrop-blur-md">
+            <p className="text-[7px] font-black uppercase tracking-[.14em] text-orange-200/55">{level}</p>
+            <p className="mt-1 text-[11px] font-black text-orange-200">{stats.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
+          </div>
+
+          <Avatar3D avatar={avatar}/>
+
+          <div className="absolute bottom-[72px] left-4 right-4 z-30 rounded-[18px] border border-white/[.07] bg-black/45 px-3 py-3 backdrop-blur-md">
+            <div className="flex justify-between text-[9px] font-bold text-white/40">
+              <span>⚡ Energía vinculada a tu Strava</span><span className="text-orange-200">{stats.sessions} entrenos</span>
             </div>
-            <button disabled={saving} onClick={save} className="rounded-2xl bg-orange-400 px-4 py-3 text-xs font-black text-black">{saving?'…':'Guardar'}</button>
-          </div>
-        </div>
-
-        <div className="relative min-h-[535px] overflow-hidden border-y border-white/[.06] bg-gradient-to-b from-[#111218] via-[#090a0e] to-[#07070a]">
-          <StudioBackdrop energy={energy}/>
-          <div className="absolute left-4 top-4 z-20 rounded-[18px] border border-white/[.08] bg-black/40 px-3 py-2.5 backdrop-blur-md">
-            <p className="text-[7px] font-black uppercase tracking-[.15em] text-white/30">Energía PR</p>
-            <p className="mt-1 font-display text-[27px] leading-none text-white">{Math.round(energy)}<span className="text-xs text-white/25">%</span></p>
-          </div>
-          <div className="absolute right-4 top-4 z-20 rounded-[18px] border border-orange-300/14 bg-black/40 px-3 py-2.5 text-right backdrop-blur-md">
-            <p className="text-[7px] font-black uppercase tracking-[.15em] text-orange-200/55">{level}</p>
-            <p className="mt-1 text-xs font-black text-orange-200">{stats.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[.07]">
+              <div className="h-full rounded-full bg-gradient-to-r from-orange-600 via-orange-400 to-amber-300 shadow-[0_0_18px_rgba(251,146,60,.35)]" style={{width:`${Math.max(4,energy)}%`}}/>
+            </div>
           </div>
 
-          <StudioAvatar avatar={avatar}/>
-
-          <div className="absolute bottom-4 left-4 right-4 z-20 rounded-[18px] border border-white/[.07] bg-black/45 px-3 py-3 backdrop-blur-md">
-            <div className="flex justify-between text-[9px] font-bold text-white/40"><span>⚡ Energía conectada a Strava</span><span className="text-orange-200">{stats.sessions} entrenos</span></div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[.07]"><div className="h-full rounded-full bg-gradient-to-r from-orange-600 via-orange-400 to-amber-300" style={{width:`${Math.max(4,energy)}%`}}/></div>
-          </div>
-        </div>
-
-        <div className="p-3">
-          <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {CATS.map(([id,label])=><button key={id} onClick={()=>setCat(id)}
-              className={`min-w-[82px] rounded-[17px] border px-3 py-2.5 text-left ${cat===id?'border-orange-300/28 bg-orange-400/[.09]':'border-transparent bg-white/[.025]'}`}>
-              <CatIcon type={id} active={cat===id}/><p className={`mt-2 text-[8px] font-black uppercase tracking-[.08em] ${cat===id?'text-orange-200':'text-white/32'}`}>{label}</p>
-            </button>)}
+          <div className="absolute bottom-0 left-0 right-0 z-30 border-t border-white/[.06] bg-[#0d0d12]/95 p-2.5 backdrop-blur-xl">
+            <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {CATS.map(([id,label])=><button key={id} onClick={()=>setCat(id)}
+                className={`min-w-[76px] rounded-[18px] border px-3 py-2.5 text-center transition ${
+                  cat===id
+                  ? 'border-[#f6c85b]/35 bg-[#f6c85b]/10 shadow-[inset_0_0_0_1px_rgba(246,200,91,.07)]'
+                  : 'border-white/[.04] bg-white/[.025]'
+                }`}>
+                <CatIcon type={id} active={cat===id}/>
+                <p className={`mt-1.5 text-[7.5px] font-black uppercase tracking-[.07em] ${cat===id?'text-[#f6c85b]':'text-white/31'}`}>{label}</p>
+              </button>)}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[29px] border border-white/[.08] bg-[#0d0e12] p-4"><Editor cat={cat} avatar={avatar} patch={patch}/></section>
+      <section className="rounded-[30px] border border-white/[.08] bg-[#0d0d12] p-4 shadow-[0_18px_50px_rgba(0,0,0,.18)]">
+        <Editor cat={cat} avatar={avatar} patch={patch}/>
+      </section>
 
-      <section className="rounded-[25px] border border-orange-300/12 bg-orange-400/[.045] p-4">
+      <section className="rounded-[26px] border border-orange-300/12 bg-gradient-to-br from-orange-500/[.06] to-white/[.02] p-4">
         <p className="text-[8px] font-black uppercase tracking-[.18em] text-orange-300">Sistema vivo</p>
-        <p className="mt-2 text-sm font-black text-white">Tu avatar no es una pegatina.</p>
-        <p className="mt-1 text-[11px] leading-5 text-white/36">La energía del estudio responde a tus kilómetros reales. Más constancia, más presencia visual.</p>
+        <p className="mt-2 text-sm font-black text-white">Tu avatar también evoluciona.</p>
+        <p className="mt-1 text-[11px] leading-5 text-white/36">El rayo, la luz del locker y la barra de energía crecen con tus kilómetros reales sincronizados desde Strava.</p>
       </section>
 
       {message&&<div className="rounded-[20px] border border-orange-300/15 bg-orange-400/[.07] p-3 text-xs text-orange-100/65">{message}</div>}
-      <div className="grid grid-cols-2 gap-2"><Link to="/app/perfil" className="rounded-2xl border border-white/[.08] bg-white/[.03] py-4 text-center text-xs font-bold text-white/55">Volver</Link><button onClick={save} className="rounded-2xl bg-orange-400 py-4 text-xs font-black text-black">Guardar</button></div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Link to="/app/perfil" className="rounded-2xl border border-white/[.08] bg-white/[.03] py-4 text-center text-xs font-bold text-white/55">Volver</Link>
+        <button onClick={save} className="rounded-2xl bg-orange-400 py-4 text-xs font-black text-black">Guardar patinador</button>
+      </div>
     </div>
   </AppLayout>
 }
 
-function StudioBackdrop({energy}){
-  return <svg viewBox="0 0 390 535" className="absolute inset-0 h-full w-full" aria-hidden="true">
+function LockerRoom({energy}){
+  return <svg viewBox="0 0 390 590" className="absolute inset-0 h-full w-full" aria-hidden="true">
     <defs>
-      <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#161820"/><stop offset="1" stopColor="#08090c"/></linearGradient>
-      <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#FFB36C" stopOpacity={.12+energy/600}/><stop offset=".5" stopColor="#FF6B1A" stopOpacity={.04+energy/600}/><stop offset="1" stopColor="#FACC15" stopOpacity=".02"/></linearGradient>
-      <radialGradient id="spot"><stop offset="0" stopColor="#fff" stopOpacity=".06"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></radialGradient>
-      <filter id="glow"><feGaussianBlur stdDeviation={3+energy/24}/></filter>
+      <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#26151b"/><stop offset=".45" stopColor="#121116"/><stop offset="1" stopColor="#08090c"/></linearGradient>
+      <linearGradient id="shelf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#241a1c"/><stop offset="1" stopColor="#0c0c10"/></linearGradient>
+      <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffe17e"/><stop offset=".5" stopColor="#d7a638"/><stop offset="1" stopColor="#805416"/></linearGradient>
+      <linearGradient id="orangeLight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FF9B45" stopOpacity={.10+energy/500}/><stop offset="1" stopColor="#FF6B1A" stopOpacity="0"/></linearGradient>
+      <radialGradient id="spot"><stop offset="0" stopColor="#fff" stopOpacity=".10"/><stop offset=".45" stopColor="#fff" stopOpacity=".025"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></radialGradient>
+      <filter id="blur"><feGaussianBlur stdDeviation={4+energy/20}/></filter>
     </defs>
-    <rect width="390" height="535" fill="url(#floor)"/>
-    <ellipse cx="195" cy="170" rx="165" ry="220" fill="url(#spot)"/>
-    <path d="M267 42 139 280h78l-61 216 139-268h-86z" fill="url(#bolt)" filter="url(#glow)"/>
-    <path d="M18 432h354" stroke="#fff" strokeOpacity=".035"/>
-    <ellipse cx="198" cy="457" rx="128" ry="22" fill="#FF6B1A" opacity=".055"/>
+    <rect width="390" height="590" fill="url(#wall)"/>
+
+    <ellipse cx="195" cy="230" rx="160" ry="220" fill="url(#spot)"/>
+    <path d="M253 35 150 272h70l-55 196 115-234h-73z" fill="url(#orangeLight)" filter="url(#blur)"/>
+
+    {/* side trophy cabinets */}
+    <g opacity=".9">
+      <rect x="8" y="108" width="70" height="335" rx="20" fill="url(#shelf)" stroke="#fff" strokeOpacity=".05"/>
+      <rect x="312" y="108" width="70" height="335" rx="20" fill="url(#shelf)" stroke="#fff" strokeOpacity=".05"/>
+      {[170,258,346].map(y=><g key={y}><path d={`M15 ${y}h56`} stroke="#fff" strokeOpacity=".05"/><path d={`M319 ${y}h56`} stroke="#fff" strokeOpacity=".05"/></g>)}
+      <Trophy x="31" y="130"/><Trophy x="335" y="130"/>
+      <MiniWheel x="44" y="218"/><MiniWheel x="348" y="218"/>
+      <MiniCone x="45" y="310"/><MiniCone x="349" y="310"/>
+    </g>
+
+    {/* back PR mark */}
+    <circle cx="195" cy="150" r="78" fill="none" stroke="#FF8B34" strokeOpacity=".045" strokeWidth="3"/>
+    <path d="M155 184 195 102l40 82-40-22z" fill="#FF8B34" opacity=".035"/>
+
+    {/* podium */}
+    <ellipse cx="195" cy="490" rx="118" ry="28" fill="#000" opacity=".52"/>
+    <ellipse cx="195" cy="480" rx="105" ry="22" fill="#231716" stroke="#FF8B34" strokeOpacity=".13"/>
+    <ellipse cx="195" cy="476" rx="88" ry="14" fill="#FF7A24" opacity=".075"/>
   </svg>
 }
 
-function StudioAvatar({avatar}){
+function Trophy({x,y}){
+  return <g transform={`translate(${x} ${y})`} opacity=".62">
+    <path d="M8 4h22v12c0 10-5 15-11 15S8 26 8 16z" fill="url(#gold)"/>
+    <path d="M8 8H2v5c0 7 3 9 8 9M30 8h6v5c0 7-3 9-8 9" fill="none" stroke="#d8a63b" strokeWidth="3"/>
+    <path d="M19 31v9M11 42h16" stroke="#d8a63b" strokeWidth="3" strokeLinecap="round"/>
+  </g>
+}
+function MiniWheel({x,y}){return <g transform={`translate(${x} ${y})`} opacity=".45"><circle r="17" fill="#FF6B1A"/><circle r="7" fill="#202026"/><circle r="2" fill="#cfcfcf"/></g>}
+function MiniCone({x,y}){return <g transform={`translate(${x} ${y})`} opacity=".42"><path d="M0 28 10 0l10 28z" fill="#FF6B1A"/><path d="M2 17h16" stroke="#fff" strokeOpacity=".65" strokeWidth="4"/><path d="M-4 29h28" stroke="#FF6B1A" strokeWidth="4" strokeLinecap="round"/></g>}
+
+function Avatar3D({avatar}){
   const top=TOPS.find(x=>x.id===avatar.top)||TOPS[0]
   const helmet=HELMETS.find(x=>x[0]===avatar.helmet)||HELMETS[0]
   const protect=PROTECTION.find(x=>x[0]===avatar.protection)||PROTECTION[0]
   const skate=SKATES.find(x=>x.id===avatar.skateModel)||SKATES[0]
 
-  return <svg viewBox="0 0 360 520" className="absolute bottom-8 left-1/2 z-10 h-[470px] w-[330px] -translate-x-1/2" aria-label="Vista previa de tu patinador">
+  return <svg viewBox="0 0 360 510" className="absolute bottom-[90px] left-1/2 z-20 h-[445px] w-[330px] -translate-x-1/2" aria-label="Vista previa de tu patinador PR">
     <defs>
-      <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={avatar.skin}/><stop offset=".7" stopColor={avatar.skin}/><stop offset="1" stopColor="#6b3f2d" stopOpacity=".35"/></linearGradient>
-      <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={top.body}/><stop offset=".68" stopColor={top.body}/><stop offset="1" stopColor="#000" stopOpacity=".28"/></linearGradient>
-      <filter id="bodyShadow"><feDropShadow dx="0" dy="9" stdDeviation="8" floodOpacity=".32"/></filter>
-      <filter id="soft"><feGaussianBlur stdDeviation="1.1"/></filter>
+      <radialGradient id="skinHead" cx=".34" cy=".24" r=".88">
+        <stop offset="0" stopColor="#fff" stopOpacity=".20"/>
+        <stop offset=".22" stopColor={avatar.skin}/>
+        <stop offset=".72" stopColor={avatar.skin}/>
+        <stop offset="1" stopColor="#6d4030" stopOpacity=".36"/>
+      </radialGradient>
+      <linearGradient id="skinLimb" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#fff" stopOpacity=".14"/>
+        <stop offset=".18" stopColor={avatar.skin}/>
+        <stop offset=".76" stopColor={avatar.skin}/>
+        <stop offset="1" stopColor="#6d4030" stopOpacity=".30"/>
+      </linearGradient>
+      <linearGradient id="jersey" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#fff" stopOpacity=".10"/><stop offset=".12" stopColor={top.body}/><stop offset=".74" stopColor={top.body}/><stop offset="1" stopColor="#000" stopOpacity=".34"/>
+      </linearGradient>
+      <linearGradient id="pants" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#24262c"/><stop offset="1" stopColor="#0d0e12"/></linearGradient>
+      <radialGradient id="helmetGrad" cx=".35" cy=".15" r=".9"><stop offset="0" stopColor="#fff" stopOpacity=".30"/><stop offset=".18" stopColor={helmet[2]}/><stop offset="1" stopColor="#000" stopOpacity=".35"/></radialGradient>
+      <linearGradient id="bootGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".16"/><stop offset=".15" stopColor={avatar.skateColor}/><stop offset="1" stopColor="#000" stopOpacity=".33"/></linearGradient>
+      <filter id="shadow"><feDropShadow dx="0" dy="10" stdDeviation="9" floodOpacity=".34"/></filter>
+      <filter id="smallShadow"><feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity=".26"/></filter>
     </defs>
 
-    <ellipse cx="182" cy="476" rx="112" ry="17" fill="#000" opacity=".5"/>
+    <ellipse cx="181" cy="477" rx="104" ry="15" fill="#000" opacity=".48"/>
 
-    {/* rear leg */}
-    <path d="M173 337c16-5 31-1 42 8l19 89-34 7-36-81z" fill="#15161b" filter="url(#bodyShadow)"/>
-    {/* front leg */}
-    <path d="M128 334c15-7 31-5 43 4l-12 104-37-2-7-79z" fill="#191a1f" filter="url(#bodyShadow)"/>
+    {/* legs */}
+    <path d="M126 334c14-7 31-5 43 3l-5 98-39 2-12-77z" fill="url(#pants)" filter="url(#shadow)"/>
+    <path d="M168 336c16-5 32-2 43 8l18 88-38 6-31-79z" fill="url(#pants)" filter="url(#shadow)"/>
+    <path d="M125 356c12 5 25 6 39 3M180 359c11 3 23 2 34-1" fill="none" stroke="#fff" strokeOpacity=".06" strokeWidth="2"/>
 
-    {/* torso: athletic tapered, slight twist */}
-    <path d="M113 213c23-16 79-18 110 2 12 30 21 68 23 111-31 20-101 22-139 3 4-44 6-82 6-116Z" fill="url(#shirt)" stroke="rgba(255,255,255,.09)" filter="url(#bodyShadow)"/>
-    <path d="M121 229c29 9 60 9 92-1" fill="none" stroke={top.detail} strokeWidth="5.5" strokeLinecap="round"/>
-    <path d="M131 309c24 8 54 8 82 0" fill="none" stroke="#fff" strokeOpacity=".05" strokeWidth="2"/>
-    <text x="168" y="275" textAnchor="middle" fill={top.detail} fontSize="22" fontWeight="900" letterSpacing="3">PR</text>
+    {/* torso with 3d shoulders */}
+    <path d="M111 209c19-18 87-21 112 2 13 28 22 68 24 111-33 20-105 22-142 2 2-43 5-84 6-115Z" fill="url(#jersey)" stroke="#fff" strokeOpacity=".08" filter="url(#shadow)"/>
+    <path d="M118 228c31 11 65 10 97-2" fill="none" stroke={top.detail} strokeWidth="5.5" strokeLinecap="round"/>
+    <path d="M133 306c24 7 53 7 78 0" fill="none" stroke="#fff" strokeOpacity=".06" strokeWidth="2"/>
+    <path d="M117 217c10 2 19 8 26 16M219 216c-10 3-18 9-24 17" fill="none" stroke="#fff" strokeOpacity=".07" strokeWidth="4" strokeLinecap="round"/>
+    <text x="168" y="270" textAnchor="middle" fill={top.detail} fontSize="21" fontWeight="900" letterSpacing="3">PR</text>
 
-    {/* left arm relaxed, angled */}
-    <path d="M117 224c-21 8-34 27-43 57-9 31-8 66 11 80 15 10 30 0 31-18l9-72 15-31z" fill="url(#skin)" stroke="rgba(0,0,0,.12)"/>
-    {/* right arm slightly back */}
-    <path d="M218 225c20 10 31 31 40 62 8 29 8 61-8 76-14 12-31 4-33-15l-10-73-13-33z" fill="url(#skin)" stroke="rgba(0,0,0,.12)"/>
+    {/* arms */}
+    <path d="M112 223c-22 9-35 30-43 62-8 31-6 62 11 76 14 12 31 3 33-15l10-75 15-30z" fill="url(#skinLimb)" stroke="#000" strokeOpacity=".10"/>
+    <path d="M218 224c21 10 33 32 41 64 7 29 6 61-10 75-14 12-30 4-32-14l-11-75-13-31z" fill="url(#skinLimb)" stroke="#000" strokeOpacity=".10"/>
 
-    {/* elbows/wrists */}
     {avatar.protection!=='none'&&<>
-      <path d="M75 300c10-8 31-6 41 4l-3 29c-13 8-30 8-41-1z" fill={protect[2]} stroke="rgba(255,255,255,.12)"/>
-      <path d="M218 303c11-10 31-12 41-4l5 29c-10 10-28 12-41 4z" fill={protect[2]} stroke="rgba(255,255,255,.12)"/>
+      <path d="M72 301c11-8 31-6 42 4l-3 28c-12 9-31 8-42-1z" fill={protect[2]} stroke="#fff" strokeOpacity=".10" filter="url(#smallShadow)"/>
+      <path d="M218 304c11-10 30-12 42-4l5 28c-10 10-29 12-41 4z" fill={protect[2]} stroke="#fff" strokeOpacity=".10" filter="url(#smallShadow)"/>
     </>}
 
+    {/* hands */}
+    <path d="M70 353c8-12 25-11 32-1 6 8 4 17-2 24-8 9-22 9-29 0-6-7-6-16-1-23z" fill="url(#skinLimb)"/>
+    <path d="M239 354c7-12 24-13 31-3 6 8 6 17 0 24-7 9-21 10-29 2-7-6-8-15-2-23z" fill="url(#skinLimb)"/>
+
     {/* neck */}
-    <path d="M145 173h43l4 48-50 2z" fill="url(#skin)"/>
+    <path d="M145 169h44l3 50-51 2z" fill="url(#skinLimb)"/>
 
-    {/* back hair for long */}
-    {avatar.hairStyle==='long'&&<path d="M107 104c5-68 121-69 128-1l-12 126-45-29-58 31z" fill={avatar.hair}/>}
+    {/* back hair */}
+    {avatar.hairStyle==='long'&&<path d="M105 97c6-68 125-71 132-2l-12 132-46-30-61 32z" fill={avatar.hair} filter="url(#smallShadow)"/>}
+    {avatar.hairStyle==='bun'&&<circle cx="176" cy="49" r="26" fill={avatar.hair} filter="url(#smallShadow)"/>}
 
-    {/* head 3/4 */}
-    <path d="M105 105c4-57 116-61 125-5l-3 42c-4 46-30 72-65 70-36-2-58-30-57-72z" fill="url(#skin)" stroke="rgba(0,0,0,.12)" filter="url(#bodyShadow)"/>
+    {/* head */}
+    <path d="M103 96c5-58 121-64 132-6l-3 45c-4 49-31 77-67 75-38-2-62-31-61-76z" fill="url(#skinHead)" stroke="#000" strokeOpacity=".10" filter="url(#shadow)"/>
+    <ellipse cx="108" cy="142" rx="6" ry="10" fill={avatar.skin}/>
+    <ellipse cx="230" cy="139" rx="5" ry="9" fill={avatar.skin}/>
 
     <Hair id={avatar.hairStyle} color={avatar.hair}/>
 
+    {/* helmet */}
     {avatar.helmet!=='none'&&<>
-      <path d="M101 112c-5-70 128-74 133 3l-10 12c-34-11-72-12-111 0z" fill={helmet[2]} stroke="rgba(0,0,0,.25)" strokeWidth="2"/>
-      <path d="M118 95c28-17 63-19 94-7" fill="none" stroke="#fff" strokeOpacity=".22" strokeWidth="5" strokeLinecap="round"/>
-      <path d="M220 122c9 13 11 27 8 43" fill="none" stroke="#171717" strokeWidth="4" strokeLinecap="round"/>
-      <path d="M116 110h18M153 100h18M190 106h17" stroke="#000" strokeOpacity=".25" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M99 108c-6-72 134-78 140 2l-11 14c-37-12-76-13-117 0z" fill="url(#helmetGrad)" stroke="#000" strokeOpacity=".22" strokeWidth="2.2" filter="url(#shadow)"/>
+      <path d="M119 88c28-16 66-19 98-7" fill="none" stroke="#fff" strokeOpacity=".25" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M120 105h17M153 92h19M191 99h19" stroke="#111" strokeOpacity=".28" strokeWidth="3.5" strokeLinecap="round"/>
+      <path d="M225 118c9 15 11 31 7 49" fill="none" stroke="#181818" strokeWidth="4" strokeLinecap="round"/>
+      <circle cx="231" cy="166" r="3" fill="#181818"/>
     </>}
 
     <Face id={avatar.face}/>
 
-    {/* subtle nose / ear */}
-    <path d="M169 145c-2 6-2 11 2 13" fill="none" stroke="#6e4637" strokeOpacity=".35" strokeWidth="2" strokeLinecap="round"/>
-    <ellipse cx="108" cy="145" rx="5" ry="9" fill={avatar.skin} opacity=".9"/>
+    {/* nose / cheeks */}
+    <path d="M169 142c-2 7-2 12 2 14" fill="none" stroke="#6e4637" strokeOpacity=".36" strokeWidth="2" strokeLinecap="round"/>
+    <ellipse cx="133" cy="160" rx="9" ry="4" fill="#d57c72" opacity=".10"/>
+    <ellipse cx="204" cy="158" rx="9" ry="4" fill="#d57c72" opacity=".10"/>
 
-    {/* hands */}
-    <path d="M75 351c9-10 25-7 30 3 3 7 1 15-5 21-8 8-21 7-27-2-5-8-4-16 2-22z" fill="url(#skin)"/>
-    <path d="M237 354c7-11 23-12 30-3 6 7 6 16 1 24-6 9-19 11-27 4-8-6-10-16-4-25z" fill="url(#skin)"/>
-
-    {/* skates, perspective */}
-    <g transform="translate(83 418) rotate(-5) scale(1.05)"><Skate wheels={skate.wheels} low={skate.low} boot={avatar.skateColor} wheel={avatar.wheelColor}/></g>
-    <g transform="translate(179 422) rotate(4) scale(1.05)"><Skate wheels={skate.wheels} low={skate.low} boot={avatar.skateColor} wheel={avatar.wheelColor}/></g>
+    {/* skates */}
+    <g transform="translate(80 417) rotate(-5) scale(1.06)"><Skate wheels={skate.wheels} low={skate.low} boot={avatar.skateColor} wheel={avatar.wheelColor}/></g>
+    <g transform="translate(179 421) rotate(4) scale(1.06)"><Skate wheels={skate.wheels} low={skate.low} boot={avatar.skateColor} wheel={avatar.wheelColor}/></g>
   </svg>
 }
 
 function Hair({id,color}){
-  if(id==='bun')return <><circle cx="174" cy="64" r="25" fill={color}/><path d="M104 112c8-50 112-57 126-8-25-19-50-20-72-15-19 4-34 12-54 23z" fill={color}/></>
-  if(id==='long')return <path d="M104 112c7-52 114-60 127-6-27-21-56-22-79-16-18 4-33 12-48 22z" fill={color}/>
-  if(id==='wave')return <path d="M103 113c3-53 120-62 131-5-13-14-26-26-43-15-13 8-22-12-38-3-13 8-28-7-50 23z" fill={color}/>
-  if(id==='fade')return <path d="M113 101c14-36 92-39 108-1-32-12-76-12-108 1z" fill={color}/>
-  if(id==='crop')return <path d="M107 107c11-44 110-50 120-3-34-14-85-13-120 3z" fill={color}/>
-  return <path d="M104 112c4-49 116-58 127-7-20-18-37-7-51-17-15 14-32 0-76 24z" fill={color}/>
+  if(id==='bun')return <path d="M103 106c9-51 116-59 130-9-26-18-53-19-76-14-21 4-37 12-54 23z" fill={color}/>
+  if(id==='long')return <path d="M102 108c8-54 119-63 133-6-29-21-58-22-84-16-19 5-35 13-49 22z" fill={color}/>
+  if(id==='wave')return <path d="M101 109c4-55 125-64 136-5-13-15-27-26-45-15-13 8-23-13-40-3-14 8-29-8-51 23z" fill={color}/>
+  if(id==='fade')return <path d="M112 97c15-37 96-41 112-2-34-12-79-11-112 2z" fill={color}/>
+  if(id==='crop')return <path d="M106 103c12-45 113-52 124-3-37-14-89-13-124 3z" fill={color}/>
+  return <path d="M101 108c5-51 121-61 133-8-20-19-38-7-53-17-16 14-34 0-80 25z" fill={color}/>
 }
 
 function Face({id}){
-  if(id==='cool')return <><path d="M127 132h29l-5 16h-19zM174 132h29l-5 16h-19z" fill="#171717"/><path d="M156 136h18" stroke="#171717" strokeWidth="3"/><path d="M149 169c10 5 20 5 29-1" fill="none" stroke="#211c1a" strokeWidth="3.2" strokeLinecap="round"/></>
+  if(id==='cool')return <>
+    <path d="M126 128h30l-5 17h-20zM176 128h30l-5 17h-20z" fill="#171717"/>
+    <path d="M156 133h20" stroke="#171717" strokeWidth="3"/>
+    <path d="M150 169c10 5 21 5 30-1" fill="none" stroke="#211c1a" strokeWidth="3.1" strokeLinecap="round"/>
+  </>
   return <>
-    <ellipse cx="142" cy="139" rx="5.7" ry={id==='focus'?4.2:6.2} fill="#211c1a"/>
-    <ellipse cx="187" cy="138" rx="5.7" ry={id==='focus'?4.2:6.2} fill="#211c1a"/>
-    <circle cx="140" cy="136.5" r="1.5" fill="#fff" opacity=".8"/><circle cx="185" cy="135.5" r="1.5" fill="#fff" opacity=".8"/>
-    <path d={id==='focus'?'M151 168c8 1 16 1 24-1':id==='smile'?'M148 165c10 12 22 12 32 0':'M149 166c10 8 21 8 30-1'} fill="none" stroke="#211c1a" strokeWidth="3.2" strokeLinecap="round"/>
-    <path d={id==='focus'?'M134 127c5-3 10-3 15-1M180 126c5-3 10-3 15-1':''} fill="none" stroke="#3a2c28" strokeWidth="2" strokeLinecap="round"/>
+    <ellipse cx="141" cy="136" rx="5.8" ry={id==='focus'?4.2:6.3} fill="#211c1a"/>
+    <ellipse cx="190" cy="135" rx="5.8" ry={id==='focus'?4.2:6.3} fill="#211c1a"/>
+    <circle cx="139" cy="133.5" r="1.6" fill="#fff" opacity=".85"/><circle cx="188" cy="132.5" r="1.6" fill="#fff" opacity=".85"/>
+    <path d={id==='focus'?'M151 167c9 1 18 1 26-1':id==='smile'?'M148 164c11 13 24 13 35 0':'M149 166c10 8 22 8 32-1'} fill="none" stroke="#211c1a" strokeWidth="3.2" strokeLinecap="round"/>
+    {id==='focus'&&<><path d="M132 124c6-3 11-3 17-1M181 123c6-3 11-3 17-1" fill="none" stroke="#3a2c28" strokeWidth="2" strokeLinecap="round"/></>}
   </>
 }
 
 function Skate({wheels,low,boot,wheel}){
   const xs=wheels===3?[15,40,65]:[10,29,48,67]
   return <g>
-    <path d={low?'M4 20 13 3h39l19 17-8 20H7z':'M4 34 10 0h35l9 18 21 11-9 18H8z'} fill={boot} stroke="rgba(255,255,255,.22)" strokeWidth="1.5"/>
-    {!low&&<><path d="M16 11h27M15 17h31M14 23h34" stroke="#fff" strokeOpacity=".32" strokeWidth="1.5" strokeLinecap="round"/><path d="M31 4v25" stroke="#fff" strokeOpacity=".18" strokeWidth="1.2"/></>}
-    <path d="M8 46h70" stroke="#8b8b8b" strokeWidth="4" strokeLinecap="round"/>
-    <path d="M14 44h58" stroke="#c5c5c5" strokeOpacity=".35" strokeWidth="1"/>
-    {xs.map(x=><g key={x}><circle cx={x} cy="55" r={wheels===3?9.5:7.7} fill={wheel} stroke="#121212" strokeWidth="1.5"/><circle cx={x} cy="55" r="2.6" fill="#3d3d3d"/><circle cx={x-2} cy="52.5" r="1.4" fill="#fff" opacity=".28"/></g>)}
+    <path d={low?'M4 20 13 3h40l19 17-8 20H7z':'M4 34 10 0h36l9 18 21 11-9 18H8z'} fill="url(#bootGrad)" stroke="#fff" strokeOpacity=".20" strokeWidth="1.5"/>
+    {!low&&<>
+      <path d="M16 10h28M15 16h31M14 22h34" stroke="#fff" strokeOpacity=".36" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M31 3v26" stroke="#fff" strokeOpacity=".18" strokeWidth="1.2"/>
+      <path d="M12 31c16 4 35 4 52 1" fill="none" stroke="#fff" strokeOpacity=".07" strokeWidth="2"/>
+    </>}
+    <path d="M8 46h70" stroke="#8d8d8d" strokeWidth="4" strokeLinecap="round"/>
+    <path d="M13 44h60" stroke="#d8d8d8" strokeOpacity=".34" strokeWidth="1.2"/>
+    {xs.map(x=><g key={x}>
+      <circle cx={x} cy="55" r={wheels===3?9.5:7.7} fill={wheel} stroke="#121212" strokeWidth="1.5"/>
+      <circle cx={x} cy="55" r="2.7" fill="#3d3d3d"/>
+      <circle cx={x-2.4} cy="52.3" r="1.5" fill="#fff" opacity=".30"/>
+    </g>)}
   </g>
 }
 
 function Editor({cat,avatar,patch}){
-  if(cat==='skin')return <Shell eyebrow="Identidad" title="Tono de piel"><div className="grid grid-cols-3 gap-2">{SKINS.map(c=><Color key={c} c={c} active={avatar.skin===c} onClick={()=>patch({skin:c})}/>)}</div></Shell>
-  if(cat==='hair')return <Shell eyebrow="Estilo" title="Pelo"><div className="grid grid-cols-3 gap-2">{HAIRS.map(([id,label])=><SimpleChoice key={id} active={avatar.hairStyle===id} label={label} onClick={()=>patch({hairStyle:id})}><HairPreview id={id} color={avatar.hair}/></SimpleChoice>)}</div><Sub>Color</Sub><div className="grid grid-cols-3 gap-2">{HAIR_COLORS.map(c=><Color key={c} c={c} active={avatar.hair===c} onClick={()=>patch({hair:c})}/>)}</div></Shell>
-  if(cat==='face')return <Shell eyebrow="Expresión" title="Rostro"><div className="grid grid-cols-2 gap-2">{FACES.map(([id,label])=><SimpleChoice key={id} active={avatar.face===id} label={label} onClick={()=>patch({face:id})}><FacePreview id={id}/></SimpleChoice>)}</div></Shell>
-  if(cat==='top')return <Shell eyebrow="Punta Rollers" title="Ropa"><div className="grid grid-cols-2 gap-2">{TOPS.map(x=><button key={x.id} onClick={()=>patch({top:x.id})} className={`rounded-[19px] border p-3 text-left ${avatar.top===x.id?'border-orange-300/35 bg-orange-400/[.08]':'border-white/[.07] bg-white/[.025]'}`}><div className="relative h-16 rounded-[15px]" style={{background:x.body}}><div className="absolute left-1/2 top-5 h-1.5 w-12 -translate-x-1/2 rounded-full" style={{background:x.detail}}/><span className="absolute inset-x-0 top-8 text-center text-[9px] font-black tracking-[.14em]" style={{color:x.detail}}>PR</span></div><p className="mt-2 text-[9px] font-bold text-white/55">{x.label}</p></button>)}</div></Shell>
-  if(cat==='helmet')return <Shell eyebrow="Protección" title="Casco"><div className="grid grid-cols-3 gap-2">{HELMETS.map(([id,label,c])=><SimpleChoice key={id} active={avatar.helmet===id} label={label} onClick={()=>patch({helmet:id})}><HelmetPreview color={c} none={id==='none'}/></SimpleChoice>)}</div></Shell>
-  if(cat==='protection')return <Shell eyebrow="Equipamiento" title="Protecciones"><div className="grid grid-cols-2 gap-2">{PROTECTION.map(([id,label,c])=><SimpleChoice key={id} active={avatar.protection===id} label={label} onClick={()=>patch({protection:id})}><ProtectPreview color={c}/></SimpleChoice>)}</div></Shell>
+  if(cat==='skin')return <Shell eyebrow="Identidad" title="Tono de piel" text="Elegí el que mejor te represente."><div className="grid grid-cols-3 gap-2">{SKINS.map(c=><Color key={c} c={c} active={avatar.skin===c} onClick={()=>patch({skin:c})}/>)}</div></Shell>
+  if(cat==='hair')return <Shell eyebrow="Estilo" title="Pelo" text="Forma y color en tiempo real."><div className="grid grid-cols-3 gap-2">{HAIRS.map(([id,label])=><SimpleChoice key={id} active={avatar.hairStyle===id} label={label} onClick={()=>patch({hairStyle:id})}><HairPreview id={id} color={avatar.hair}/></SimpleChoice>)}</div><Sub>Color</Sub><div className="grid grid-cols-3 gap-2">{HAIR_COLORS.map(c=><Color key={c} c={c} active={avatar.hair===c} onClick={()=>patch({hair:c})}/>)}</div></Shell>
+  if(cat==='face')return <Shell eyebrow="Expresión" title="Rostro" text="Sutil, adulto y con actitud."><div className="grid grid-cols-2 gap-2">{FACES.map(([id,label])=><SimpleChoice key={id} active={avatar.face===id} label={label} onClick={()=>patch({face:id})}><FacePreview id={id}/></SimpleChoice>)}</div></Shell>
+  if(cat==='top')return <Shell eyebrow="Punta Rollers" title="Ropa" text="Looks inspirados en nuestra identidad."><div className="grid grid-cols-2 gap-2">{TOPS.map(x=><button key={x.id} onClick={()=>patch({top:x.id})} className={`rounded-[20px] border p-3 text-left ${avatar.top===x.id?'border-[#f6c85b]/35 bg-[#f6c85b]/[.08]':'border-white/[.07] bg-white/[.025]'}`}><div className="relative h-20 rounded-[17px] shadow-inner" style={{background:`linear-gradient(135deg,rgba(255,255,255,.10),transparent 30%),${x.body}`}}><div className="absolute left-1/2 top-6 h-1.5 w-12 -translate-x-1/2 rounded-full" style={{background:x.detail}}/><span className="absolute inset-x-0 top-10 text-center text-[10px] font-black tracking-[.16em]" style={{color:x.detail}}>PR</span></div><p className="mt-2 text-[9px] font-bold text-white/55">{x.label}</p></button>)}</div></Shell>
+  if(cat==='helmet')return <Shell eyebrow="Protección" title="Casco" text="Silueta deportiva, ventilación y color."><div className="grid grid-cols-3 gap-2">{HELMETS.map(([id,label,c])=><SimpleChoice key={id} active={avatar.helmet===id} label={label} onClick={()=>patch({helmet:id})}><HelmetPreview color={c} none={id==='none'}/></SimpleChoice>)}</div></Shell>
+  if(cat==='protection')return <Shell eyebrow="Equipamiento" title="Protecciones" text="Muñequeras y detalles que acompañan el look."><div className="grid grid-cols-2 gap-2">{PROTECTION.map(([id,label,c])=><SimpleChoice key={id} active={avatar.protection===id} label={label} onClick={()=>patch({protection:id})}><ProtectPreview color={c}/></SimpleChoice>)}</div></Shell>
   return <SkateEditor avatar={avatar} patch={patch}/>
 }
 
 function SkateEditor({avatar,patch}){
   const items=SKATES.filter(x=>x.type===avatar.skateType)
   function type(t){const first=SKATES.find(x=>x.type===t);patch({skateType:t,skateModel:first.id})}
-  return <Shell eyebrow="Tu setup" title="Patines">
-    <div className="grid grid-cols-2 gap-2">{['3w','4w'].map(t=><button key={t} onClick={()=>type(t)} className={`rounded-[19px] border p-3 text-left ${avatar.skateType===t?'border-orange-300/35 bg-orange-400/[.08]':'border-white/[.07] bg-white/[.025]'}`}><p className="font-display text-[28px] text-white">{t==='3w'?3:4} <span className="text-xs text-white/30">ruedas</span></p><SkatePreview wheels={t==='3w'?3:4} boot={avatar.skateColor} wheel={avatar.wheelColor}/></button>)}</div>
+  return <Shell eyebrow="Tu setup" title="Patines" text="3 ruedas o 4. Fitness, Urban, Endurance o Speed.">
+    <div className="grid grid-cols-2 gap-2">{['3w','4w'].map(t=><button key={t} onClick={()=>type(t)} className={`rounded-[20px] border p-3 text-left ${avatar.skateType===t?'border-[#f6c85b]/35 bg-[#f6c85b]/[.08]':'border-white/[.07] bg-white/[.025]'}`}><p className="font-display text-[30px] text-white">{t==='3w'?3:4} <span className="text-xs text-white/30">ruedas</span></p><SkatePreview wheels={t==='3w'?3:4} boot={avatar.skateColor} wheel={avatar.wheelColor}/></button>)}</div>
     <Sub>Modelo</Sub>
-    <div className="space-y-2">{items.map(x=><button key={x.id} onClick={()=>patch({skateModel:x.id})} className={`flex w-full items-center gap-3 rounded-[19px] border p-3 text-left ${avatar.skateModel===x.id?'border-orange-300/35 bg-orange-400/[.08]':'border-white/[.07] bg-white/[.025]'}`}><SkatePreview wheels={x.wheels} low={x.low} boot={avatar.skateColor} wheel={avatar.wheelColor} compact/><div className="flex-1"><p className="text-sm font-black text-white">{x.label}</p><p className="mt-0.5 text-[9px] text-white/30">{x.desc}</p></div>{avatar.skateModel===x.id&&<span className="text-orange-300">✓</span>}</button>)}</div>
+    <div className="space-y-2">{items.map(x=><button key={x.id} onClick={()=>patch({skateModel:x.id})} className={`flex w-full items-center gap-3 rounded-[20px] border p-3 text-left ${avatar.skateModel===x.id?'border-[#f6c85b]/35 bg-[#f6c85b]/[.08]':'border-white/[.07] bg-white/[.025]'}`}><SkatePreview wheels={x.wheels} low={x.low} boot={avatar.skateColor} wheel={avatar.wheelColor} compact/><div className="flex-1"><p className="text-sm font-black text-white">{x.label}</p><p className="mt-0.5 text-[9px] text-white/30">{x.desc}</p></div>{avatar.skateModel===x.id&&<span className="text-[#f6c85b]">✓</span>}</button>)}</div>
     <Sub>Bota</Sub><div className="grid grid-cols-3 gap-2">{['#17191F','#F1F1F1','#A91D24','#2563EB','#D9468A','#FF6B1A'].map(c=><Color key={c} c={c} active={avatar.skateColor===c} onClick={()=>patch({skateColor:c})}/>)}</div>
     <Sub>Ruedas</Sub><div className="grid grid-cols-3 gap-2">{['#FF6B1A','#FACC15','#F2F2F2','#22C55E','#3B82F6','#D9468A'].map(c=><Color key={c} c={c} active={avatar.wheelColor===c} onClick={()=>patch({wheelColor:c})}/>)}</div>
   </Shell>
 }
 
-function Shell({eyebrow,title,children}){return <><p className="text-[8px] font-black uppercase tracking-[.18em] text-orange-300">{eyebrow}</p><h2 className="mt-2 font-display text-[27px] text-white">{title}</h2><p className="mt-1 text-[11px] leading-5 text-white/32">Elegí cada detalle y miralo aplicado en tiempo real.</p><div className="mt-4">{children}</div></>}
+function Shell({eyebrow,title,text,children}){return <><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#f6c85b]">{eyebrow}</p><h2 className="mt-2 font-display text-[28px] text-white">{title}</h2><p className="mt-1 text-[11px] leading-5 text-white/32">{text}</p><div className="mt-4">{children}</div></>}
 function Sub({children}){return <p className="mb-2 mt-5 text-[8px] font-black uppercase tracking-[.16em] text-white/25">{children}</p>}
-function Color({c,active,onClick}){return <button onClick={onClick} className={`relative h-16 rounded-[18px] border ${active?'border-orange-300/40 bg-orange-400/[.08]':'border-white/[.07] bg-white/[.025]'}`}><span className="mx-auto block h-9 w-9 rounded-full border border-white/10" style={{background:c}}/>{active&&<span className="absolute right-2 top-2 text-[10px] font-black text-orange-300">✓</span>}</button>}
-function SimpleChoice({active,label,onClick,children}){return <button onClick={onClick} className={`rounded-[18px] border p-2.5 ${active?'border-orange-300/35 bg-orange-400/[.08]':'border-white/[.07] bg-white/[.025]'}`}>{children}<p className="mt-1 truncate text-[8px] font-bold text-white/50">{label}</p></button>}
-function HairPreview({id,color}){return <svg viewBox="0 0 70 55" className="mx-auto h-12"><ellipse cx="35" cy="31" rx="19" ry="20" fill="#c99170"/><g transform="translate(-129 -69) scale(.92)"><Hair id={id} color={color}/></g></svg>}
-function FacePreview({id}){return <svg viewBox="0 0 78 58" className="mx-auto h-12"><ellipse cx="39" cy="29" rx="23" ry="24" fill="#d3a07c"/><g transform="translate(-125 -112)"><Face id={id}/></g></svg>}
-function HelmetPreview({color,none}){return <svg viewBox="0 0 70 52" className="mx-auto h-12">{none?<path d="M10 42h50" stroke="rgba(255,255,255,.2)" strokeWidth="2"/>:<><path d="M9 36C7 7 61 6 62 36l-7 6c-13-5-27-5-40 0z" fill={color} stroke="rgba(255,255,255,.18)"/><path d="M18 24c11-8 24-10 36-5" fill="none" stroke="#fff" strokeOpacity=".22" strokeWidth="3" strokeLinecap="round"/></>}</svg>}
-function ProtectPreview({color}){return <div className="flex h-12 items-center justify-center gap-2"><span className="h-8 w-6 rounded-[9px] border border-white/10" style={{background:color}}/><span className="h-8 w-6 rounded-[9px] border border-white/10" style={{background:color}}/></div>}
-function SkatePreview({wheels,low=false,boot,wheel,compact=false}){const xs=wheels===3?[18,42,66]:[12,30,48,66];return <svg viewBox="0 0 90 62" className={`${compact?'h-12 w-20':'mt-2 h-14 w-full'}`}><path d={low?'M8 28 18 8h39l22 17-8 17H11z':'M8 38 15 4h36l10 19 21 10-9 15H12z'} fill={boot} stroke="rgba(255,255,255,.18)"/><path d="M12 49h70" stroke="#8a8a8a" strokeWidth="3"/>{xs.map(x=><g key={x}><circle cx={x} cy="55" r={wheels===3?7:5.7} fill={wheel} stroke="#111"/><circle cx={x} cy="55" r="1.7" fill="#333"/></g>)}</svg>}
-function CatIcon({type,active}){const c=active?'#FDBA74':'rgba(255,255,255,.42)';return <svg viewBox="0 0 32 24" className="h-6 w-8" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+function Color({c,active,onClick}){return <button onClick={onClick} className={`relative h-16 rounded-[18px] border ${active?'border-[#f6c85b]/40 bg-[#f6c85b]/[.08]':'border-white/[.07] bg-white/[.025]'}`}><span className="mx-auto block h-9 w-9 rounded-full border border-white/10 shadow-[inset_0_-6px_12px_rgba(0,0,0,.15),0_4px_12px_rgba(0,0,0,.18)]" style={{background:c}}/>{active&&<span className="absolute right-2 top-2 text-[10px] font-black text-[#f6c85b]">✓</span>}</button>}
+function SimpleChoice({active,label,onClick,children}){return <button onClick={onClick} className={`rounded-[18px] border p-2.5 ${active?'border-[#f6c85b]/35 bg-[#f6c85b]/[.08]':'border-white/[.07] bg-white/[.025]'}`}>{children}<p className="mt-1 truncate text-[8px] font-bold text-white/50">{label}</p></button>}
+function HairPreview({id,color}){return <svg viewBox="0 0 70 55" className="mx-auto h-12"><defs><radialGradient id={`ph-${id}`}><stop stopColor="#e6b08c"/><stop offset="1" stopColor="#a86e50"/></radialGradient></defs><ellipse cx="35" cy="31" rx="19" ry="20" fill={`url(#ph-${id})`}/><g transform="translate(-129 -69) scale(.92)"><Hair id={id} color={color}/></g></svg>}
+function FacePreview({id}){return <svg viewBox="0 0 78 58" className="mx-auto h-12"><defs><radialGradient id={`pf-${id}`}><stop stopColor="#e7b18e"/><stop offset="1" stopColor="#a86e50"/></radialGradient></defs><ellipse cx="39" cy="29" rx="23" ry="24" fill={`url(#pf-${id})`}/><g transform="translate(-125 -112)"><Face id={id}/></g></svg>}
+function HelmetPreview({color,none}){return <svg viewBox="0 0 70 52" className="mx-auto h-12">{none?<path d="M10 42h50" stroke="rgba(255,255,255,.2)" strokeWidth="2"/>:<><path d="M9 36C7 7 61 6 62 36l-7 6c-13-5-27-5-40 0z" fill={color} stroke="rgba(255,255,255,.18)"/><path d="M18 24c11-8 24-10 36-5" fill="none" stroke="#fff" strokeOpacity=".22" strokeWidth="3" strokeLinecap="round"/><path d="M22 17h9M38 15h10" stroke="#111" strokeOpacity=".25" strokeWidth="2.5" strokeLinecap="round"/></>}</svg>}
+function ProtectPreview({color}){return <div className="flex h-12 items-center justify-center gap-2"><span className="h-8 w-6 rounded-[9px] border border-white/10 shadow-inner" style={{background:color}}/><span className="h-8 w-6 rounded-[9px] border border-white/10 shadow-inner" style={{background:color}}/></div>}
+function SkatePreview({wheels,low=false,boot,wheel,compact=false}){const xs=wheels===3?[18,42,66]:[12,30,48,66];return <svg viewBox="0 0 90 62" className={`${compact?'h-12 w-20':'mt-2 h-14 w-full'}`}><defs><linearGradient id={`pb-${wheels}-${low}`}><stop stopColor="#fff" stopOpacity=".14"/><stop offset=".2" stopColor={boot}/><stop offset="1" stopColor="#000" stopOpacity=".3"/></linearGradient></defs><path d={low?'M8 28 18 8h39l22 17-8 17H11z':'M8 38 15 4h36l10 19 21 10-9 15H12z'} fill={`url(#pb-${wheels}-${low})`} stroke="rgba(255,255,255,.18)"/>{!low&&<><path d="M22 16h27M20 22h32M18 28h36" stroke="#fff" strokeOpacity=".30" strokeWidth="1.2"/></>}<path d="M12 49h70" stroke="#8a8a8a" strokeWidth="3"/>{xs.map(x=><g key={x}><circle cx={x} cy="55" r={wheels===3?7:5.7} fill={wheel} stroke="#111"/><circle cx={x} cy="55" r="1.7" fill="#333"/></g>)}</svg>}
+function CatIcon({type,active}){const c=active?'#f6c85b':'rgba(255,255,255,.38)';return <svg viewBox="0 0 32 24" className="mx-auto h-6 w-8" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
   {type==='skin'&&<><circle cx="16" cy="8" r="5"/><path d="M8 23c1-6 15-6 16 0"/></>}
   {type==='hair'&&<path d="M7 14c0-12 18-13 18 0-5-6-12-5-18 0z"/>}
   {type==='face'&&<><circle cx="16" cy="12" r="9"/><circle cx="13" cy="10" r="1" fill={c}/><circle cx="19" cy="10" r="1" fill={c}/><path d="M13 15c2 2 4 2 6 0"/></>}
