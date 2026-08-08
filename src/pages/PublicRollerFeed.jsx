@@ -62,7 +62,7 @@ function isPublicLegacyItem(item) {
     return false
   }
 
-  return ['Publicación', 'Entrenamiento', 'Cumpleaños', 'Insignia', 'Evento'].includes(
+  return ['Publicación', 'Entrenamiento', 'Cumpleaños', 'Evento'].includes(
     resolveLegacyType(item)
   )
 }
@@ -397,7 +397,7 @@ export default function PublicRollerFeed() {
                   </h1>
 
                   <p className="mt-4 max-w-xl text-sm leading-6 text-white/50">
-                    Entrenos, kilómetros, logros, cumpleaños y eventos en un solo lugar.
+                    Entrenos, kilómetros, cumpleaños y eventos en un solo lugar.
                     Estás viendo una parte de cómo vive Punta Rollers por dentro, sin cuenta y sin
                     mostrar información privada.
                   </p>
@@ -489,7 +489,7 @@ export default function PublicRollerFeed() {
 
                 <p className="mt-4 max-w-2xl text-sm leading-6 text-white/52">
                   Cada alumno de Punta Rollers tiene un espacio digital propio: kilómetros,
-                  entrenamientos, clases, insignias, objetivos y evolución reunidos en una misma
+                  entrenamientos, clases, objetivos y evolución reunidos en una misma
                   experiencia. Parte de ese movimiento es lo que estás viendo acá, pero de forma
                   anónima. Lo personal queda reservado para nuestra comunidad.
                 </p>
@@ -498,7 +498,6 @@ export default function PublicRollerFeed() {
                   <FeatureMini icon="📏" title="Kilómetros" text="Historial y progreso" />
                   <FeatureMini icon="🔥" title="Entrenos" text="Actividad y constancia" />
                   <FeatureMini icon="🎓" title="Clases" text="Seguimiento PR" />
-                  <FeatureMini icon="🏅" title="Insignias" text="Logros desbloqueados" />
                 </div>
 
                 <div className="mt-5 rounded-[24px] border border-white/10 bg-white/[.025] p-4 sm:p-5">
@@ -839,4 +838,4 @@ function PublicFeedCard({ item, fallbackEmoji }) {
       </div>
     </article>
   )
-}
+                   }
