@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import MusicPage from './pages/Music'
 import PRCardPage from './pages/PRCard'
 import ActivityPage from './pages/Activity'
+import MyActivity from './pages/MyActivity'
 import ServicesPage from './pages/Services'
 import ContentPage from './pages/Content'
 import StorePage from './pages/Store'
@@ -147,7 +148,7 @@ function AppRoutes() {
           path="/app/entrenamiento"
           element={
             <PrivateRoute>
-              <Profile mode="training" />
+              <MyActivity />
             </PrivateRoute>
           }
         />
