@@ -73,7 +73,7 @@ export default function PrivateLessonsPanel({
     () =>
       (profiles || []).filter(
         (profile) =>
-          profile.role === 'alumno'
+          (profile.role === 'alumno' || profile.participa_como_alumno === true)
       ),
     [profiles]
   )
