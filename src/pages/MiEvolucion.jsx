@@ -149,7 +149,8 @@ export default function MiEvolucion() {
           .eq('eliminado', false).order('creado_en', { ascending: false }),
         supabase.from('pr_activity_summary').select('*').eq('alumno_id', profileId).maybeSingle(),
         supabase.from('pr_activities').select('*').eq('alumno_id', profileId)
-          .eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(500),
+          .eq('fuente', 'strava')
+          .eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
         supabase.from('actividad_pr').select('*').eq('alumno_id', profileId)
           .or('eliminado.is.null,eliminado.eq.false').order('fecha', { ascending: false }),
         supabase.rpc('obtener_mis_particulares'),
@@ -232,19 +233,43 @@ export default function MiEvolucion() {
     }
     const index = Math.round(Object.values(axes).reduce((a, b) => a + b, 0) / 5)
 
-    const days = Math.max(0, Math.ceil((RACE_DATE.getTime() - Date.now()) / 86400000))
-    const preparation = clamp(
-      (grouped.length * 9) +
-      Math.min(25, kmTotal / 8) +
-      (classesDone * 2) +
-      (badges.length * 2) +
-      (goals.filter((x) => x.estado === 'Completado').length * 8)
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const raceStart = new Date(2026, 10, 1)
+    const seasonStart = new Date(2026, 5, 1)
+    const days = Math.max(0, Math.ceil((raceStart.getTime() - todayStart.getTime()) / 86400000))
+    const totalSeasonDays = Math.max(1, Math.ceil((raceStart.getTime() - seasonStart.getTime()) / 86400000))
+    const elapsedSeasonDays = clamp(
+      Math.ceil((todayStart.getTime() - seasonStart.getTime()) / 86400000),
+      0,
+      totalSeasonDays
     )
+    const calendarProgress = clamp((elapsedSeasonDays / totalSeasonDays) * 100)
+
+    const trainingScore = clamp(
+      (grouped.length * 10) +
+      Math.min(32, kmTotal / 6) +
+      (classesDone * 2.5) +
+      (badges.length * 2) +
+      (goals.filter((x) => x.estado === 'Completado').length * 10)
+    )
+
+    // La preparación deportiva no tiene que copiar el paso del calendario.
+    // La comparamos contra el momento de la temporada para que el alumno
+    // entienda si está en ritmo, adelantado o necesita reforzar.
+    const expectedByToday = clamp(calendarProgress * 0.88)
+    const preparation = clamp(Math.max(trainingScore, expectedByToday * 0.72))
+    const preparationGap = preparation - expectedByToday
+    const preparationStatus =
+      preparationGap >= 8 ? 'Adelantado'
+        : preparationGap >= -10 ? 'En ritmo'
+          : 'A reforzar'
 
     return {
       grouped, best6, best12, featured, first, latest, diff, improvement,
       kmTotal, secondsTotal, badges, notes, events, classesDone, axes, index,
-      days, preparation,
+      days, preparation, calendarProgress, expectedByToday, preparationStatus,
+      totalSeasonDays, elapsedSeasonDays,
     }
   }, [takes, performance, activities, activityItems, privateLessons, summary])
 
@@ -281,9 +306,15 @@ export default function MiEvolucion() {
             </div>
 
             <div className="mt-6 grid grid-cols-3 divide-x divide-white/[.07] rounded-[24px] border border-white/[.07] bg-black/25">
-              <Metric value={activities.length} label="Entrenos" />
+              <Metric value={activities.length} label="Entrenos Strava" />
               <Metric value={data.kmTotal.toLocaleString('es-UY', { maximumFractionDigits: 1 })} label="Km" accent />
               <Metric value={data.badges.length} label="Insignias" />
+            </div>
+
+            <div className="mt-3 rounded-[18px] border border-orange-300/10 bg-orange-400/[.05] px-3 py-2.5">
+              <p className="text-[10px] leading-4 text-orange-100/55">
+                🟠 Los entrenamientos y kilómetros muestran tu historial completo sincronizado desde Strava.
+              </p>
             </div>
 
             <div className="mt-4 flex items-center justify-between rounded-[20px] border border-white/[.06] bg-white/[.025] px-4 py-3">
@@ -299,32 +330,103 @@ export default function MiEvolucion() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[32px] border border-orange-300/20 bg-gradient-to-br from-orange-500/[.12] via-[#111014] to-black">
-          <div className="p-5">
+        <section className="relative overflow-hidden rounded-[34px] border border-orange-300/25 bg-gradient-to-br from-[#351405] via-[#120d0d] to-black shadow-[0_30px_90px_rgba(249,115,22,.12)]">
+          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-orange-500/15 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-amber-400/[.08] blur-3xl" />
+
+          <div className="relative p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">🏁 Objetivo 2026</p>
-                <h2 className="mt-2 font-display text-[30px] leading-none text-white">Camino a Shifter Marathon</h2>
-                <p className="mt-2 text-xs text-white/38">1 de noviembre de 2026 · tu preparación en un solo lugar.</p>
+                <p className="text-[9px] font-black uppercase tracking-[.19em] text-orange-300">🏁 Shifter Marathon 2026</p>
+                <h2 className="mt-2 font-display text-[31px] leading-[.96] text-white">
+                  Tu cuenta regresiva<br/><span className="text-orange-300">ya empezó.</span>
+                </h2>
+                <p className="mt-2 text-xs text-white/38">1 de noviembre · cada semana cuenta.</p>
               </div>
-              <div className="rounded-2xl border border-orange-300/20 bg-orange-400/10 px-3 py-2 text-center">
-                <p className="font-display text-2xl text-orange-300">{data.days}</p>
-                <p className="text-[7px] font-black uppercase tracking-wider text-white/30">días</p>
+
+              <div className="relative grid h-[88px] w-[88px] shrink-0 place-items-center rounded-full"
+                style={{
+                  background: `conic-gradient(rgb(251 146 60) ${data.calendarProgress}%, rgba(255,255,255,.07) 0)`
+                }}
+              >
+                <div className="grid h-[72px] w-[72px] place-items-center rounded-full bg-[#100c0c] text-center">
+                  <div>
+                    <p className="font-display text-[29px] leading-none text-orange-300">{data.days}</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-[.14em] text-white/30">días</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-bold text-white">Preparación PR</span>
-                <span className="text-xs font-black text-orange-300">{Math.round(data.preparation)}%</span>
+            <div className="mt-6 rounded-[25px] border border-orange-300/15 bg-black/30 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/28">Tiempo de temporada transcurrido</p>
+                  <p className="mt-1 text-sm font-bold text-white">
+                    {Math.round(data.calendarProgress)}% del camino hasta la carrera
+                  </p>
+                </div>
+                <span className="rounded-full border border-orange-300/20 bg-orange-400/10 px-2.5 py-1 text-[9px] font-black text-orange-200">
+                  {data.days} días restantes
+                </span>
               </div>
-              <ProgressBar value={data.preparation} />
-              <p className="mt-2 text-[9px] leading-4 text-white/25">
-                Indicador interno construido con tus registros disponibles: entrenamientos, kilómetros, tomas, clases, metas e insignias.
-              </p>
+
+              <div className="relative mt-4">
+                <div className="h-3 overflow-hidden rounded-full bg-white/[.07]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-orange-600 via-orange-400 to-amber-300"
+                    style={{ width: `${data.calendarProgress}%` }}
+                  />
+                </div>
+                <div
+                  className="absolute top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,.8)]"
+                  style={{ left: `calc(${data.calendarProgress}% - 2px)` }}
+                />
+              </div>
+
+              <div className="mt-2 flex justify-between text-[8px] font-bold uppercase tracking-wider text-white/22">
+                <span>Junio</span><span>Julio</span><span>Agosto</span><span>Sept.</span><span>Oct.</span><span>🏁 Nov.</span>
+              </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-2.5">
+            <div className="mt-4 rounded-[25px] border border-white/[.07] bg-white/[.025] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/28">Preparación PR</p>
+                  <p className="mt-1 text-lg font-black text-white">{data.preparationStatus}</p>
+                  <p className="mt-1 text-[10px] leading-4 text-white/32">
+                    No mide solamente tiempo: usa tus km, entrenamientos, tomas, clases, metas e insignias.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-display text-[34px] leading-none text-orange-300">{Math.round(data.preparation)}%</p>
+                  <p className="mt-1 text-[8px] uppercase text-white/25">preparación</p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <ProgressBar value={data.preparation} />
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 rounded-2xl bg-black/25 px-3 py-2">
+                <span className={`h-2 w-2 rounded-full ${
+                  data.preparationStatus === 'Adelantado'
+                    ? 'bg-emerald-400'
+                    : data.preparationStatus === 'En ritmo'
+                      ? 'bg-orange-400'
+                      : 'bg-amber-300'
+                }`} />
+                <p className="text-[10px] text-white/42">
+                  {data.preparationStatus === 'Adelantado'
+                    ? 'Vas por encima del ritmo esperado para este momento de la preparación.'
+                    : data.preparationStatus === 'En ritmo'
+                      ? 'Tu preparación acompaña bien el momento actual de la temporada.'
+                      : 'Todavía hay margen: sumar constancia hará crecer este indicador.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
               <div className="rounded-[22px] border border-white/[.07] bg-black/25 p-4">
                 <p className="text-[8px] uppercase tracking-wider text-white/25">Mejor 6K</p>
                 <p className="mt-2 font-display text-[26px] text-white">{data.best6 ? formatDuration(data.best6.tiempo_segundos) : '—'}</p>
@@ -361,39 +463,89 @@ export default function MiEvolucion() {
           {data.grouped.length ? (
             <>
               <div className="mt-5 rounded-[24px] border border-white/[.07] bg-white/[.025] p-4">
-                <div className="flex items-end justify-between">
+                <div className="flex items-end justify-between gap-4">
                   <div>
                     <p className="text-[8px] uppercase tracking-wider text-white/25">Distancia destacada</p>
                     <p className="mt-1 font-display text-3xl text-orange-300">{data.featured ? `${data.featured}K` : '—'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[8px] uppercase tracking-wider text-white/25">Mejora acumulada</p>
-                    <p className="mt-1 font-display text-2xl text-white">{data.diff > 0 ? `−${formatDuration(data.diff)}` : 'En progreso'}</p>
+                    <p className="text-[8px] uppercase tracking-wider text-white/25">Entre primera y última toma</p>
+                    <p className={`mt-1 font-display text-2xl ${data.diff > 0 ? 'text-emerald-300' : 'text-white'}`}>
+                      {data.diff > 0 ? `−${formatDuration(data.diff)}` : data.diff < 0 ? `+${formatDuration(Math.abs(data.diff))}` : 'Sin cambio'}
+                    </p>
                   </div>
                 </div>
-                <div className="mt-4"><ProgressBar value={Math.max(8, data.improvement * 7)} tone="green" /></div>
+
+                {data.first && data.latest && (
+                  <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                    <div className="rounded-2xl border border-white/[.06] bg-black/25 p-3 text-center">
+                      <p className="text-[8px] uppercase tracking-wider text-white/25">Primera toma</p>
+                      <p className="mt-2 font-display text-[23px] text-white">{formatDuration(data.first.tiempo_segundos)}</p>
+                    </div>
+                    <div className={`text-xl ${data.diff > 0 ? 'text-emerald-300' : 'text-white/30'}`}>→</div>
+                    <div className={`rounded-2xl border p-3 text-center ${
+                      data.diff > 0
+                        ? 'border-emerald-300/20 bg-emerald-400/[.08]'
+                        : 'border-white/[.06] bg-black/25'
+                    }`}>
+                      <p className="text-[8px] uppercase tracking-wider text-white/25">Última toma</p>
+                      <p className={`mt-2 font-display text-[23px] ${data.diff > 0 ? 'text-emerald-300' : 'text-white'}`}>
+                        {formatDuration(data.latest.tiempo_segundos)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 rounded-2xl bg-black/20 px-3 py-3">
+                  <p className="text-[10px] leading-5 text-white/42">
+                    {data.diff > 0
+                      ? `📈 Mejoraste ${formatDuration(data.diff)} (${data.improvement.toFixed(1)}%) en tu distancia destacada. La evolución se mide por tiempo real, no por llenar una barra arbitraria.`
+                      : data.diff < 0
+                        ? `↔️ La última toma fue ${formatDuration(Math.abs(data.diff))} más lenta. No significa retroceso: clima, carga de entrenamiento y estrategia también influyen.`
+                        : 'Necesitamos otra toma comparable para medir cuánto mejoraste.'}
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-4 flex items-end gap-2 rounded-[24px] border border-white/[.06] bg-black/25 px-3 pt-5 pb-3 min-h-[150px]">
-                {[...data.grouped].reverse().slice(-6).map((take, idx, arr) => {
-                  const record = take.rows.find((x) => normalizeDistance(x.distancia_km) === data.featured) || take.rows[0]
-                  const seconds = Number(record?.tiempo_segundos) || 0
-                  const all = arr.map((g) => {
-                    const r = g.rows.find((x) => normalizeDistance(x.distancia_km) === data.featured) || g.rows[0]
-                    return Number(r?.tiempo_segundos) || 0
-                  }).filter(Boolean)
-                  const max = Math.max(...all, 1)
-                  const min = Math.min(...all, max)
-                  const quality = max === min ? 65 : 35 + ((max - seconds) / (max - min)) * 60
-                  return (
-                    <div key={take.numero} className="flex flex-1 flex-col items-center gap-2">
-                      <div className="flex h-24 w-full items-end rounded-xl bg-white/[.025] p-1">
-                        <div className="w-full rounded-lg bg-gradient-to-t from-orange-600 to-amber-300" style={{ height: `${clamp(quality, 20, 100)}%` }} />
+              <div className="mt-4 rounded-[24px] border border-white/[.06] bg-black/25 p-4">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/25">Progresión de tomas</p>
+                    <p className="mt-1 text-[10px] text-white/35">En esta gráfica, más alto = mejor tiempo.</p>
+                  </div>
+                  <span className="text-[9px] text-orange-200">↓ tiempo = ↑ progreso</span>
+                </div>
+
+                <div className="flex min-h-[160px] items-end gap-2">
+                  {[...data.grouped].reverse().slice(-6).map((take, idx, arr) => {
+                    const record = take.rows.find((x) => normalizeDistance(x.distancia_km) === data.featured) || take.rows[0]
+                    const seconds = Number(record?.tiempo_segundos) || 0
+                    const all = arr.map((g) => {
+                      const r = g.rows.find((x) => normalizeDistance(x.distancia_km) === data.featured) || g.rows[0]
+                      return Number(r?.tiempo_segundos) || 0
+                    }).filter(Boolean)
+                    const max = Math.max(...all, 1)
+                    const min = Math.min(...all, max)
+                    const quality = max === min ? 70 : 46 + ((max - seconds) / (max - min)) * 48
+
+                    return (
+                      <div key={take.numero} className="flex min-w-0 flex-1 flex-col items-center">
+                        <p className="mb-2 text-[9px] font-bold text-white/55">{seconds ? formatDuration(seconds) : '—'}</p>
+                        <div className="flex h-28 w-full items-end rounded-xl bg-white/[.025] p-1">
+                          <div
+                            className={`w-full rounded-lg ${
+                              seconds === Math.min(...all)
+                                ? 'bg-gradient-to-t from-emerald-600 to-emerald-300'
+                                : 'bg-gradient-to-t from-orange-600 to-amber-300'
+                            }`}
+                            style={{ height: `${clamp(quality, 35, 96)}%` }}
+                          />
+                        </div>
+                        <span className="mt-2 text-[8px] font-bold text-white/28">T{take.numero}</span>
                       </div>
-                      <span className="text-[8px] font-bold text-white/28">T{take.numero}</span>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
 
               <button type="button" onClick={() => setHistoryOpen((x) => !x)}
@@ -488,11 +640,23 @@ export default function MiEvolucion() {
             </div>
           </div>
           {data.notes[0] ? (
-            <div className="mt-3 rounded-[22px] border border-violet-300/15 bg-violet-400/[.06] p-4">
+            <details className="group mt-3 rounded-[22px] border border-violet-300/15 bg-violet-400/[.06] p-4">
               <p className="text-[8px] font-black uppercase tracking-wider text-violet-200">Última devolución</p>
-              <p className="mt-2 text-sm leading-6 text-white/60">{data.notes[0].descripcion || data.notes[0].titulo}</p>
-              <p className="mt-2 text-[9px] text-white/25">{formatDate(data.notes[0].fecha)}</p>
-            </div>
+              <p className="mt-2 text-sm leading-6 text-white/60 group-open:hidden"
+                style={{ display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                {data.notes[0].descripcion || data.notes[0].titulo}
+              </p>
+              <p className="mt-2 hidden text-sm leading-6 text-white/60 group-open:block">
+                {data.notes[0].descripcion || data.notes[0].titulo}
+              </p>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <p className="text-[9px] text-white/25">{formatDate(data.notes[0].fecha)}</p>
+                <summary className="cursor-pointer list-none text-[10px] font-black text-violet-200">
+                  <span className="group-open:hidden">Leer completa ↓</span>
+                  <span className="hidden group-open:inline">Cerrar ↑</span>
+                </summary>
+              </div>
+            </details>
           ) : (
             <div className="mt-3"><EmptyLine icon="📝" title="Todavía sin devolución" text="Las observaciones de tus profesores aparecerán automáticamente." /></div>
           )}
@@ -531,4 +695,4 @@ export default function MiEvolucion() {
       </div>
     </AppLayout>
   )
-}
+      }
