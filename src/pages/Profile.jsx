@@ -1294,18 +1294,46 @@ export default function Profile() {
 
             <Link
               to="/app/evolucion"
-              className="mt-3 flex w-full items-center justify-between gap-3 rounded-[22px] border border-orange-300/20 bg-gradient-to-r from-orange-500/[0.13] via-orange-400/[0.07] to-white/[0.025] px-4 py-3.5 shadow-[0_12px_34px_rgba(249,115,22,.08)]"
+              className="group relative mt-3 block overflow-hidden rounded-[22px] border border-orange-300/25 bg-gradient-to-r from-orange-500/[0.14] via-orange-400/[0.07] to-white/[0.025] px-4 py-3.5 shadow-[0_12px_34px_rgba(249,115,22,.08)] transition active:scale-[0.99]"
             >
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-300/20 bg-orange-400/10 text-xl">
-                  📈
+              <div className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-orange-500/10 blur-2xl" />
+
+              <div className="relative flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-300/20 bg-orange-400/10 text-xl">
+                    📈
+                    <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#111016] bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,.9)]" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-black text-white">Mi evolución</p>
+                      <span className="rounded-full border border-orange-300/25 bg-orange-400/15 px-2 py-0.5 text-[8px] font-black uppercase tracking-[.12em] text-orange-200">
+                        Nuevo
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[10px] text-white/35">
+                      Performance · objetivos · Shifter Marathon
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-white">Mi evolución</p>
-                  <p className="mt-0.5 truncate text-[10px] text-white/35">Performance · objetivos · Shifter Marathon</p>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="hidden rounded-full border border-white/[0.07] bg-white/[0.035] px-2.5 py-1 text-[8px] font-bold uppercase tracking-[.1em] text-white/35 sm:inline">
+                    Ver ahora
+                  </span>
+                  <span className="text-orange-300 transition-transform group-active:translate-x-0.5">→</span>
                 </div>
               </div>
-              <span className="shrink-0 text-orange-300">→</span>
+
+              <div className="relative mt-3 flex items-center justify-between border-t border-orange-300/10 pt-2.5">
+                <p className="text-[9px] leading-4 text-orange-100/45">
+                  Tus km, marcas, metas y preparación para la carrera.
+                </p>
+                <span className="ml-3 shrink-0 text-[8px] font-black uppercase tracking-[.12em] text-orange-300/75">
+                  Descubrir
+                </span>
+              </div>
             </Link>
 
             {!hidePaymentSection && (
