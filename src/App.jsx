@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
+import StudentLaunchGate from './components/StudentLaunchGate'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -27,6 +28,7 @@ import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
 import MiEvolucion from './pages/MiEvolucion'
 import RollerAvatar from './pages/RollerAvatar'
+import AvatarPremiumPreview from './pages/AvatarPremiumPreview'
 import Insignias from './pages/Insignias'
 
 function ScrollToTop() {
@@ -62,7 +64,11 @@ function PrivateRoute({ children }) {
     )
   }
 
-  return children
+  return (
+    <StudentLaunchGate user={user}>
+      {children}
+    </StudentLaunchGate>
+  )
 }
 
 function AdminRoute({ children }) {
@@ -85,7 +91,11 @@ function AdminRoute({ children }) {
     return <Navigate to="/app/perfil" replace />
   }
 
-  return children
+  return (
+    <StudentLaunchGate user={user}>
+      {children}
+    </StudentLaunchGate>
+  )
 }
 
 function AppRoutes() {
@@ -131,6 +141,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <RollerAvatar />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/avatar-premium"
+          element={
+            <PrivateRoute>
+              <AvatarPremiumPreview />
             </PrivateRoute>
           }
         />
