@@ -7,20 +7,8 @@ const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
   { key: 'Entrenamiento', label: 'Entrenos' },
   { key: 'Cumpleaños', label: 'Cumples' },
-  { key: 'Insignia', label: 'Logros' },
   { key: 'Evento', label: 'Eventos' },
 ]
-
-const REACTION_OPTIONS = [
-  { key: 'aplauso', icon: '👏', label: 'Grande' },
-  { key: 'fuego', icon: '🔥', label: 'Motivador' },
-  { key: 'corazon', icon: '❤️', label: 'Me encanta' },
-  { key: 'amor', icon: '😍', label: 'Increíble' },
-]
-
-function getReactionOption(key) {
-  return REACTION_OPTIONS.find((item) => item.key === key) || REACTION_OPTIONS[0]
-}
 
 const EMPTY_STATES = {
   Todos: {
@@ -45,7 +33,7 @@ const EMPTY_STATES = {
     icon: '🏅',
     title: 'Todavía no hay logros publicados',
     description:
-      'Las insignias otorgadas a la comunidad aparecerán acá.',
+      'Los movimientos de la comunidad aparecerán acá.',
   },
   Evento: {
     icon: '📅',
@@ -418,209 +406,6 @@ function normalizeLegacyItem(item, profilesByAnyId) {
   }
 }
 
-
-
-const DEFAULT_ROLLER_EVENTS = [
-  {
-    titulo: 'Morning on Street by PR',
-    descripcion:
-      'Rodada exclusiva de 19 km hacia La Barra, ida y vuelta. Nos concentramos a las 10:00 en la Parada 2 y, al finalizar, nos vamos a almorzar todos juntos.',
-    inicio: '2026-07-26T13:00:00.000Z',
-    fin: '2026-07-26T15:00:00.000Z',
-    mes_referencia: '',
-    lugar: 'Parada 2, La Brava',
-    link: '',
-    color: 'street',
-    estado: 'Publicado',
-    visible_feed: true,
-    creado_por_nombre: 'Equipo Punta Rollers',
-  },
-  {
-    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
-    descripcion:
-      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeón mundial máster y especialista con más de 40 años de experiencia. Horarios y ubicación a confirmar.',
-    inicio: '2026-09-04T03:00:00.000Z',
-    fin: '2026-09-07T02:59:00.000Z',
-    mes_referencia:
-      'Viernes 4, sábado 5 y domingo 6 de septiembre · horario a confirmar',
-    lugar: 'Ubicación a confirmar',
-    link: '',
-    color: 'violet',
-    estado: 'Publicado',
-    visible_feed: true,
-    creado_por_nombre: 'Equipo Punta Rollers',
-  },
-  {
-    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
-    descripcion:
-      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clínica intensiva de patinaje. Próximamente anunciaremos las fechas, los horarios y la ubicación.',
-    inicio: null,
-    fin: null,
-    mes_referencia: 'Octubre 2026 · fechas a confirmar',
-    lugar: 'Ubicación a confirmar',
-    link: '',
-    color: 'electric',
-    estado: 'Próximamente',
-    visible_feed: true,
-    creado_por_nombre: 'Equipo Punta Rollers',
-  },
-]
-
-
-function normalizeEventTitle(value) {
-  return String(value || '')
-    .trim()
-    .toLocaleLowerCase('es-UY')
-}
-
-function getDefaultRollerEvents() {
-  return DEFAULT_ROLLER_EVENTS.map((event, index) => ({
-    id: `default-event-${index + 1}`,
-    created_at: event.inicio || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    _isFallback: true,
-    ...event,
-  }))
-}
-
-function mergeRollerEvents(databaseEvents = []) {
-  const byTitle = new Map(
-    (databaseEvents || []).map((event) => [
-      normalizeEventTitle(event.titulo),
-      event,
-    ])
-  )
-
-  const merged = getDefaultRollerEvents().map((fallback) => {
-    const databaseVersion = byTitle.get(
-      normalizeEventTitle(fallback.titulo)
-    )
-
-    if (databaseVersion) {
-      byTitle.delete(normalizeEventTitle(fallback.titulo))
-      return databaseVersion
-    }
-
-    return fallback
-  })
-
-  return [...merged, ...byTitle.values()]
-}
-
-const ROLLER_EVENT_COLORS = {
-  street: {
-    card: 'from-[#2a0d0d] via-[#101014] to-[#27120b]',
-    border: 'border-red-400/25',
-    accent: 'text-red-200',
-    glow: 'bg-red-500/15',
-  },
-  violet: {
-    card: 'from-[#25103b] via-[#17101f] to-[#09090d]',
-    border: 'border-fuchsia-300/25',
-    accent: 'text-fuchsia-200',
-    glow: 'bg-fuchsia-500/15',
-  },
-  electric: {
-    card: 'from-[#0b2141] via-[#0d1724] to-[#08090d]',
-    border: 'border-cyan-300/25',
-    accent: 'text-cyan-200',
-    glow: 'bg-cyan-500/15',
-  },
-  gold: {
-    card: 'from-[#2b2008] via-[#15130d] to-[#08080b]',
-    border: 'border-amber-300/25',
-    accent: 'text-amber-200',
-    glow: 'bg-amber-500/15',
-  },
-  green: {
-    card: 'from-[#0b2c22] via-[#0d1814] to-[#08090b]',
-    border: 'border-emerald-300/25',
-    accent: 'text-emerald-200',
-    glow: 'bg-emerald-500/15',
-  },
-}
-
-function getRollerEventStatus(event) {
-  if (event.estado === 'Cancelado') return 'Cancelado'
-  if (!event.inicio) return 'Próximamente'
-
-  const start = new Date(event.inicio).getTime()
-  const end = event.fin ? new Date(event.fin).getTime() : start
-  const now = Date.now()
-
-  if (Number.isNaN(start)) return 'Próximamente'
-  if (now < start) return 'Publicado'
-  if (now <= end + 5 * 60000) return 'En curso'
-  return 'Finalizado'
-}
-
-function isVisibleRollerEvent(event) {
-  if (!event || event.visible_feed === false || event.estado === 'Cancelado') {
-    return false
-  }
-
-  if (!event.inicio) return true
-
-  const end = event.fin
-    ? new Date(event.fin).getTime()
-    : new Date(event.inicio).getTime()
-
-  if (Number.isNaN(end)) return true
-  return Date.now() <= end + 5 * 60000
-}
-
-function formatRollerEventRange(event) {
-  if (event.mes_referencia) return event.mes_referencia
-  if (!event.inicio) return 'Fecha a confirmar'
-
-  const start = new Date(event.inicio)
-  const end = event.fin ? new Date(event.fin) : null
-
-  const startText = start.toLocaleString('es-UY', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-
-  if (!end || Number.isNaN(end.getTime())) return startText
-
-  const sameDay = start.toDateString() === end.toDateString()
-  const endText = end.toLocaleString('es-UY', {
-    weekday: sameDay ? undefined : 'long',
-    day: sameDay ? undefined : 'numeric',
-    month: sameDay ? undefined : 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-
-  return `${startText} · hasta ${endText}`
-}
-
-function normalizeRollerEvent(event) {
-  return {
-    id: `roller-event-${event.id}`,
-    rawId: event.id,
-    type: 'Evento',
-    date:
-      event.inicio ||
-      event.created_at ||
-      new Date().toISOString(),
-    eventStart: event.inicio || null,
-    title: event.titulo || 'Evento Punta Rollers',
-    description: event.descripcion || '',
-    eventLocation: event.lugar || '',
-    eventUrl: event.link || '',
-    eventColor: event.color || 'street',
-    eventStatus: getRollerEventStatus(event),
-    eventRange: formatRollerEventRange(event),
-    creatorName: event.creado_por_nombre || 'Equipo Punta Rollers',
-    featured: true,
-  }
-}
-
-
 function getBirthdayParts(profile = {}) {
   const directMonth = Number(profile.cumple_mes)
   const directDay = Number(profile.cumple_dia)
@@ -758,18 +543,7 @@ export default function Activity() {
 
   const [activities, setActivities] = useState([])
   const [legacyItems, setLegacyItems] = useState([])
-  const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
-  const [reactions, setReactions] = useState([])
-  const [reactionModalItem, setReactionModalItem] = useState(null)
-  const [savingReactionKey, setSavingReactionKey] = useState('')
-  const [energy, setEnergy] = useState(() => {
-    try {
-      return localStorage.getItem('pr_rollerfeed_energy') || ''
-    } catch {
-      return ''
-    }
-  })
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -852,8 +626,6 @@ export default function Activity() {
       profilesResponse,
       activitiesResponse,
       legacyResponse,
-      eventsResponse,
-      reactionsResponse,
     ] = await Promise.all([
       supabase.from('profiles_feed').select('*').limit(500),
 
@@ -871,16 +643,6 @@ export default function Activity() {
         .order('fecha', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100),
-
-      supabase
-        .from('rollerfeed_events')
-        .select('*'),
-
-      supabase
-        .from('rollerfeed_reactions')
-        .select('*')
-        .order('created_at', { ascending: true })
-        .limit(2000),
     ])
 
     if (profilesResponse.error) {
@@ -916,44 +678,6 @@ export default function Activity() {
             isVisibleEvent(item)
         )
       )
-    }
-
-    if (eventsResponse.error) {
-      setEvents(
-        getDefaultRollerEvents()
-          .filter(
-            (event) =>
-              event.estado !== 'Cancelado' &&
-              event.visible_feed !== false
-          )
-          .filter(isVisibleRollerEvent)
-      )
-      setMessage((current) =>
-        current ||
-        `Los eventos oficiales se cargaron desde el respaldo de la app. Supabase respondió: ${eventsResponse.error.message}`
-      )
-    } else {
-      const loadedEvents = mergeRollerEvents(eventsResponse.data || [])
-
-      setEvents(
-        loadedEvents
-          .filter(
-            (event) =>
-              event.estado !== 'Cancelado' &&
-              event.visible_feed !== false
-          )
-          .filter(isVisibleRollerEvent)
-      )
-    }
-
-    if (reactionsResponse.error) {
-      setReactions([])
-      setMessage((current) =>
-        current ||
-        `Las reacciones todavía no están disponibles: ${reactionsResponse.error.message}`
-      )
-    } else {
-      setReactions(reactionsResponse.data || [])
     }
 
     setProfiles(profilesResponse.data || [])
@@ -1017,88 +741,6 @@ export default function Activity() {
     return map
   }, [profiles])
 
-  const currentProfile = useMemo(
-    () => profilesByAnyId.get(String(profileId)) || {},
-    [profilesByAnyId, profileId]
-  )
-
-  const currentReactionProfileId = currentProfile?.id || profileId || ''
-
-  const reactionsByFeedKey = useMemo(() => {
-    const map = new Map()
-    reactions.forEach((reaction) => {
-      const key = String(reaction.feed_key || '')
-      if (!key) return
-      const current = map.get(key) || []
-      current.push(reaction)
-      map.set(key, current)
-    })
-    return map
-  }, [reactions])
-
-  function getItemReactions(item) {
-    return reactionsByFeedKey.get(String(item?.id || '')) || []
-  }
-
-  async function selectReaction(item, reactionKey) {
-    if (!item?.id || !currentReactionProfileId) {
-      setMessage('No pudimos identificar tu perfil para guardar la reacción.')
-      return
-    }
-    if (savingReactionKey) return
-
-    const feedKey = String(item.id)
-    const requestKey = `${feedKey}-${reactionKey}`
-    const existing = reactions.find(
-      (reaction) =>
-        String(reaction.feed_key) === feedKey &&
-        String(reaction.profile_id) === String(currentReactionProfileId)
-    )
-
-    setSavingReactionKey(requestKey)
-    setMessage('')
-
-    try {
-      if (existing?.reaction === reactionKey) {
-        const { error } = await supabase
-          .from('rollerfeed_reactions')
-          .delete()
-          .eq('id', existing.id)
-        if (error) throw error
-        setReactions((current) => current.filter((reaction) => reaction.id !== existing.id))
-        return
-      }
-
-      const payload = {
-        feed_key: feedKey,
-        profile_id: String(currentReactionProfileId),
-        reaction: reactionKey,
-        updated_at: new Date().toISOString(),
-      }
-
-      const { data, error } = await supabase
-        .from('rollerfeed_reactions')
-        .upsert(payload, { onConflict: 'feed_key,profile_id' })
-        .select('*')
-        .single()
-      if (error) throw error
-
-      setReactions((current) => [
-        ...current.filter(
-          (reaction) => !(
-            String(reaction.feed_key) === feedKey &&
-            String(reaction.profile_id) === String(currentReactionProfileId)
-          )
-        ),
-        data,
-      ])
-    } catch (error) {
-      setMessage(`No pudimos guardar tu reacción: ${error?.message || 'error desconocido'}`)
-    } finally {
-      setSavingReactionKey('')
-    }
-  }
-
   const feedItems = useMemo(() => {
     const trainingPosts = activities.map((activity) =>
       normalizeActivity(activity, profilesByAnyId)
@@ -1109,11 +751,9 @@ export default function Activity() {
     )
 
     const birthdays = buildBirthdayPosts(profiles)
-    const eventPosts = events.map(normalizeRollerEvent)
 
     return [
       ...birthdays,
-      ...eventPosts,
       ...trainingPosts,
       ...communityPosts,
     ].sort(
@@ -1124,7 +764,6 @@ export default function Activity() {
   }, [
     activities,
     legacyItems,
-    events,
     profiles,
     profilesByAnyId,
   ])
@@ -1132,39 +771,13 @@ export default function Activity() {
   const visibleItems = useMemo(() => {
     if (filter === 'Todos') {
       return feedItems.filter(
-        (item) =>
-          item.type !== 'Insignia' &&
-          item.type !== 'Evento'
+        (item) => item.type !== 'Insignia'
       )
     }
 
-    const filteredItems = feedItems.filter(
+    return feedItems.filter(
       (item) => item.type === filter
     )
-
-    if (filter === 'Evento') {
-      return [...filteredItems].sort((a, b) => {
-        const aHasConfirmedDate = Boolean(a.eventStart)
-        const bHasConfirmedDate = Boolean(b.eventStart)
-
-        if (aHasConfirmedDate && bHasConfirmedDate) {
-          return (
-            new Date(a.eventStart).getTime() -
-            new Date(b.eventStart).getTime()
-          )
-        }
-
-        if (aHasConfirmedDate) return -1
-        if (bHasConfirmedDate) return 1
-
-        return String(a.title || '').localeCompare(
-          String(b.title || ''),
-          'es-UY'
-        )
-      })
-    }
-
-    return filteredItems
   }, [feedItems, filter])
 
   const communityStats = useMemo(() => {
@@ -1208,120 +821,6 @@ export default function Activity() {
       ) || null
     )
   }, [activities, profileId, profilesByAnyId])
-
-
-  const firstName = useMemo(() => {
-    const fullName = getProfileName(currentProfile)
-    return fullName ? fullName.split(' ')[0] : 'roller'
-  }, [currentProfile])
-
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Buenos días'
-    if (hour < 19) return 'Buenas tardes'
-    return 'Buenas noches'
-  }, [])
-
-  const todaySnapshot = useMemo(() => {
-    const now = new Date()
-    const start = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    ).getTime()
-    const end = start + 86400000
-
-    const todayActivities = activities.filter((activity) => {
-      const raw =
-        activity.fecha_inicio ||
-        activity.created_at ||
-        activity.creado_en
-      const time = new Date(raw || 0).getTime()
-      return Number.isFinite(time) && time >= start && time < end
-    })
-
-    const todayKilometers = todayActivities.reduce(
-      (sum, activity) =>
-        sum + (Number(activity.distancia_metros) || 0),
-      0
-    ) / 1000
-
-    const todaySkaters = new Set(
-      todayActivities
-        .map((activity) => activity.alumno_id)
-        .filter(Boolean)
-        .map(String)
-    ).size
-
-    const birthdays = feedItems.filter(
-      (item) =>
-        item.type === 'Cumpleaños' &&
-        Number(item.daysUntil) === 0
-    )
-
-    const badges = feedItems.filter((item) => {
-      if (item.type !== 'Insignia') return false
-      const time = new Date(item.date || 0).getTime()
-      return Number.isFinite(time) && time >= start && time < end
-    })
-
-    const upcomingEvent =
-      feedItems
-        .filter(
-          (item) =>
-            item.type === 'Evento' &&
-            item.eventStatus !== 'Finalizado' &&
-            item.eventStatus !== 'Cancelado'
-        )
-        .sort((a, b) => {
-          if (!a.eventStart && !b.eventStart) return 0
-          if (!a.eventStart) return 1
-          if (!b.eventStart) return -1
-          return (
-            new Date(a.eventStart).getTime() -
-            new Date(b.eventStart).getTime()
-          )
-        })[0] || null
-
-    return {
-      activities: todayActivities.length,
-      kilometers: todayKilometers,
-      skaters: todaySkaters,
-      birthdays,
-      badges: badges.length,
-      upcomingEvent,
-    }
-  }, [activities, feedItems])
-
-  const vueltaDelDia = useMemo(() => {
-    const preferred = feedItems.find(
-      (item) =>
-        item.featured &&
-        item.type !== 'Evento' &&
-        item.type !== 'Cumpleaños'
-    )
-
-    if (preferred) return preferred
-
-    return (
-      feedItems.find(
-        (item) =>
-          item.type === 'Entrenamiento' ||
-          item.type === 'Publicación' ||
-          item.type === 'Insignia'
-      ) || null
-    )
-  }, [feedItems])
-
-  function chooseEnergy(value) {
-    setEnergy(value)
-
-    try {
-      localStorage.setItem('pr_rollerfeed_energy', value)
-    } catch {
-      // El EnergyTómetro sigue funcionando aunque el navegador bloquee localStorage.
-    }
-  }
 
   async function refreshFeed() {
     if (refreshing || syncing) return
@@ -1390,293 +889,219 @@ export default function Activity() {
     EMPTY_STATES[filter] || EMPTY_STATES.Todos
 
   return (
-    <AppLayout title="RollerFeed">
-      <div className="pr-page animate-page-enter pb-24">
-        <header className="border-b border-white/10 pb-6">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="h-px w-9 bg-orange-400" />
-                <p className="text-[9px] font-black uppercase tracking-[0.24em] text-orange-300">
-                  La comunidad está rodando
+    <AppLayout title="RollerFeed ⚡️">
+      <div className="pr-page space-y-5 animate-page-enter">
+        <section className="relative overflow-hidden rounded-[34px] border border-orange-300/20 bg-gradient-to-br from-[#ff5a1f]/25 via-[#16100f] to-[#08080c] p-5 shadow-[0_28px_90px_rgba(249,115,22,0.14)]">
+          <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
+
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5">
+                  <span className="w-2 h-2 rounded-full bg-orange-400" />
+                  <span className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.17em]">
+                    La comunidad está rodando
+                  </span>
+                </div>
+
+                <h1 className="font-display text-[38px] leading-none text-white mt-4">
+                  RollerFeed ⚡️
+                </h1>
+
+                <p className="text-white/48 text-sm mt-3 leading-relaxed max-w-[290px]">
+                  Entrenamientos, logros, eventos y momentos que nos hacen sentir parte de Punta Rollers.
                 </p>
               </div>
-              <p className="mt-4 text-xs font-semibold text-white/35">
-                {greeting}, {firstName}
-              </p>
-              <h1 className="mt-1 font-display text-[42px] leading-[0.92] text-white">
-                RollerFeed
-              </h1>
-              <p className="mt-3 max-w-[300px] text-sm leading-6 text-white/42">
-                Lo que está pasando hoy en Punta Rollers, sin ruido de más.
-              </p>
+
+              <div className="w-16 h-16 rounded-[23px] border border-orange-300/25 bg-orange-400/10 grid place-items-center text-3xl shrink-0">
+                🛼
+              </div>
             </div>
 
-            <button
-              type="button"
-              disabled={refreshing || syncing}
-              onClick={refreshFeed}
-              className="mb-1 shrink-0 border-b border-white/15 pb-1 text-[10px] font-bold text-white/45 transition hover:border-orange-300 hover:text-orange-200 disabled:opacity-40"
-            >
-              {refreshing || syncing ? 'Actualizando…' : 'Actualizar ↻'}
-            </button>
-          </div>
-
-          <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 border-y border-white/10 py-4">
-            <HeroStat value={communityStats.activities} label="Actividades" />
-            <HeroStat
-              value={communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })}
-              label="Km rodados"
-              highlight
-            />
-            <HeroStat value={communityStats.skaters} label="Patinadores" />
-          </div>
-        </header>
-
-        <TodayInPRCard snapshot={todaySnapshot} onSelectFilter={setFilter} />
-
-        <section className="border-b border-white/10 py-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="section-label text-orange-200">EnergyTómetro</p>
-              <h2 className="mt-1 font-display text-[25px] text-white">¿Cómo llegás hoy?</h2>
+            <div className="grid grid-cols-3 gap-2.5 mt-5">
+              <HeroStat
+                value={communityStats.activities}
+                label="Actividades"
+              />
+              <HeroStat
+                value={communityStats.kilometers.toLocaleString(
+                  'es-UY',
+                  { maximumFractionDigits: 0 }
+                )}
+                label="Km rodados"
+                highlight
+              />
+              <HeroStat
+                value={communityStats.skaters}
+                label="Patinadores"
+              />
             </div>
-            {energy && (
-              <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-emerald-300/70">Guardado ✓</span>
-            )}
           </div>
+        </section>
 
-          <div className="mt-4 flex items-center justify-between gap-1">
-            {[
-              { key: 'full', icon: '🤩', label: 'A full' },
-              { key: 'bien', icon: '🙂', label: 'Bien' },
-              { key: 'normal', icon: '😐', label: 'Normal' },
-              { key: 'cansado', icon: '😴', label: 'Cansado' },
-              { key: 'cafe', icon: '☕', label: 'Café' },
-            ].map((option) => {
-              const selected = energy === option.key
+        {myLatest && (
+          <section className="rounded-[26px] border border-pr-gold/20 bg-gradient-to-r from-pr-gold/10 via-white/[0.025] to-orange-400/[0.06] p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="section-label text-pr-gold">
+                  Tu última actividad
+                </p>
+                <p className="text-white text-sm font-semibold mt-2 truncate">
+                  {myLatest.nombre || 'Entrenamiento'}
+                </p>
+                <p className="text-white/35 text-[10px] mt-1">
+                  {formatDistance(
+                    myLatest.distancia_metros
+                  )}{' '}
+                  ·{' '}
+                  {formatDuration(
+                    myLatest.tiempo_movimiento_segundos
+                  )}
+                </p>
+              </div>
+
+              {myLatest.strava_url ? (
+                <a
+                  href={myLatest.strava_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 px-3 py-2.5 text-pr-gold text-[10px] font-bold"
+                >
+                  Ver actividad →
+                </a>
+              ) : (
+                <span className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5 text-white/30 text-[10px] font-bold">
+                  Actividad guardada
+                </span>
+              )}
+            </div>
+          </section>
+        )}
+
+        <section className="overflow-x-auto -mx-[18px] px-[18px]">
+          <div className="flex gap-2 min-w-max">
+            {FEED_FILTERS.map((item) => {
+              const active = filter === item.key
+
               return (
                 <button
-                  key={option.key}
+                  key={item.key}
                   type="button"
-                  onClick={() => chooseEnergy(option.key)}
-                  className={`min-w-0 flex-1 py-2 text-center transition ${selected ? 'text-orange-200' : 'text-white/35'}`}
+                  onClick={() => setFilter(item.key)}
+                  className={`px-4 py-2.5 rounded-full text-xs font-semibold border transition ${
+                    active
+                      ? 'bg-gradient-to-r from-pr-gold to-orange-300 text-black border-pr-gold'
+                      : 'bg-white/[0.03] text-white/45 border-white/[0.07]'
+                  }`}
                 >
-                  <span className={`mx-auto grid h-11 w-11 place-items-center rounded-full text-xl transition ${selected ? 'bg-orange-400/15 ring-1 ring-orange-300/35' : 'bg-white/[0.035]'}`}>
-                    {option.icon}
-                  </span>
-                  <span className="mt-1.5 block truncate text-[8px] font-bold">{option.label}</span>
+                  {item.label}
                 </button>
               )
             })}
           </div>
         </section>
 
-        <section className="py-6">
-          <div className="-mx-[18px] overflow-x-auto px-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max gap-5">
-              {[
-                { key: 'Todos', icon: '🟠', label: 'Todo' },
-                { key: 'Cumpleaños', icon: '🎂', label: 'Cumples' },
-                { key: 'Evento', icon: '🏁', label: 'Eventos' },
-                { key: 'Insignia', icon: '🏅', label: 'Logros' },
-                { key: 'Entrenamiento', icon: '⚡', label: 'Entrenos' },
-              ].map((moment) => (
-                <button key={moment.key} type="button" onClick={() => setFilter(moment.key)} className="w-[62px] text-center">
-                  <span className={`mx-auto grid h-[54px] w-[54px] place-items-center rounded-full text-xl transition ${filter === moment.key ? 'bg-orange-400/15 ring-2 ring-orange-300' : 'bg-white/[0.035] ring-1 ring-white/10'}`}>
-                    {moment.icon}
-                  </span>
-                  <span className={`mt-2 block text-[9px] font-bold ${filter === moment.key ? 'text-orange-200' : 'text-white/40'}`}>{moment.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
+        <section>
+          <div className="flex items-end justify-between gap-4 mb-3">
+            <div>
+              <p className="section-label">
+                Comunidad PR
+              </p>
 
-        {vueltaDelDia && filter === 'Todos' && (
-          <section className="border-y border-orange-300/20 bg-orange-400/[0.035] py-6">
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-300">Selección de la comunidad</p>
-                <h2 className="mt-1 font-display text-[28px] text-white">Vuelta del día</h2>
-              </div>
-              <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/25">Hoy</span>
+              <h2 className="font-display text-[27px] text-white mt-1">
+                {filter === 'Todos'
+                  ? 'Lo último sobre ruedas'
+                  : filter === 'Cumpleaños'
+                    ? 'Cumpleaños'
+                    : FEED_FILTERS.find(
+                        (item) => item.key === filter
+                      )?.label}
+              </h2>
             </div>
-            <FeedCard
-              item={vueltaDelDia}
-              reactions={getItemReactions(vueltaDelDia)}
-              profilesByAnyId={profilesByAnyId}
-              currentProfileId={currentReactionProfileId}
-              savingReactionKey={savingReactionKey}
-              onReact={selectReaction}
-              onOpenReactions={() => setReactionModalItem(vueltaDelDia)}
-              featured
-            />
-          </section>
-        )}
 
-        {myLatest && (
-          <section className="border-b border-white/10 py-5">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="section-label">Tu última actividad</p>
-                <p className="mt-1 truncate text-sm font-bold text-white">{myLatest.nombre || 'Entrenamiento'}</p>
-                <p className="mt-1 text-[10px] text-white/35">
-                  {formatDistance(myLatest.distancia_metros)} · {formatDuration(myLatest.tiempo_movimiento_segundos)}
-                </p>
-              </div>
-              {myLatest.strava_url && (
-                <a href={myLatest.strava_url} target="_blank" rel="noreferrer" className="shrink-0 text-[10px] font-bold text-orange-200">
-                  Ver en Strava →
-                </a>
-              )}
-            </div>
-          </section>
-        )}
-
-        <section className="pt-7">
-          <div className="mb-5">
-            <p className="section-label">Comunidad PR</p>
-            <h2 className="mt-1 font-display text-[30px] text-white">
-              {filter === 'Todos' ? 'Lo último sobre ruedas' : filter === 'Cumpleaños' ? 'Cumpleaños' : FEED_FILTERS.find((item) => item.key === filter)?.label}
-            </h2>
+            <button
+              type="button"
+              disabled={refreshing || syncing}
+              onClick={refreshFeed}
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.035] px-3 py-2.5 text-white/45 text-[10px] font-bold disabled:opacity-50"
+            >
+              {refreshing || syncing
+                ? 'Actualizando…'
+                : '↻ Actualizar'}
+            </button>
           </div>
 
           {message && (
-            <div className="mb-4 border-l-2 border-amber-300 bg-amber-400/[0.06] px-4 py-3 text-xs leading-relaxed text-amber-100/80">{message}</div>
+            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-amber-100 text-xs leading-relaxed mb-3">
+              {message}
+            </div>
           )}
 
           {loading ? (
-            <div className="divide-y divide-white/10">
+            <div className="space-y-4">
               <LoadingFeedCard />
               <LoadingFeedCard />
               <LoadingFeedCard />
             </div>
           ) : visibleItems.length > 0 ? (
-            <div className="divide-y divide-white/10">
-              {visibleItems
-                .filter((item) => filter !== 'Todos' || !vueltaDelDia || item.id !== vueltaDelDia.id)
-                .map((item) => (
-                  <FeedCard
-                    key={item.id}
-                    item={item}
-                    reactions={getItemReactions(item)}
-                    profilesByAnyId={profilesByAnyId}
-                    currentProfileId={currentReactionProfileId}
-                    savingReactionKey={savingReactionKey}
-                    onReact={selectReaction}
-                    onOpenReactions={() => setReactionModalItem(item)}
-                  />
-                ))}
+            <div className="space-y-4">
+              {visibleItems.map((item) => (
+                <FeedCard key={item.id} item={item} />
+              ))}
             </div>
           ) : (
-            <div className="border-y border-white/10 py-10 text-center">
-              <div className="text-3xl">{emptyState.icon}</div>
-              <h3 className="mt-3 font-display text-2xl text-white">{emptyState.title}</h3>
-              <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-white/35">{emptyState.description}</p>
+            <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
+              <div className="w-16 h-16 rounded-[22px] grid place-items-center mx-auto bg-orange-400/10 border border-orange-300/20 text-3xl">
+                {emptyState.icon}
+              </div>
+
+              <h3 className="font-display text-2xl text-white mt-4">
+                {emptyState.title}
+              </h3>
+
+              <p className="text-white/35 text-sm mt-2 leading-relaxed">
+                {emptyState.description}
+              </p>
             </div>
           )}
         </section>
-
-        {reactionModalItem && (
-          <ReactionsModal
-            item={reactionModalItem}
-            reactions={getItemReactions(reactionModalItem)}
-            profilesByAnyId={profilesByAnyId}
-            onClose={() => setReactionModalItem(null)}
-          />
-        )}
       </div>
     </AppLayout>
   )
 }
 
-
-function TodayInPRCard({ snapshot, onSelectFilter }) {
-  const event = snapshot.upcomingEvent
-  const birthdayCount = snapshot.birthdays.length
-
+function HeroStat({
+  value,
+  label,
+  highlight = false,
+}) {
   return (
-    <section className="border-b border-white/10 py-6">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="section-label text-orange-200">Hoy en Punta Rollers</p>
-          <h2 className="mt-1 font-display text-[28px] text-white">Un vistazo y seguís rodando.</h2>
-        </div>
-        {snapshot.kilometers > 0 && (
-          <p className="shrink-0 text-right text-[10px] text-white/30">
-            <span className="block font-display text-xl text-orange-200">
-              {snapshot.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km
-            </span>
-            hoy
-          </p>
-        )}
-      </div>
-
-      <div className="mt-5 grid grid-cols-4 divide-x divide-white/10 border-y border-white/10 py-3">
-        <TodayItem icon="🔥" value={snapshot.activities} label="entrenos" onClick={() => onSelectFilter('Entrenamiento')} />
-        <TodayItem icon="🛼" value={snapshot.skaters} label="personas" onClick={() => onSelectFilter('Entrenamiento')} />
-        <TodayItem icon="🎂" value={birthdayCount} label="cumples" onClick={() => onSelectFilter('Cumpleaños')} />
-        <TodayItem icon="🏅" value={snapshot.badges} label="logros" onClick={() => onSelectFilter('Insignia')} />
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onSelectFilter('Evento')}
-        className="group mt-5 flex w-full items-center justify-between gap-4 text-left"
+    <div className="rounded-[21px] border border-white/[0.08] bg-black/25 p-3 text-center">
+      <p
+        className={`font-display text-[25px] leading-none ${
+          highlight ? 'text-orange-300' : 'text-white'
+        }`}
       >
-        <div className="min-w-0">
-          <p className="text-[9px] font-black uppercase tracking-[0.17em] text-orange-300/70">Próximo evento</p>
-          <p className="mt-1 truncate text-sm font-bold text-white">{event?.title || 'Próximamente en Punta Rollers'}</p>
-          <p className="mt-1 truncate text-[10px] text-white/32">{event?.eventRange || 'Todavía no hay una fecha publicada'}</p>
-        </div>
-        <span className="shrink-0 text-lg text-white/20 transition group-hover:translate-x-1 group-hover:text-orange-300">→</span>
-      </button>
-    </section>
-  )
-}
+        {value}
+      </p>
 
-function TodayItem({ icon, value, label, onClick }) {
-  return (
-    <button type="button" onClick={onClick} className="min-w-0 px-2 text-center active:opacity-70">
-      <span className="block text-base">{icon}</span>
-      <span className="mt-1 block font-display text-[20px] leading-none text-white">{value}</span>
-      <span className="mt-1 block truncate text-[8px] font-bold uppercase tracking-[0.08em] text-white/28">{label}</span>
-    </button>
-  )
-}
-
-function HeroStat({ value, label, highlight = false }) {
-  return (
-    <div className="px-3 text-center">
-      <p className={`font-display text-[26px] leading-none ${highlight ? 'text-orange-300' : 'text-white'}`}>{value}</p>
-      <p className="mt-2 text-[8px] font-bold uppercase tracking-[0.13em] text-white/26">{label}</p>
+      <p className="text-white/30 text-[8px] uppercase tracking-[0.13em] mt-2">
+        {label}
+      </p>
     </div>
   )
 }
 
-function FeedCard({
-  item,
-  reactions,
-  profilesByAnyId,
-  currentProfileId,
-  savingReactionKey,
-  onReact,
-  onOpenReactions,
-}) {
-  const reactionProps = {
-    reactions,
-    profilesByAnyId,
-    currentProfileId,
-    savingReactionKey,
-    onReact,
-    onOpenReactions,
+function FeedCard({ item }) {
+  if (item.type === 'Cumpleaños') {
+    return <BirthdayCard item={item} />
   }
 
-  if (item.type === 'Cumpleaños') return <BirthdayCard item={item} {...reactionProps} />
-  if (item.type === 'Entrenamiento') return <TrainingCard item={item} {...reactionProps} />
-  if (item.type === 'Evento' && item.eventColor) return <EventCard item={item} {...reactionProps} />
-  return <CommunityCard item={item} {...reactionProps} />
+  if (item.type === 'Entrenamiento') {
+    return <TrainingCard item={item} />
+  }
+
+  return <CommunityCard item={item} />
 }
 
 function ProfileAvatar({
@@ -1717,366 +1142,240 @@ function ProfileAvatar({
   )
 }
 
-function TrainingCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
-  return (
-    <article className="py-6">
-      <div className="flex items-center gap-3">
-        <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-white">{item.userName}</p>
-          <p className="mt-1 text-[10px] text-white/28">{formatRelativeDate(item.date)} · {item.source === 'strava' ? 'Strava' : 'Punta Rollers'}</p>
-        </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-300/70">Entreno</span>
-      </div>
-
-      <h3 className="mt-4 font-display text-[27px] leading-tight text-white">{item.title}</h3>
-      {item.description && <p className="mt-2 text-sm leading-relaxed text-white/42">{item.description}</p>}
-
-      <div className="mt-5 grid grid-cols-3 divide-x divide-white/10 border-y border-white/10 py-3">
-        <Metric label="Distancia" value={formatDistance(item.distanceMeters)} highlight />
-        <Metric label="Tiempo" value={formatDuration(item.durationSeconds)} />
-        <Metric label="Velocidad" value={formatSpeed(item.averageSpeed)} />
-      </div>
-
-      <ReactionPanel
-        item={item}
-        reactions={reactions}
-        profilesByAnyId={profilesByAnyId}
-        currentProfileId={currentProfileId}
-        savingReactionKey={savingReactionKey}
-        onReact={onReact}
-        onOpenReactions={onOpenReactions}
-        action={item.stravaUrl ? (
-          <a href={item.stravaUrl} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-orange-200">Ver en Strava →</a>
-        ) : null}
-      />
-    </article>
-  )
-}
-
-function BirthdayCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
-  return (
-    <article className="relative overflow-hidden py-7">
-      <div className="absolute left-0 top-7 h-12 w-[2px] bg-fuchsia-400/70" />
-      <div className="pl-4">
-        <div className="flex items-center gap-3">
-          <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} size="large" />
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-fuchsia-300/70">{item.daysUntil === 0 ? 'Celebración PR' : 'Próximo cumpleaños'}</p>
-            <h3 className="mt-1 font-display text-[28px] leading-tight text-white">{item.title}</h3>
-          </div>
-          <span className="text-3xl">🎂</span>
-        </div>
-        <p className="mt-4 text-sm leading-relaxed text-white/42">{item.description}</p>
-        <ReactionPanel item={item} reactions={reactions} profilesByAnyId={profilesByAnyId} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} onOpenReactions={onOpenReactions} />
-      </div>
-    </article>
-  )
-}
-
-function getEventDateVisual(item) {
-  const rawDate = item?.eventStart
-    ? new Date(item.eventStart)
-    : null
-  const hasValidDate =
-    rawDate && Number.isFinite(rawDate.getTime())
-
-  if (hasValidDate) {
-    const today = new Date()
-    const todayStart = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    )
-    const eventStart = new Date(
-      rawDate.getFullYear(),
-      rawDate.getMonth(),
-      rawDate.getDate()
-    )
-    const daysUntil = Math.round(
-      (eventStart.getTime() - todayStart.getTime()) /
-        86400000
-    )
-
-    return {
-      eyebrow:
-        daysUntil === 0
-          ? 'HOY'
-          : daysUntil === 1
-            ? 'MAÑANA'
-            : rawDate
-                .toLocaleDateString('es-UY', { weekday: 'short' })
-                .replace('.', '')
-                .toUpperCase(),
-      day: rawDate.getDate(),
-      month: rawDate
-        .toLocaleDateString('es-UY', { month: 'long' })
-        .toUpperCase(),
-      year: rawDate.getFullYear(),
-      confirmed: true,
-    }
-  }
-
-  const range = String(item?.eventRange || '')
-  const monthMatch = range.match(
-    /(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(\d{4})/i
-  )
-
-  return {
-    eyebrow: 'PRÓXIMO',
-    day: monthMatch ? monthMatch[2] : '—',
-    month: monthMatch
-      ? monthMatch[1].toUpperCase()
-      : 'FECHA',
-    year: monthMatch ? 'FECHAS A CONFIRMAR' : '',
-    confirmed: false,
-  }
-}
-
-function getEventTimeLabel(item) {
-  const range = String(item?.eventRange || '')
-  const timeMatches = range.match(/\d{1,2}:\d{2}/g)
-
-  if (timeMatches?.length >= 2) {
-    return `${timeMatches[0]} — ${timeMatches[1]}`
-  }
-
-  if (timeMatches?.length === 1) {
-    return timeMatches[0]
-  }
-
-  if (/3 días|4,\s*5\s*y\s*6/i.test(range)) {
-    return '3 DÍAS · 2 H POR JORNADA'
-  }
-
-  return item?.eventStatus === 'Próximamente'
-    ? 'HORARIO A CONFIRMAR'
-    : 'INFORMACIÓN DEL EVENTO'
-}
-
-function EventCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
-  const color =
-    ROLLER_EVENT_COLORS[item.eventColor] || ROLLER_EVENT_COLORS.street
-  const dateVisual = getEventDateVisual(item)
-  const timeLabel = getEventTimeLabel(item)
-
+function TrainingCard({ item }) {
   return (
     <article
-      className={`group relative overflow-hidden rounded-[34px] border ${color.border} bg-gradient-to-br ${color.card} shadow-[0_26px_80px_rgba(0,0,0,0.38)]`}
+      className={`relative overflow-hidden rounded-[30px] border bg-gradient-to-br from-[#171217] via-[#101014] to-[#09090d] ${
+        item.featured
+          ? 'border-pr-gold/30 shadow-[0_22px_65px_rgba(212,175,55,0.09)]'
+          : 'border-white/[0.08]'
+      }`}
     >
-      <div className={`absolute -right-20 -top-24 h-64 w-64 rounded-full ${color.glow} blur-3xl`} />
-      <div className={`absolute -left-20 bottom-[-110px] h-56 w-56 rounded-full ${color.glow} blur-3xl opacity-60`} />
+      <div className="relative p-4">
+        <div className="flex items-center gap-3">
+          <ProfileAvatar
+            photo={item.userPhoto}
+            name={item.userName}
+            verified={item.verified}
+          />
 
-      <div className="absolute inset-0 opacity-[0.16]">
-        <div className="absolute right-[-42px] top-[-28px] h-44 w-44 rounded-full border-[22px] border-white/20" />
-        <div className="absolute right-[18px] top-[34px] h-20 w-20 rounded-full border-[10px] border-white/15" />
-        <div className="absolute right-[-30px] bottom-[36px] h-px w-[72%] rotate-[-16deg] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-        <div className="absolute right-[-12px] bottom-[66px] h-px w-[60%] rotate-[-16deg] bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-        <div className="absolute right-[8px] bottom-[96px] h-px w-[48%] rotate-[-16deg] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-      </div>
-
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-      <div className="absolute left-0 top-0 h-full w-[4px] bg-gradient-to-b from-white/55 via-white/15 to-transparent" />
-
-      <div className="relative grid grid-cols-[88px_minmax(0,1fr)]">
-        <aside className="border-r border-white/[0.09] bg-black/20 px-3 py-5 text-center">
-          <div className={`mx-auto mb-3 grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-black/25 ${color.accent}`}>
-            ◫
-          </div>
-
-          <p className={`text-[9px] font-black tracking-[0.14em] ${color.accent}`}>
-            {dateVisual.eyebrow}
-          </p>
-
-          <p className="font-display text-[34px] leading-none text-white mt-2">
-            {dateVisual.day}
-          </p>
-
-          <p className={`text-[10px] font-black tracking-[0.08em] mt-2 ${color.accent}`}>
-            {dateVisual.month}
-          </p>
-
-          {dateVisual.year && (
-            <p className="text-white/28 text-[9px] mt-1 leading-relaxed">
-              {dateVisual.year}
-            </p>
-          )}
-
-          <div className="my-4 h-px bg-white/[0.09]" />
-
-          <p className="text-white/50 text-[10px] leading-relaxed">
-            📍 {item.eventLocation || 'Ubicación a confirmar'}
-          </p>
-        </aside>
-
-        <div className="min-w-0 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <p className={`text-[9px] font-black uppercase tracking-[0.18em] ${color.accent}`}>
-              Evento Punta Rollers
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-sm font-bold truncate">
+              {item.userName}
             </p>
 
-            <span className="shrink-0 rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-white/75 text-[9px] font-black uppercase tracking-wide backdrop-blur">
-              {item.eventStatus}
-            </span>
+            <p className="text-white/30 text-[10px] mt-1">
+              {formatRelativeDate(item.date)} ·{' '}
+              {item.source === 'strava'
+                ? 'Strava'
+                : 'Punta Rollers'}
+            </p>
           </div>
 
-          <h3 className="font-display text-[29px] leading-[0.98] text-white mt-4 max-w-[95%]">
+          <span className="w-10 h-10 rounded-2xl border border-orange-300/15 bg-orange-400/10 grid place-items-center text-lg">
+            🛼
+          </span>
+        </div>
+
+        <div className="mt-4">
+          <p className="section-label text-orange-200">
+            Entrenamiento
+          </p>
+
+          <h3 className="font-display text-[26px] leading-tight text-white mt-2">
             {item.title}
           </h3>
 
-          <div className={`inline-flex max-w-full items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 mt-4 ${color.accent}`}>
-            <span className="text-xs">◷</span>
-            <span className="truncate text-[10px] font-black uppercase tracking-[0.08em]">
-              {timeLabel}
-            </span>
-          </div>
-
           {item.description && (
-            <p className="text-white/58 text-[13px] leading-[1.65] mt-4 pr-1">
+            <p className="text-white/43 text-sm leading-relaxed mt-2">
               {item.description}
             </p>
           )}
-
-          <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/[0.09]">
-            <p className="text-white/28 text-[9px]">
-              Publicado por {item.creatorName}
-            </p>
-
-            {item.eventUrl && (
-              <a
-                href={item.eventUrl}
-                target="_blank"
-                rel="noreferrer"
-                className={`text-[10px] font-black ${color.accent}`}
-              >
-                Más información →
-              </a>
-            )}
-          </div>
         </div>
-      </div>
 
-      <div className="relative px-5 pb-5">
-        <ReactionPanel item={item} reactions={reactions} profilesByAnyId={profilesByAnyId} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} onOpenReactions={onOpenReactions} />
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <Metric
+            label="Distancia"
+            value={formatDistance(item.distanceMeters)}
+            highlight
+          />
+          <Metric
+            label="Tiempo"
+            value={formatDuration(item.durationSeconds)}
+          />
+          <Metric
+            label="Velocidad"
+            value={formatSpeed(item.averageSpeed)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <Reaction icon="👏" value={0} />
+            <Reaction icon="🔥" value={0} />
+            <Reaction icon="❤️" value={0} />
+          </div>
+
+          {item.stravaUrl && (
+            <a
+              href={item.stravaUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-orange-200 text-[10px] font-bold"
+            >
+              Ver en Strava →
+            </a>
+          )}
+        </div>
       </div>
     </article>
   )
 }
 
-
-function CommunityCard({ item, reactions, profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions }) {
-  const isBadge = item.type === 'Insignia'
-  const isEvent = item.type === 'Evento'
-  const icon = isBadge ? '🏅' : isEvent ? '📅' : '📣'
-
+function BirthdayCard({ item }) {
   return (
-    <article className="py-6">
-      <div className="flex items-center gap-3">
-        <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-white">{item.userName}</p>
-          <p className="mt-1 text-[10px] text-white/28">{formatRelativeDate(item.date)}</p>
+    <article className="relative overflow-hidden rounded-[32px] border border-fuchsia-300/25 bg-gradient-to-br from-fuchsia-500/[0.18] via-[#17101c] to-[#0b090d] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <ProfileAvatar
+          photo={item.userPhoto}
+          name={item.userName}
+          verified={item.verified}
+          size="large"
+        />
+
+        <div className="w-14 h-14 rounded-[20px] border border-fuchsia-300/25 bg-fuchsia-400/15 grid place-items-center text-2xl">
+          🎂
         </div>
-        <span className="text-xl">{icon}</span>
       </div>
 
-      <p className="mt-4 text-[9px] font-black uppercase tracking-[0.16em] text-orange-300/65">{item.type}</p>
-      <h3 className="mt-1 font-display text-[26px] leading-tight text-white">{item.title}</h3>
-      {item.description && <p className="mt-3 text-sm leading-relaxed text-white/42">{item.description}</p>}
+      <p className="section-label text-fuchsia-200 mt-5">
+        {item.daysUntil === 0
+          ? 'Celebración PR'
+          : 'Próximo cumpleaños'}
+      </p>
+
+      <h3 className="font-display text-[29px] leading-tight text-white mt-2">
+        {item.title}
+      </h3>
+
+      <p className="text-fuchsia-100/55 text-sm leading-relaxed mt-3">
+        {item.description}
+      </p>
+    </article>
+  )
+}
+
+function CommunityCard({ item }) {
+  const isBadge = item.type === 'Insignia'
+  const isEvent = item.type === 'Evento'
+
+  const icon = isBadge
+    ? '🏅'
+    : isEvent
+      ? '📅'
+      : '📣'
+
+  return (
+    <article className="rounded-[29px] border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.018] p-4">
+      <div className="flex items-center gap-3">
+        <ProfileAvatar
+          photo={item.userPhoto}
+          name={item.userName}
+          verified={item.verified}
+        />
+
+        <div className="min-w-0 flex-1">
+          <p className="text-white text-sm font-bold truncate">
+            {item.userName}
+          </p>
+
+          <p className="text-white/28 text-[10px] mt-1">
+            {formatRelativeDate(item.date)}
+          </p>
+        </div>
+
+        <div className="w-11 h-11 rounded-[17px] border border-white/[0.08] bg-white/[0.04] grid place-items-center text-xl">
+          {icon}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="section-label text-pr-gold">
+          {item.type}
+        </p>
+
+        <h3 className="font-display text-[24px] leading-tight text-white mt-2">
+          {item.title}
+        </h3>
+
+        {item.description && (
+          <p className="text-white/43 text-sm leading-relaxed mt-3">
+            {item.description}
+          </p>
+        )}
+      </div>
 
       {isEvent && (item.eventLocation || item.eventUrl) && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/40">
-          {item.eventLocation && <span>📍 {item.eventLocation}</span>}
-          {item.eventUrl && <a href={item.eventUrl} target="_blank" rel="noreferrer" className="font-bold text-orange-200">Ver información →</a>}
+        <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-2">
+          {item.eventLocation && (
+            <p className="text-white/45 text-xs">
+              📍 {item.eventLocation}
+            </p>
+          )}
+
+          {item.eventUrl && (
+            <a
+              href={item.eventUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-pr-gold text-xs font-bold"
+            >
+              Ver información →
+            </a>
+          )}
         </div>
       )}
 
       {item.creatorName && (
-        <p className="mt-4 text-[9px] text-white/24">{isBadge ? 'Otorgada por' : 'Publicado por'} {item.creatorName}</p>
+        <p className="text-white/28 text-[9px] text-right mt-4 pt-4 border-t border-white/[0.06]">
+          {isBadge ? 'Otorgada por' : 'Publicado por'}{' '}
+          {item.creatorName}
+        </p>
       )}
-
-      <ReactionPanel item={item} reactions={reactions} profilesByAnyId={profilesByAnyId} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} onOpenReactions={onOpenReactions} />
     </article>
   )
 }
 
-function Metric({ label, value, highlight = false }) {
+function Metric({
+  label,
+  value,
+  highlight = false,
+}) {
   return (
-    <div className="min-w-0 px-2 text-center">
-      <p className="text-[8px] uppercase tracking-wider text-white/24">{label}</p>
-      <p className={`mt-1 truncate text-[12px] font-bold ${highlight ? 'text-orange-300' : 'text-white'}`}>{value}</p>
+    <div className="rounded-[20px] border border-white/[0.07] bg-black/25 p-3 text-center min-w-0">
+      <p className="text-white/25 text-[8px] uppercase tracking-wider">
+        {label}
+      </p>
+
+      <p
+        className={`text-[12px] font-bold mt-1 truncate ${
+          highlight ? 'text-orange-300' : 'text-white'
+        }`}
+      >
+        {value}
+      </p>
     </div>
   )
 }
 
-function ReactionPanel({ item, reactions = [], profilesByAnyId, currentProfileId, savingReactionKey, onReact, onOpenReactions, action = null }) {
-  const myReaction = reactions.find((reaction) => String(reaction.profile_id) === String(currentProfileId))
-  const counts = REACTION_OPTIONS.reduce((result, option) => {
-    result[option.key] = reactions.filter((reaction) => reaction.reaction === option.key).length
-    return result
-  }, {})
-  const reactorProfiles = reactions.map((reaction) => findProfile(profilesByAnyId, reaction.profile_id)).filter((profile) => profile && Object.keys(profile).length > 0)
-  const names = reactorProfiles.map(getProfileName).filter(Boolean)
-  const summary = names.length === 0 ? '' : names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} y ${names[1]}` : `${names[0]}, ${names[1]} y ${names.length - 2} más`
-
+function Reaction({ icon, value }) {
   return (
-    <div className="mt-4 pt-4 border-t border-white/[0.07]">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          {REACTION_OPTIONS.map((option) => {
-            const selected = myReaction?.reaction === option.key
-            const saving = savingReactionKey === `${item.id}-${option.key}`
-            return (
-              <button key={option.key} type="button" disabled={Boolean(savingReactionKey)} onClick={() => onReact(item, option.key)} aria-label={option.label} title={option.label} className={`min-w-[42px] rounded-full border px-2 py-1.5 text-[11px] font-bold transition active:scale-95 disabled:opacity-60 ${selected ? 'border-orange-300/45 bg-orange-400/20 text-white' : 'border-white/[0.08] bg-white/[0.035] text-white/58'}`}>
-                {saving ? '…' : option.icon}{' '}{counts[option.key] || ''}
-              </button>
-            )
-          })}
-        </div>
-        {action}
-      </div>
-
-      {reactions.length > 0 && (
-        <button type="button" onClick={onOpenReactions} className="mt-3 flex w-full items-center gap-2 text-left">
-          <span className="flex -space-x-2">
-            {reactorProfiles.slice(0, 3).map((profile, index) => (
-              <span key={`${profile.id || index}-${index}`} className="h-7 w-7 overflow-hidden rounded-full border-2 border-[#101014] bg-pr-gold/15 grid place-items-center">
-                {getProfilePhoto(profile) ? <img src={getProfilePhoto(profile)} alt={getProfileName(profile)} className="h-full w-full object-cover" /> : <span className="text-[8px] font-black text-pr-gold">{getInitials(getProfileName(profile))}</span>}
-              </span>
-            ))}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[10px] text-white/42">{summary || `${reactions.length} reacciones`}</span>
-          <span className="text-white/20 text-xs">›</span>
-        </button>
-      )}
-    </div>
-  )
-}
-
-function ReactionsModal({ item, reactions = [], profilesByAnyId, onClose }) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 px-3 pb-3 backdrop-blur-sm sm:items-center" onClick={onClose}>
-      <section className="w-full max-w-md overflow-hidden rounded-[30px] border border-white/[0.10] bg-[#111117] shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
-          <div className="min-w-0"><p className="section-label text-orange-200">Reacciones</p><h3 className="mt-1 max-w-[260px] truncate font-display text-xl text-white">{item?.title || 'Publicación'}</h3></div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/55">×</button>
-        </div>
-        <div className="max-h-[65vh] overflow-y-auto p-3">
-          {reactions.length > 0 ? reactions.map((reaction) => {
-            const profile = findProfile(profilesByAnyId, reaction.profile_id)
-            const name = getProfileName(profile) || 'Integrante PR'
-            const option = getReactionOption(reaction.reaction)
-            return (
-              <div key={reaction.id} className="flex items-center gap-3 rounded-[20px] px-2 py-3">
-                <ProfileAvatar photo={getProfilePhoto(profile)} name={name} verified={getProfileVerified(profile)} />
-                <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{name}</p><p className="mt-1 text-[10px] text-white/30">{option.label}</p></div>
-                <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-xl">{option.icon}</span>
-              </div>
-            )
-          }) : <div className="p-8 text-center"><p className="text-sm text-white/40">Todavía no hay reacciones.</p></div>}
-        </div>
-      </section>
-    </div>
+    <button
+      type="button"
+      className="rounded-full border border-white/[0.07] bg-white/[0.035] px-2.5 py-1.5 text-white/55 text-[10px] font-semibold"
+    >
+      {icon} {value}
+    </button>
   )
 }
 
@@ -2102,4 +1401,4 @@ function LoadingFeedCard() {
       </div>
     </div>
   )
-      }
+          }
