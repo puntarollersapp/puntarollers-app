@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
+import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
 const nameOf = (p) => [p?.nombre, p?.apellido].filter(Boolean).join(' ').trim() || 'Roller PR'
@@ -25,6 +26,7 @@ function Avatar({ profile, small = false }) {
 }
 
 export default function MessagesPage() {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const initialFriend = params.get('with') || ''
@@ -175,6 +177,82 @@ export default function MessagesPage() {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 30)
   }
 
+  async function deleteForMe(messageId) {
+    const confirmed = window.confirm('¿Ocultar este mensaje solo para vos?')
+    if (!confirmed) return
+
+    const { data, error } = await supabase.rpc('pr_dm_hide_message', {
+      message_id_value: messageId,
+    })
+
+    if (error || !data?.success) {
+      setNotice(data?.error || error?.message || 'No se pudo ocultar el mensaje.')
+      return
+    }
+
+    await refreshActive()
+  }
+
+  async function deleteForAll(messageId) {
+    const confirmed = window.confirm(
+      '¿Eliminar este mensaje para ambos? Esta acción no se puede deshacer.'
+    )
+    if (!confirmed) return
+
+    const { data, error } = await supabase.rpc('pr_dm_delete_message_for_all', {
+      message_id_value: messageId,
+    })
+
+    if (error || !data?.success) {
+      setNotice(data?.error || error?.message || 'No se pudo eliminar el mensaje.')
+      return
+    }
+
+    await refreshActive()
+  }
+
+  async function clearForMe() {
+    if (!active?.id) return
+    const confirmed = window.confirm(
+      '¿Dejar esta conversación vacía solo para vos? La otra persona seguirá viendo sus mensajes.'
+    )
+    if (!confirmed) return
+
+    const { data, error } = await supabase.rpc('pr_dm_clear_for_me', {
+      conversation_id_value: active.id,
+    })
+
+    if (error || !data?.success) {
+      setNotice(data?.error || error?.message || 'No se pudo limpiar la conversación.')
+      return
+    }
+
+    setMessages([])
+    await loadInbox({ silent: true })
+    setNotice('Conversación limpia para vos.')
+  }
+
+  async function adminClearForAll() {
+    if (!active?.id || user?.role !== 'admin') return
+    const confirmed = window.confirm(
+      '¿Vaciar esta conversación PARA AMBOS? Usalo solo para pruebas o moderación.'
+    )
+    if (!confirmed) return
+
+    const { data, error } = await supabase.rpc('pr_dm_admin_clear_conversation', {
+      conversation_id_value: active.id,
+    })
+
+    if (error || !data?.success) {
+      setNotice(data?.error || error?.message || 'No se pudo vaciar la conversación.')
+      return
+    }
+
+    setMessages([])
+    await loadInbox({ silent: true })
+    setNotice('Chat vaciado para ambos.')
+  }
+
   useEffect(() => {
     let alive = true
     ;(async () => {
@@ -203,6 +281,8 @@ export default function MessagesPage() {
             <button type="button" onClick={() => { setActive(null); setParams({}, { replace: true }) }} className="grid h-11 w-11 place-items-center rounded-[17px] border border-white/10 bg-white/[0.035] text-white/70">←</button>
             <Avatar profile={activeOther} small />
             <div className="min-w-0 flex-1"><p className="truncate text-sm font-black text-white">{nameOf(activeOther)}</p><p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.13em] text-emerald-300/65">Amigo PR · chat privado</p></div>
+            <button type="button" onClick={clearForMe} className="grid h-10 w-10 shrink-0 place-items-center rounded-[15px] border border-white/10 bg-white/[0.035] text-sm text-white/55" aria-label="Limpiar para mí">🧹</button>
+            {user?.role === 'admin' && <button type="button" onClick={adminClearForAll} className="grid h-10 w-10 shrink-0 place-items-center rounded-[15px] border border-red-400/15 bg-red-500/[0.08] text-sm text-red-200" aria-label="Vaciar para ambos">⚠️</button>}
           </div>
         </section>
 
@@ -215,7 +295,25 @@ export default function MessagesPage() {
               {m.media_type === 'image' && m.media_url && <img src={m.media_url} alt="Foto compartida" className="mb-2 max-h-[360px] w-full rounded-[16px] object-cover" />}
               {m.media_type === 'audio' && m.media_url && <audio src={m.media_url} controls preload="metadata" className="mb-1 w-[245px] max-w-full" />}
               {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed">{m.body}</p>}
-              <p className={`mt-1.5 text-right text-[8px] font-bold ${m.is_mine ? 'text-black/45' : 'text-white/25'}`}>{timeOf(m.created_at)}{m.is_mine && m.read_at ? ' · leído' : ''}</p>
+              <div className="mt-1.5 flex items-center justify-end gap-2">
+                <p className={`text-right text-[8px] font-bold ${m.is_mine ? 'text-black/45' : 'text-white/25'}`}>{timeOf(m.created_at)}{m.is_mine && m.read_at ? ' · leído' : ''}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (m.is_mine) {
+                      const choice = window.confirm('Aceptar = eliminar para ambos. Cancelar = ocultar solo para vos.')
+                      if (choice) deleteForAll(m.id)
+                      else deleteForMe(m.id)
+                    } else {
+                      deleteForMe(m.id)
+                    }
+                  }}
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] ${m.is_mine ? 'text-black/45' : 'text-white/28'}`}
+                  aria-label="Opciones del mensaje"
+                >
+                  ···
+                </button>
+              </div>
             </div>
           </div>)}
           <div ref={bottomRef} />
