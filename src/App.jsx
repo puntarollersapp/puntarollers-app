@@ -24,6 +24,7 @@ import StravaCallback from './pages/StravaCallback'
 import CommunityPage from './pages/Community'
 import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
+import MiEvolucion from './pages/MiEvolucion'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -118,6 +119,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/evolucion"
+          element={
+            <PrivateRoute>
+              <MiEvolucion />
             </PrivateRoute>
           }
         />
