@@ -136,7 +136,7 @@ export default function PaymentsPanel({
     () =>
       profiles.filter(
         (profile) =>
-          profile.role === 'alumno'
+          (profile.role === 'alumno' || profile.participa_como_alumno === true)
       ),
     [profiles]
   )
@@ -585,4 +585,4 @@ function DateBox({ label, value }) {
       </p>
     </div>
   )
-}
+                }
