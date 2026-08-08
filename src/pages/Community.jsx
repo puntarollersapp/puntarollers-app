@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -77,6 +78,7 @@ function ProfileCard({
   onAcceptRequest,
   onRejectRequest,
   onRemoveFriend,
+  onMessageFriend,
 }) {
   const relationship = profile.relationship_status || 'none'
   const incoming = relationship === 'incoming'
@@ -146,14 +148,25 @@ function ProfileCard({
             )}
 
             {isFriend && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onRemoveFriend(profile.id)}
-                className="w-full rounded-2xl border border-red-300/15 bg-red-400/[0.06] py-3 text-xs font-bold text-red-200 disabled:opacity-40"
-              >
-                Eliminar amistad
-              </button>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onMessageFriend(profile.id)}
+                  className="rounded-2xl bg-gradient-to-r from-sky-300 to-cyan-300 py-3 px-4 text-xs font-black text-[#071018] disabled:opacity-40"
+                >
+                  💬 Mensaje
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onRemoveFriend(profile.id)}
+                  aria-label="Eliminar amistad"
+                  className="rounded-2xl border border-red-300/15 bg-red-400/[0.06] px-4 text-xs font-bold text-red-200 disabled:opacity-40"
+                >
+                  ···
+                </button>
+              </div>
             )}
 
             {relationship === 'none' && (
@@ -175,6 +188,7 @@ function ProfileCard({
 
 export default function CommunityPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState('explorar')
   const [query, setQuery] = useState('')
@@ -298,6 +312,10 @@ export default function CommunityPage() {
     )
   }
 
+  function messageFriend(profileId) {
+    navigate(`/app/mensajes?with=${encodeURIComponent(profileId)}`)
+  }
+
   function removeFriend(profileId) {
     const confirmed = window.confirm(
       '¿Querés eliminar esta amistad? La otra persona no recibirá una notificación.'
@@ -350,6 +368,22 @@ export default function CommunityPage() {
             </div>
           </div>
         </section>
+
+        <button
+          type="button"
+          onClick={() => navigate('/app/mensajes')}
+          className="group w-full overflow-hidden rounded-[26px] border border-violet-300/15 bg-gradient-to-r from-violet-400/[0.10] via-white/[0.025] to-sky-400/[0.08] p-4 text-left active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] border border-violet-300/20 bg-violet-400/10 text-2xl">💬</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-violet-200/70">PR CHAT</p>
+              <h2 className="mt-0.5 text-sm font-black text-white">Tus conversaciones</h2>
+              <p className="mt-1 text-[11px] text-white/35">Hablá en privado con tus amigos de Punta Rollers.</p>
+            </div>
+            <span className="text-xl text-white/30 transition-transform group-active:translate-x-1">→</span>
+          </div>
+        </button>
 
         {!loading && friends.length > 0 && (
           <section>
@@ -469,6 +503,7 @@ export default function CommunityPage() {
                 onAcceptRequest={acceptRequest}
                 onRejectRequest={rejectRequest}
                 onRemoveFriend={removeFriend}
+                onMessageFriend={messageFriend}
               />
             ))}
           </section>
@@ -488,6 +523,7 @@ export default function CommunityPage() {
                   onAcceptRequest={acceptRequest}
                   onRejectRequest={rejectRequest}
                   onRemoveFriend={removeFriend}
+                  onMessageFriend={messageFriend}
                 />
               ))}
             </div>
@@ -508,4 +544,4 @@ export default function CommunityPage() {
       </div>
     </AppLayout>
   )
-            }
+}
