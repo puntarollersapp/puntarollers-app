@@ -217,7 +217,6 @@ export default function MiEvolucion() {
 
     const kmTotal = activities.reduce((sum, x) => sum + (Number(x.distancia_metros) || 0) / 1000, 0)
     const secondsTotal = activities.reduce((sum, x) => sum + (Number(x.tiempo_movimiento_segundos) || 0), 0)
-    const badges = activityItems.filter((x) => x.tipo === 'Insignia')
     const notes = activityItems.filter((x) => x.tipo === 'Nota')
     const events = activityItems.filter((x) => x.tipo === 'Evento')
     const lessonHistory = privateLessons.historial.filter((x) => x?.anulado !== true)
@@ -250,7 +249,6 @@ export default function MiEvolucion() {
       (grouped.length * 10) +
       Math.min(32, kmTotal / 6) +
       (classesDone * 2.5) +
-      (badges.length * 2) +
       (goals.filter((x) => x.estado === 'Completado').length * 10)
     )
 
@@ -267,7 +265,7 @@ export default function MiEvolucion() {
 
     return {
       grouped, best6, best12, featured, first, latest, diff, improvement,
-      kmTotal, secondsTotal, badges, notes, events, classesDone, axes, index,
+      kmTotal, secondsTotal, notes, events, classesDone, axes, index,
       days, preparation, calendarProgress, expectedByToday, preparationStatus,
       totalSeasonDays, elapsedSeasonDays,
     }
@@ -308,7 +306,7 @@ export default function MiEvolucion() {
             <div className="mt-6 grid grid-cols-3 divide-x divide-white/[.07] rounded-[24px] border border-white/[.07] bg-black/25">
               <Metric value={activities.length} label="Entrenos Strava" />
               <Metric value={data.kmTotal.toLocaleString('es-UY', { maximumFractionDigits: 1 })} label="Km" accent />
-              <Metric value={data.badges.length} label="Insignias" />
+              <Metric value={data.grouped.length} label="Tomas" />
             </div>
 
             <div className="mt-3 rounded-[18px] border border-orange-300/10 bg-orange-400/[.05] px-3 py-2.5">
@@ -395,7 +393,7 @@ export default function MiEvolucion() {
                   <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/28">Preparación PR</p>
                   <p className="mt-1 text-lg font-black text-white">{data.preparationStatus}</p>
                   <p className="mt-1 text-[10px] leading-4 text-white/32">
-                    No mide solamente tiempo: usa tus km, entrenamientos, tomas, clases, metas e insignias.
+                    No mide solamente tiempo: usa tus km, entrenamientos, tomas, clases y metas.
                   </p>
                 </div>
                 <div className="text-right">
@@ -695,4 +693,4 @@ export default function MiEvolucion() {
       </div>
     </AppLayout>
   )
-      }
+}
