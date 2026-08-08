@@ -22,6 +22,7 @@ import Tracking from './pages/Tracking'
 import Terminos from './pages/Terminos'
 import StravaCallback from './pages/StravaCallback'
 import CommunityPage from './pages/Community'
+import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
 
 function ScrollToTop() {
@@ -217,6 +218,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <CommunityPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/mensajes"
+          element={
+            <PrivateRoute>
+              <MessagesPage />
             </PrivateRoute>
           }
         />
