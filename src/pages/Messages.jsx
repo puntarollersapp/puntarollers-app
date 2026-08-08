@@ -36,7 +36,13 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [notice, setNotice] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [notificationPermission, setNotificationPermission] = useState(() => typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
   const bottomRef = useRef(null)
+  const fileRef = useRef(null)
+  const recorderRef = useRef(null)
+  const audioChunksRef = useRef([])
 
   const activeOther = useMemo(() => active?.other_profile || null, [active])
 
@@ -72,6 +78,81 @@ export default function MessagesPage() {
     const inbox = await loadInbox({ silent: true })
     const found = inbox.find((item) => item.id === data.conversation_id)
     if (found) await openConversation(found)
+  }
+
+  async function refreshActive({ markRead = true } = {}) {
+    if (!active?.id) return
+    const { data } = await supabase.rpc('pr_dm_messages', { conversation_id_value: active.id })
+    if (Array.isArray(data)) setMessages(data)
+    if (markRead) await supabase.rpc('pr_dm_mark_read', { conversation_id_value: active.id })
+    await loadInbox({ silent: true })
+  }
+
+  async function uploadMedia(file, mediaType) {
+    if (!file || !active?.id || uploading) return
+    if (file.size > 10 * 1024 * 1024) {
+      setNotice('El archivo supera el máximo de 10 MB.')
+      return
+    }
+    setUploading(true)
+    setNotice('')
+    try {
+      const ext = (file.name?.split('.').pop() || (mediaType === 'audio' ? 'webm' : 'jpg')).replace(/[^a-z0-9]/gi, '')
+      const objectPath = `${active.id}/${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('pr-chat-media').upload(objectPath, file, { contentType: file.type, upsert: false })
+      if (uploadError) throw uploadError
+      const { data: publicData } = supabase.storage.from('pr-chat-media').getPublicUrl(objectPath)
+      const { data, error } = await supabase.rpc('pr_dm_send_media', {
+        conversation_id_value: active.id,
+        media_type_value: mediaType,
+        media_url_value: publicData.publicUrl,
+        media_name_value: file.name || null,
+        body_value: null,
+      })
+      if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo enviar el archivo.')
+      await refreshActive()
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 30)
+    } catch (error) {
+      setNotice(error.message || 'No se pudo enviar el archivo.')
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  async function toggleRecording() {
+    if (recording) {
+      recorderRef.current?.stop()
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      audioChunksRef.current = []
+      recorder.ondataavailable = (event) => { if (event.data.size) audioChunksRef.current.push(event.data) }
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop())
+        setRecording(false)
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        const file = new File([blob], `audio-${Date.now()}.webm`, { type: blob.type || 'audio/webm' })
+        await uploadMedia(file, 'audio')
+      }
+      recorderRef.current = recorder
+      recorder.start()
+      setRecording(true)
+    } catch {
+      setNotice('Necesitamos permiso del micrófono para grabar un audio.')
+    }
+  }
+
+  async function enableNotifications() {
+    if (typeof Notification === 'undefined') {
+      setNotice('Este navegador no permite notificaciones web.')
+      return
+    }
+    const permission = await Notification.requestPermission()
+    setNotificationPermission(permission)
+    if (permission === 'granted') setNotice('Avisos activados. Mientras Punta Rollers esté abierta podremos avisarte de mensajes nuevos.')
   }
 
   async function sendMessage(event) {
@@ -110,10 +191,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!active?.id) return
-    const timer = window.setInterval(async () => {
-      const { data } = await supabase.rpc('pr_dm_messages', { conversation_id_value: active.id })
-      if (Array.isArray(data)) setMessages(data)
-    }, 12000)
+    const timer = window.setInterval(() => refreshActive(), 2000)
     return () => window.clearInterval(timer)
   }, [active?.id])
 
@@ -134,7 +212,9 @@ export default function MessagesPage() {
           {messages.length === 0 && <div className="py-14 text-center"><div className="text-4xl">👋</div><h2 className="mt-4 font-display text-2xl text-white">Empiecen a rodar la charla.</h2><p className="mx-auto mt-2 max-w-[270px] text-xs leading-relaxed text-white/32">Este espacio es privado entre ustedes. Mandá el primer mensaje.</p></div>}
           {messages.map((m) => <div key={m.id} className={`flex ${m.is_mine ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[82%] rounded-[22px] px-4 py-3 ${m.is_mine ? 'rounded-br-md bg-gradient-to-br from-sky-300 to-cyan-300 text-[#071018]' : 'rounded-bl-md border border-white/[0.07] bg-white/[0.045] text-white'}`}>
-              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed">{m.body}</p>
+              {m.media_type === 'image' && m.media_url && <img src={m.media_url} alt="Foto compartida" className="mb-2 max-h-[360px] w-full rounded-[16px] object-cover" />}
+              {m.media_type === 'audio' && m.media_url && <audio src={m.media_url} controls preload="metadata" className="mb-1 w-[245px] max-w-full" />}
+              {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed">{m.body}</p>}
               <p className={`mt-1.5 text-right text-[8px] font-bold ${m.is_mine ? 'text-black/45' : 'text-white/25'}`}>{timeOf(m.created_at)}{m.is_mine && m.read_at ? ' · leído' : ''}</p>
             </div>
           </div>)}
@@ -142,9 +222,12 @@ export default function MessagesPage() {
         </div>
 
         <form onSubmit={sendMessage} className="fixed bottom-[72px] left-1/2 z-40 w-full max-w-[520px] -translate-x-1/2 border-t border-white/[0.07] bg-[#09090e]/95 p-3 backdrop-blur-xl">
-          <div className="flex items-end gap-2 rounded-[24px] border border-white/[0.09] bg-white/[0.04] p-2">
-            <textarea value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 1200))} rows={1} placeholder="Escribí un mensaje…" className="max-h-28 min-h-11 flex-1 resize-none bg-transparent px-2 py-3 text-sm text-white outline-none placeholder:text-white/25" />
-            <button type="submit" disabled={!draft.trim() || sending} className="grid h-11 w-11 shrink-0 place-items-center rounded-[17px] bg-gradient-to-br from-sky-300 to-cyan-300 font-black text-[#071018] disabled:opacity-30">➤</button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => uploadMedia(e.target.files?.[0], 'image')} />
+          <div className="flex items-end gap-1.5 rounded-[24px] border border-white/[0.09] bg-white/[0.04] p-2">
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || recording} className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] text-lg text-white/65 active:bg-white/10 disabled:opacity-30" aria-label="Enviar foto">📷</button>
+            <button type="button" onClick={toggleRecording} disabled={uploading} className={`grid h-11 w-11 shrink-0 place-items-center rounded-[16px] text-lg ${recording ? 'bg-red-500 text-white animate-pulse' : 'text-white/65 active:bg-white/10'} disabled:opacity-30`} aria-label="Grabar audio">{recording ? '■' : '🎙️'}</button>
+            <textarea value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 1200))} rows={1} placeholder={recording ? 'Grabando audio…' : uploading ? 'Subiendo…' : 'Mensaje…'} className="max-h-28 min-h-11 flex-1 resize-none bg-transparent px-2 py-3 text-sm text-white outline-none placeholder:text-white/25" />
+            <button type="submit" disabled={!draft.trim() || sending || uploading || recording} className="grid h-11 w-11 shrink-0 place-items-center rounded-[17px] bg-gradient-to-br from-orange-400 to-amber-300 font-black text-[#130b04] disabled:opacity-30">➤</button>
           </div>
         </form>
       </div>
@@ -158,6 +241,12 @@ export default function MessagesPage() {
         <div className="relative"><p className="text-[9px] font-black uppercase tracking-[0.2em] text-violet-200/70">PR CHAT · SOLO AMIGOS</p><h1 className="mt-2 font-display text-[36px] leading-none text-white">Más cerca,<br/>también fuera de pista.</h1><p className="mt-3 max-w-[300px] text-sm leading-relaxed text-white/40">Conversaciones privadas entre miembros de tu comunidad Punta Rollers.</p></div>
       </section>
 
+      {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+        <button type="button" onClick={enableNotifications} className="w-full rounded-[22px] border border-orange-300/15 bg-orange-400/[0.07] p-3.5 text-left">
+          <div className="flex items-center gap-3"><span className="text-xl">🔔</span><div><p className="text-xs font-black text-white">Activar avisos de PR Chat</p><p className="mt-0.5 text-[10px] text-white/35">Enterate cuando llegue un mensaje mientras la app esté abierta.</p></div></div>
+        </button>
+      )}
+
       {notice && <div className="rounded-2xl border border-orange-300/15 bg-orange-400/[0.07] p-3 text-xs text-orange-100/80">{notice}</div>}
 
       {friends.length > 0 && <section><div className="mb-3 px-1"><p className="section-label">Nuevo mensaje</p><h2 className="mt-1 font-display text-2xl text-white">Tus amigos</h2></div><div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{friends.map((f) => <button key={f.id} type="button" onClick={() => startWith(f.id)} className="w-[72px] shrink-0 text-center"><div className="mx-auto rounded-full bg-gradient-to-br from-violet-300 to-sky-300 p-[2px]"><div className="overflow-hidden rounded-full bg-[#101018] p-[2px]"><div className="h-14 w-14 overflow-hidden rounded-full grid place-items-center">{f.foto ? <img src={f.foto} alt={nameOf(f)} className="h-full w-full object-cover"/> : <span className="text-xl">🛼</span>}</div></div></div><p className="mt-2 truncate text-[9px] font-bold text-white/55">{f.nombre}</p></button>)}</div></section>}
@@ -167,4 +256,4 @@ export default function MessagesPage() {
       </section>
     </div>
   </AppLayout>
-    }
+}
