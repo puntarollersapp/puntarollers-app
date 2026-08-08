@@ -16,7 +16,6 @@ const PAYMENT_EXEMPT_DOCUMENTS = new Set([
 ])
 
 const BADGE_IMAGES = {
-  'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k-1.png?v=4',
   'primer evento pr': '/insignias-pr/primer-evento-pr.png',
   'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
   'espiritu pr': '/insignias-pr/espiritu-pr.png',
@@ -40,19 +39,7 @@ function normalizeBadgeTitle(value) {
 }
 
 function getBadgeImage(title) {
-  const normalizedTitle = normalizeBadgeTitle(title)
-
-  if (
-    normalizedTitle.includes('travesia') &&
-    normalizedTitle.includes('la barra') &&
-    (normalizedTitle.includes('19k') ||
-      normalizedTitle.includes('19 km') ||
-      normalizedTitle.includes('19 kilometros'))
-  ) {
-    return '/insignias-pr/travesia-la-barra-19k-1.png?v=4'
-  }
-
-  return BADGE_IMAGES[normalizedTitle] || ''
+  return BADGE_IMAGES[normalizeBadgeTitle(title)] || ''
 }
 
 function loadSavedUser() {
@@ -139,94 +126,6 @@ function normalizePerformanceDistance(value) {
 
 function normalizeDocument(value) {
   return String(value || '').replace(/\D/g, '')
-}
-
-function getValidDateTimestamp(value) {
-  if (!value) return null
-
-  const timestamp = new Date(value).getTime()
-  return Number.isFinite(timestamp) ? timestamp : null
-}
-
-function getFirstPerformanceTakeTimestamp(items) {
-  const timestamps = (items || [])
-    .filter((item) => !item.eliminado)
-    .map((item) => getValidDateTimestamp(item.fecha))
-    .filter((timestamp) => timestamp !== null)
-
-  return timestamps.length ? Math.min(...timestamps) : null
-}
-
-function getStravaActivityKey(item) {
-  const externalId =
-    item.strava_activity_id ||
-    item.strava_id ||
-    item.external_id ||
-    item.actividad_strava_id ||
-    item.source_id ||
-    item.id_strava
-
-  if (externalId) {
-    return `strava:${String(externalId)}`
-  }
-
-  return [
-    'fallback',
-    item.fecha_inicio || item.start_date || item.fecha || '',
-    Number(item.distancia_metros) || 0,
-    Number(item.tiempo_movimiento_segundos) || 0,
-    String(item.nombre || item.name || item.titulo || '')
-      .trim()
-      .toLowerCase(),
-  ].join('|')
-}
-
-function getUniqueStravaActivitiesSinceFirstTake(activities, takes) {
-  const firstTakeTimestamp = getFirstPerformanceTakeTimestamp(takes)
-  const unique = new Map()
-
-  ;(activities || []).forEach((item) => {
-    if (item.eliminada === true) return
-
-    const activityTimestamp = getValidDateTimestamp(
-      item.fecha_inicio || item.start_date || item.fecha
-    )
-
-    if (
-      firstTakeTimestamp !== null &&
-      (activityTimestamp === null || activityTimestamp < firstTakeTimestamp)
-    ) {
-      return
-    }
-
-    const key = getStravaActivityKey(item)
-    if (!unique.has(key)) unique.set(key, item)
-  })
-
-  return [...unique.values()]
-}
-
-function calculatePerformanceKilometers(items) {
-  const groupedTakes = new Map()
-
-  ;(items || []).forEach((item) => {
-    if (item.eliminado === true) return
-
-    const distance = normalizePerformanceDistance(item.distancia_km)
-    if (!distance) return
-
-    const takeNumber = Number(item.numero_toma) || 0
-    const fallbackDate = String(item.fecha || '').slice(0, 10)
-    const key = takeNumber > 0 ? `take:${takeNumber}` : `date:${fallbackDate}`
-    const currentMaximum = groupedTakes.get(key) || 0
-
-    groupedTakes.set(key, Math.max(currentMaximum, distance))
-  })
-
-  return [...groupedTakes.values()].reduce(
-    (total, distance) => total + distance,
-    0
-  )
 }
 
 function groupPerformanceTakes(items) {
@@ -480,7 +379,7 @@ function getPaymentStatus(
   }
 }
 
-export default function Profile({ mode = 'profile' }) {
+export default function Profile() {
   const location = useLocation()
   const { user, logout, updateUser } = useAuth()
 
@@ -667,11 +566,10 @@ export default function Profile({ mode = 'profile' }) {
 
         supabase
           .from('pr_activities')
-          .select('*')
+          .select('distancia_metros, tiempo_movimiento_segundos')
           .eq('alumno_id', profileId)
           .eq('fuente', 'strava')
           .eq('eliminada', false)
-          .order('fecha_inicio', { ascending: false })
           .limit(1000),
       ])
 
@@ -792,17 +690,7 @@ export default function Profile({ mode = 'profile' }) {
 
       if (!lifetimeActivitiesResponse.error) {
         const allActivities = lifetimeActivitiesResponse.data || []
-        const allPerformanceTakes = performanceTakesResponse.error
-          ? []
-          : performanceTakesResponse.data || []
-
-        const uniqueStravaActivities =
-          getUniqueStravaActivitiesSinceFirstTake(
-            allActivities,
-            allPerformanceTakes
-          )
-
-        const stravaTotals = uniqueStravaActivities.reduce(
+        const totals = allActivities.reduce(
           (accumulator, item) => ({
             sessions: accumulator.sessions + 1,
             kilometers:
@@ -815,15 +703,7 @@ export default function Profile({ mode = 'profile' }) {
           { sessions: 0, kilometers: 0, activeSeconds: 0 }
         )
 
-        const performanceKilometers =
-          calculatePerformanceKilometers(allPerformanceTakes)
-
-        setLifetimeActivityStats({
-          sessions: stravaTotals.sessions,
-          kilometers:
-            stravaTotals.kilometers + performanceKilometers,
-          activeSeconds: stravaTotals.activeSeconds,
-        })
+        setLifetimeActivityStats(totals)
       }
 
       setLoading(false)
@@ -844,11 +724,6 @@ export default function Profile({ mode = 'profile' }) {
       ),
     [activity]
   )
-
-  const featuredBadge = badges[0] || null
-  const featuredBadgeImage = featuredBadge
-    ? getBadgeImage(featuredBadge.titulo)
-    : ''
 
   const events = useMemo(
     () =>
@@ -1228,521 +1103,557 @@ export default function Profile({ mode = 'profile' }) {
     }
   }
 
-  const isTrainingPage = mode === 'training'
-  const isBadgesPage = mode === 'badges'
-  const pageTitle = isTrainingPage
-    ? 'Actividad deportiva'
-    : isBadgesPage
-      ? 'Insignias'
-      : 'Perfil'
-
   return (
-    <AppLayout title={pageTitle}>
+    <AppLayout title="Mi perfil">
       <div className="pr-page space-y-5 animate-page-enter">
         {loading && (
           <div className="pr-card p-4 text-white/40 text-sm">
-            Cargando tu información…
+            Cargando tu perfil…
           </div>
         )}
 
-        {isTrainingPage && (
-          <>
-            <section className="relative overflow-hidden rounded-[34px] border border-sky-300/15 bg-gradient-to-br from-sky-500/[0.13] via-[#11131a] to-[#08080d] p-5 shadow-[0_28px_90px_rgba(14,165,233,0.1)]">
-              <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="section-label">Actividad deportiva</p>
-                  <h1 className="mt-1 font-display text-[34px] leading-none text-white">
-                    Tu evolución sobre ruedas
-                  </h1>
-                  <p className="mt-3 max-w-[300px] text-sm leading-relaxed text-white/42">
-                    Entrenamientos, metas, devoluciones y rendimiento reunidos en un solo lugar.
-                  </p>
-                </div>
-                <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-sky-300/20 bg-sky-400/10 text-2xl">
-                  🛼
-                </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-3 gap-2">
-                <MiniStat value={headerStats.sessions} label="Sesiones" />
-                <MiniStat value={`${headerStats.kilometers.toFixed(1)} km`} label="Distancia" />
-                <MiniStat value={performanceSummary.index || 0} label="Índice PR" />
-              </div>
-            </section>
-
-            <StravaActivityProfile
-              connected={stravaConnected}
-              connecting={stravaConnecting}
-              summary={activitySummary}
-              activities={stravaActivities}
-              onConnect={connectStrava}
-            />
-
-            <EvolutionNotesSection
-              notes={notes}
-              unreadCount={unreadNotes.length}
-              open={open === 'observaciones'}
-              onClick={toggleNotes}
-            />
-
-            {coachGoals.length > 0 && (
-              <CoachGoalsProfile
-                goals={coachGoals}
-                takes={performanceTakes}
-              />
-            )}
-
-            {hasPerformance ? (
-              <PerformanceProfile
-                performance={performance}
-                summary={performanceSummary}
+        <section
+          ref={profileTopRef}
+          className="pr-panel overflow-hidden scroll-mt-4"
+        >
+          <div className="h-[150px] relative bg-gradient-to-br from-[#211a0d] via-[#111119] to-[#08080d] overflow-hidden">
+            {profile.banner ? (
+              <img
+                src={profile.banner}
+                alt="Banner"
+                className="absolute inset-0 w-full h-full object-cover opacity-75"
               />
             ) : (
-              <section className="pr-panel p-5">
-                <p className="section-label">PR Performance</p>
-                <h2 className="mt-1 font-display text-2xl text-white">
-                  Tu rendimiento aparecerá acá
-                </h2>
-                <p className="mt-3 text-sm leading-relaxed text-white/38">
-                  Cuando tengas una toma de tiempos cargada, vas a ver tus marcas, evolución e índice PR.
-                </p>
-              </section>
-            )}
-          </>
-        )}
-
-        {isBadgesPage && (
-          <>
-            <section className="relative overflow-hidden rounded-[34px] border border-pr-gold/20 bg-gradient-to-br from-pr-gold/[0.14] via-[#15120c] to-[#08080d] p-5 shadow-[0_28px_90px_rgba(212,175,55,0.1)]">
-              <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-pr-gold/10 blur-3xl" />
-              <div className="relative flex items-start justify-between gap-4">
+              <div className="absolute inset-0 flex items-start justify-center text-center px-8 pt-5">
                 <div>
-                  <p className="section-label">Tu historia PR</p>
-                  <h1 className="mt-1 font-display text-[36px] leading-none text-white">
-                    Insignias
-                  </h1>
-                  <p className="mt-3 max-w-[290px] text-sm leading-relaxed text-white/42">
-                    Cada logro representa una parte de tu recorrido dentro de Punta Rollers.
+                  <div className="text-4xl">🛼</div>
+
+                  <p className="text-pr-gold text-sm font-semibold mt-2">
+                    Tu historia sobre ruedas
+                  </p>
+
+                  <p className="text-white/30 text-xs mt-1">
+                    Elegí una imagen que te represente.
                   </p>
                 </div>
-                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-[22px] border border-pr-gold/25 bg-pr-gold/10 text-3xl shadow-[0_0_30px_rgba(212,175,55,0.12)]">
-                  🏅
-                </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <MiniStat value={badges.length} label="Conseguidas" />
-                <MiniStat value={badges.length ? 'Colección activa' : 'Primer logro'} label="Estado" />
-              </div>
-            </section>
-
-            <ProfileBadges badges={badges} />
-          </>
-        )}
-
-        {!isTrainingPage && !isBadgesPage && (
-          <>
-            <section
-              ref={profileTopRef}
-              className="pr-panel overflow-hidden scroll-mt-4"
-            >
-              <div className="h-[150px] relative bg-gradient-to-br from-[#211a0d] via-[#111119] to-[#08080d] overflow-hidden">
-                {profile.banner ? (
-                  <img
-                    src={profile.banner}
-                    alt="Banner"
-                    className="absolute inset-0 w-full h-full object-cover opacity-75"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-start justify-center text-center px-8 pt-5">
-                    <div>
-                      <div className="text-4xl">🛼</div>
-                      <p className="text-pr-gold text-sm font-semibold mt-2">
-                        Tu historia sobre ruedas
-                      </p>
-                      <p className="text-white/30 text-xs mt-1">
-                        Elegí una imagen que te represente.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d13] via-black/5 to-black/15" />
-
-                <label className="absolute top-4 right-4 px-3 py-2 rounded-full bg-black/55 border border-white/10 text-white/65 text-[10px] font-semibold cursor-pointer">
-                  Cambiar banner
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) =>
-                      previewImage(event.target.files?.[0], 'banner')
-                    }
-                  />
-                </label>
-
-                {bannerFile && (
-                  <div className="absolute left-4 right-4 bottom-4 flex gap-2">
-                    <button
-                      type="button"
-                      disabled={savingMedia === 'banner'}
-                      onClick={() => saveMedia('banner')}
-                      className="flex-1 rounded-2xl bg-pr-gold text-black py-3 text-xs font-bold disabled:opacity-50"
-                    >
-                      {savingMedia === 'banner' ? 'Guardando…' : 'Guardar banner'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={savingMedia === 'banner'}
-                      onClick={() => cancelMedia('banner')}
-                      className="px-4 rounded-2xl bg-black/60 border border-white/10 text-white/70 text-xs font-semibold"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="px-5 pb-5 relative">
-                <label className={`absolute -top-16 left-5 w-32 h-32 rounded-[36px] p-[3px] bg-gradient-to-br ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)] cursor-pointer`}>
-                  <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
-                    {profile.foto ? (
-                      <img
-                        src={profile.foto}
-                        alt={profile.nombre}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-center">
-                        <div className="text-3xl">📷</div>
-                        <p className="text-pr-gold text-[9px] mt-1">Subir foto</p>
-                      </div>
-                    )}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) =>
-                      previewImage(event.target.files?.[0], 'foto')
-                    }
-                  />
-                </label>
-
-                <div className="pt-20 flex items-start justify-between gap-4">
-                  <div>
-                    <h1 className="font-display text-[34px] leading-none text-white">
-                      {profile.nombre}
-                      {profile.verificado && (
-                        <span className="text-sky-400 text-xl ml-1">✓</span>
-                      )}
-                    </h1>
-
-                    <div className="flex flex-wrap items-center gap-2 mt-3">
-                      {profile.ciudad && (
-                        <span className="rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-white/48 text-[10px] font-semibold">
-                          📍 {profile.ciudad}
-                        </span>
-                      )}
-                      {profile.instagram && (
-                        <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-3 py-1.5 text-pr-gold/80 text-[10px] font-semibold">
-                          {profile.instagram}
-                        </span>
-                      )}
-                    </div>
-
-                    {featuredBadge && (
-                      <Link
-                        to="/app/insignias"
-                        className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-pr-gold/20 bg-gradient-to-r from-pr-gold/[0.12] to-white/[0.025] px-3 py-2 active:scale-[0.98] transition-transform"
-                      >
-                        <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full border border-pr-gold/20 bg-black/30">
-                          {featuredBadgeImage ? (
-                            <img
-                              src={featuredBadgeImage}
-                              alt={featuredBadge.titulo}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-sm">🏅</span>
-                          )}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-[8px] font-bold uppercase tracking-[0.15em] text-pr-gold/55">
-                            Insignia destacada
-                          </span>
-                          <span className="block truncate text-[10px] font-bold text-pr-gold/90">
-                            {featuredBadge.titulo}
-                          </span>
-                        </span>
-                        <span className="ml-1 text-[10px] text-pr-gold/45">→</span>
-                      </Link>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={toggleProfileEditor}
-                    className="shrink-0 px-4 py-2.5 rounded-[16px] border border-pr-gold/30 bg-pr-gold/10 text-pr-gold text-xs font-bold shadow-[0_10px_28px_rgba(212,175,55,0.08)] active:scale-[0.98] transition-transform"
-                  >
-                    {editing ? '✕ Cerrar' : '✏️ Editar'}
-                  </button>
-                </div>
-
-                {fotoFile && (
-                  <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 mt-4">
-                    <p className="text-pr-gold text-xs font-semibold">Nueva foto lista</p>
-                    <p className="text-white/40 text-[11px] mt-1">
-                      Guardala ahora sin abrir Editar perfil.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 mt-3">
-                      <button
-                        type="button"
-                        disabled={savingMedia === 'foto'}
-                        onClick={() => saveMedia('foto')}
-                        className="rounded-xl bg-pr-gold text-black py-3 text-xs font-bold disabled:opacity-50"
-                      >
-                        {savingMedia === 'foto' ? 'Guardando…' : 'Guardar foto'}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={savingMedia === 'foto'}
-                        onClick={() => cancelMedia('foto')}
-                        className="rounded-xl bg-white/5 border border-white/10 text-white/65 py-3 text-xs font-semibold"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-white/50 text-sm leading-relaxed mt-5">
-                  {profile.sobreMi || 'Mi espacio personal dentro de Punta Rollers.'}
-                </p>
-
-                <div className="mt-5 grid grid-cols-1 gap-2.5">
-                  {profile.fechaNacimiento && (
-                    <div className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3">
-                      <span className="grid h-9 w-9 place-items-center rounded-xl bg-fuchsia-400/10 text-base">🎂</span>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/25">Cumpleaños</p>
-                        <p className="mt-0.5 text-xs font-semibold text-white/65">{formatDate(profile.fechaNacimiento)}</p>
-                      </div>
-                    </div>
-                  )}
-                  {profile.email && (
-                    <div className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3">
-                      <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-400/10 text-base">✉️</span>
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/25">Email</p>
-                        <p className="mt-0.5 truncate text-xs font-semibold text-white/65">{profile.email}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <ProfileActivitySignature stats={headerStats} />
-
-                <p className="mt-3 text-center text-[10px] font-semibold leading-relaxed text-white/30">
-                  Miembro desde {profile.miembroDesde || '2026'}
-                  <span className="mx-1.5 text-pr-gold/35">•</span>
-                  {headerStats.kilometers.toFixed(1)} km recorridos
-                  <span className="mx-1.5 text-pr-gold/35">•</span>
-                  {headerStats.sessions} entrenamiento{headerStats.sessions === 1 ? '' : 's'}
-                </p>
-
-                {!hidePaymentSection && (
-                  <PaymentStatusStrip
-                    status={paymentStatus}
-                    ultimoPago={profile.ultimoPago}
-                  />
-                )}
-              </div>
-            </section>
-
-            {message && (
-              <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-pr-gold text-sm">
-                {message}
               </div>
             )}
 
-            {editing && (
-              <section
-                ref={editSectionRef}
-                id="editar-perfil"
-                className="pr-panel p-5 space-y-4 scroll-mt-4"
-              >
-                <div>
-                  <p className="section-label">Personalización</p>
-                  <h2 className="font-display text-2xl text-white mt-1">
-                    Editá tu información
-                  </h2>
-                  {!form.fechaNacimiento && (
-                    <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/[0.08] p-3 mt-4">
-                      <p className="text-fuchsia-100 text-xs font-bold">🎂 Completá tu cumpleaños</p>
-                      <p className="text-white/40 text-[11px] mt-1 leading-relaxed">
-                        Así RollerFeed ⚡️ podrá celebrar tu día automáticamente con toda la comunidad.
-                      </p>
-                    </div>
-                  )}
-                </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d13] via-black/5 to-black/15" />
 
-                <EditInput label="Nombre" value={form.nombre} onChange={(value) => setForm({ ...form, nombre: value })} />
-                <EditInput label="Instagram" value={form.instagram} onChange={(value) => setForm({ ...form, instagram: value })} />
-                <EditInput label="Ciudad" value={form.ciudad} onChange={(value) => setForm({ ...form, ciudad: value })} />
-                <EditInput label="Email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} />
-                <EditInput label="Cumpleaños" type="date" value={form.fechaNacimiento} onChange={(value) => setForm({ ...form, fechaNacimiento: value })} />
-                <EditInput label="PIN de ingreso" value={form.pin} onChange={(value) => setForm({ ...form, pin: value })} />
+            <label className="absolute top-4 right-4 px-3 py-2 rounded-full bg-black/55 border border-white/10 text-white/65 text-[10px] font-semibold cursor-pointer">
+              Cambiar banner
 
-                <label className="block">
-                  <span className="section-label">Sobre mí</span>
-                  <textarea
-                    rows="4"
-                    value={form.sobreMi}
-                    onChange={(event) => setForm({ ...form, sobreMi: event.target.value })}
-                    className="input-pr mt-2 resize-none"
-                  />
-                </label>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) =>
+                  previewImage(
+                    event.target.files?.[0],
+                    'banner'
+                  )
+                }
+              />
+            </label>
+
+            {bannerFile && (
+              <div className="absolute left-4 right-4 bottom-4 flex gap-2">
+                <button
+                  type="button"
+                  disabled={savingMedia === 'banner'}
+                  onClick={() => saveMedia('banner')}
+                  className="flex-1 rounded-2xl bg-pr-gold text-black py-3 text-xs font-bold disabled:opacity-50"
+                >
+                  {savingMedia === 'banner'
+                    ? 'Guardando…'
+                    : 'Guardar banner'}
+                </button>
 
                 <button
                   type="button"
-                  disabled={saving}
-                  onClick={saveProfile}
-                  className="btn-gold w-full disabled:opacity-50"
+                  disabled={savingMedia === 'banner'}
+                  onClick={() => cancelMedia('banner')}
+                  className="px-4 rounded-2xl bg-black/60 border border-white/10 text-white/70 text-xs font-semibold"
                 >
-                  {saving ? 'Guardando…' : 'Guardar cambios'}
+                  Cancelar
                 </button>
-              </section>
+              </div>
+            )}
+          </div>
+
+          <div className="px-5 pb-5 relative">
+            <label className={`absolute -top-16 left-5 w-32 h-32 rounded-[36px] p-[3px] bg-gradient-to-br ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)] cursor-pointer`}>
+              <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
+              {profile.foto ? (
+                <img
+                  src={profile.foto}
+                  alt={profile.nombre}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center">
+                  <div className="text-3xl">📷</div>
+
+                  <p className="text-pr-gold text-[9px] mt-1">
+                    Subir foto
+                  </p>
+                </div>
+              )}
+              </span>
+
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) =>
+                  previewImage(
+                    event.target.files?.[0],
+                    'foto'
+                  )
+                }
+              />
+            </label>
+
+            <div className="pt-20 flex items-start justify-between gap-4">
+              <div>
+                <h1 className="font-display text-[34px] leading-none text-white">
+                  {profile.nombre}
+
+                  {profile.verificado && (
+                    <span className="text-sky-400 text-xl ml-1">
+                      ✓
+                    </span>
+                  )}
+                </h1>
+
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {profile.ciudad && (
+                    <span className="rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-white/48 text-[10px] font-semibold">
+                      📍 {profile.ciudad}
+                    </span>
+                  )}
+
+                  {profile.instagram && (
+                    <span className="rounded-full border border-pr-gold/15 bg-pr-gold/[0.07] px-3 py-1.5 text-pr-gold/80 text-[10px] font-semibold">
+                      {profile.instagram}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleProfileEditor}
+                className="shrink-0 px-4 py-2.5 rounded-[16px] border border-pr-gold/30 bg-pr-gold/10 text-pr-gold text-xs font-bold shadow-[0_10px_28px_rgba(212,175,55,0.08)] active:scale-[0.98] transition-transform"
+              >
+                {editing ? '✕ Cerrar' : '✏️ Editar'}
+              </button>
+            </div>
+
+            {fotoFile && (
+              <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 mt-4">
+                <p className="text-pr-gold text-xs font-semibold">
+                  Nueva foto lista
+                </p>
+
+                <p className="text-white/40 text-[11px] mt-1">
+                  Guardala ahora sin abrir Editar perfil.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button
+                    type="button"
+                    disabled={savingMedia === 'foto'}
+                    onClick={() => saveMedia('foto')}
+                    className="rounded-xl bg-pr-gold text-black py-3 text-xs font-bold disabled:opacity-50"
+                  >
+                    {savingMedia === 'foto'
+                      ? 'Guardando…'
+                      : 'Guardar foto'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={savingMedia === 'foto'}
+                    onClick={() => cancelMedia('foto')}
+                    className="rounded-xl bg-white/5 border border-white/10 text-white/65 py-3 text-xs font-semibold"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
             )}
 
-            <section className="pr-panel p-5">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="section-label">Accesos rápidos</p>
-                  <h2 className="mt-1 font-display text-2xl text-white">Mis espacios</h2>
+            <p className="text-white/50 text-sm leading-relaxed mt-5">
+              {profile.sobreMi ||
+                'Mi espacio personal dentro de Punta Rollers.'}
+            </p>
+
+            <ProfileActivitySignature stats={headerStats} />
+
+            <Link
+              to="/app/evolucion"
+              className="mt-3 flex w-full items-center justify-between gap-3 rounded-[22px] border border-orange-300/20 bg-gradient-to-r from-orange-500/[0.13] via-orange-400/[0.07] to-white/[0.025] px-4 py-3.5 shadow-[0_12px_34px_rgba(249,115,22,.08)]"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-300/20 bg-orange-400/10 text-xl">
+                  📈
                 </div>
-                <span className="text-[10px] text-white/24">Todo en un toque</span>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <Link
-                  to="/app/prcard"
-                  className="relative overflow-hidden rounded-[24px] border border-pr-gold/20 bg-gradient-to-br from-pr-gold/[0.14] to-white/[0.025] p-4 active:scale-[0.98] transition-transform"
-                >
-                  <span className="text-2xl">💳</span>
-                  <p className="mt-4 font-display text-lg text-white">PRCard</p>
-                  <p className="mt-1 text-[10px] text-white/34">
-                    {profile.prcardActiva ? 'Tu tarjeta está activa' : 'Consultá tu estado'}
-                  </p>
-                </Link>
-
-                <Link
-                  to="/app/servicios"
-                  className="relative overflow-hidden rounded-[24px] border border-sky-300/15 bg-gradient-to-br from-sky-400/[0.1] to-white/[0.025] p-4 active:scale-[0.98] transition-transform"
-                >
-                  <span className="text-2xl">🛼</span>
-                  <p className="mt-4 font-display text-lg text-white">Servicios PR</p>
-                  <p className="mt-1 text-[10px] text-white/34">Todo lo que tenés disponible</p>
-                </Link>
-              </div>
-
-              <Link
-                to="/app/entrenamiento"
-                className="mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-[22px] border border-red-400/15 bg-gradient-to-r from-red-500/[0.11] via-red-500/[0.05] to-white/[0.02] px-4 py-3.5 active:scale-[0.98] transition-transform"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-red-400/20 bg-red-500/10 text-lg">🛼</span>
-                  <div className="min-w-0">
-                    <p className="font-display text-base text-white">Actividad deportiva</p>
-                    <p className="mt-0.5 truncate text-[9px] text-white/32">Metas, evolución y rendimiento</p>
-                  </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-white">Mi evolución</p>
+                  <p className="mt-0.5 truncate text-[10px] text-white/35">Performance · objetivos · Shifter Marathon</p>
                 </div>
-                <span className="text-xs font-bold text-red-300/70">Abrir →</span>
-              </Link>
-
-              <div className="mt-4">
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/24">Tus grupos</p>
-                {profile.gruposInfo?.length ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {profile.gruposInfo.map((group, index) => (
-                      <a
-                        key={`${group.titulo}-${index}`}
-                        href={group.link || '#'}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border border-emerald-300/15 bg-emerald-400/[0.06] px-3 py-1.5 text-[9px] font-bold text-emerald-100/75 active:scale-[0.97] transition-transform"
-                      >
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,.75)]" />
-                        <span className="truncate">{group.titulo}</span>
-                        <span className="shrink-0 text-emerald-200/30">↗</span>
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-xs text-white/30">Todavía no tenés grupos asignados.</p>
-                )}
               </div>
-            </section>
+              <span className="shrink-0 text-orange-300">→</span>
+            </Link>
 
-            {hasPrivateLessons && (
-              <PrivateLessonsProfile
-                cuponera={privateLessons.cuponera}
-                history={privateLessons.historial}
+            {!hidePaymentSection && (
+              <PaymentStatusStrip
+                status={paymentStatus}
+                ultimoPago={profile.ultimoPago}
               />
             )}
+          </div>
+        </section>
 
-            {form.esTesoreria && (
-              <Accordion
-                title="Tesorería"
-                subtitle="Registrar y consultar pagos"
-                open={open === 'tesoreria'}
-                onClick={() => setOpen(open === 'tesoreria' ? '' : 'tesoreria')}
-              >
-                <TreasuryPanel currentUser={{ ...base, ...form }} setMessage={setMessage} />
-              </Accordion>
-            )}
 
-            <Accordion
-              title="Contactos PR"
-              subtitle="Estamos para ayudarte"
-              open={open === 'contactos'}
-              onClick={() => setOpen(open === 'contactos' ? '' : 'contactos')}
-            >
-              {contactos.length ? (
-                <div className="space-y-2">
-                  {contactos.map((contact) => (
-                    <a
-                      key={contact.id}
-                      href={contact.link || '#'}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="pr-card p-4 flex justify-between"
-                    >
-                      <div>
-                        <p className="text-white font-semibold text-sm">{contact.nombre}</p>
-                        {contact.detalle && (
-                          <p className="text-white/35 text-xs mt-1">{contact.detalle}</p>
-                        )}
-                      </div>
-                      <span className="text-pr-gold text-xs">Abrir →</span>
-                    </a>
-                  ))}
+        <StravaActivityProfile
+          connected={stravaConnected}
+          connecting={stravaConnecting}
+          summary={activitySummary}
+          activities={stravaActivities}
+          onConnect={connectStrava}
+        />
+
+        <EvolutionNotesSection
+          notes={notes}
+          unreadCount={unreadNotes.length}
+          open={open === 'observaciones'}
+          onClick={toggleNotes}
+        />
+
+        {coachGoals.length > 0 && (
+          <CoachGoalsProfile
+            goals={coachGoals}
+            takes={performanceTakes}
+          />
+        )}
+
+        {hasPerformance && (
+          <PerformanceProfile
+            performance={performance}
+            summary={performanceSummary}
+          />
+        )}
+
+        {hasPrivateLessons && (
+          <PrivateLessonsProfile
+            cuponera={privateLessons.cuponera}
+            history={privateLessons.historial}
+          />
+        )}
+
+        {message && (
+          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 text-pr-gold text-sm">
+            {message}
+          </div>
+        )}
+
+        {editing && (
+          <section
+            ref={editSectionRef}
+            id="editar-perfil"
+            className="pr-panel p-5 space-y-4 scroll-mt-4"
+          >
+            <div>
+              <p className="section-label">
+                Personalización
+              </p>
+
+              <h2 className="font-display text-2xl text-white mt-1">
+                Editá tu información
+              </h2>
+
+              {!form.fechaNacimiento && (
+                <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/[0.08] p-3 mt-4">
+                  <p className="text-fuchsia-100 text-xs font-bold">
+                    🎂 Completá tu cumpleaños
+                  </p>
+                  <p className="text-white/40 text-[11px] mt-1 leading-relaxed">
+                    Así RollerFeed ⚡️ podrá celebrar tu día automáticamente con toda la comunidad.
+                  </p>
                 </div>
-              ) : (
-                <Empty title="Sin contactos cargados" text="Los contactos del equipo aparecerán acá." />
               )}
-            </Accordion>
+            </div>
+
+            <EditInput
+              label="Nombre"
+              value={form.nombre}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  nombre: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Instagram"
+              value={form.instagram}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  instagram: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Ciudad"
+              value={form.ciudad}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  ciudad: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Email"
+              value={form.email}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  email: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Cumpleaños"
+              type="date"
+              value={form.fechaNacimiento}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  fechaNacimiento: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="PIN de ingreso"
+              value={form.pin}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  pin: value,
+                })
+              }
+            />
+
+            <label className="block">
+              <span className="section-label">
+                Sobre mí
+              </span>
+
+              <textarea
+                rows="4"
+                value={form.sobreMi}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    sobreMi: event.target.value,
+                  })
+                }
+                className="input-pr mt-2 resize-none"
+              />
+            </label>
 
             <button
               type="button"
-              onClick={logout}
-              className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold"
+              disabled={saving}
+              onClick={saveProfile}
+              className="btn-gold w-full disabled:opacity-50"
             >
-              Cerrar sesión
+              {saving
+                ? 'Guardando…'
+                : 'Guardar cambios'}
             </button>
-          </>
+          </section>
         )}
+
+        <section className="pr-panel p-5">
+          <div>
+            <p className="section-label">
+              Comunidad
+            </p>
+
+            <h2 className="font-display text-2xl text-white mt-1">
+              Tus grupos
+            </h2>
+          </div>
+
+          {profile.gruposInfo?.length ? (
+            <div className="space-y-2 mt-4">
+              {profile.gruposInfo.map(
+                (group, index) => (
+                  <a
+                    key={`${group.titulo}-${index}`}
+                    href={group.link || '#'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="pr-card p-4 flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="text-white font-semibold text-sm">
+                        {group.titulo}
+                      </p>
+
+                      <p className="text-white/32 text-[11px] mt-1">
+                        Grupo asignado por Punta Rollers
+                      </p>
+                    </div>
+
+                    <span className="text-pr-gold text-xs">
+                      Abrir →
+                    </span>
+                  </a>
+                )
+              )}
+            </div>
+          ) : (
+            <Empty
+              title="Todavía no tenés grupos asignados"
+              text="Cuando el equipo PR te agregue a un grupo, aparecerá acá."
+            />
+          )}
+        </section>
+
+        <Accordion
+          title="Mis servicios PR"
+          subtitle="Accesos activos"
+          open={open === 'servicios'}
+          onClick={() =>
+            setOpen(
+              open === 'servicios' ? '' : 'servicios'
+            )
+          }
+        >
+          <Service
+            title="PR Card"
+            active={profile.prcardActiva}
+            href="https://puntarollerscard.com/"
+            action="Abrir plataforma"
+          />
+
+          <Service
+            title="PR Tracking"
+            active={profile.trackingActivo}
+            href="/app/tracking"
+            action="Ver información"
+          />
+        </Accordion>
+
+        <ProfileBadges badges={badges} />
+
+        <Accordion
+          title={`Eventos (${events.length})`}
+          subtitle="Tu participación"
+          open={open === 'participaciones'}
+          onClick={() =>
+            setOpen(
+              open === 'participaciones'
+                ? ''
+                : 'participaciones'
+            )
+          }
+        >
+          <ActivityList
+            items={events}
+            empty="Todavía no hay participaciones"
+            icon="🎯"
+          />
+        </Accordion>
+
+        {form.esTesoreria && (
+          <Accordion
+            title="Tesorería"
+            subtitle="Registrar y consultar pagos"
+            open={open === 'tesoreria'}
+            onClick={() =>
+              setOpen(
+                open === 'tesoreria'
+                  ? ''
+                  : 'tesoreria'
+              )
+            }
+          >
+            <TreasuryPanel
+              currentUser={{
+                ...base,
+                ...form,
+              }}
+              setMessage={setMessage}
+            />
+          </Accordion>
+        )}
+
+        <Accordion
+          title="Contactos PR"
+          subtitle="Estamos para ayudarte"
+          open={open === 'contactos'}
+          onClick={() =>
+            setOpen(
+              open === 'contactos' ? '' : 'contactos'
+            )
+          }
+        >
+          {contactos.length ? (
+            <div className="space-y-2">
+              {contactos.map((contact) => (
+                <a
+                  key={contact.id}
+                  href={contact.link || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pr-card p-4 flex justify-between"
+                >
+                  <div>
+                    <p className="text-white font-semibold text-sm">
+                      {contact.nombre}
+                    </p>
+
+                    {contact.detalle && (
+                      <p className="text-white/35 text-xs mt-1">
+                        {contact.detalle}
+                      </p>
+                    )}
+                  </div>
+
+                  <span className="text-pr-gold text-xs">
+                    Abrir →
+                  </span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <Empty
+              title="Sin contactos cargados"
+              text="Los contactos del equipo aparecerán acá."
+            />
+          )}
+        </Accordion>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="w-full rounded-2xl border border-red-500/20 bg-red-500/10 py-4 text-red-200 text-sm font-semibold"
+        >
+          Cerrar sesión
+        </button>
       </div>
     </AppLayout>
   )
