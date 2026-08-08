@@ -26,6 +26,7 @@ import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
 import MiEvolucion from './pages/MiEvolucion'
 import RollerAvatar from './pages/RollerAvatar'
+import Insignias from './pages/Insignias'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -155,7 +156,7 @@ function AppRoutes() {
           path="/app/insignias"
           element={
             <PrivateRoute>
-              <Profile mode="badges" />
+              <Insignias />
             </PrivateRoute>
           }
         />
@@ -294,4 +295,4 @@ export default function App() {
       </div>
     </AuthProvider>
   )
-}
+         }
