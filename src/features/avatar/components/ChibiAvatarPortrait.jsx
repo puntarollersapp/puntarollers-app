@@ -100,7 +100,7 @@ export default function ChibiAvatarPortrait({
           width: headwear.portraitWidth || '70%',
         }}
       />
-      <PortraitAsset option={eyewear} className="top-[32%] z-40 w-[52%]" />
+      <PortraitAsset option={eyewear} className="top-[26%] z-40 w-[46%]" />
       <PortraitFaceDetails piercing={piercing} tattoo={tattoo} />
 
       <span className="pointer-events-none absolute inset-0 z-40 bg-gradient-to-b from-black/10 via-transparent to-black/30" />

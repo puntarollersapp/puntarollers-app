@@ -148,7 +148,7 @@ export default function ChibiAvatarStage({
             width: headwear.stageWidth || '39%',
           }}
         />
-        <Asset option={eyewear} className="top-[15.5%] z-[35] w-[32%]" />
+        <Asset option={eyewear} className="top-[12%] z-[35] w-[28%]" />
         <FaceDetails piercing={piercing} tattoo={tattoo} />
         <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
         <Asset option={hands} className="top-[26%] z-30 w-[62%]" />
