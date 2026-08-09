@@ -267,6 +267,12 @@ export const CHIBI_HELMETS = {
 export const CHIBI_ACCESSORIES = CHIBI_EYEWEAR
 
 const earringsSrc = '/avatar/v3/accessories/earrings-hoop-small-v1.webp'
+const earringsStageByHead = {
+  masculine: { width: '55%', top: '4.5%' },
+}
+const earringsPortraitByHead = {
+  masculine: { width: '104%', top: '0%' },
+}
 
 export const CHIBI_EARRINGS = {
   none: {
@@ -282,6 +288,8 @@ export const CHIBI_EARRINGS = {
     src: earringsSrc,
     stageWidth: '43%',
     stageTop: '9.5%',
+    stageByHead: earringsStageByHead,
+    portraitByHead: earringsPortraitByHead,
   },
   violet: {
     id: 'violet',
@@ -290,6 +298,8 @@ export const CHIBI_EARRINGS = {
     src: earringsSrc,
     stageWidth: '43%',
     stageTop: '9.5%',
+    stageByHead: earringsStageByHead,
+    portraitByHead: earringsPortraitByHead,
     filter: colorFilters.violet,
     unlockAt: 20,
   },
@@ -300,6 +310,8 @@ export const CHIBI_EARRINGS = {
     src: earringsSrc,
     stageWidth: '43%',
     stageTop: '9.5%',
+    stageByHead: earringsStageByHead,
+    portraitByHead: earringsPortraitByHead,
     filter: colorFilters.cyan,
     unlockAt: 35,
   },
