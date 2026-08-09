@@ -1,4 +1,4 @@
-export const CHIBI_ASSET_VERSION = 3
+export const CHIBI_ASSET_VERSION = 4
 
 export const DEFAULT_CHIBI_SELECTION = {
   version: CHIBI_ASSET_VERSION,
@@ -11,7 +11,8 @@ export const DEFAULT_CHIBI_SELECTION = {
   jersey: 'orange',
   sticker: 'none',
   shorts: 'orange',
-  hands: 'orange',
+  hands: 'base',
+  protection: 'standard',
   wrist: 'none',
   skates: 'orange',
 }
@@ -146,6 +147,14 @@ export const CHIBI_HEADWEAR = {
     stageTop: '-1.4%',
     portraitWidth: '70%',
     portraitTop: '-13.8%',
+    stageByHead: {
+      silver: { width: '43%', top: '-1%' },
+      curly: { width: '41%', top: '-1.2%' },
+    },
+    portraitByHead: {
+      silver: { width: '78%', top: '-12%' },
+      curly: { width: '75%', top: '-13%' },
+    },
     unlockAt: 15,
   },
 }
@@ -187,7 +196,7 @@ export const CHIBI_EYEWEAR = {
 // Alias temporal: evita romper imports o avatares de la versión 2.
 export const CHIBI_ACCESSORIES = CHIBI_EYEWEAR
 
-const earringsSrc = '/avatar/v3/accessories/earrings-hoop-v1.webp'
+const earringsSrc = '/avatar/v3/accessories/earrings-hoop-small-v1.webp'
 
 export const CHIBI_EARRINGS = {
   none: {
@@ -277,7 +286,10 @@ function coloredOption(id, label, color, src, unlockAt = 0) {
 
 const jerseySrc = '/avatar/v3/parts/jersey-orange-v1.webp'
 const shortsSrc = '/avatar/v3/parts/short-orange-v1.webp'
-const handsSrc = '/avatar/v3/parts/hands-orange-v1.webp'
+const handsSrc = '/avatar/v3/parts/hands-base-v1.webp'
+const protectionStandardSrc =
+  '/avatar/v3/parts/protection-standard-v2.webp'
+const protectionShieldSrc = '/avatar/v3/parts/protection-shield-v2.webp'
 const skatesSrc = '/avatar/v3/parts/skates-orange-v1.webp'
 
 export const CHIBI_JERSEYS = {
@@ -316,12 +328,63 @@ export const CHIBI_SHORTS = {
 }
 
 export const CHIBI_HANDS = {
-  orange: {
-    id: 'orange',
-    label: 'Muñequeras PR',
-    description: 'Protección roller',
+  base: {
+    id: 'base',
+    label: 'Manos base',
+    description: 'Anatomía permanente',
     src: handsSrc,
-    filter: 'none',
+    stageWidth: '52%',
+    stageTop: '30.5%',
+  },
+}
+
+export const CHIBI_PROTECTIONS = {
+  standard: {
+    id: 'standard',
+    label: 'PR Standard',
+    description: 'Muñequera roller esencial',
+    src: protectionStandardSrc,
+    stageWidth: '43%',
+    stageTop: '30.6%',
+  },
+  standardViolet: {
+    id: 'standardViolet',
+    label: 'Standard Violet',
+    description: 'Muñequera roller violeta',
+    src: protectionStandardSrc,
+    stageWidth: '43%',
+    stageTop: '30.6%',
+    filter: colorFilters.violet,
+    unlockAt: 15,
+  },
+  standardCyan: {
+    id: 'standardCyan',
+    label: 'Standard Cyan',
+    description: 'Muñequera roller cyan',
+    src: protectionStandardSrc,
+    stageWidth: '43%',
+    stageTop: '30.6%',
+    filter: colorFilters.cyan,
+    unlockAt: 30,
+  },
+  shield: {
+    id: 'shield',
+    label: 'PR Shield',
+    description: 'Protección reforzada',
+    src: protectionShieldSrc,
+    stageWidth: '43%',
+    stageTop: '31.4%',
+    unlockAt: 20,
+  },
+  shieldViolet: {
+    id: 'shieldViolet',
+    label: 'Shield Violet',
+    description: 'Protección reforzada violeta',
+    src: protectionShieldSrc,
+    stageWidth: '43%',
+    stageTop: '31.4%',
+    filter: colorFilters.violet,
+    unlockAt: 40,
   },
 }
 
@@ -459,11 +522,11 @@ export const CHIBI_CATEGORIES = [
     options: CHIBI_SHORTS,
   },
   {
-    id: 'hands',
+    id: 'protection',
     label: 'Protección',
     icon: '✦',
     eyebrow: 'Muñequeras',
-    options: CHIBI_HANDS,
+    options: CHIBI_PROTECTIONS,
   },
   {
     id: 'wrist',
@@ -494,7 +557,7 @@ export function resolveChibiSelection(value = {}) {
         : fallback
       return selection
     },
-    { version: CHIBI_ASSET_VERSION }
+    { version: CHIBI_ASSET_VERSION, hands: DEFAULT_CHIBI_SELECTION.hands }
   )
 }
 

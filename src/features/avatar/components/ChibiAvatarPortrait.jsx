@@ -48,6 +48,15 @@ function PortraitFaceDetails({ piercing, tattoo }) {
   )
 }
 
+function headwearGeometry(headwear, headId) {
+  const override = headwear?.portraitByHead?.[headId]
+
+  return {
+    top: override?.top || headwear?.portraitTop,
+    width: override?.width || headwear?.portraitWidth,
+  }
+}
+
 export default function ChibiAvatarPortrait({
   selection = DEFAULT_CHIBI_SELECTION,
   className = '',
@@ -62,6 +71,7 @@ export default function ChibiAvatarPortrait({
     CHIBI_PIERCINGS[selection.piercing] || CHIBI_PIERCINGS.none
   const tattoo = CHIBI_TATTOOS[selection.tattoo] || CHIBI_TATTOOS.none
   const jersey = CHIBI_JERSEYS[selection.jersey] || CHIBI_JERSEYS.orange
+  const headwearPortrait = headwearGeometry(headwear, head.id)
 
   return (
     <span
@@ -83,7 +93,7 @@ export default function ChibiAvatarPortrait({
       <span className="pointer-events-none absolute left-1/2 top-[22%] z-10 h-[58%] w-[58%] -translate-x-1/2 rounded-full bg-orange-400/10 blur-2xl" />
 
       <PortraitAsset option={jersey} className="top-[44%] z-20 w-[84%]" />
-      <PortraitAsset option={earrings} className="top-[11%] z-[29] w-[85%]" />
+      <PortraitAsset option={earrings} className="top-[7.5%] z-[29] w-[85%]" />
       <PortraitAsset
         option={head}
         className="z-30"
@@ -96,8 +106,8 @@ export default function ChibiAvatarPortrait({
         option={headwear}
         className="z-[46]"
         style={{
-          top: headwear.portraitTop || '-15%',
-          width: headwear.portraitWidth || '70%',
+          top: headwearPortrait.top || '-15%',
+          width: headwearPortrait.width || '70%',
         }}
       />
       <PortraitAsset option={eyewear} className="top-[26%] z-40 w-[46%]" />

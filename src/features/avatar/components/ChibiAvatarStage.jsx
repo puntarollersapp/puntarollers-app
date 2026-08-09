@@ -6,6 +6,7 @@ import {
   CHIBI_HEADWEAR,
   CHIBI_JERSEYS,
   CHIBI_PIERCINGS,
+  CHIBI_PROTECTIONS,
   CHIBI_SHORTS,
   CHIBI_SKATES,
   CHIBI_STICKERS,
@@ -40,10 +41,10 @@ function JerseySticker({ sticker }) {
   if (sticker.kind === 'bolt') {
     return (
       <span
-        className="pointer-events-none absolute left-[45.5%] top-[38.5%] z-30 grid h-[4.2%] w-[5.8%] -translate-x-1/2 place-items-center rounded-full border border-orange-200/55 bg-[#141417]/85 text-[7px] text-orange-300 shadow-[0_0_10px_rgba(249,115,22,.3)]"
+        className="pointer-events-none absolute left-1/2 top-[37.8%] z-30 grid h-[4.2%] w-[8%] -translate-x-1/2 place-items-center rounded-full border border-orange-200/55 bg-[#141417]/85 text-[6px] font-black tracking-[-.12em] text-orange-300 shadow-[0_0_10px_rgba(249,115,22,.3)]"
         aria-hidden="true"
       >
-        ⚡
+        ϟϟ
       </span>
     )
   }
@@ -56,6 +57,15 @@ function JerseySticker({ sticker }) {
       aria-hidden="true"
     />
   )
+}
+
+function headwearGeometry(headwear, headId, mode) {
+  const override = headwear?.[`${mode}ByHead`]?.[headId]
+
+  return {
+    top: override?.top || headwear?.[`${mode}Top`],
+    width: override?.width || headwear?.[`${mode}Width`],
+  }
 }
 
 function FaceDetails({ piercing, tattoo }) {
@@ -100,9 +110,12 @@ export default function ChibiAvatarStage({
   const jersey = CHIBI_JERSEYS[selection.jersey] || CHIBI_JERSEYS.orange
   const sticker = CHIBI_STICKERS[selection.sticker] || CHIBI_STICKERS.none
   const shorts = CHIBI_SHORTS[selection.shorts] || CHIBI_SHORTS.orange
-  const hands = CHIBI_HANDS[selection.hands] || CHIBI_HANDS.orange
+  const hands = CHIBI_HANDS.base
+  const protection =
+    CHIBI_PROTECTIONS[selection.protection] || CHIBI_PROTECTIONS.standard
   const wrist = CHIBI_WRISTS[selection.wrist] || CHIBI_WRISTS.none
   const skates = CHIBI_SKATES[selection.skates] || CHIBI_SKATES.orange
+  const headwearStage = headwearGeometry(headwear, head.id, 'stage')
 
   return (
     <section
@@ -131,7 +144,14 @@ export default function ChibiAvatarStage({
       />
 
       <div className="absolute inset-0 z-20" aria-hidden="true">
-        <Asset option={earrings} className="top-[8.7%] z-[29] w-[43.1%]" />
+        <Asset
+          option={earrings}
+          className="z-[29]"
+          style={{
+            top: earrings.stageTop || '5%',
+            width: earrings.stageWidth || '43%',
+          }}
+        />
         <Asset
           option={head}
           className="z-30"
@@ -144,18 +164,30 @@ export default function ChibiAvatarStage({
           option={headwear}
           className="z-[36]"
           style={{
-            top: headwear.stageTop || '-2%',
-            width: headwear.stageWidth || '39%',
+            top: headwearStage.top || '-2%',
+            width: headwearStage.width || '39%',
           }}
         />
         <Asset option={eyewear} className="top-[12%] z-[35] w-[28%]" />
         <FaceDetails piercing={piercing} tattoo={tattoo} />
         <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
-        <Asset option={hands} className="top-[26%] z-30 w-[62%]" />
+        <Asset
+          option={hands}
+          className="z-30"
+          style={{ top: hands.stageTop, width: hands.stageWidth }}
+        />
+        <Asset
+          option={protection}
+          className="z-[33]"
+          style={{
+            top: protection.stageTop,
+            width: protection.stageWidth,
+          }}
+        />
         <Asset
           option={wrist}
           className="z-[34]"
-          style={{ left: '35.2%', top: '39%', width: '14.8%' }}
+          style={{ left: '39.5%', top: '39%', width: '14.8%' }}
         />
         <JerseySticker sticker={sticker} />
         <Asset option={shorts} className="top-[43%] z-20 w-[44%]" />
@@ -175,7 +207,7 @@ export default function ChibiAvatarStage({
         <div className="absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2">
           <div className="rounded-xl border border-white/10 bg-black/50 px-2.5 py-1.5 shadow-xl backdrop-blur-md">
             <p className="text-[6px] font-black uppercase tracking-[.16em] text-orange-200/72">
-              PR Locker · chibi v3
+              PR Locker · chibi v4
             </p>
           </div>
 
