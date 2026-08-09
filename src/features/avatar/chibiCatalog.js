@@ -196,6 +196,12 @@ export const CHIBI_EYEWEAR = {
     stageTop: '11.4%',
     portraitWidth: '52%',
     portraitTop: '23%',
+    stageByHead: {
+      masculine: { width: '36%', top: '10.7%' },
+    },
+    portraitByHead: {
+      masculine: { width: '62%', top: '21.3%' },
+    },
   },
   halfrim: {
     id: 'halfrim',
@@ -206,6 +212,12 @@ export const CHIBI_EYEWEAR = {
     stageTop: '12.2%',
     portraitWidth: '54%',
     portraitTop: '25%',
+    stageByHead: {
+      masculine: { width: '37%', top: '11.4%' },
+    },
+    portraitByHead: {
+      masculine: { width: '64%', top: '23.1%' },
+    },
     unlockAt: 15,
   },
   retro: {
@@ -217,6 +229,12 @@ export const CHIBI_EYEWEAR = {
     stageTop: '12.4%',
     portraitWidth: '44%',
     portraitTop: '25%',
+    stageByHead: {
+      masculine: { width: '30%', top: '11.9%' },
+    },
+    portraitByHead: {
+      masculine: { width: '52%', top: '23.9%' },
+    },
     unlockAt: 25,
   },
 }
