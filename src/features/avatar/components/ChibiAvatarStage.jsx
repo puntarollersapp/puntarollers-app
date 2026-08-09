@@ -75,7 +75,7 @@ export default function ChibiAvatarStage({
 
   return (
     <section
-      className={`relative isolate aspect-[2/3] w-full overflow-hidden rounded-[30px] border border-orange-200/10 bg-[#09090d] shadow-[0_22px_60px_rgba(0,0,0,.5)] ${className}`}
+      className={`relative isolate aspect-[2/3] h-full w-auto max-w-full shrink-0 overflow-hidden rounded-[30px] border border-orange-200/10 bg-[#09090d] shadow-[0_22px_60px_rgba(0,0,0,.5)] ${className}`}
       aria-label="Vista previa del avatar modular Punta Rollers"
     >
       <img
@@ -101,7 +101,7 @@ export default function ChibiAvatarStage({
 
       <div className="absolute inset-0 z-20" aria-hidden="true">
         <Asset option={head} className="top-[1%] z-30 w-[56%]" />
-        <Asset option={accessory} className="top-[4%] z-[35] w-[56%]" />
+        <Asset option={accessory} className="top-[13%] z-[35] w-[38%]" />
         <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
         <Asset option={hands} className="top-[27%] z-30 w-[70%]" />
         <JerseySticker sticker={sticker} />

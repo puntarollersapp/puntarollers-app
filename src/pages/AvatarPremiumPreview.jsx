@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ChibiAvatarStage from '../features/avatar/components/ChibiAvatarStage'
 import {
@@ -61,6 +61,7 @@ export default function AvatarPremiumPreview() {
   const [activeCategory, setActiveCategory] = useState('head')
   const [selection, setSelection] = useState(DEFAULT_CHIBI_SELECTION)
   const [useAsProfilePhoto, setUseAsProfilePhoto] = useState(false)
+  const previewRef = useRef(null)
   const canPreviewLocked = user?.role === 'admin'
 
   useEffect(() => {
@@ -125,6 +126,13 @@ export default function AvatarPremiumPreview() {
   function chooseOption(categoryId, optionId) {
     setSelection((current) => ({ ...current, [categoryId]: optionId }))
     setMessage('')
+
+    window.requestAnimationFrame(() => {
+      previewRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
   }
 
   async function saveChibiAvatar() {
@@ -180,7 +188,7 @@ export default function AvatarPremiumPreview() {
   return (
     <AppLayout title="PR Roller" showBack>
       <div className="animate-page-enter px-3 pb-4 pt-3">
-        <div className="flex h-[calc(100dvh-150px)] min-h-[500px] flex-col gap-2.5">
+        <div className="flex min-h-[calc(100dvh-150px)] flex-col gap-2.5">
           <div className="flex items-center justify-between gap-3 px-1">
             <div className="min-w-0">
               <p className="text-[7px] font-black uppercase tracking-[.2em] text-orange-300/75">
@@ -201,11 +209,14 @@ export default function AvatarPremiumPreview() {
             </button>
           </div>
 
-          <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-white/[.06] bg-gradient-to-b from-[#17121d] to-[#09090d] p-1.5">
+          <div
+            ref={previewRef}
+            className="flex h-[clamp(350px,50dvh,480px)] shrink-0 scroll-mt-[76px] items-center justify-center overflow-hidden rounded-[28px] border border-white/[.06] bg-[radial-gradient(circle_at_center,rgba(249,115,22,.08),transparent_55%),linear-gradient(to_bottom,#17121d,#09090d)] p-1.5"
+          >
             <ChibiAvatarStage
               selection={selection}
               energy={progress.energy}
-              className="h-full max-h-[500px] w-auto max-w-full"
+              className="h-full w-auto max-w-full"
             />
           </div>
 
@@ -255,7 +266,7 @@ export default function AvatarPremiumPreview() {
               </span>
             </div>
 
-            <div className="mt-2 grid max-h-[clamp(104px,17dvh,150px)] grid-cols-3 gap-2 overflow-y-auto pr-0.5">
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1 pr-0.5">
               {Object.values(activeGroup.options).map((option) => {
                 const active = selection[activeGroup.id] === option.id
                 const locked =
@@ -268,7 +279,7 @@ export default function AvatarPremiumPreview() {
                     onClick={() => chooseOption(activeGroup.id, option.id)}
                     disabled={locked}
                     aria-pressed={active}
-                    className={`relative flex min-h-[104px] min-w-0 flex-col items-center justify-center overflow-hidden rounded-[18px] border px-1.5 py-2 transition-all disabled:cursor-not-allowed disabled:opacity-35 ${
+                    className={`relative flex h-[112px] w-[104px] min-w-[104px] flex-col items-center justify-center overflow-hidden rounded-[18px] border px-1.5 py-2 transition-all disabled:cursor-not-allowed disabled:opacity-35 ${
                       active
                         ? 'border-orange-200/70 bg-orange-300/[.1] shadow-[inset_0_0_0_1px_rgba(251,146,60,.18)]'
                         : 'border-white/[.08] bg-white/[.035]'

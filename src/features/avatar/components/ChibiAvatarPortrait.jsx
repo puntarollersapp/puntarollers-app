@@ -51,7 +51,7 @@ export default function ChibiAvatarPortrait({
 
       <PortraitAsset option={jersey} className="top-[44%] z-20 w-[84%]" />
       <PortraitAsset option={head} className="top-[-2%] z-30 w-[90%]" />
-      <PortraitAsset option={accessory} className="top-[3%] z-40 w-[90%]" />
+      <PortraitAsset option={accessory} className="top-[28%] z-40 w-[61%]" />
 
       <span className="pointer-events-none absolute inset-0 z-40 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
