@@ -3705,7 +3705,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
     { id: crypto.randomUUID(), distance: '6', customDistance: '', time: '' },
   ])
   const [profileForm, setProfileForm] = useState({
-    perfilRodaje: 'En evolucion',
+    perfilRodaje: 'En evolución',
     tecnica: '',
     resistencia: '',
   })
@@ -3828,7 +3828,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
         nextResult.error ? fallbackNext : Number(nextResult.data) || fallbackNext
       )
       setProfileForm({
-        perfilRodaje: profileData?.perfil_rodaje || 'En evolucion',
+        perfilRodaje: profileData?.perfil_rodaje || 'En evolución',
         tecnica: profileData?.tecnica ? String(profileData.tecnica) : '',
         resistencia: profileData?.resistencia
           ? String(profileData.resistencia)
@@ -4586,7 +4586,7 @@ function PerformancePanel({ creator, alumnos, setMsg }) {
                 className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm outline-none text-white"
               >
                 <option value="Recreativo">Recreativo</option>
-                <option value="En evolucion">En evolucion</option>
+                <option value="En evolución">En evolución</option>
                 <option value="Competitivo">Competitivo</option>
                 <option value="Racing Team">Racing Team</option>
               </select>
