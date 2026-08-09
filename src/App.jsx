@@ -28,6 +28,7 @@ import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
 import MiEvolucion from './pages/MiEvolucion'
 import RollerAvatar from './pages/RollerAvatar'
+import AvatarPremiumPreview from './pages/AvatarPremiumPreview'
 import Insignias from './pages/Insignias'
 
 function ScrollToTop() {
@@ -140,6 +141,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <RollerAvatar />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/avatar-premium"
+          element={
+            <PrivateRoute>
+              <AvatarPremiumPreview />
             </PrivateRoute>
           }
         />
