@@ -29,7 +29,7 @@ function PortraitFaceDetails({ piercing }) {
   return (
     <>
       {piercing?.kind === 'nose-stud' && (
-        <span className="pointer-events-none absolute left-[58%] top-[50%] z-[48] aspect-square w-[2.4%] rounded-full border border-white/70 bg-slate-300 shadow-[0_0_4px_rgba(255,255,255,.8)]" />
+        <span className="pointer-events-none absolute left-[51.8%] top-[55.5%] z-[48] aspect-square w-[2.4%] rounded-full border border-white/70 bg-slate-300 shadow-[0_0_4px_rgba(255,255,255,.8)]" />
       )}
       {piercing?.kind === 'brow-stud' && (
         <span className="pointer-events-none absolute left-[36.5%] top-[39%] z-[48] h-[3.4%] w-[4.4%] -rotate-12 rounded-full border-2 border-slate-300/90 border-l-transparent" />
@@ -83,7 +83,7 @@ export default function ChibiAvatarPortrait({
       <span className="pointer-events-none absolute left-1/2 top-[22%] z-10 h-[58%] w-[58%] -translate-x-1/2 rounded-full bg-orange-400/10 blur-2xl" />
 
       <PortraitAsset option={jersey} className="top-[44%] z-20 w-[84%]" />
-      <PortraitAsset option={earrings} className="top-[7.5%] z-[29] w-[85%]" />
+      <PortraitAsset option={earrings} className="top-[7.5%] z-[39] w-[85%]" />
       <PortraitAsset
         option={head}
         className="z-30"

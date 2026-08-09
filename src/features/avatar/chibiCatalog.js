@@ -1,4 +1,4 @@
-export const CHIBI_ASSET_VERSION = 6
+export const CHIBI_ASSET_VERSION = 7
 
 export const DEFAULT_CHIBI_SELECTION = {
   version: CHIBI_ASSET_VERSION,
@@ -193,9 +193,9 @@ export const CHIBI_EYEWEAR = {
     description: 'Redondos y abiertos',
     src: '/avatar/v3/accessories/glasses-round-v1.webp',
     stageWidth: '30%',
-    stageTop: '9.7%',
+    stageTop: '11.4%',
     portraitWidth: '52%',
-    portraitTop: '20%',
+    portraitTop: '23%',
   },
   halfrim: {
     id: 'halfrim',
@@ -203,9 +203,9 @@ export const CHIBI_EYEWEAR = {
     description: 'Media montura técnica',
     src: '/avatar/v3/accessories/glasses-halfrim-v1.webp',
     stageWidth: '31%',
-    stageTop: '10.5%',
+    stageTop: '12.2%',
     portraitWidth: '54%',
-    portraitTop: '22%',
+    portraitTop: '25%',
     unlockAt: 15,
   },
   retro: {
@@ -214,9 +214,9 @@ export const CHIBI_EYEWEAR = {
     description: 'Rectangulares translúcidos',
     src: '/avatar/v3/accessories/glasses-retro-v1.webp',
     stageWidth: '25%',
-    stageTop: '10.7%',
+    stageTop: '12.4%',
     portraitWidth: '44%',
-    portraitTop: '22%',
+    portraitTop: '25%',
     unlockAt: 25,
   },
 }
@@ -405,16 +405,16 @@ export const CHIBI_PROTECTIONS = {
     label: 'PR Flex',
     description: 'Mano y muñequera ligera',
     src: '/avatar/v3/parts/handpack-flex-v2.webp',
-    stageWidth: '48.5%',
-    stageTop: '34%',
+    stageWidth: '52%',
+    stageTop: '34.5%',
   },
   street: {
     id: 'street',
     label: 'PR Street',
     description: 'Guante urbano integrado',
     src: '/avatar/v3/parts/handpack-street-v2.webp',
-    stageWidth: '48.5%',
-    stageTop: '34%',
+    stageWidth: '52%',
+    stageTop: '34.5%',
     unlockAt: 15,
   },
   pulse: {
@@ -422,8 +422,8 @@ export const CHIBI_PROTECTIONS = {
     label: 'PR Pulse',
     description: 'Muñequera técnica integrada',
     src: '/avatar/v3/parts/handpack-pulse-v2.webp',
-    stageWidth: '48.5%',
-    stageTop: '34%',
+    stageWidth: '52%',
+    stageTop: '34.5%',
     unlockAt: 30,
   },
 }

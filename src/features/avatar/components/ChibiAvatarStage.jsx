@@ -70,7 +70,7 @@ function FaceDetails({ piercing }) {
   return (
     <>
       {piercing?.kind === 'nose-stud' && (
-        <span className="pointer-events-none absolute left-[54.1%] top-[21.5%] z-[38] aspect-square w-[1.25%] rounded-full border border-white/70 bg-slate-300 shadow-[0_0_4px_rgba(255,255,255,.8)]" />
+        <span className="pointer-events-none absolute left-[51.6%] top-[23.4%] z-[38] aspect-square w-[1.25%] rounded-full border border-white/70 bg-slate-300 shadow-[0_0_4px_rgba(255,255,255,.8)]" />
       )}
       {piercing?.kind === 'brow-stud' && (
         <span className="pointer-events-none absolute left-[42.2%] top-[17.7%] z-[38] h-[1.8%] w-[2.4%] rotate-[-14deg] rounded-full border-2 border-slate-300/90 border-l-transparent shadow-[0_0_3px_rgba(255,255,255,.5)]" />
@@ -132,7 +132,7 @@ export default function ChibiAvatarStage({
       <div className="absolute inset-0 z-20" aria-hidden="true">
         <Asset
           option={earrings}
-          className="z-[29]"
+          className="z-[34]"
           style={{
             top: earrings.stageTop || '5%',
             width: earrings.stageWidth || '43%',
@@ -198,7 +198,7 @@ export default function ChibiAvatarStage({
         <div className="absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2">
           <div className="rounded-xl border border-white/10 bg-black/50 px-2.5 py-1.5 shadow-xl backdrop-blur-md">
             <p className="text-[6px] font-black uppercase tracking-[.16em] text-orange-200/72">
-              PR Locker · chibi v6
+              PR Locker · chibi v7
             </p>
           </div>
 
