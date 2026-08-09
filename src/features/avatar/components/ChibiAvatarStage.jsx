@@ -57,12 +57,12 @@ function JerseySticker({ sticker }) {
   )
 }
 
-function headwearGeometry(headwear, headId, mode) {
-  const override = headwear?.[`${mode}ByHead`]?.[headId]
+function stageGeometry(option, headId) {
+  const override = option?.stageByHead?.[headId]
 
   return {
-    top: override?.top || headwear?.[`${mode}Top`],
-    width: override?.width || headwear?.[`${mode}Width`],
+    top: override?.top || option?.stageTop,
+    width: override?.width || option?.stageWidth,
   }
 }
 
@@ -101,8 +101,9 @@ export default function ChibiAvatarStage({
   const protection =
     CHIBI_PROTECTIONS[selection.protection] || CHIBI_PROTECTIONS.flex
   const skates = CHIBI_SKATES[selection.skates] || CHIBI_SKATES.orange
-  const headwearStage = headwearGeometry(headwear, head.id, 'stage')
-  const earringsStage = headwearGeometry(earrings, head.id, 'stage')
+  const headwearStage = stageGeometry(headwear, head.id)
+  const earringsStage = stageGeometry(earrings, head.id)
+  const eyewearStage = stageGeometry(eyewear, head.id)
 
   return (
     <section
@@ -167,8 +168,8 @@ export default function ChibiAvatarStage({
           option={eyewear}
           className="z-[35]"
           style={{
-            top: eyewear.stageTop,
-            width: eyewear.stageWidth,
+            top: eyewearStage.top,
+            width: eyewearStage.width,
           }}
         />
         <FaceDetails piercing={piercing} />
