@@ -13,7 +13,7 @@ import { clampAvatarEnergy } from '../avatarEnergy'
 const SLOT_CLASS =
   'pointer-events-none absolute left-1/2 h-auto -translate-x-1/2 object-contain transition-[filter,transform] duration-300'
 
-function Asset({ option, className, alt = '' }) {
+function Asset({ option, className, alt = '', style }) {
   if (!option?.src) return null
 
   return (
@@ -21,7 +21,7 @@ function Asset({ option, className, alt = '' }) {
       src={option.src}
       alt={alt}
       className={`${SLOT_CLASS} ${className}`}
-      style={{ filter: option.filter || 'none' }}
+      style={{ filter: option.filter || 'none', ...style }}
       loading="eager"
       decoding="async"
       draggable="false"
@@ -44,16 +44,12 @@ function JerseySticker({ sticker }) {
   }
 
   return (
-    <span
-      className="pointer-events-none absolute left-[45.5%] top-[37.9%] z-30 h-[5.2%] w-[7.2%] -translate-x-1/2 overflow-hidden rounded-full border border-amber-100/50 bg-black/30 shadow-[0_0_10px_rgba(250,204,21,.25)]"
+    <img
+      src="/avatar/v3/brand/pr-logo-official-v1.png"
+      alt=""
+      className="pointer-events-none absolute left-1/2 top-[37.2%] z-30 h-auto w-[6%] -translate-x-1/2 opacity-90 drop-shadow-[0_0_7px_rgba(250,204,21,.42)]"
       aria-hidden="true"
-    >
-      <img
-        src="/avatar/v3/brand/pr-logo-official-v1.png"
-        alt=""
-        className="absolute left-1/2 top-0 h-auto w-[145%] max-w-none -translate-x-1/2"
-      />
-    </span>
+    />
   )
 }
 
@@ -100,40 +96,37 @@ export default function ChibiAvatarStage({
       />
 
       <div className="absolute inset-0 z-20" aria-hidden="true">
-        <Asset option={head} className="top-[1%] z-30 w-[56%]" />
-        <Asset option={accessory} className="top-[13%] z-[35] w-[38%]" />
+        <Asset
+          option={head}
+          className="z-30"
+          style={{
+            top: head.stageTop || '2%',
+            width: head.stageWidth || '50%',
+          }}
+        />
+        <Asset option={accessory} className="top-[15.5%] z-[35] w-[32%]" />
         <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
-        <Asset option={hands} className="top-[27%] z-30 w-[70%]" />
+        <Asset option={hands} className="top-[26%] z-30 w-[62%]" />
         <JerseySticker sticker={sticker} />
         <Asset option={shorts} className="top-[43%] z-20 w-[44%]" />
-        <Asset option={skates} className="top-[55%] z-30 w-[56%]" />
+        <Asset option={skates} className="top-[58%] z-30 w-[52%]" />
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-30 bg-gradient-to-b from-black/20 via-transparent to-black/25" />
 
-      <img
-        src="/avatar/v3/brand/pr-logo-official-v1.png"
-        alt=""
-        className="pointer-events-none absolute bottom-[6.3%] left-1/2 z-40 w-[13%] -translate-x-1/2 opacity-80 drop-shadow-[0_0_10px_rgba(249,115,22,.95)]"
-        aria-hidden="true"
-      />
-
       {showHud && (
         <div className="absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2">
-          <div className="rounded-2xl border border-white/10 bg-black/55 px-3 py-2 shadow-xl backdrop-blur-md">
-            <p className="text-[7px] font-black uppercase tracking-[.18em] text-orange-200/75">
-              PR Roller Locker
-            </p>
-            <p className="mt-0.5 text-[8px] font-semibold text-white/45">
-              Modular chibi v2
+          <div className="rounded-xl border border-white/10 bg-black/50 px-2.5 py-1.5 shadow-xl backdrop-blur-md">
+            <p className="text-[6px] font-black uppercase tracking-[.16em] text-orange-200/72">
+              PR Locker · chibi v2
             </p>
           </div>
 
-          <div className="rounded-2xl border border-orange-300/20 bg-black/55 px-3 py-2 text-right shadow-xl backdrop-blur-md">
-            <p className="text-[6px] font-black uppercase tracking-[.12em] text-white/35">
-              Energía PR
+          <div className="flex items-center gap-1.5 rounded-xl border border-orange-300/20 bg-black/50 px-2.5 py-1.5 text-right shadow-xl backdrop-blur-md">
+            <p className="text-[5px] font-black uppercase tracking-[.1em] text-white/35">
+              Energía
             </p>
-            <p className="font-display text-[20px] leading-none text-orange-200">
+            <p className="font-display text-[15px] leading-none text-orange-200">
               {Math.round(safeEnergy)}%
             </p>
           </div>

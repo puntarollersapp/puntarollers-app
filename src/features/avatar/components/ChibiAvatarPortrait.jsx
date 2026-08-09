@@ -5,7 +5,7 @@ import {
   DEFAULT_CHIBI_SELECTION,
 } from '../chibiCatalog'
 
-function PortraitAsset({ option, className }) {
+function PortraitAsset({ option, className, style }) {
   if (!option?.src) return null
 
   return (
@@ -13,7 +13,7 @@ function PortraitAsset({ option, className }) {
       src={option.src}
       alt=""
       className={`pointer-events-none absolute left-1/2 h-auto -translate-x-1/2 object-contain ${className}`}
-      style={{ filter: option.filter || 'none' }}
+      style={{ filter: option.filter || 'none', ...style }}
       loading="eager"
       decoding="async"
       draggable="false"
@@ -50,15 +50,22 @@ export default function ChibiAvatarPortrait({
       <span className="pointer-events-none absolute left-1/2 top-[22%] z-10 h-[58%] w-[58%] -translate-x-1/2 rounded-full bg-orange-400/10 blur-2xl" />
 
       <PortraitAsset option={jersey} className="top-[44%] z-20 w-[84%]" />
-      <PortraitAsset option={head} className="top-[-2%] z-30 w-[90%]" />
-      <PortraitAsset option={accessory} className="top-[28%] z-40 w-[61%]" />
+      <PortraitAsset
+        option={head}
+        className="z-30"
+        style={{
+          top: head.portraitTop || '-2%',
+          width: head.portraitWidth || '90%',
+        }}
+      />
+      <PortraitAsset option={accessory} className="top-[32%] z-40 w-[52%]" />
 
       <span className="pointer-events-none absolute inset-0 z-40 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
       <img
         src="/avatar/v3/brand/pr-logo-official-v1.png"
         alt=""
-        className="pointer-events-none absolute bottom-[4%] right-[5%] z-50 w-[18%] opacity-85 drop-shadow-[0_0_8px_rgba(249,115,22,.9)]"
+        className="pointer-events-none absolute bottom-[4%] right-[5%] z-50 w-[12%] opacity-65 drop-shadow-[0_0_8px_rgba(249,115,22,.7)]"
       />
     </span>
   )
