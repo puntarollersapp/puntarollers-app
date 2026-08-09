@@ -1,11 +1,16 @@
 import {
-  CHIBI_ACCESSORIES,
+  CHIBI_EARRINGS,
+  CHIBI_EYEWEAR,
   CHIBI_HANDS,
   CHIBI_HEADS,
+  CHIBI_HEADWEAR,
   CHIBI_JERSEYS,
+  CHIBI_PIERCINGS,
   CHIBI_SHORTS,
   CHIBI_SKATES,
   CHIBI_STICKERS,
+  CHIBI_TATTOOS,
+  CHIBI_WRISTS,
   DEFAULT_CHIBI_SELECTION,
 } from '../chibiCatalog'
 import { clampAvatarEnergy } from '../avatarEnergy'
@@ -53,6 +58,29 @@ function JerseySticker({ sticker }) {
   )
 }
 
+function FaceDetails({ piercing, tattoo }) {
+  return (
+    <>
+      {piercing?.kind === 'nose-stud' && (
+        <span className="pointer-events-none absolute left-[54.1%] top-[21.5%] z-[38] aspect-square w-[1.25%] rounded-full border border-white/70 bg-slate-300 shadow-[0_0_4px_rgba(255,255,255,.8)]" />
+      )}
+      {piercing?.kind === 'brow-stud' && (
+        <span className="pointer-events-none absolute left-[42.2%] top-[17.7%] z-[38] h-[1.8%] w-[2.4%] rotate-[-14deg] rounded-full border-2 border-slate-300/90 border-l-transparent shadow-[0_0_3px_rgba(255,255,255,.5)]" />
+      )}
+      {tattoo?.kind === 'face-bolt' && (
+        <span className="pointer-events-none absolute left-[42.6%] top-[21.3%] z-[37] -rotate-12 text-[7px] font-black text-[#38251d]/75">
+          ϟ
+        </span>
+      )}
+      {tattoo?.kind === 'face-lines' && (
+        <span className="pointer-events-none absolute left-[42.1%] top-[22%] z-[37] -rotate-12 text-[7px] font-black tracking-[-.16em] text-[#38251d]/70">
+          ╱╱
+        </span>
+      )}
+    </>
+  )
+}
+
 export default function ChibiAvatarStage({
   selection = DEFAULT_CHIBI_SELECTION,
   energy = 0,
@@ -61,12 +89,19 @@ export default function ChibiAvatarStage({
 }) {
   const safeEnergy = clampAvatarEnergy(energy)
   const head = CHIBI_HEADS[selection.head] || CHIBI_HEADS.masculine
-  const accessory =
-    CHIBI_ACCESSORIES[selection.accessory] || CHIBI_ACCESSORIES.none
+  const headwear =
+    CHIBI_HEADWEAR[selection.headwear] || CHIBI_HEADWEAR.none
+  const eyewear = CHIBI_EYEWEAR[selection.eyewear] || CHIBI_EYEWEAR.none
+  const earrings =
+    CHIBI_EARRINGS[selection.earrings] || CHIBI_EARRINGS.none
+  const piercing =
+    CHIBI_PIERCINGS[selection.piercing] || CHIBI_PIERCINGS.none
+  const tattoo = CHIBI_TATTOOS[selection.tattoo] || CHIBI_TATTOOS.none
   const jersey = CHIBI_JERSEYS[selection.jersey] || CHIBI_JERSEYS.orange
   const sticker = CHIBI_STICKERS[selection.sticker] || CHIBI_STICKERS.none
   const shorts = CHIBI_SHORTS[selection.shorts] || CHIBI_SHORTS.orange
   const hands = CHIBI_HANDS[selection.hands] || CHIBI_HANDS.orange
+  const wrist = CHIBI_WRISTS[selection.wrist] || CHIBI_WRISTS.none
   const skates = CHIBI_SKATES[selection.skates] || CHIBI_SKATES.orange
 
   return (
@@ -96,6 +131,7 @@ export default function ChibiAvatarStage({
       />
 
       <div className="absolute inset-0 z-20" aria-hidden="true">
+        <Asset option={earrings} className="top-[8.7%] z-[29] w-[43.1%]" />
         <Asset
           option={head}
           className="z-30"
@@ -104,12 +140,33 @@ export default function ChibiAvatarStage({
             width: head.stageWidth || '50%',
           }}
         />
-        <Asset option={accessory} className="top-[15.5%] z-[35] w-[32%]" />
+        <Asset
+          option={headwear}
+          className="z-[36]"
+          style={{
+            top: headwear.stageTop || '-2%',
+            width: headwear.stageWidth || '39%',
+          }}
+        />
+        <Asset option={eyewear} className="top-[15.5%] z-[35] w-[32%]" />
+        <FaceDetails piercing={piercing} tattoo={tattoo} />
         <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
         <Asset option={hands} className="top-[26%] z-30 w-[62%]" />
+        <Asset
+          option={wrist}
+          className="z-[34]"
+          style={{ left: '35.2%', top: '39%', width: '14.8%' }}
+        />
         <JerseySticker sticker={sticker} />
         <Asset option={shorts} className="top-[43%] z-20 w-[44%]" />
-        <Asset option={skates} className="top-[58%] z-30 w-[52%]" />
+        <Asset
+          option={skates}
+          className="z-30"
+          style={{
+            top: skates.stageTop || '58%',
+            width: skates.stageWidth || '52%',
+          }}
+        />
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-30 bg-gradient-to-b from-black/20 via-transparent to-black/25" />
@@ -118,7 +175,7 @@ export default function ChibiAvatarStage({
         <div className="absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2">
           <div className="rounded-xl border border-white/10 bg-black/50 px-2.5 py-1.5 shadow-xl backdrop-blur-md">
             <p className="text-[6px] font-black uppercase tracking-[.16em] text-orange-200/72">
-              PR Locker · chibi v2
+              PR Locker · chibi v3
             </p>
           </div>
 

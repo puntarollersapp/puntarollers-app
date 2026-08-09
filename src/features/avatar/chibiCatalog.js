@@ -1,13 +1,18 @@
-export const CHIBI_ASSET_VERSION = 2
+export const CHIBI_ASSET_VERSION = 3
 
 export const DEFAULT_CHIBI_SELECTION = {
   version: CHIBI_ASSET_VERSION,
   head: 'masculine',
-  accessory: 'none',
+  headwear: 'none',
+  eyewear: 'none',
+  earrings: 'none',
+  piercing: 'none',
+  tattoo: 'none',
   jersey: 'orange',
   sticker: 'none',
   shorts: 'orange',
   hands: 'orange',
+  wrist: 'none',
   skates: 'orange',
 }
 
@@ -21,7 +26,7 @@ const colorFilters = {
 export const CHIBI_HEADS = {
   masculine: {
     id: 'masculine',
-    label: 'Masculino',
+    label: 'Deportivo',
     description: 'Corte deportivo',
     src: '/avatar/v3/parts/head-masculine-v1.webp',
     stageWidth: '51%',
@@ -31,7 +36,7 @@ export const CHIBI_HEADS = {
   },
   feminine: {
     id: 'feminine',
-    label: 'Femenino',
+    label: 'Bob',
     description: 'Bob deportivo',
     src: '/avatar/v3/parts/head-feminine-v1.webp',
     stageWidth: '43%',
@@ -71,14 +76,86 @@ export const CHIBI_HEADS = {
     portraitTop: '3%',
     unlockAt: 30,
   },
+  buzz: {
+    id: 'buzz',
+    label: 'Rapado',
+    description: 'Corte corto',
+    src: '/avatar/v3/parts/head-buzz-v1.webp',
+    stageWidth: '47.7%',
+    stageTop: '3.6%',
+    portraitWidth: '90%',
+    portraitTop: '-1.9%',
+  },
+  wave: {
+    id: 'wave',
+    label: 'Ondas',
+    description: 'Ondas con volumen',
+    src: '/avatar/v3/parts/head-wave-v1.webp',
+    stageWidth: '45.1%',
+    stageTop: '4.1%',
+    portraitWidth: '85%',
+    portraitTop: '-0.4%',
+  },
+  ponytail: {
+    id: 'ponytail',
+    label: 'Cola alta',
+    description: 'Ondas y pecas',
+    src: '/avatar/v3/parts/head-ponytail-v1.webp',
+    stageWidth: '40.9%',
+    stageTop: '4.7%',
+    portraitWidth: '77%',
+    portraitTop: '1.4%',
+    unlockAt: 15,
+  },
+  braids: {
+    id: 'braids',
+    label: 'Trenzas',
+    description: 'Trenzas largas',
+    src: '/avatar/v3/parts/head-braids-v1.webp',
+    stageWidth: '41.7%',
+    stageTop: '4.3%',
+    portraitWidth: '78.6%',
+    portraitTop: '0%',
+    unlockAt: 20,
+  },
+}
+
+export const CHIBI_HEADWEAR = {
+  none: {
+    id: 'none',
+    label: 'Sin gorro',
+    description: 'Peinado libre',
+    kind: 'none',
+  },
+  cap: {
+    id: 'cap',
+    label: 'Gorra PR',
+    description: 'Gorra deportiva',
+    src: '/avatar/v3/accessories/cap-orange-v1.webp',
+    stageWidth: '39%',
+    stageTop: '-2%',
+    portraitWidth: '70%',
+    portraitTop: '-15.7%',
+  },
+  beanie: {
+    id: 'beanie',
+    label: 'Beanie PR',
+    description: 'Gorro tejido',
+    src: '/avatar/v3/accessories/beanie-orange-v1.webp',
+    stageWidth: '38%',
+    stageTop: '-1.4%',
+    portraitWidth: '70%',
+    portraitTop: '-13.8%',
+    unlockAt: 15,
+  },
 }
 
 const glassesSrc = '/avatar/v3/accessories/glasses-sport-v1.webp'
 
-export const CHIBI_ACCESSORIES = {
+export const CHIBI_EYEWEAR = {
   none: {
     id: 'none',
-    label: 'Sin accesorio',
+    label: 'Sin lentes',
     description: 'Cara libre',
     kind: 'none',
   },
@@ -104,6 +181,86 @@ export const CHIBI_ACCESSORIES = {
     src: glassesSrc,
     filter: colorFilters.cyan,
     unlockAt: 35,
+  },
+}
+
+// Alias temporal: evita romper imports o avatares de la versión 2.
+export const CHIBI_ACCESSORIES = CHIBI_EYEWEAR
+
+const earringsSrc = '/avatar/v3/accessories/earrings-hoop-v1.webp'
+
+export const CHIBI_EARRINGS = {
+  none: {
+    id: 'none',
+    label: 'Sin caravanas',
+    description: 'Orejas libres',
+    kind: 'none',
+  },
+  hoops: {
+    id: 'hoops',
+    label: 'Aros Orange',
+    description: 'Aros pequeños',
+    src: earringsSrc,
+  },
+  violet: {
+    id: 'violet',
+    label: 'Aros Violet',
+    description: 'Aros violetas',
+    src: earringsSrc,
+    filter: colorFilters.violet,
+    unlockAt: 20,
+  },
+  cyan: {
+    id: 'cyan',
+    label: 'Aros Cyan',
+    description: 'Aros cyan',
+    src: earringsSrc,
+    filter: colorFilters.cyan,
+    unlockAt: 35,
+  },
+}
+
+export const CHIBI_PIERCINGS = {
+  none: {
+    id: 'none',
+    label: 'Sin piercing',
+    description: 'Cara libre',
+    kind: 'none',
+  },
+  nose: {
+    id: 'nose',
+    label: 'Nostril',
+    description: 'Punto plateado',
+    kind: 'nose-stud',
+  },
+  brow: {
+    id: 'brow',
+    label: 'Ceja',
+    description: 'Piercing de ceja',
+    kind: 'brow-stud',
+    unlockAt: 25,
+  },
+}
+
+export const CHIBI_TATTOOS = {
+  none: {
+    id: 'none',
+    label: 'Sin tattoo',
+    description: 'Piel libre',
+    kind: 'none',
+  },
+  bolt: {
+    id: 'bolt',
+    label: 'Rayo',
+    description: 'Rayo facial',
+    kind: 'face-bolt',
+  },
+  lines: {
+    id: 'lines',
+    label: 'Doble línea',
+    description: 'Marca deportiva',
+    kind: 'face-lines',
+    unlockAt: 20,
   },
 }
 
@@ -168,27 +325,117 @@ export const CHIBI_HANDS = {
   },
 }
 
+const watchSrc = '/avatar/v3/accessories/watch-orange-v1.webp'
+
+export const CHIBI_WRISTS = {
+  none: {
+    id: 'none',
+    label: 'Sin reloj',
+    description: 'Muñeca libre',
+    kind: 'none',
+  },
+  orange: {
+    id: 'orange',
+    label: 'PR Watch',
+    description: 'Reloj deportivo',
+    src: watchSrc,
+    filter: 'none',
+  },
+  violet: {
+    id: 'violet',
+    label: 'Watch Violet',
+    description: 'Reloj violeta',
+    src: watchSrc,
+    filter: colorFilters.violet,
+    unlockAt: 20,
+  },
+}
+
 export const CHIBI_SKATES = {
   orange: coloredOption('orange', 'Orange 4W', '#ff7417', skatesSrc),
   violet: coloredOption('violet', 'Violet 4W', '#8b5cf6', skatesSrc, 15),
   cyan: coloredOption('cyan', 'Cyan 4W', '#22d3ee', skatesSrc, 30),
   ice: coloredOption('ice', 'Ice 4W', '#f2f4f7', skatesSrc, 45),
+  speed3: {
+    id: 'speed3',
+    label: 'Speed 3W',
+    description: 'Tres ruedas grandes',
+    src: '/avatar/v3/parts/skates-speed-3w-v1.webp',
+    stageWidth: '48%',
+    stageTop: '58.4%',
+  },
+  speed3violet: {
+    id: 'speed3violet',
+    label: 'Speed Violet',
+    description: 'Tres ruedas grandes',
+    src: '/avatar/v3/parts/skates-speed-3w-v1.webp',
+    stageWidth: '48%',
+    stageTop: '58.4%',
+    filter: colorFilters.violet,
+    unlockAt: 25,
+  },
+  urban3: {
+    id: 'urban3',
+    label: 'Urban 3W',
+    description: 'Tres ruedas compactas',
+    src: '/avatar/v3/parts/skates-urban-3w-v1.webp',
+    stageWidth: '48%',
+    stageTop: '58.7%',
+  },
+  urban3cyan: {
+    id: 'urban3cyan',
+    label: 'Urban Cyan',
+    description: 'Tres ruedas compactas',
+    src: '/avatar/v3/parts/skates-urban-3w-v1.webp',
+    stageWidth: '48%',
+    stageTop: '58.7%',
+    filter: colorFilters.cyan,
+    unlockAt: 35,
+  },
 }
 
 export const CHIBI_CATEGORIES = [
   {
     id: 'head',
-    label: 'Cabeza',
+    label: 'Cara',
     icon: '●',
-    eyebrow: 'Personaje',
+    eyebrow: 'Cara y peinado',
     options: CHIBI_HEADS,
   },
   {
-    id: 'accessory',
-    label: 'Accesorio',
-    icon: '◉',
-    eyebrow: 'Lentes roller',
-    options: CHIBI_ACCESSORIES,
+    id: 'headwear',
+    label: 'Gorro',
+    icon: '⌒',
+    eyebrow: 'Cabeza',
+    options: CHIBI_HEADWEAR,
+  },
+  {
+    id: 'eyewear',
+    label: 'Lentes',
+    icon: '◎',
+    eyebrow: 'Mirada',
+    options: CHIBI_EYEWEAR,
+  },
+  {
+    id: 'earrings',
+    label: 'Caravanas',
+    icon: '◌',
+    eyebrow: 'Orejas',
+    options: CHIBI_EARRINGS,
+  },
+  {
+    id: 'piercing',
+    label: 'Piercing',
+    icon: '•',
+    eyebrow: 'Detalles faciales',
+    options: CHIBI_PIERCINGS,
+  },
+  {
+    id: 'tattoo',
+    label: 'Tattoo',
+    icon: 'ϟ',
+    eyebrow: 'Tatuajes',
+    options: CHIBI_TATTOOS,
   },
   {
     id: 'jersey',
@@ -219,10 +466,17 @@ export const CHIBI_CATEGORIES = [
     options: CHIBI_HANDS,
   },
   {
+    id: 'wrist',
+    label: 'Reloj',
+    icon: '◫',
+    eyebrow: 'Muñeca',
+    options: CHIBI_WRISTS,
+  },
+  {
     id: 'skates',
     label: 'Rollers',
     icon: '⚡',
-    eyebrow: 'Cuatro ruedas',
+    eyebrow: 'Tres y cuatro ruedas',
     options: CHIBI_SKATES,
   },
 ]
@@ -230,7 +484,10 @@ export const CHIBI_CATEGORIES = [
 export function resolveChibiSelection(value = {}) {
   return CHIBI_CATEGORIES.reduce(
     (selection, category) => {
-      const requested = value?.[category.id]
+      const requested =
+        category.id === 'eyewear'
+          ? value?.eyewear || value?.accessory
+          : value?.[category.id]
       const fallback = DEFAULT_CHIBI_SELECTION[category.id]
       selection[category.id] = category.options[requested]
         ? requested

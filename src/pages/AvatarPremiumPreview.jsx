@@ -22,6 +22,24 @@ function OptionArtwork({ categoryId, option }) {
     return <span className="text-[22px] font-light text-white/22">×</span>
   }
 
+  if (categoryId === 'piercing') {
+    return option.kind === 'brow-stud' ? (
+      <span className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[.035] text-[28px] text-slate-200">
+        ◔
+      </span>
+    ) : (
+      <span className="h-4 w-4 rounded-full border-2 border-white/80 bg-slate-300 shadow-[0_0_12px_rgba(255,255,255,.65)]" />
+    )
+  }
+
+  if (categoryId === 'tattoo') {
+    return (
+      <span className="grid h-11 w-11 place-items-center rounded-full border border-orange-200/15 bg-orange-300/[.06] text-[25px] font-black text-orange-200/75">
+        {option.kind === 'face-lines' ? '╱╱' : 'ϟ'}
+      </span>
+    )
+  }
+
   if (categoryId === 'sticker') {
     if (option.kind === 'bolt') {
       return <span className="text-[24px] text-orange-300">⚡</span>
@@ -36,6 +54,10 @@ function OptionArtwork({ categoryId, option }) {
         />
       </span>
     )
+  }
+
+  if (!option.src) {
+    return <span className="text-[22px] text-white/35">•</span>
   }
 
   return (
@@ -309,7 +331,7 @@ export default function AvatarPremiumPreview() {
 
             <div className="mt-2 flex min-h-[18px] items-center justify-between gap-3 px-1">
               <p className="truncate text-[8px] text-white/35">
-                {message || 'Cada pieza usa un lugar fijo: no hay rodilleras ni patines corridos.'}
+                {message || 'Combiná lentes, gorro, caravanas, piercing, tattoo y reloj.'}
               </p>
               <Link
                 to="/app/perfil"
