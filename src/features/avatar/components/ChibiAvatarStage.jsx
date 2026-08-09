@@ -102,6 +102,7 @@ export default function ChibiAvatarStage({
     CHIBI_PROTECTIONS[selection.protection] || CHIBI_PROTECTIONS.flex
   const skates = CHIBI_SKATES[selection.skates] || CHIBI_SKATES.orange
   const headwearStage = headwearGeometry(headwear, head.id, 'stage')
+  const earringsStage = headwearGeometry(earrings, head.id, 'stage')
 
   return (
     <section
@@ -134,8 +135,8 @@ export default function ChibiAvatarStage({
           option={earrings}
           className="z-[34]"
           style={{
-            top: earrings.stageTop || '5%',
-            width: earrings.stageWidth || '43%',
+            top: earringsStage.top || '5%',
+            width: earringsStage.width || '43%',
           }}
         />
         <Asset
