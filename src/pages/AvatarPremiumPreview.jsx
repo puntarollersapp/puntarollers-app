@@ -402,7 +402,7 @@ export default function AvatarPremiumPreview() {
 
             <div className="mt-2 flex min-h-[18px] items-center justify-between gap-3 px-1">
               <p className="truncate text-[8px] text-white/35">
-                {message || 'Combiná lentes, gorro, caravanas, piercing, tattoo y reloj.'}
+                {message || 'Combiná lentes, gorro, caravanas, piercing y tattoo.'}
               </p>
               <Link
                 to="/app/perfil"

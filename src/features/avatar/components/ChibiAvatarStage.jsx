@@ -11,7 +11,6 @@ import {
   CHIBI_SKATES,
   CHIBI_STICKERS,
   CHIBI_TATTOOS,
-  CHIBI_WRISTS,
   DEFAULT_CHIBI_SELECTION,
 } from '../chibiCatalog'
 import { clampAvatarEnergy } from '../avatarEnergy'
@@ -113,7 +112,6 @@ export default function ChibiAvatarStage({
   const hands = CHIBI_HANDS.base
   const protection =
     CHIBI_PROTECTIONS[selection.protection] || CHIBI_PROTECTIONS.standard
-  const wrist = CHIBI_WRISTS[selection.wrist] || CHIBI_WRISTS.none
   const skates = CHIBI_SKATES[selection.skates] || CHIBI_SKATES.orange
   const headwearStage = headwearGeometry(headwear, head.id, 'stage')
 
@@ -183,11 +181,6 @@ export default function ChibiAvatarStage({
             top: protection.stageTop,
             width: protection.stageWidth,
           }}
-        />
-        <Asset
-          option={wrist}
-          className="z-[34]"
-          style={{ left: '39.5%', top: '39%', width: '14.8%' }}
         />
         <JerseySticker sticker={sticker} />
         <Asset option={shorts} className="top-[43%] z-20 w-[44%]" />

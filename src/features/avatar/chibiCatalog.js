@@ -1,4 +1,4 @@
-export const CHIBI_ASSET_VERSION = 4
+export const CHIBI_ASSET_VERSION = 5
 
 export const DEFAULT_CHIBI_SELECTION = {
   version: CHIBI_ASSET_VERSION,
@@ -388,32 +388,6 @@ export const CHIBI_PROTECTIONS = {
   },
 }
 
-const watchSrc = '/avatar/v3/accessories/watch-orange-v1.webp'
-
-export const CHIBI_WRISTS = {
-  none: {
-    id: 'none',
-    label: 'Sin reloj',
-    description: 'Muñeca libre',
-    kind: 'none',
-  },
-  orange: {
-    id: 'orange',
-    label: 'PR Watch',
-    description: 'Reloj deportivo',
-    src: watchSrc,
-    filter: 'none',
-  },
-  violet: {
-    id: 'violet',
-    label: 'Watch Violet',
-    description: 'Reloj violeta',
-    src: watchSrc,
-    filter: colorFilters.violet,
-    unlockAt: 20,
-  },
-}
-
 export const CHIBI_SKATES = {
   orange: coloredOption('orange', 'Orange 4W', '#ff7417', skatesSrc),
   violet: coloredOption('violet', 'Violet 4W', '#8b5cf6', skatesSrc, 15),
@@ -529,13 +503,6 @@ export const CHIBI_CATEGORIES = [
     options: CHIBI_PROTECTIONS,
   },
   {
-    id: 'wrist',
-    label: 'Reloj',
-    icon: '◫',
-    eyebrow: 'Muñeca',
-    options: CHIBI_WRISTS,
-  },
-  {
     id: 'skates',
     label: 'Rollers',
     icon: '⚡',
@@ -557,7 +524,11 @@ export function resolveChibiSelection(value = {}) {
         : fallback
       return selection
     },
-    { version: CHIBI_ASSET_VERSION, hands: DEFAULT_CHIBI_SELECTION.hands }
+    {
+      version: CHIBI_ASSET_VERSION,
+      hands: DEFAULT_CHIBI_SELECTION.hands,
+      wrist: 'none',
+    }
   )
 }
 
