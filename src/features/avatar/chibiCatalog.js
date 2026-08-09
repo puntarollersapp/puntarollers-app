@@ -1,18 +1,17 @@
-export const CHIBI_ASSET_VERSION = 5
+export const CHIBI_ASSET_VERSION = 6
 
 export const DEFAULT_CHIBI_SELECTION = {
   version: CHIBI_ASSET_VERSION,
   head: 'masculine',
   headwear: 'none',
+  helmet: 'none',
   eyewear: 'none',
   earrings: 'none',
   piercing: 'none',
-  tattoo: 'none',
   jersey: 'orange',
   sticker: 'none',
   shorts: 'orange',
-  hands: 'base',
-  protection: 'standard',
+  protection: 'flex',
   wrist: 'none',
   skates: 'orange',
 }
@@ -157,9 +156,29 @@ export const CHIBI_HEADWEAR = {
     },
     unlockAt: 15,
   },
+  bucket: {
+    id: 'bucket',
+    label: 'Bucket Street',
+    description: 'Piluso técnico',
+    src: '/avatar/v3/accessories/headwear-bucket-v1.webp',
+    stageWidth: '44%',
+    stageTop: '-3%',
+    portraitWidth: '80%',
+    portraitTop: '-14%',
+    unlockAt: 20,
+  },
+  backwards: {
+    id: 'backwards',
+    label: 'Backwards',
+    description: 'Gorra hacia atrás',
+    src: '/avatar/v3/accessories/headwear-backwards-v1.webp',
+    stageWidth: '50%',
+    stageTop: '-4%',
+    portraitWidth: '90%',
+    portraitTop: '-19%',
+    unlockAt: 25,
+  },
 }
-
-const glassesSrc = '/avatar/v3/accessories/glasses-sport-v1.webp'
 
 export const CHIBI_EYEWEAR = {
   none: {
@@ -168,28 +187,79 @@ export const CHIBI_EYEWEAR = {
     description: 'Cara libre',
     kind: 'none',
   },
-  sport: {
-    id: 'sport',
-    label: 'Sport Orange',
-    description: 'Lentes roller',
-    src: glassesSrc,
-    filter: 'none',
+  round: {
+    id: 'round',
+    label: 'Round Street',
+    description: 'Redondos y abiertos',
+    src: '/avatar/v3/accessories/glasses-round-v1.webp',
+    stageWidth: '30%',
+    stageTop: '9.7%',
+    portraitWidth: '52%',
+    portraitTop: '20%',
   },
-  violet: {
-    id: 'violet',
-    label: 'Sport Violet',
-    description: 'Lentes violetas',
-    src: glassesSrc,
-    filter: colorFilters.violet,
+  halfrim: {
+    id: 'halfrim',
+    label: 'Aero Half',
+    description: 'Media montura técnica',
+    src: '/avatar/v3/accessories/glasses-halfrim-v1.webp',
+    stageWidth: '31%',
+    stageTop: '10.5%',
+    portraitWidth: '54%',
+    portraitTop: '22%',
+    unlockAt: 15,
+  },
+  retro: {
+    id: 'retro',
+    label: 'Retro Amber',
+    description: 'Rectangulares translúcidos',
+    src: '/avatar/v3/accessories/glasses-retro-v1.webp',
+    stageWidth: '25%',
+    stageTop: '10.7%',
+    portraitWidth: '44%',
+    portraitTop: '22%',
+    unlockAt: 25,
+  },
+}
+
+export const CHIBI_HELMETS = {
+  none: {
+    id: 'none',
+    label: 'Sin casco',
+    description: 'Peinado o gorro libre',
+    kind: 'none',
+  },
+  punk: {
+    id: 'punk',
+    label: 'Punk Spike',
+    description: 'Casco roller con cresta',
+    src: '/avatar/v3/accessories/helmet-punk-v1.webp',
+    stageWidth: '60%',
+    stageTop: '-6.5%',
+    portraitWidth: '108%',
+    portraitTop: '-21.5%',
     unlockAt: 20,
   },
-  cyan: {
-    id: 'cyan',
-    label: 'Sport Cyan',
-    description: 'Lentes cyan',
-    src: glassesSrc,
-    filter: colorFilters.cyan,
-    unlockAt: 35,
+  street: {
+    id: 'street',
+    label: 'Street Splash',
+    description: 'Casco roller urbano',
+    src: '/avatar/v3/accessories/helmet-street-v1.webp',
+    stageWidth: '56%',
+    stageTop: '-5.8%',
+    portraitWidth: '100%',
+    portraitTop: '-19%',
+    unlockAt: 30,
+  },
+  retro: {
+    id: 'retro',
+    label: 'Retro Bolt',
+    description: 'Casco roller ventilado',
+    src: '/avatar/v3/accessories/helmet-retro-v1.webp',
+    stageWidth: '58%',
+    stageTop: '-6%',
+    portraitWidth: '105%',
+    portraitTop: '-20%',
+    unlockAt: 40,
   },
 }
 
@@ -251,28 +321,6 @@ export const CHIBI_PIERCINGS = {
   },
 }
 
-export const CHIBI_TATTOOS = {
-  none: {
-    id: 'none',
-    label: 'Sin tattoo',
-    description: 'Piel libre',
-    kind: 'none',
-  },
-  bolt: {
-    id: 'bolt',
-    label: 'Rayo',
-    description: 'Rayo facial',
-    kind: 'face-bolt',
-  },
-  lines: {
-    id: 'lines',
-    label: 'Doble línea',
-    description: 'Marca deportiva',
-    kind: 'face-lines',
-    unlockAt: 20,
-  },
-}
-
 function coloredOption(id, label, color, src, unlockAt = 0) {
   return {
     id,
@@ -286,10 +334,6 @@ function coloredOption(id, label, color, src, unlockAt = 0) {
 
 const jerseySrc = '/avatar/v3/parts/jersey-orange-v1.webp'
 const shortsSrc = '/avatar/v3/parts/short-orange-v1.webp'
-const handsSrc = '/avatar/v3/parts/hands-base-v1.webp'
-const protectionStandardSrc =
-  '/avatar/v3/parts/protection-standard-v2.webp'
-const protectionShieldSrc = '/avatar/v3/parts/protection-shield-v2.webp'
 const skatesSrc = '/avatar/v3/parts/skates-orange-v1.webp'
 
 export const CHIBI_JERSEYS = {
@@ -297,6 +341,20 @@ export const CHIBI_JERSEYS = {
   violet: coloredOption('violet', 'PR Violet', '#8b5cf6', jerseySrc, 15),
   cyan: coloredOption('cyan', 'PR Cyan', '#22d3ee', jerseySrc, 30),
   ice: coloredOption('ice', 'PR Ice', '#f2f4f7', jerseySrc, 45),
+  hoodie: {
+    id: 'hoodie',
+    label: 'Street Hoodie',
+    description: 'Buzo técnico con cierre',
+    src: '/avatar/v3/parts/jersey-hoodie-v1.webp',
+    unlockAt: 20,
+  },
+  racing: {
+    id: 'racing',
+    label: 'Racing Zip',
+    description: 'Jersey de carrera',
+    src: '/avatar/v3/parts/jersey-racing-v1.webp',
+    unlockAt: 35,
+  },
 }
 
 export const CHIBI_STICKERS = {
@@ -325,66 +383,48 @@ export const CHIBI_SHORTS = {
   orange: coloredOption('orange', 'PR Orange', '#ff7417', shortsSrc),
   violet: coloredOption('violet', 'PR Violet', '#8b5cf6', shortsSrc, 15),
   cyan: coloredOption('cyan', 'PR Cyan', '#22d3ee', shortsSrc, 30),
-}
-
-export const CHIBI_HANDS = {
-  base: {
-    id: 'base',
-    label: 'Manos base',
-    description: 'Anatomía permanente',
-    src: handsSrc,
-    stageWidth: '52%',
-    stageTop: '30.5%',
+  cargo: {
+    id: 'cargo',
+    label: 'Cargo Street',
+    description: 'Bolsillos técnicos',
+    src: '/avatar/v3/parts/short-cargo-v1.webp',
+    unlockAt: 20,
+  },
+  racing: {
+    id: 'racing',
+    label: 'Racing Fit',
+    description: 'Calce deportivo',
+    src: '/avatar/v3/parts/short-racing-v1.webp',
+    unlockAt: 35,
   },
 }
 
 export const CHIBI_PROTECTIONS = {
-  standard: {
-    id: 'standard',
-    label: 'PR Standard',
-    description: 'Muñequera roller esencial',
-    src: protectionStandardSrc,
-    stageWidth: '43%',
-    stageTop: '30.6%',
+  flex: {
+    id: 'flex',
+    label: 'PR Flex',
+    description: 'Mano y muñequera ligera',
+    src: '/avatar/v3/parts/handpack-flex-v2.webp',
+    stageWidth: '48.5%',
+    stageTop: '34%',
   },
-  standardViolet: {
-    id: 'standardViolet',
-    label: 'Standard Violet',
-    description: 'Muñequera roller violeta',
-    src: protectionStandardSrc,
-    stageWidth: '43%',
-    stageTop: '30.6%',
-    filter: colorFilters.violet,
+  street: {
+    id: 'street',
+    label: 'PR Street',
+    description: 'Guante urbano integrado',
+    src: '/avatar/v3/parts/handpack-street-v2.webp',
+    stageWidth: '48.5%',
+    stageTop: '34%',
     unlockAt: 15,
   },
-  standardCyan: {
-    id: 'standardCyan',
-    label: 'Standard Cyan',
-    description: 'Muñequera roller cyan',
-    src: protectionStandardSrc,
-    stageWidth: '43%',
-    stageTop: '30.6%',
-    filter: colorFilters.cyan,
+  pulse: {
+    id: 'pulse',
+    label: 'PR Pulse',
+    description: 'Muñequera técnica integrada',
+    src: '/avatar/v3/parts/handpack-pulse-v2.webp',
+    stageWidth: '48.5%',
+    stageTop: '34%',
     unlockAt: 30,
-  },
-  shield: {
-    id: 'shield',
-    label: 'PR Shield',
-    description: 'Protección reforzada',
-    src: protectionShieldSrc,
-    stageWidth: '43%',
-    stageTop: '31.4%',
-    unlockAt: 20,
-  },
-  shieldViolet: {
-    id: 'shieldViolet',
-    label: 'Shield Violet',
-    description: 'Protección reforzada violeta',
-    src: protectionShieldSrc,
-    stageWidth: '43%',
-    stageTop: '31.4%',
-    filter: colorFilters.violet,
-    unlockAt: 40,
   },
 }
 
@@ -429,6 +469,24 @@ export const CHIBI_SKATES = {
     filter: colorFilters.cyan,
     unlockAt: 35,
   },
+  aggressive: {
+    id: 'aggressive',
+    label: 'Park Aggressive',
+    description: 'Bota y guía reforzadas',
+    src: '/avatar/v3/parts/skates-aggressive-v1.webp',
+    stageWidth: '52%',
+    stageTop: '58%',
+    unlockAt: 25,
+  },
+  fitness: {
+    id: 'fitness',
+    label: 'Fitness Flow',
+    description: 'Softboot y ruedas cyan',
+    src: '/avatar/v3/parts/skates-fitness-v1.webp',
+    stageWidth: '52%',
+    stageTop: '56.8%',
+    unlockAt: 30,
+  },
 }
 
 export const CHIBI_CATEGORIES = [
@@ -445,6 +503,13 @@ export const CHIBI_CATEGORIES = [
     icon: '⌒',
     eyebrow: 'Cabeza',
     options: CHIBI_HEADWEAR,
+  },
+  {
+    id: 'helmet',
+    label: 'Casco',
+    icon: '◒',
+    eyebrow: 'Protección roller',
+    options: CHIBI_HELMETS,
   },
   {
     id: 'eyewear',
@@ -466,13 +531,6 @@ export const CHIBI_CATEGORIES = [
     icon: '•',
     eyebrow: 'Detalles faciales',
     options: CHIBI_PIERCINGS,
-  },
-  {
-    id: 'tattoo',
-    label: 'Tattoo',
-    icon: 'ϟ',
-    eyebrow: 'Tatuajes',
-    options: CHIBI_TATTOOS,
   },
   {
     id: 'jersey',
@@ -526,8 +584,8 @@ export function resolveChibiSelection(value = {}) {
     },
     {
       version: CHIBI_ASSET_VERSION,
-      hands: DEFAULT_CHIBI_SELECTION.hands,
       wrist: 'none',
+      tattoo: 'none',
     }
   )
 }

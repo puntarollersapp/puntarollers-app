@@ -59,14 +59,6 @@ function OptionArtwork({ categoryId, option }) {
     )
   }
 
-  if (categoryId === 'tattoo') {
-    return (
-      <span className="grid h-11 w-11 place-items-center rounded-full border border-orange-200/15 bg-orange-300/[.06] text-[25px] font-black text-orange-200/75">
-        {option.kind === 'face-lines' ? '╱╱' : 'ϟ'}
-      </span>
-    )
-  }
-
   if (categoryId === 'sticker') {
     if (option.kind === 'bolt') {
       return <span className="text-[24px] text-orange-300">⚡</span>
@@ -188,7 +180,19 @@ export default function AvatarPremiumPreview() {
   }, [activeCategory])
 
   function chooseOption(categoryId, optionId) {
-    setSelection((current) => ({ ...current, [categoryId]: optionId }))
+    setSelection((current) => {
+      const next = { ...current, [categoryId]: optionId }
+
+      if (categoryId === 'headwear' && optionId !== 'none') {
+        next.helmet = 'none'
+      }
+
+      if (categoryId === 'helmet' && optionId !== 'none') {
+        next.headwear = 'none'
+      }
+
+      return next
+    })
     setMessage('')
 
     window.requestAnimationFrame(() => {
@@ -402,7 +406,10 @@ export default function AvatarPremiumPreview() {
 
             <div className="mt-2 flex min-h-[18px] items-center justify-between gap-3 px-1">
               <p className="truncate text-[8px] text-white/35">
-                {message || 'Combiná lentes, gorro, caravanas, piercing y tattoo.'}
+                {message ||
+                  (activeGroup.id === 'helmet' || activeGroup.id === 'headwear'
+                    ? 'Casco y gorro son excluyentes: al elegir uno se quita el otro.'
+                    : 'Combiná lentes, gorro, caravanas y piercing.')}
               </p>
               <Link
                 to="/app/perfil"

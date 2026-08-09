@@ -1,16 +1,15 @@
 import {
   CHIBI_EARRINGS,
   CHIBI_EYEWEAR,
-  CHIBI_HANDS,
   CHIBI_HEADS,
   CHIBI_HEADWEAR,
+  CHIBI_HELMETS,
   CHIBI_JERSEYS,
   CHIBI_PIERCINGS,
   CHIBI_PROTECTIONS,
   CHIBI_SHORTS,
   CHIBI_SKATES,
   CHIBI_STICKERS,
-  CHIBI_TATTOOS,
   DEFAULT_CHIBI_SELECTION,
 } from '../chibiCatalog'
 import { clampAvatarEnergy } from '../avatarEnergy'
@@ -67,7 +66,7 @@ function headwearGeometry(headwear, headId, mode) {
   }
 }
 
-function FaceDetails({ piercing, tattoo }) {
+function FaceDetails({ piercing }) {
   return (
     <>
       {piercing?.kind === 'nose-stud' && (
@@ -75,16 +74,6 @@ function FaceDetails({ piercing, tattoo }) {
       )}
       {piercing?.kind === 'brow-stud' && (
         <span className="pointer-events-none absolute left-[42.2%] top-[17.7%] z-[38] h-[1.8%] w-[2.4%] rotate-[-14deg] rounded-full border-2 border-slate-300/90 border-l-transparent shadow-[0_0_3px_rgba(255,255,255,.5)]" />
-      )}
-      {tattoo?.kind === 'face-bolt' && (
-        <span className="pointer-events-none absolute left-[42.6%] top-[21.3%] z-[37] -rotate-12 text-[7px] font-black text-[#38251d]/75">
-          ϟ
-        </span>
-      )}
-      {tattoo?.kind === 'face-lines' && (
-        <span className="pointer-events-none absolute left-[42.1%] top-[22%] z-[37] -rotate-12 text-[7px] font-black tracking-[-.16em] text-[#38251d]/70">
-          ╱╱
-        </span>
       )}
     </>
   )
@@ -100,18 +89,17 @@ export default function ChibiAvatarStage({
   const head = CHIBI_HEADS[selection.head] || CHIBI_HEADS.masculine
   const headwear =
     CHIBI_HEADWEAR[selection.headwear] || CHIBI_HEADWEAR.none
+  const helmet = CHIBI_HELMETS[selection.helmet] || CHIBI_HELMETS.none
   const eyewear = CHIBI_EYEWEAR[selection.eyewear] || CHIBI_EYEWEAR.none
   const earrings =
     CHIBI_EARRINGS[selection.earrings] || CHIBI_EARRINGS.none
   const piercing =
     CHIBI_PIERCINGS[selection.piercing] || CHIBI_PIERCINGS.none
-  const tattoo = CHIBI_TATTOOS[selection.tattoo] || CHIBI_TATTOOS.none
   const jersey = CHIBI_JERSEYS[selection.jersey] || CHIBI_JERSEYS.orange
   const sticker = CHIBI_STICKERS[selection.sticker] || CHIBI_STICKERS.none
   const shorts = CHIBI_SHORTS[selection.shorts] || CHIBI_SHORTS.orange
-  const hands = CHIBI_HANDS.base
   const protection =
-    CHIBI_PROTECTIONS[selection.protection] || CHIBI_PROTECTIONS.standard
+    CHIBI_PROTECTIONS[selection.protection] || CHIBI_PROTECTIONS.flex
   const skates = CHIBI_SKATES[selection.skates] || CHIBI_SKATES.orange
   const headwearStage = headwearGeometry(headwear, head.id, 'stage')
 
@@ -166,14 +154,24 @@ export default function ChibiAvatarStage({
             width: headwearStage.width || '39%',
           }}
         />
-        <Asset option={eyewear} className="top-[12%] z-[35] w-[28%]" />
-        <FaceDetails piercing={piercing} tattoo={tattoo} />
-        <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
         <Asset
-          option={hands}
-          className="z-30"
-          style={{ top: hands.stageTop, width: hands.stageWidth }}
+          option={helmet}
+          className="z-[37]"
+          style={{
+            top: helmet.stageTop,
+            width: helmet.stageWidth,
+          }}
         />
+        <Asset
+          option={eyewear}
+          className="z-[35]"
+          style={{
+            top: eyewear.stageTop,
+            width: eyewear.stageWidth,
+          }}
+        />
+        <FaceDetails piercing={piercing} />
+        <Asset option={jersey} className="top-[21%] z-20 w-[53%]" />
         <Asset
           option={protection}
           className="z-[33]"
@@ -200,7 +198,7 @@ export default function ChibiAvatarStage({
         <div className="absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2">
           <div className="rounded-xl border border-white/10 bg-black/50 px-2.5 py-1.5 shadow-xl backdrop-blur-md">
             <p className="text-[6px] font-black uppercase tracking-[.16em] text-orange-200/72">
-              PR Locker · chibi v4
+              PR Locker · chibi v6
             </p>
           </div>
 
