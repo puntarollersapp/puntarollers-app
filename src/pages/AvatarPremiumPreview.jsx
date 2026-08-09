@@ -18,11 +18,11 @@ function avatarObject(value) {
 }
 
 function OptionArtwork({ categoryId, option }) {
-  if (categoryId === 'sticker') {
-    if (option.kind === 'none') {
-      return <span className="text-[22px] font-light text-white/22">×</span>
-    }
+  if (option.kind === 'none') {
+    return <span className="text-[22px] font-light text-white/22">×</span>
+  }
 
+  if (categoryId === 'sticker') {
     if (option.kind === 'bolt') {
       return <span className="text-[24px] text-orange-300">⚡</span>
     }
@@ -30,7 +30,7 @@ function OptionArtwork({ categoryId, option }) {
     return (
       <span className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-amber-100/40 bg-black/25">
         <img
-          src="/logo.png"
+          src="/avatar/v3/brand/pr-logo-official-v1.png"
           alt=""
           className="h-auto w-[145%] max-w-none"
         />
@@ -60,6 +60,7 @@ export default function AvatarPremiumPreview() {
   const [storedAvatar, setStoredAvatar] = useState({})
   const [activeCategory, setActiveCategory] = useState('head')
   const [selection, setSelection] = useState(DEFAULT_CHIBI_SELECTION)
+  const [useAsProfilePhoto, setUseAsProfilePhoto] = useState(false)
   const canPreviewLocked = user?.role === 'admin'
 
   useEffect(() => {
@@ -91,6 +92,7 @@ export default function AvatarPremiumPreview() {
         const savedChibi = avatarObject(avatar.chibi)
         setStoredAvatar(avatar)
         setSelection(resolveChibiSelection(savedChibi))
+        setUseAsProfilePhoto(Boolean(savedChibi.useAsProfilePhoto))
         setAvatarReady(true)
       } else {
         setMessage(
@@ -138,7 +140,11 @@ export default function AvatarPremiumPreview() {
       return
     }
 
-    const chibi = resolveChibiSelection(selection)
+    const chibi = {
+      ...avatarObject(storedAvatar.chibi),
+      ...resolveChibiSelection(selection),
+      useAsProfilePhoto,
+    }
     const nextAvatar = {
       ...avatarObject(storedAvatar),
       chibi,
@@ -174,7 +180,7 @@ export default function AvatarPremiumPreview() {
   return (
     <AppLayout title="PR Roller" showBack>
       <div className="animate-page-enter px-3 pb-4 pt-3">
-        <div className="flex h-[calc(100dvh-150px)] min-h-[660px] flex-col gap-2.5">
+        <div className="flex h-[calc(100dvh-150px)] min-h-[500px] flex-col gap-2.5">
           <div className="flex items-center justify-between gap-3 px-1">
             <div className="min-w-0">
               <p className="text-[7px] font-black uppercase tracking-[.2em] text-orange-300/75">
@@ -249,7 +255,7 @@ export default function AvatarPremiumPreview() {
               </span>
             </div>
 
-            <div className="mt-2 grid max-h-[150px] grid-cols-3 gap-2 overflow-y-auto pr-0.5">
+            <div className="mt-2 grid max-h-[clamp(104px,17dvh,150px)] grid-cols-3 gap-2 overflow-y-auto pr-0.5">
               {Object.values(activeGroup.options).map((option) => {
                 const active = selection[activeGroup.id] === option.id
                 const locked =
@@ -301,6 +307,38 @@ export default function AvatarPremiumPreview() {
                 Perfil →
               </Link>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setUseAsProfilePhoto((current) => !current)
+                setMessage('La preferencia se aplicará cuando guardes el avatar.')
+              }}
+              aria-pressed={useAsProfilePhoto}
+              className="mt-2 flex w-full items-center justify-between gap-3 rounded-2xl border border-white/[.07] bg-white/[.035] px-3 py-2.5 text-left"
+            >
+              <span className="min-w-0">
+                <span className="block text-[9px] font-black text-white/78">
+                  Usar mi PR Roller en el perfil
+                </span>
+                <span className="mt-0.5 block truncate text-[7px] text-white/32">
+                  Tu foto real queda guardada y podés volver cuando quieras.
+                </span>
+              </span>
+
+              <span
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                  useAsProfilePhoto ? 'bg-orange-400' : 'bg-white/10'
+                }`}
+                aria-hidden="true"
+              >
+                <span
+                  className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    useAsProfilePhoto ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </span>
+            </button>
           </section>
         </div>
       </div>

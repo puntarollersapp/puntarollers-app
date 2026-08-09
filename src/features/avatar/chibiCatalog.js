@@ -1,8 +1,9 @@
-export const CHIBI_ASSET_VERSION = 1
+export const CHIBI_ASSET_VERSION = 2
 
 export const DEFAULT_CHIBI_SELECTION = {
   version: CHIBI_ASSET_VERSION,
   head: 'masculine',
+  accessory: 'none',
   jersey: 'orange',
   sticker: 'none',
   shorts: 'orange',
@@ -29,6 +30,60 @@ export const CHIBI_HEADS = {
     label: 'Femenino',
     description: 'Bob deportivo',
     src: '/avatar/v3/parts/head-feminine-v1.webp',
+  },
+  curly: {
+    id: 'curly',
+    label: 'Rulos',
+    description: 'Rulos y sonrisa',
+    src: '/avatar/v3/parts/head-curly-v1.webp',
+  },
+  bun: {
+    id: 'bun',
+    label: 'Rodete',
+    description: 'Rodete y pecas',
+    src: '/avatar/v3/parts/head-bun-v1.webp',
+    unlockAt: 15,
+  },
+  silver: {
+    id: 'silver',
+    label: 'Silver',
+    description: 'Corte plateado',
+    src: '/avatar/v3/parts/head-silver-v1.webp',
+    unlockAt: 30,
+  },
+}
+
+const glassesSrc = '/avatar/v3/accessories/glasses-sport-v1.webp'
+
+export const CHIBI_ACCESSORIES = {
+  none: {
+    id: 'none',
+    label: 'Sin accesorio',
+    description: 'Cara libre',
+    kind: 'none',
+  },
+  sport: {
+    id: 'sport',
+    label: 'Sport Orange',
+    description: 'Lentes roller',
+    src: glassesSrc,
+    filter: 'none',
+  },
+  violet: {
+    id: 'violet',
+    label: 'Sport Violet',
+    description: 'Lentes violetas',
+    src: glassesSrc,
+    filter: colorFilters.violet,
+    unlockAt: 20,
+  },
+  cyan: {
+    id: 'cyan',
+    label: 'Sport Cyan',
+    description: 'Lentes cyan',
+    src: glassesSrc,
+    filter: colorFilters.cyan,
+    unlockAt: 35,
   },
 }
 
@@ -107,6 +162,13 @@ export const CHIBI_CATEGORIES = [
     icon: '●',
     eyebrow: 'Personaje',
     options: CHIBI_HEADS,
+  },
+  {
+    id: 'accessory',
+    label: 'Accesorio',
+    icon: '◉',
+    eyebrow: 'Lentes roller',
+    options: CHIBI_ACCESSORIES,
   },
   {
     id: 'jersey',

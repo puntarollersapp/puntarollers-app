@@ -8,6 +8,8 @@ import {
 } from '../lib/supabase'
 import { mockUser } from '../data/mockData'
 import TreasuryPanel from '../components/treasury/TreasuryPanel'
+import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
+import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -50,6 +52,10 @@ function loadSavedUser() {
   } catch {
     return {}
   }
+}
+
+function avatarObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
 function parsePaymentDate(value) {
@@ -396,7 +402,11 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [savingMedia, setSavingMedia] = useState('')
+  const [savingAvatarIdentity, setSavingAvatarIdentity] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [profileAvatar, setProfileAvatar] = useState(
+    avatarObject(base.pr_avatar)
+  )
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -581,6 +591,7 @@ export default function Profile() {
 
       if (profileResponse.data) {
         const data = profileResponse.data
+        const loadedAvatar = avatarObject(data.pr_avatar)
 
         const loadedProfile = {
           nombre: data.nombre || base.nombre || '',
@@ -622,6 +633,7 @@ export default function Profile() {
         }
 
         setForm(loadedProfile)
+        setProfileAvatar(loadedAvatar)
         setSavedMedia({
           foto: loadedProfile.foto,
           banner: loadedProfile.banner,
@@ -630,6 +642,7 @@ export default function Profile() {
         const nextUser = {
           ...base,
           ...loadedProfile,
+          pr_avatar: loadedAvatar,
         }
 
         localStorage.setItem(
@@ -716,6 +729,12 @@ export default function Profile() {
     ...base,
     ...form,
   }
+
+  const savedChibi = avatarObject(profileAvatar.chibi)
+  const chibiSelection = resolveChibiSelection(savedChibi)
+  const hasChibiAvatar = Number(savedChibi.version || 0) > 0
+  const useChibiPhoto =
+    hasChibiAvatar && Boolean(savedChibi.useAsProfilePhoto)
 
   const badges = useMemo(
     () =>
@@ -1102,6 +1121,54 @@ export default function Profile() {
     }
   }
 
+  async function toggleChibiProfilePhoto() {
+    if (!hasChibiAvatar || savingAvatarIdentity) return
+
+    const nextChibi = {
+      ...savedChibi,
+      ...chibiSelection,
+      useAsProfilePhoto: !useChibiPhoto,
+    }
+    const nextAvatar = {
+      ...profileAvatar,
+      chibi: nextChibi,
+    }
+
+    try {
+      setSavingAvatarIdentity(true)
+      setMessage(
+        useChibiPhoto
+          ? 'Volviendo a tu foto…'
+          : 'Mostrando tu PR Roller en el perfil…'
+      )
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          pr_avatar: nextAvatar,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profileId)
+        .select('id')
+        .maybeSingle()
+
+      if (error) throw error
+      if (!data?.id) throw new Error('No encontramos el perfil para guardar.')
+
+      setProfileAvatar(nextAvatar)
+      updateUser?.({ pr_avatar: nextAvatar })
+      setMessage(
+        useChibiPhoto
+          ? 'Tu foto volvió a mostrarse. El PR Roller sigue guardado.'
+          : 'Tu PR Roller ahora aparece como foto de perfil.'
+      )
+    } catch (error) {
+      setMessage(`No pudimos cambiar la foto visible: ${error.message}`)
+    } finally {
+      setSavingAvatarIdentity(false)
+    }
+  }
+
   return (
     <AppLayout title="Mi perfil">
       <div className="pr-page space-y-5 animate-page-enter">
@@ -1182,9 +1249,14 @@ export default function Profile() {
           </div>
 
           <div className="px-5 pb-5 relative">
-            <label className={`absolute -top-16 left-5 w-32 h-32 rounded-[36px] p-[3px] bg-gradient-to-br ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)] cursor-pointer`}>
+            <div className={`absolute -top-16 left-5 h-32 w-32 rounded-[36px] bg-gradient-to-br p-[3px] ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)]`}>
               <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
-              {profile.foto ? (
+              {useChibiPhoto ? (
+                <ChibiAvatarPortrait
+                  selection={chibiSelection}
+                  className="h-full w-full"
+                />
+              ) : profile.foto ? (
                 <img
                   src={profile.foto}
                   alt={profile.nombre}
@@ -1201,18 +1273,31 @@ export default function Profile() {
               )}
               </span>
 
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) =>
-                  previewImage(
-                    event.target.files?.[0],
-                    'foto'
-                  )
-                }
-              />
-            </label>
+              {!useChibiPhoto && (
+                <label
+                  className="absolute inset-0 cursor-pointer rounded-[36px]"
+                  aria-label="Cambiar foto de perfil"
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) =>
+                      previewImage(
+                        event.target.files?.[0],
+                        'foto'
+                      )
+                    }
+                  />
+                </label>
+              )}
+
+              {useChibiPhoto && (
+                <span className="pointer-events-none absolute -bottom-1 -right-1 rounded-full border-2 border-[#0d0d13] bg-orange-400 px-2 py-1 text-[7px] font-black uppercase tracking-wider text-black shadow-lg">
+                  PR Roller
+                </span>
+              )}
+            </div>
 
             <div className="pt-20 flex items-start justify-between gap-4">
               <div>
@@ -1291,6 +1376,64 @@ export default function Profile() {
 
             <ProfileActivitySignature stats={headerStats} />
 
+            {hasChibiAvatar && (
+              <div className="relative mt-3 overflow-hidden rounded-[22px] border border-orange-300/20 bg-gradient-to-r from-[#17131a] via-orange-400/[.07] to-[#111016] p-3.5 shadow-[0_12px_34px_rgba(249,115,22,.08)]">
+                <img
+                  src="/avatar/v3/brand/pr-logo-official-v1.png"
+                  alt=""
+                  className="pointer-events-none absolute -right-5 -top-7 w-28 opacity-[.045] drop-shadow-[0_0_18px_rgba(249,115,22,.8)]"
+                />
+
+                <div className="relative flex items-center gap-3">
+                  <ChibiAvatarPortrait
+                    selection={chibiSelection}
+                    className="h-16 w-16 shrink-0 rounded-[18px] border border-orange-200/20 shadow-lg"
+                  />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-black text-white">Mi PR Roller</p>
+                      <span className="rounded-full border border-orange-300/25 bg-orange-400/15 px-2 py-0.5 text-[7px] font-black uppercase tracking-[.12em] text-orange-200">
+                        Guardado
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[9px] leading-4 text-white/38">
+                      Elegí qué identidad querés mostrar sin perder tu foto.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={toggleChibiProfilePhoto}
+                    disabled={savingAvatarIdentity}
+                    className={`shrink-0 rounded-xl border px-3 py-2 text-[8px] font-black transition disabled:opacity-45 ${
+                      useChibiPhoto
+                        ? 'border-white/10 bg-white/[.055] text-white/65'
+                        : 'border-orange-300/35 bg-orange-400/15 text-orange-200'
+                    }`}
+                  >
+                    {savingAvatarIdentity
+                      ? 'Guardando…'
+                      : useChibiPhoto
+                        ? 'Usar mi foto'
+                        : 'Usar como foto'}
+                  </button>
+                </div>
+
+                <div className="relative mt-3 flex items-center justify-between border-t border-white/[.06] pt-2.5">
+                  <span className="text-[8px] font-semibold text-white/28">
+                    {useChibiPhoto ? 'Visible en tu perfil' : 'Tu foto actual sigue visible'}
+                  </span>
+                  <Link
+                    to="/app/avatar-premium"
+                    className="text-[8px] font-black text-orange-300/75"
+                  >
+                    Modificar →
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <Link
               to="/app/evolucion"
               className="group relative mt-3 block overflow-hidden rounded-[22px] border border-orange-300/25 bg-gradient-to-r from-orange-500/[0.14] via-orange-400/[0.07] to-white/[0.025] px-4 py-3.5 shadow-[0_12px_34px_rgba(249,115,22,.08)] transition active:scale-[0.99]"
@@ -1336,7 +1479,7 @@ export default function Profile() {
             </Link>
 
             <Link
-              to="/app/avatar"
+              to="/app/avatar-premium"
               className="mt-3 flex w-full items-center justify-between gap-3 rounded-[22px] border border-white/[.08] bg-gradient-to-r from-white/[.045] via-white/[.025] to-orange-400/[.04] px-4 py-3.5 transition active:scale-[.99]"
             >
               <div className="flex min-w-0 items-center gap-3">
@@ -1347,8 +1490,12 @@ export default function Profile() {
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-white">Crear mi patinador</p>
-                  <p className="mt-0.5 truncate text-[10px] text-white/35">Avatar PR · patines · energía Strava</p>
+                  <p className="text-sm font-black text-white">
+                    {hasChibiAvatar ? 'Modificar mi PR Roller' : 'Crear mi PR Roller'}
+                  </p>
+                  <p className="mt-0.5 truncate text-[10px] text-white/35">
+                    Peinados · ropa · accesorios · rollers
+                  </p>
                 </div>
               </div>
               <span className="shrink-0 text-orange-300">→</span>

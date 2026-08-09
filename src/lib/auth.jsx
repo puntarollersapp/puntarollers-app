@@ -127,6 +127,12 @@ function normalizeProfile(profile) {
       activo: Boolean(profile.tracking_activo),
     },
     estadisticas: parseStatistics(profile.estadisticas),
+    pr_avatar:
+      profile.pr_avatar &&
+      typeof profile.pr_avatar === 'object' &&
+      !Array.isArray(profile.pr_avatar)
+        ? profile.pr_avatar
+        : {},
   }
 }
 
