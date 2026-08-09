@@ -19,42 +19,42 @@ const HAIR_OPTIONS = [
 const CLOTHING_OPTIONS = [
   ['none', 'Base técnica', '#19191d'],
   ['orange', 'PR Orange', '#f36b18'],
-  ['ice', 'Ice Racing', '#f1f1f1'],
-  ['electric', 'Electric Racing', '#1760df'],
+  ['ice', 'Ice Racing', '#f1f1f1', 15],
+  ['electric', 'Electric Racing', '#1760df', 30],
 ]
 
 const PROTECTION_OPTIONS = [
   ['none', 'Sin protección', '#25252b'],
   ['orange', 'PR Orange', '#f36b18'],
-  ['carbon', 'Carbon', '#25262b'],
-  ['ice', 'Ice', '#e6e6e6'],
-  ['electric', 'Electric', '#174bcc'],
+  ['carbon', 'Carbon', '#25262b', 10],
+  ['ice', 'Ice', '#e6e6e6', 20],
+  ['electric', 'Electric', '#174bcc', 30],
 ]
 
 const SKATE_OPTIONS = [
   ['none', 'Sin patines', '#25252b'],
   ['fitness-orange', 'Fitness 4W Orange', '#f36b18'],
-  ['fitness-carbon', 'Fitness 4W Carbon', '#34353a'],
-  ['fitness-ice', 'Urban 4W Ice', '#e8edf6'],
-  ['speed-orange', 'Speed 3W Orange', '#ff7a1a'],
+  ['fitness-carbon', 'Fitness 4W Carbon', '#34353a', 15],
+  ['fitness-ice', 'Urban 4W Ice', '#e8edf6', 25],
+  ['speed-orange', 'Speed 3W Orange', '#ff7a1a', 40],
 ]
 
 const HELMET_OPTIONS = [
   ['none', 'Sin casco', '#32323a'],
   ['orange', 'PR Orange', '#ff6b1a'],
-  ['carbon', 'Carbon', '#24252a'],
-  ['white', 'Ice', '#f1f1f1'],
-  ['blue', 'Electric', '#174bcc'],
-  ['aero', 'Aero Carbon', '#1f2025'],
-  ['urban', 'Urban Ice', '#f1f1f1'],
+  ['carbon', 'Carbon', '#24252a', 15],
+  ['white', 'Ice', '#f1f1f1', 25],
+  ['blue', 'Electric', '#174bcc', 35],
+  ['aero', 'Aero Carbon', '#1f2025', 50],
+  ['urban', 'Urban Ice', '#f1f1f1', 20],
 ]
 
 const STICKER_OPTIONS = [
   ['none', 'Sin sticker', '#25252b'],
   ['gold', 'PR Gold', '#f5d36a'],
-  ['carbon', 'PR Carbon', '#3a3b40'],
-  ['electric', 'PR Electric', '#2563eb'],
-  ['fire', 'PR Fire', '#f97316'],
+  ['carbon', 'PR Carbon', '#3a3b40', 10],
+  ['electric', 'PR Electric', '#2563eb', 25],
+  ['fire', 'PR Fire', '#f97316', 45],
 ]
 
 const DEFAULT_PREMIUM_SELECTION = {
@@ -70,6 +70,11 @@ const DEFAULT_PREMIUM_SELECTION = {
 
 function validOption(options, value, fallback) {
   return options.some(([id]) => id === value) ? value : fallback
+}
+
+function optionUnlocked(options, value, energy) {
+  const option = options.find(([id]) => id === value)
+  return !option || Number(option[3] || 0) <= energy
 }
 
 function avatarObject(value) {
@@ -93,6 +98,7 @@ export default function AvatarPremiumPreview() {
   )
   const [skates, setSkates] = useState(DEFAULT_PREMIUM_SELECTION.skates)
   const [sticker, setSticker] = useState(DEFAULT_PREMIUM_SELECTION.sticker)
+  const canPreviewLocked = user?.role === 'admin'
 
   useEffect(() => {
     let active = true
@@ -193,6 +199,21 @@ export default function AvatarPremiumPreview() {
 
   async function savePremiumAvatar() {
     if (!user?.id || !avatarReady) return
+
+    const hasLockedSelection = [
+      [CLOTHING_OPTIONS, clothing],
+      [STICKER_OPTIONS, sticker],
+      [HELMET_OPTIONS, helmet],
+      [PROTECTION_OPTIONS, protection],
+      [SKATE_OPTIONS, skates],
+    ].some(([options, value]) =>
+      !optionUnlocked(options, value, progress.energy)
+    )
+
+    if (!canPreviewLocked && hasLockedSelection) {
+      setMessage('Todavía te falta Energía PR para guardar uno de esos objetos.')
+      return
+    }
 
     const premium = {
       version: 3,
@@ -309,6 +330,8 @@ export default function AvatarPremiumPreview() {
           value={hair}
           onChange={setHair}
           options={HAIR_OPTIONS}
+          energy={progress.energy}
+          canPreviewLocked={canPreviewLocked}
         />
 
         <OptionSection
@@ -317,6 +340,8 @@ export default function AvatarPremiumPreview() {
           value={clothing}
           onChange={setClothing}
           options={CLOTHING_OPTIONS}
+          energy={progress.energy}
+          canPreviewLocked={canPreviewLocked}
         />
 
         <OptionSection
@@ -325,6 +350,8 @@ export default function AvatarPremiumPreview() {
           value={sticker}
           onChange={setSticker}
           options={STICKER_OPTIONS}
+          energy={progress.energy}
+          canPreviewLocked={canPreviewLocked}
         />
 
         <OptionSection
@@ -333,6 +360,8 @@ export default function AvatarPremiumPreview() {
           value={protection}
           onChange={setProtection}
           options={PROTECTION_OPTIONS}
+          energy={progress.energy}
+          canPreviewLocked={canPreviewLocked}
         />
 
         <OptionSection
@@ -341,6 +370,8 @@ export default function AvatarPremiumPreview() {
           value={skates}
           onChange={setSkates}
           options={SKATE_OPTIONS}
+          energy={progress.energy}
+          canPreviewLocked={canPreviewLocked}
         />
 
         <OptionSection
@@ -349,6 +380,8 @@ export default function AvatarPremiumPreview() {
           value={helmet}
           onChange={setHelmet}
           options={HELMET_OPTIONS}
+          energy={progress.energy}
+          canPreviewLocked={canPreviewLocked}
         />
 
         <section className="grid grid-cols-3 gap-2">
@@ -392,7 +425,15 @@ export default function AvatarPremiumPreview() {
   )
 }
 
-function OptionSection({ eyebrow, title, value, onChange, options }) {
+function OptionSection({
+  eyebrow,
+  title,
+  value,
+  onChange,
+  options,
+  energy = 0,
+  canPreviewLocked = false,
+}) {
   return (
     <section className="rounded-[24px] border border-white/[.08] bg-[#0d0d12] p-4">
       <div className="flex items-center justify-between gap-3">
@@ -408,24 +449,34 @@ function OptionSection({ eyebrow, title, value, onChange, options }) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        {options.map(([id, label, color]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onChange(id)}
-            className={`flex min-w-0 items-center gap-2 rounded-[18px] border px-3 py-3 text-left text-xs font-bold ${
-              value === id
-                ? 'border-orange-300/35 bg-orange-400/[.1] text-orange-100'
-                : 'border-white/[.07] bg-white/[.025] text-white/42'
-            }`}
-          >
-            <span
-              className="h-4 w-4 shrink-0 rounded-full border border-white/15 shadow-inner"
-              style={{ backgroundColor: color }}
-            />
-            <span className="truncate">{label}</span>
-          </button>
-        ))}
+        {options.map(([id, label, color, unlockAt = 0]) => {
+          const locked = !canPreviewLocked && energy < unlockAt
+
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChange(id)}
+              disabled={locked}
+              className={`flex min-w-0 items-center gap-2 rounded-[18px] border px-3 py-3 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 ${
+                value === id
+                  ? 'border-orange-300/35 bg-orange-400/[.1] text-orange-100'
+                  : 'border-white/[.07] bg-white/[.025] text-white/42'
+              }`}
+            >
+              <span
+                className="h-4 w-4 shrink-0 rounded-full border border-white/15 shadow-inner"
+                style={{ backgroundColor: color }}
+              />
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+              {locked && (
+                <span className="shrink-0 text-[7px] font-black text-orange-200/70">
+                  🔒 {unlockAt}%
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
     </section>
   )
