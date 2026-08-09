@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AvatarStage from '../features/avatar/components/AvatarStage'
 import { calculateAvatarProgress } from '../features/avatar/avatarEnergy'
@@ -13,50 +13,11 @@ const BODY_OPTIONS = [
   ['masculine', 'Masculino', '#8c6048'],
 ]
 
-const FACE_OPTIONS = [
-  ['pr-visor', 'Visor PR', '#111217'],
-  ['none', 'Rostro base', '#a66d50'],
-]
-
-const HAIR_OPTIONS = [
-  ['none', 'Corte base', '#25252b'],
-  ['soft', 'Soft Pixie', '#251b18'],
-  ['wave', 'Urban Wave', '#4b2418'],
-  ['bun', 'Performance Bun', '#301b16'],
-  ['crop', 'Speed Crop', '#211713'],
-]
-
 const CLOTHING_OPTIONS = [
   ['none', 'Base técnica', '#19191d'],
   ['orange', 'PR Orange', '#f36b18'],
   ['ice', 'Ice Racing', '#f1f1f1', 15],
   ['electric', 'Electric Racing', '#1760df', 30],
-]
-
-const PROTECTION_OPTIONS = [
-  ['none', 'Sin protección', '#25252b'],
-  ['orange', 'PR Orange', '#f36b18'],
-  ['carbon', 'Carbon', '#25262b', 10],
-  ['ice', 'Ice', '#e6e6e6', 20],
-  ['electric', 'Electric', '#174bcc', 30],
-]
-
-const SKATE_OPTIONS = [
-  ['none', 'Sin patines', '#25252b'],
-  ['fitness-orange', 'Fitness 4W Orange', '#f36b18'],
-  ['fitness-carbon', 'Fitness 4W Carbon', '#34353a', 15],
-  ['fitness-ice', 'Urban 4W Ice', '#e8edf6', 25],
-  ['speed-orange', 'Speed 3W Orange', '#ff7a1a', 40],
-]
-
-const HELMET_OPTIONS = [
-  ['none', 'Sin casco', '#32323a'],
-  ['orange', 'PR Orange', '#ff6b1a'],
-  ['carbon', 'Carbon', '#24252a', 15],
-  ['white', 'Ice', '#f1f1f1', 25],
-  ['blue', 'Electric', '#174bcc', 35],
-  ['aero', 'Aero Carbon', '#1f2025', 50],
-  ['urban', 'Urban Ice', '#f1f1f1', 20],
 ]
 
 const STICKER_OPTIONS = [
@@ -68,14 +29,14 @@ const STICKER_OPTIONS = [
 ]
 
 const DEFAULT_PREMIUM_SELECTION = {
-  version: 4,
+  version: 5,
   body: 'feminine',
-  face: 'pr-visor',
-  hair: 'soft',
+  face: 'integrated',
+  hair: 'integrated',
   clothing: 'orange',
   helmet: 'none',
-  protection: 'orange',
-  skates: 'fitness-orange',
+  protection: 'integrated',
+  skates: 'integrated',
   sticker: 'gold',
 }
 
@@ -94,23 +55,15 @@ function avatarObject(value) {
 
 export default function AvatarPremiumPreview() {
   const { user, updateUser } = useAuth()
-  const previewRef = useRef(null)
   const [progress, setProgress] = useState(EMPTY_PROGRESS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [avatarReady, setAvatarReady] = useState(false)
   const [storedAvatar, setStoredAvatar] = useState({})
-  const [activeCategory, setActiveCategory] = useState('face')
+  const [activeCategory, setActiveCategory] = useState('body')
   const [body, setBody] = useState(DEFAULT_PREMIUM_SELECTION.body)
-  const [face, setFace] = useState(DEFAULT_PREMIUM_SELECTION.face)
-  const [helmet, setHelmet] = useState(DEFAULT_PREMIUM_SELECTION.helmet)
-  const [hair, setHair] = useState(DEFAULT_PREMIUM_SELECTION.hair)
   const [clothing, setClothing] = useState(DEFAULT_PREMIUM_SELECTION.clothing)
-  const [protection, setProtection] = useState(
-    DEFAULT_PREMIUM_SELECTION.protection
-  )
-  const [skates, setSkates] = useState(DEFAULT_PREMIUM_SELECTION.skates)
   const [sticker, setSticker] = useState(DEFAULT_PREMIUM_SELECTION.sticker)
   const canPreviewLocked = user?.role === 'admin'
 
@@ -147,46 +100,11 @@ export default function AvatarPremiumPreview() {
         setStoredAvatar(avatar)
         setAvatarReady(true)
         setBody(premium.body === 'masculine' ? 'masculine' : 'feminine')
-        setFace(
-          validOption(
-            FACE_OPTIONS,
-            premium.face,
-            DEFAULT_PREMIUM_SELECTION.face
-          )
-        )
-        setHair(
-          validOption(
-            HAIR_OPTIONS,
-            premium.hair,
-            DEFAULT_PREMIUM_SELECTION.hair
-          )
-        )
         setClothing(
           validOption(
             CLOTHING_OPTIONS,
             premium.clothing,
             DEFAULT_PREMIUM_SELECTION.clothing
-          )
-        )
-        setHelmet(
-          validOption(
-            HELMET_OPTIONS,
-            premium.helmet,
-            DEFAULT_PREMIUM_SELECTION.helmet
-          )
-        )
-        setProtection(
-          validOption(
-            PROTECTION_OPTIONS,
-            premium.protection,
-            DEFAULT_PREMIUM_SELECTION.protection
-          )
-        )
-        setSkates(
-          validOption(
-            SKATE_OPTIONS,
-            premium.skates,
-            DEFAULT_PREMIUM_SELECTION.skates
           )
         )
         setSticker(
@@ -216,29 +134,12 @@ export default function AvatarPremiumPreview() {
     }
   }, [user?.id])
 
-  function chooseOption(onChange, value) {
-    onChange(value)
-    setMessage('')
-
-    if (typeof window !== 'undefined' && window.innerHeight < 640) {
-      window.requestAnimationFrame(() => {
-        previewRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        })
-      })
-    }
-  }
-
   async function savePremiumAvatar() {
     if (!user?.id || !avatarReady) return
 
     const hasLockedSelection = [
       [CLOTHING_OPTIONS, clothing],
       [STICKER_OPTIONS, sticker],
-      [HELMET_OPTIONS, helmet],
-      [PROTECTION_OPTIONS, protection],
-      [SKATE_OPTIONS, skates],
     ].some(
       ([options, value]) =>
         !optionUnlocked(options, value, progress.energy)
@@ -250,14 +151,14 @@ export default function AvatarPremiumPreview() {
     }
 
     const premium = {
-      version: 4,
+      version: 5,
       body,
-      face,
-      hair,
+      face: 'integrated',
+      hair: 'integrated',
       clothing,
-      helmet,
-      protection,
-      skates,
+      helmet: 'none',
+      protection: 'integrated',
+      skates: 'integrated',
       sticker,
     }
     const nextAvatar = {
@@ -295,26 +196,10 @@ export default function AvatarPremiumPreview() {
     {
       id: 'body',
       label: 'Cuerpo',
-      eyebrow: 'Base corporal',
+      eyebrow: 'Base corporal validada',
       value: body,
       onChange: setBody,
       options: BODY_OPTIONS,
-    },
-    {
-      id: 'face',
-      label: 'Rostro',
-      eyebrow: 'Identidad neutral',
-      value: face,
-      onChange: setFace,
-      options: FACE_OPTIONS,
-    },
-    {
-      id: 'hair',
-      label: 'Pelo',
-      eyebrow: 'Estilo personal',
-      value: hair,
-      onChange: setHair,
-      options: HAIR_OPTIONS,
     },
     {
       id: 'clothing',
@@ -332,30 +217,6 @@ export default function AvatarPremiumPreview() {
       onChange: setSticker,
       options: STICKER_OPTIONS,
     },
-    {
-      id: 'protection',
-      label: 'Protección',
-      eyebrow: 'Seguridad',
-      value: protection,
-      onChange: setProtection,
-      options: PROTECTION_OPTIONS,
-    },
-    {
-      id: 'skates',
-      label: 'Patines',
-      eyebrow: 'Setup de rodaje',
-      value: skates,
-      onChange: setSkates,
-      options: SKATE_OPTIONS,
-    },
-    {
-      id: 'helmet',
-      label: 'Casco',
-      eyebrow: 'Seguridad y estilo',
-      value: helmet,
-      onChange: setHelmet,
-      options: HELMET_OPTIONS,
-    },
   ]
   const activeGroup =
     categories.find((category) => category.id === activeCategory) || categories[0]
@@ -367,10 +228,10 @@ export default function AvatarPremiumPreview() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[8px] font-black uppercase tracking-[.18em] text-orange-300">
-                PR Roller Avatar · Fase 4
+                PR Roller Avatar · Base segura
               </p>
               <h1 className="mt-1 truncate font-display text-[25px] leading-none text-white">
-                Diseñá tu identidad PR
+                Primero: que todo calce bien
               </h1>
             </div>
 
@@ -385,19 +246,11 @@ export default function AvatarPremiumPreview() {
           </div>
 
           <div className="grid min-h-0 flex-1 gap-3 min-[470px]:grid-cols-[minmax(0,1fr)_184px]">
-            <div
-              ref={previewRef}
-              className="flex min-h-0 items-center justify-center rounded-[28px] border border-white/[.06] bg-black/20 p-1.5"
-            >
+            <div className="flex min-h-0 items-center justify-center rounded-[28px] border border-white/[.06] bg-black/20 p-1.5">
               <AvatarStage
                 energy={progress.energy}
                 body={body}
-                face={face}
-                helmet={helmet}
-                hair={hair}
                 clothing={clothing}
-                protection={protection}
-                skates={skates}
                 sticker={sticker}
                 className="w-full max-w-[230px] min-[470px]:max-w-[300px]"
               />
@@ -405,8 +258,8 @@ export default function AvatarPremiumPreview() {
 
             <section className="flex min-h-0 flex-col rounded-[24px] border border-white/[.08] bg-[#0d0d12] p-3 shadow-2xl">
               <div
-                className="grid grid-cols-4 gap-1.5 min-[470px]:grid-cols-2"
-                aria-label="Categorías del avatar"
+                className="grid grid-cols-3 gap-1.5"
+                aria-label="Categorías verificadas del avatar"
               >
                 {categories.map((category) => (
                   <button
@@ -434,19 +287,26 @@ export default function AvatarPremiumPreview() {
                     {activeGroup.label}
                   </h2>
                   <span className="rounded-full bg-emerald-400/[.08] px-2 py-1 text-[7px] font-black uppercase text-emerald-200/75">
-                    En vivo
+                    Verificado
                   </span>
                 </div>
 
                 <OptionChoices
                   value={activeGroup.value}
-                  onChange={(value) =>
-                    chooseOption(activeGroup.onChange, value)
-                  }
+                  onChange={(value) => {
+                    activeGroup.onChange(value)
+                    setMessage('')
+                  }}
                   options={activeGroup.options}
                   energy={progress.energy}
                   canPreviewLocked={canPreviewLocked}
                 />
+              </div>
+
+              <div className="mt-2 rounded-xl border border-cyan-300/10 bg-cyan-400/[.045] px-2.5 py-2 text-[8px] leading-3.5 text-cyan-100/55">
+                Pelo, protecciones y patines ahora pertenecen a cada cuerpo.
+                Las opciones desalineadas quedan suspendidas hasta rehacerlas
+                desde su anatomía exacta.
               </div>
 
               {message && (

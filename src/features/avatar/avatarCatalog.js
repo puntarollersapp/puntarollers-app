@@ -1,23 +1,23 @@
-export const AVATAR_ASSET_VERSION = 2
+export const AVATAR_ASSET_VERSION = 3
 
 export const AVATAR_BODIES = {
   feminine: {
-    id: 'foundation-feminine-v1',
+    id: 'body-master-v1',
     label: 'Femenino',
     kind: 'body',
     order: 30,
-    src: '/avatar/v2/base/foundation-feminine-v1.webp',
-    fallbackSrc: '/avatar/v2/base/foundation-feminine-v1.webp',
-    alt: 'Base técnica femenina de PR Roller Avatar',
+    src: '/avatar/v2/base/body-master-v1.webp',
+    fallbackSrc: '/avatar/v2/base/body-master-v1.webp',
+    alt: 'Patinadora femenina completa y alineada de PR Roller Avatar',
   },
   masculine: {
-    id: 'foundation-masculine-v1',
+    id: 'body-masculine-v1',
     label: 'Masculino',
     kind: 'body',
     order: 30,
-    src: '/avatar/v2/base/foundation-masculine-v1.webp',
-    fallbackSrc: '/avatar/v2/base/foundation-masculine-v1.webp',
-    alt: 'Base técnica masculina con short de PR Roller Avatar',
+    src: '/avatar/v2/base/body-masculine-v1.webp',
+    fallbackSrc: '/avatar/v2/base/body-masculine-v1.webp',
+    alt: 'Patinador masculino con short, protecciones y rollers alineados',
   },
 }
 
@@ -41,66 +41,6 @@ export const AVATAR_SCENES = {
     label: 'PR Roller Locker',
     src: '/avatar/v2/scenes/locker-room/background-v1.webp',
     fallbackSrc: '/avatar/v2/scenes/locker-room/background-v1.webp',
-  },
-}
-
-export const AVATAR_HELMETS = {
-  orange: {
-    id: 'helmet-orange-v1',
-    label: 'PR Orange',
-    order: 90,
-    src: '/avatar/v2/helmets/helmet-orange-v1.webp',
-    fallbackSrc: '/avatar/v2/helmets/helmet-orange-v1.webp',
-  },
-  carbon: {
-    id: 'helmet-carbon-v1',
-    label: 'Carbon',
-    order: 90,
-    src: '/avatar/v2/helmets/helmet-carbon-v1.webp',
-    fallbackSrc: '/avatar/v2/helmets/helmet-carbon-v1.webp',
-  },
-  white: {
-    id: 'helmet-white-v1',
-    label: 'Ice',
-    order: 90,
-    src: '/avatar/v2/helmets/helmet-white-v1.webp',
-    fallbackSrc: '/avatar/v2/helmets/helmet-white-v1.webp',
-  },
-  blue: {
-    id: 'helmet-blue-v1',
-    label: 'Electric',
-    order: 90,
-    src: '/avatar/v2/helmets/helmet-blue-v1.webp',
-    fallbackSrc: '/avatar/v2/helmets/helmet-blue-v1.webp',
-  },
-  aero: {
-    id: 'helmet-aero-carbon-v1',
-    label: 'Aero Carbon',
-    order: 90,
-    src: '/avatar/v2/helmets/helmet-aero-carbon-v1.webp',
-    fallbackSrc: '/avatar/v2/helmets/helmet-aero-carbon-v1.webp',
-    width: '15.25%',
-    top: '4.15%',
-  },
-  urban: {
-    id: 'helmet-urban-ice-v1',
-    label: 'Urban Ice',
-    order: 90,
-    src: '/avatar/v2/helmets/helmet-urban-ice-v1.webp',
-    fallbackSrc: '/avatar/v2/helmets/helmet-urban-ice-v1.webp',
-    width: '15.5%',
-    top: '4.1%',
-  },
-}
-
-export const AVATAR_FACES = {
-  'pr-visor': {
-    id: 'face-pr-visor-orange-v1',
-    label: 'Visor PR',
-    src: '/avatar/v2/faces/face-pr-visor-orange-v1.webp',
-    fallbackSrc: '/avatar/v2/faces/face-pr-visor-orange-v1.webp',
-    width: '15%',
-    top: '7%',
   },
 }
 
@@ -129,51 +69,10 @@ export const AVATAR_STICKERS = {
   },
 }
 
-export const AVATAR_HAIR = {
-  soft: avatarLayer('hair-soft-v1', 'Soft Pixie', 50, 'hair'),
-  wave: avatarLayer('hair-wave-v1', 'Urban Wave', 50, 'hair'),
-  bun: avatarLayer('hair-bun-v1', 'Performance Bun', 50, 'hair'),
-  crop: avatarLayer('hair-crop-v1', 'Speed Crop', 50, 'hair'),
-}
-
 export const AVATAR_CLOTHING = {
   orange: clothingLayer('orange', 'PR Orange'),
   ice: clothingLayer('ice', 'Ice Racing'),
   electric: clothingLayer('electric', 'Electric Racing'),
-}
-
-export const AVATAR_PROTECTION = {
-  orange: avatarLayer('protection-orange-v1', 'PR Orange', 60, 'protection'),
-  carbon: avatarLayer('protection-carbon-v1', 'Carbon', 60, 'protection'),
-  ice: avatarLayer('protection-ice-v1', 'Ice', 60, 'protection'),
-  electric: avatarLayer('protection-electric-v1', 'Electric', 60, 'protection'),
-}
-
-export const AVATAR_SKATES = {
-  'fitness-orange': avatarLayer(
-    'skates-fitness-orange-v1',
-    'Fitness 4W Orange',
-    70,
-    'skates'
-  ),
-  'fitness-carbon': avatarLayer(
-    'skates-fitness-carbon-v1',
-    'Fitness 4W Carbon',
-    70,
-    'skates'
-  ),
-  'fitness-ice': avatarLayer(
-    'skates-fitness-ice-v1',
-    'Urban 4W Ice',
-    70,
-    'skates'
-  ),
-  'speed-orange': avatarLayer(
-    'skates-speed-orange-v1',
-    'Speed 3W Orange',
-    70,
-    'skates'
-  ),
 }
 
 export function layerForBody(option, body = 'feminine') {
@@ -186,16 +85,6 @@ export function layerForBody(option, body = 'feminine') {
     ...option,
     ...bodyAsset,
     id: `${option.id}-${body}`,
-  }
-}
-
-function avatarLayer(id, label, order, directory) {
-  return {
-    id,
-    label,
-    order,
-    src: `/avatar/v2/${directory}/${id}.webp`,
-    fallbackSrc: `/avatar/v2/${directory}/${id}.webp`,
   }
 }
 

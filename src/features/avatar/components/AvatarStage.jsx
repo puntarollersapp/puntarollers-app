@@ -1,11 +1,6 @@
 import {
   AVATAR_CLOTHING,
-  AVATAR_FACES,
-  AVATAR_HAIR,
   AVATAR_SCENES,
-  AVATAR_HELMETS,
-  AVATAR_PROTECTION,
-  AVATAR_SKATES,
   AVATAR_STICKERS,
   PREMIUM_MASTER_PRESET,
   layerForBody,
@@ -20,12 +15,7 @@ export default function AvatarStage({
   energy = 0,
   className = '',
   showHud = true,
-  helmet = 'none',
-  face = 'pr-visor',
-  hair = 'soft',
   clothing = 'orange',
-  protection = 'orange',
-  skates = 'fitness-orange',
   sticker = 'gold',
 }) {
   const safeEnergy = clampAvatarEnergy(energy)
@@ -34,16 +24,11 @@ export default function AvatarStage({
     AVATAR_SCENES[resolvedPreset.scene] || AVATAR_SCENES['locker-room-v1']
   const selectedLayers = [
     layerForBody(AVATAR_CLOTHING[clothing], body),
-    AVATAR_HAIR[hair],
-    AVATAR_PROTECTION[protection],
-    AVATAR_SKATES[skates],
   ].filter(Boolean)
   const layers = orderedLayers({
     ...(resolvedPreset || PREMIUM_MASTER_PRESET),
     layers: [...(resolvedPreset.layers || []), ...selectedLayers],
   })
-  const helmetLayer = AVATAR_HELMETS[helmet] || null
-  const faceLayer = AVATAR_FACES[face] || null
   const stickerLayer = AVATAR_STICKERS[sticker] || null
 
   return (
@@ -92,23 +77,6 @@ export default function AvatarStage({
           </picture>
         ))}
 
-        {faceLayer && (
-          <picture>
-            <source srcSet={faceLayer.src} type="image/webp" />
-            <img
-              src={faceLayer.fallbackSrc}
-              alt=""
-              className="absolute left-1/2 -translate-x-1/2 object-contain drop-shadow-[0_0_7px_rgba(249,115,22,.2)]"
-              style={{
-                top: faceLayer.top || '7%',
-                width: faceLayer.width || '15%',
-              }}
-              loading="eager"
-              decoding="async"
-            />
-          </picture>
-        )}
-
         {stickerLayer && (
           <div
             className="absolute left-1/2 top-[22.4%] h-[6.4%] w-[9.6%] -translate-x-1/2 overflow-hidden"
@@ -123,23 +91,6 @@ export default function AvatarStage({
             />
           </div>
         )}
-
-        {helmetLayer && (
-          <picture>
-            <source srcSet={helmetLayer.src} type="image/webp" />
-            <img
-              src={helmetLayer.fallbackSrc}
-              alt=""
-              className="absolute left-1/2 -translate-x-1/2 object-contain"
-              style={{
-                top: helmetLayer.top || '4%',
-                width: helmetLayer.width || '15.625%',
-              }}
-              loading="eager"
-              decoding="async"
-            />
-          </picture>
-        )}
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-30 bg-gradient-to-b from-black/20 via-transparent to-black/20" />
@@ -151,7 +102,7 @@ export default function AvatarStage({
               PR Roller Locker
             </p>
             <p className="mt-1 text-[9px] font-semibold text-white/48">
-              Sistema modular v1
+              Base anatómica validada
             </p>
           </div>
 
