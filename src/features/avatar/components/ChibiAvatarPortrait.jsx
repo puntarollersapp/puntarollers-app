@@ -38,21 +38,12 @@ function PortraitFaceDetails({ piercing }) {
   )
 }
 
-function headwearGeometry(headwear, headId) {
-  const override = headwear?.portraitByHead?.[headId]
+function portraitGeometry(option, headId) {
+  const override = option?.portraitByHead?.[headId]
 
   return {
-    top: override?.top || headwear?.portraitTop,
-    width: override?.width || headwear?.portraitWidth,
-  }
-}
-
-function earringsGeometry(earrings, headId) {
-  const override = earrings?.portraitByHead?.[headId]
-
-  return {
-    top: override?.top || earrings?.portraitTop,
-    width: override?.width || earrings?.portraitWidth,
+    top: override?.top || option?.portraitTop,
+    width: override?.width || option?.portraitWidth,
   }
 }
 
@@ -70,8 +61,9 @@ export default function ChibiAvatarPortrait({
   const piercing =
     CHIBI_PIERCINGS[selection.piercing] || CHIBI_PIERCINGS.none
   const jersey = CHIBI_JERSEYS[selection.jersey] || CHIBI_JERSEYS.orange
-  const headwearPortrait = headwearGeometry(headwear, head.id)
-  const earringsPortrait = earringsGeometry(earrings, head.id)
+  const headwearPortrait = portraitGeometry(headwear, head.id)
+  const earringsPortrait = portraitGeometry(earrings, head.id)
+  const eyewearPortrait = portraitGeometry(eyewear, head.id)
 
   return (
     <span
@@ -129,8 +121,8 @@ export default function ChibiAvatarPortrait({
         option={eyewear}
         className="z-40"
         style={{
-          top: eyewear.portraitTop,
-          width: eyewear.portraitWidth,
+          top: eyewearPortrait.top,
+          width: eyewearPortrait.width,
         }}
       />
       <PortraitFaceDetails piercing={piercing} />
