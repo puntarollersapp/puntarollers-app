@@ -93,6 +93,17 @@ export const AVATAR_HELMETS = {
   },
 }
 
+export const AVATAR_FACES = {
+  'pr-visor': {
+    id: 'face-pr-visor-orange-v1',
+    label: 'Visor PR',
+    src: '/avatar/v2/faces/face-pr-visor-orange-v1.webp',
+    fallbackSrc: '/avatar/v2/faces/face-pr-visor-orange-v1.webp',
+    width: '15%',
+    top: '7%',
+  },
+}
+
 export const AVATAR_STICKERS = {
   gold: {
     id: 'pr-gold',

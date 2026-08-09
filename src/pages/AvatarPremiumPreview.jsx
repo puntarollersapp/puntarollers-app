@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AvatarStage from '../features/avatar/components/AvatarStage'
 import { calculateAvatarProgress } from '../features/avatar/avatarEnergy'
@@ -7,6 +7,16 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
 const EMPTY_PROGRESS = calculateAvatarProgress([])
+
+const BODY_OPTIONS = [
+  ['feminine', 'Femenino', '#d8a27f'],
+  ['masculine', 'Masculino', '#8c6048'],
+]
+
+const FACE_OPTIONS = [
+  ['pr-visor', 'Visor PR', '#111217'],
+  ['none', 'Rostro base', '#a66d50'],
+]
 
 const HAIR_OPTIONS = [
   ['none', 'Corte base', '#25252b'],
@@ -58,8 +68,9 @@ const STICKER_OPTIONS = [
 ]
 
 const DEFAULT_PREMIUM_SELECTION = {
-  version: 3,
+  version: 4,
   body: 'feminine',
+  face: 'pr-visor',
   hair: 'soft',
   clothing: 'orange',
   helmet: 'none',
@@ -83,13 +94,16 @@ function avatarObject(value) {
 
 export default function AvatarPremiumPreview() {
   const { user, updateUser } = useAuth()
+  const previewRef = useRef(null)
   const [progress, setProgress] = useState(EMPTY_PROGRESS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [avatarReady, setAvatarReady] = useState(false)
   const [storedAvatar, setStoredAvatar] = useState({})
+  const [activeCategory, setActiveCategory] = useState('face')
   const [body, setBody] = useState(DEFAULT_PREMIUM_SELECTION.body)
+  const [face, setFace] = useState(DEFAULT_PREMIUM_SELECTION.face)
   const [helmet, setHelmet] = useState(DEFAULT_PREMIUM_SELECTION.helmet)
   const [hair, setHair] = useState(DEFAULT_PREMIUM_SELECTION.hair)
   const [clothing, setClothing] = useState(DEFAULT_PREMIUM_SELECTION.clothing)
@@ -132,8 +146,13 @@ export default function AvatarPremiumPreview() {
 
         setStoredAvatar(avatar)
         setAvatarReady(true)
-        setBody(
-          premium.body === 'masculine' ? 'masculine' : 'feminine'
+        setBody(premium.body === 'masculine' ? 'masculine' : 'feminine')
+        setFace(
+          validOption(
+            FACE_OPTIONS,
+            premium.face,
+            DEFAULT_PREMIUM_SELECTION.face
+          )
         )
         setHair(
           validOption(
@@ -197,6 +216,20 @@ export default function AvatarPremiumPreview() {
     }
   }, [user?.id])
 
+  function chooseOption(onChange, value) {
+    onChange(value)
+    setMessage('')
+
+    if (typeof window !== 'undefined' && window.innerHeight < 640) {
+      window.requestAnimationFrame(() => {
+        previewRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      })
+    }
+  }
+
   async function savePremiumAvatar() {
     if (!user?.id || !avatarReady) return
 
@@ -206,8 +239,9 @@ export default function AvatarPremiumPreview() {
       [HELMET_OPTIONS, helmet],
       [PROTECTION_OPTIONS, protection],
       [SKATE_OPTIONS, skates],
-    ].some(([options, value]) =>
-      !optionUnlocked(options, value, progress.energy)
+    ].some(
+      ([options, value]) =>
+        !optionUnlocked(options, value, progress.energy)
     )
 
     if (!canPreviewLocked && hasLockedSelection) {
@@ -216,8 +250,9 @@ export default function AvatarPremiumPreview() {
     }
 
     const premium = {
-      version: 3,
+      version: 4,
       body,
+      face,
       hair,
       clothing,
       helmet,
@@ -256,178 +291,197 @@ export default function AvatarPremiumPreview() {
     }
   }
 
+  const categories = [
+    {
+      id: 'body',
+      label: 'Cuerpo',
+      eyebrow: 'Base corporal',
+      value: body,
+      onChange: setBody,
+      options: BODY_OPTIONS,
+    },
+    {
+      id: 'face',
+      label: 'Rostro',
+      eyebrow: 'Identidad neutral',
+      value: face,
+      onChange: setFace,
+      options: FACE_OPTIONS,
+    },
+    {
+      id: 'hair',
+      label: 'Pelo',
+      eyebrow: 'Estilo personal',
+      value: hair,
+      onChange: setHair,
+      options: HAIR_OPTIONS,
+    },
+    {
+      id: 'clothing',
+      label: 'Camiseta',
+      eyebrow: 'Equipación PR',
+      value: clothing,
+      onChange: setClothing,
+      options: CLOTHING_OPTIONS,
+    },
+    {
+      id: 'sticker',
+      label: 'Sticker',
+      eyebrow: 'Identidad Punta Rollers',
+      value: sticker,
+      onChange: setSticker,
+      options: STICKER_OPTIONS,
+    },
+    {
+      id: 'protection',
+      label: 'Protección',
+      eyebrow: 'Seguridad',
+      value: protection,
+      onChange: setProtection,
+      options: PROTECTION_OPTIONS,
+    },
+    {
+      id: 'skates',
+      label: 'Patines',
+      eyebrow: 'Setup de rodaje',
+      value: skates,
+      onChange: setSkates,
+      options: SKATE_OPTIONS,
+    },
+    {
+      id: 'helmet',
+      label: 'Casco',
+      eyebrow: 'Seguridad y estilo',
+      value: helmet,
+      onChange: setHelmet,
+      options: HELMET_OPTIONS,
+    },
+  ]
+  const activeGroup =
+    categories.find((category) => category.id === activeCategory) || categories[0]
+
   return (
     <AppLayout title="Avatar Premium" showBack>
-      <div className="pr-page space-y-4 animate-page-enter pb-10">
-        <div>
-          <p className="text-[8px] font-black uppercase tracking-[.18em] text-orange-300">
-            PR Roller Avatar · Fase 3
-          </p>
-          <h1 className="mt-2 font-display text-[34px] leading-none text-white">
-            El nuevo personaje maestro.
-          </h1>
-          <p className="mt-2 text-xs leading-5 text-white/40">
-            Prueba real del sistema modular femenino y masculino. Esta vista no
-            reemplaza todavía el editor actual.
-          </p>
-        </div>
+      <div className="pr-page animate-page-enter pb-4">
+        <div className="flex h-[calc(100dvh-158px)] min-h-[560px] flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[8px] font-black uppercase tracking-[.18em] text-orange-300">
+                PR Roller Avatar · Fase 4
+              </p>
+              <h1 className="mt-1 truncate font-display text-[25px] leading-none text-white">
+                Diseñá tu identidad PR
+              </h1>
+            </div>
 
-        <AvatarStage
-          energy={progress.energy}
-          body={body}
-          helmet={helmet}
-          hair={hair}
-          clothing={clothing}
-          protection={protection}
-          skates={skates}
-          sticker={sticker}
-        />
-
-        <button
-          type="button"
-          onClick={savePremiumAvatar}
-          disabled={saving || loading || !avatarReady}
-          className="w-full rounded-[20px] bg-gradient-to-b from-orange-300 to-orange-500 py-4 text-xs font-black uppercase tracking-[.05em] text-black shadow-[0_16px_38px_rgba(249,115,22,.2)] disabled:opacity-45"
-        >
-          {saving ? 'Guardando…' : '✓ Guardar Avatar Premium'}
-        </button>
-
-        {message && (
-          <div className="rounded-[20px] border border-orange-300/15 bg-orange-400/[.07] p-3 text-xs text-orange-100/65">
-            {message}
+            <div className="shrink-0 rounded-2xl border border-orange-300/15 bg-orange-400/[.07] px-3 py-2 text-right">
+              <p className="text-[7px] font-black uppercase tracking-[.12em] text-white/35">
+                Strava
+              </p>
+              <p className="mt-0.5 text-[10px] font-bold text-orange-200">
+                {Math.round(progress.energy)}% · {progress.sessions} entrenos
+              </p>
+            </div>
           </div>
-        )}
 
-        <section className="rounded-[24px] border border-white/[.08] bg-[#0d0d12] p-4">
-          <p className="text-[8px] font-black uppercase tracking-[.16em] text-orange-300">
-            Base corporal
-          </p>
-          <h2 className="mt-1 font-display text-[24px] text-white">Tu patinador</h2>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {[
-              ['feminine', 'Femenino'],
-              ['masculine', 'Masculino'],
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setBody(id)}
-                className={`rounded-[18px] border px-3 py-3 text-left text-xs font-bold ${
-                  body === id
-                    ? 'border-orange-300/35 bg-orange-400/[.1] text-orange-100'
-                    : 'border-white/[.07] bg-white/[.025] text-white/42'
-                }`}
+          <div className="grid min-h-0 flex-1 gap-3 min-[470px]:grid-cols-[minmax(0,1fr)_184px]">
+            <div
+              ref={previewRef}
+              className="flex min-h-0 items-center justify-center rounded-[28px] border border-white/[.06] bg-black/20 p-1.5"
+            >
+              <AvatarStage
+                energy={progress.energy}
+                body={body}
+                face={face}
+                helmet={helmet}
+                hair={hair}
+                clothing={clothing}
+                protection={protection}
+                skates={skates}
+                sticker={sticker}
+                className="w-full max-w-[230px] min-[470px]:max-w-[300px]"
+              />
+            </div>
+
+            <section className="flex min-h-0 flex-col rounded-[24px] border border-white/[.08] bg-[#0d0d12] p-3 shadow-2xl">
+              <div
+                className="grid grid-cols-4 gap-1.5 min-[470px]:grid-cols-2"
+                aria-label="Categorías del avatar"
               >
-                {label}
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setActiveCategory(category.id)}
+                    aria-pressed={activeCategory === category.id}
+                    className={`min-w-0 rounded-xl border px-1.5 py-2 text-[7px] font-black uppercase tracking-[.04em] transition-colors ${
+                      activeCategory === category.id
+                        ? 'border-orange-300/35 bg-orange-400/[.12] text-orange-100'
+                        : 'border-white/[.06] bg-white/[.025] text-white/35'
+                    }`}
+                  >
+                    <span className="block truncate">{category.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 flex min-h-0 flex-1 flex-col">
+                <p className="text-[7px] font-black uppercase tracking-[.15em] text-orange-300/70">
+                  {activeGroup.eyebrow}
+                </p>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <h2 className="font-display text-[21px] leading-none text-white">
+                    {activeGroup.label}
+                  </h2>
+                  <span className="rounded-full bg-emerald-400/[.08] px-2 py-1 text-[7px] font-black uppercase text-emerald-200/75">
+                    En vivo
+                  </span>
+                </div>
+
+                <OptionChoices
+                  value={activeGroup.value}
+                  onChange={(value) =>
+                    chooseOption(activeGroup.onChange, value)
+                  }
+                  options={activeGroup.options}
+                  energy={progress.energy}
+                  canPreviewLocked={canPreviewLocked}
+                />
+              </div>
+
+              {message && (
+                <p className="mt-2 rounded-xl border border-orange-300/10 bg-orange-400/[.06] px-2.5 py-2 text-[9px] leading-4 text-orange-100/65">
+                  {message}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={savePremiumAvatar}
+                disabled={saving || loading || !avatarReady}
+                className="mt-2 w-full rounded-[16px] bg-gradient-to-b from-orange-300 to-orange-500 py-3 text-[9px] font-black uppercase tracking-[.05em] text-black shadow-[0_12px_28px_rgba(249,115,22,.18)] disabled:opacity-45"
+              >
+                {saving ? 'Guardando…' : '✓ Guardar Avatar'}
               </button>
-            ))}
+
+              <div className="mt-2 flex items-center justify-center gap-3 text-[8px] font-semibold text-white/32">
+                <Link to="/app/avatar" className="hover:text-white/60">
+                  Editor anterior
+                </Link>
+                <span aria-hidden="true">·</span>
+                <Link to="/app/perfil" className="hover:text-white/60">
+                  Volver al perfil
+                </Link>
+              </div>
+            </section>
           </div>
-        </section>
-
-        <OptionSection
-          eyebrow="Estilo personal"
-          title="Pelo"
-          value={hair}
-          onChange={setHair}
-          options={HAIR_OPTIONS}
-          energy={progress.energy}
-          canPreviewLocked={canPreviewLocked}
-        />
-
-        <OptionSection
-          eyebrow="Equipación PR"
-          title="Camiseta"
-          value={clothing}
-          onChange={setClothing}
-          options={CLOTHING_OPTIONS}
-          energy={progress.energy}
-          canPreviewLocked={canPreviewLocked}
-        />
-
-        <OptionSection
-          eyebrow="Identidad Punta Rollers"
-          title="Sticker PR"
-          value={sticker}
-          onChange={setSticker}
-          options={STICKER_OPTIONS}
-          energy={progress.energy}
-          canPreviewLocked={canPreviewLocked}
-        />
-
-        <OptionSection
-          eyebrow="Seguridad"
-          title="Protecciones"
-          value={protection}
-          onChange={setProtection}
-          options={PROTECTION_OPTIONS}
-          energy={progress.energy}
-          canPreviewLocked={canPreviewLocked}
-        />
-
-        <OptionSection
-          eyebrow="Setup de rodaje"
-          title="Patines"
-          value={skates}
-          onChange={setSkates}
-          options={SKATE_OPTIONS}
-          energy={progress.energy}
-          canPreviewLocked={canPreviewLocked}
-        />
-
-        <OptionSection
-          eyebrow="Seguridad y estilo"
-          title="Casco"
-          value={helmet}
-          onChange={setHelmet}
-          options={HELMET_OPTIONS}
-          energy={progress.energy}
-          canPreviewLocked={canPreviewLocked}
-        />
-
-        <section className="grid grid-cols-3 gap-2">
-          <Metric
-            value={progress.kilometers.toLocaleString('es-UY', {
-              maximumFractionDigits: 1,
-            })}
-            label="Km Strava"
-          />
-          <Metric value={progress.sessions} label="Entrenos" />
-          <Metric value={`${Math.round(progress.energy)}%`} label="Energía" />
-        </section>
-
-        <section className="rounded-[24px] border border-orange-300/15 bg-orange-400/[.06] p-4">
-          <p className="text-[8px] font-black uppercase tracking-[.15em] text-orange-200/70">
-            {loading ? 'Calculando progreso…' : progress.level}
-          </p>
-          <p className="mt-2 text-xs leading-5 text-white/42">
-            Fondo, cuerpo, pelo, camiseta, casco, protecciones y patines se
-            guardan sin borrar el formato anterior. La energía sigue
-            calculándose con los entrenamientos reales de Strava.
-          </p>
-        </section>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Link
-            to="/app/avatar"
-            className="rounded-2xl border border-white/10 bg-white/[.035] py-4 text-center text-xs font-bold text-white/55"
-          >
-            Editor actual
-          </Link>
-          <Link
-            to="/app/perfil"
-            className="rounded-2xl bg-orange-400 py-4 text-center text-xs font-black text-black"
-          >
-            Volver al perfil
-          </Link>
         </div>
       </div>
     </AppLayout>
   )
 }
 
-function OptionSection({
-  eyebrow,
-  title,
+function OptionChoices({
   value,
   onChange,
   options,
@@ -435,62 +489,35 @@ function OptionSection({
   canPreviewLocked = false,
 }) {
   return (
-    <section className="rounded-[24px] border border-white/[.08] bg-[#0d0d12] p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[8px] font-black uppercase tracking-[.16em] text-orange-300">
-            {eyebrow}
-          </p>
-          <h2 className="mt-1 font-display text-[24px] text-white">{title}</h2>
-        </div>
-        <span className="rounded-full border border-emerald-300/15 bg-emerald-400/[.08] px-2.5 py-1 text-[8px] font-black uppercase tracking-[.12em] text-emerald-200">
-          Activo
-        </span>
-      </div>
+    <div className="mt-2 flex gap-2 overflow-x-auto pb-1 min-[470px]:grid min-[470px]:grid-cols-1 min-[470px]:content-start min-[470px]:overflow-y-auto min-[470px]:pr-1">
+      {options.map(([id, label, color, unlockAt = 0]) => {
+        const locked = !canPreviewLocked && energy < unlockAt
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        {options.map(([id, label, color, unlockAt = 0]) => {
-          const locked = !canPreviewLocked && energy < unlockAt
-
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onChange(id)}
-              disabled={locked}
-              className={`flex min-w-0 items-center gap-2 rounded-[18px] border px-3 py-3 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-35 ${
-                value === id
-                  ? 'border-orange-300/35 bg-orange-400/[.1] text-orange-100'
-                  : 'border-white/[.07] bg-white/[.025] text-white/42'
-              }`}
-            >
-              <span
-                className="h-4 w-4 shrink-0 rounded-full border border-white/15 shadow-inner"
-                style={{ backgroundColor: color }}
-              />
-              <span className="min-w-0 flex-1 truncate">{label}</span>
-              {locked && (
-                <span className="shrink-0 text-[7px] font-black text-orange-200/70">
-                  🔒 {unlockAt}%
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function Metric({ value, label }) {
-  return (
-    <div className="min-w-0 rounded-[20px] border border-white/[.07] bg-white/[.03] px-2 py-4 text-center">
-      <p className="truncate font-display text-[24px] leading-none text-white">
-        {value}
-      </p>
-      <p className="mt-2 text-[7px] font-black uppercase tracking-[.1em] text-white/28">
-        {label}
-      </p>
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            disabled={locked}
+            className={`flex min-w-[126px] items-center gap-2 rounded-[14px] border px-2.5 py-2.5 text-left text-[9px] font-bold disabled:cursor-not-allowed disabled:opacity-35 min-[470px]:min-w-0 ${
+              value === id
+                ? 'border-orange-300/35 bg-orange-400/[.1] text-orange-100'
+                : 'border-white/[.07] bg-white/[.025] text-white/42'
+            }`}
+          >
+            <span
+              className="h-3.5 w-3.5 shrink-0 rounded-full border border-white/15 shadow-inner"
+              style={{ backgroundColor: color }}
+            />
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            {locked && (
+              <span className="shrink-0 text-[7px] font-black text-orange-200/70">
+                🔒 {unlockAt}%
+              </span>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }

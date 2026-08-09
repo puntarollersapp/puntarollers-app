@@ -1,5 +1,6 @@
 import {
   AVATAR_CLOTHING,
+  AVATAR_FACES,
   AVATAR_HAIR,
   AVATAR_SCENES,
   AVATAR_HELMETS,
@@ -20,6 +21,7 @@ export default function AvatarStage({
   className = '',
   showHud = true,
   helmet = 'none',
+  face = 'pr-visor',
   hair = 'soft',
   clothing = 'orange',
   protection = 'orange',
@@ -41,6 +43,7 @@ export default function AvatarStage({
     layers: [...(resolvedPreset.layers || []), ...selectedLayers],
   })
   const helmetLayer = AVATAR_HELMETS[helmet] || null
+  const faceLayer = AVATAR_FACES[face] || null
   const stickerLayer = AVATAR_STICKERS[sticker] || null
 
   return (
@@ -88,6 +91,23 @@ export default function AvatarStage({
             />
           </picture>
         ))}
+
+        {faceLayer && (
+          <picture>
+            <source srcSet={faceLayer.src} type="image/webp" />
+            <img
+              src={faceLayer.fallbackSrc}
+              alt=""
+              className="absolute left-1/2 -translate-x-1/2 object-contain drop-shadow-[0_0_7px_rgba(249,115,22,.2)]"
+              style={{
+                top: faceLayer.top || '7%',
+                width: faceLayer.width || '15%',
+              }}
+              loading="eager"
+              decoding="async"
+            />
+          </picture>
+        )}
 
         {stickerLayer && (
           <div
