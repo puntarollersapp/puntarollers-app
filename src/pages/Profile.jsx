@@ -8,7 +8,9 @@ import {
 } from '../lib/supabase'
 import { mockUser } from '../data/mockData'
 import TreasuryPanel from '../components/treasury/TreasuryPanel'
-import ProfileLaunchSuite from '../components/profile/ProfileLaunchSuite'
+import ProfileLaunchSuite, {
+  ProfileStoryCard,
+} from '../components/profile/ProfileLaunchSuite'
 import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
 import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 
@@ -743,6 +745,44 @@ export default function Profile() {
         (item) => item.tipo === 'Insignia'
       ),
     [activity]
+  )
+
+  const recentBadges = useMemo(
+    () =>
+      [...badges]
+        .sort(
+          (a, b) =>
+            new Date(b.fecha || b.created_at || 0).getTime() -
+            new Date(a.fecha || a.created_at || 0).getTime()
+        )
+        .slice(0, 3)
+        .map((item) => ({
+          id: item.id,
+          title: item.titulo || 'Insignia PR',
+          image: item.imagen || item.icono || getBadgeImage(item.titulo),
+          date: item.fecha || item.created_at || '',
+        })),
+    [badges]
+  )
+
+  const activityTrend = useMemo(
+    () =>
+      [...stravaActivities]
+        .slice(0, 6)
+        .reverse()
+        .map((item) => {
+          const date = new Date(item.fecha_inicio || item.created_at || 0)
+          return {
+            value: (Number(item.distancia_metros) || 0) / 1000,
+            label: Number.isNaN(date.getTime())
+              ? 'PR'
+              : date.toLocaleDateString('es-UY', {
+                  day: '2-digit',
+                  month: '2-digit',
+                }),
+          }
+        }),
+    [stravaActivities]
   )
 
   const events = useMemo(
@@ -1511,6 +1551,16 @@ export default function Profile() {
           </div>
         </section>
 
+        <ProfileStoryCard
+          profile={profile}
+          stats={headerStats}
+          badgeCount={badges.length}
+          recentBadges={recentBadges}
+          chibiSelection={chibiSelection}
+          hasChibiAvatar={hasChibiAvatar}
+          performance={performanceSummary}
+          activityTrend={activityTrend}
+        />
 
         <StravaActivityProfile
           connected={stravaConnected}
@@ -1796,10 +1846,6 @@ export default function Profile() {
 
         <ProfileLaunchSuite
           profile={profile}
-          stats={headerStats}
-          badgeCount={badges.length}
-          chibiSelection={chibiSelection}
-          useChibiPhoto={useChibiPhoto}
         />
 
         <Accordion
