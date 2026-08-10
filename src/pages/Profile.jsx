@@ -13,39 +13,13 @@ import ProfileLaunchSuite, {
 } from '../components/profile/ProfileLaunchSuite'
 import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
 import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
+import { getBadgeImage } from '../lib/badges'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const PAYMENT_EXEMPT_DOCUMENTS = new Set([
   '50373134',
 ])
-
-const BADGE_IMAGES = {
-  'primer evento pr': '/insignias-pr/primer-evento-pr.png',
-  'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
-  'espiritu pr': '/insignias-pr/espiritu-pr.png',
-  'primeros 6k': '/insignias-pr/primeros-6k.png',
-  'primeros 10k': '/insignias-pr/primeros-10k.png',
-  'ya frena en t': '/insignias-pr/frena-en-t.png',
-  'frena en t': '/insignias-pr/frena-en-t.png',
-  'ya frena con taco': '/insignias-pr/frena-con-taco.png',
-  'frena con taco': '/insignias-pr/frena-con-taco.png',
-  'buen companero': '/insignias-pr/buen-companero.png',
-  'actitud positiva': '/insignias-pr/actitud-positiva.png',
-  'entrenador potencial': '/insignias-pr/entrenador-potencial.png',
-}
-
-function normalizeBadgeTitle(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-}
-
-function getBadgeImage(title) {
-  return BADGE_IMAGES[normalizeBadgeTitle(title)] || ''
-}
 
 function loadSavedUser() {
   try {

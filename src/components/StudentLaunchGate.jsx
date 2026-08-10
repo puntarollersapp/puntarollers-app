@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import LaunchExperience from './LaunchExperience'
-import { PR_LAUNCH } from '../lib/launch'
+import { PR_LAUNCH, hasLaunchBypass } from '../lib/launch'
 
 export const STUDENT_LAUNCH_GATE = {
   enabled: true,
@@ -39,7 +39,7 @@ export default function StudentLaunchGate({ user, children }) {
   )
   const [now, setNow] = useState(() => Date.now())
 
-  const hasBypass = STUDENT_LAUNCH_GATE.bypassRoles.includes(user?.role)
+  const hasBypass = hasLaunchBypass(user)
   const validTarget = Number.isFinite(target)
   const locked =
     STUDENT_LAUNCH_GATE.enabled &&

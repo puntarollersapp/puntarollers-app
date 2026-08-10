@@ -2,30 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-
-const BADGE_IMAGES = {
-  'primer evento pr': '/insignias-pr/primer-evento-pr.png',
-  'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
-  'espiritu pr': '/insignias-pr/espiritu-pr.png',
-  'primeros 6k': '/insignias-pr/primeros-6k.png',
-  'primeros 10k': '/insignias-pr/primeros-10k.png',
-  'ya frena en t': '/insignias-pr/frena-en-t.png',
-  'frena en t': '/insignias-pr/frena-en-t.png',
-  'ya frena con taco': '/insignias-pr/frena-con-taco.png',
-  'frena con taco': '/insignias-pr/frena-con-taco.png',
-  'buen companero': '/insignias-pr/buen-companero.png',
-  'actitud positiva': '/insignias-pr/actitud-positiva.png',
-  'entrenador potencial': '/insignias-pr/entrenador-potencial.png',
-  'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k-1.png',
-}
-
-function normalize(value) {
-  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
-}
-
-function imageFor(title) {
-  return BADGE_IMAGES[normalize(title)] || ''
-}
+import { getBadgeImage, normalizeBadgeTitle } from '../lib/badges'
 
 function savedUser() {
   try { return JSON.parse(localStorage.getItem('pr_user') || '{}') } catch { return {} }
@@ -69,7 +46,7 @@ export default function Insignias() {
   const unique = useMemo(() => {
     const seen = new Set()
     return badges.filter((badge) => {
-      const key = normalize(badge.titulo)
+      const key = normalizeBadgeTitle(badge.titulo)
       if (seen.has(key)) return false
       seen.add(key)
       return true
@@ -117,7 +94,7 @@ export default function Insignias() {
 
             <div className="grid grid-cols-2 gap-3">
               {unique.map((badge, index) => {
-                const image = imageFor(badge.titulo)
+                const image = getBadgeImage(badge.titulo)
                 return (
                   <button key={badge.id} type="button" onClick={() => setSelected(badge)}
                     className="group relative overflow-hidden rounded-[25px] border border-white/[.08] bg-[#0e0e13] p-3 text-left active:scale-[.99]">
@@ -147,7 +124,7 @@ export default function Insignias() {
           <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-3 backdrop-blur-sm" onClick={() => setSelected(null)}>
             <div className="w-full max-w-md rounded-[30px] border border-pr-gold/20 bg-[#111116] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="mx-auto aspect-square max-w-[210px] overflow-hidden rounded-[28px] border border-pr-gold/15 bg-pr-gold/[.06] grid place-items-center">
-                {imageFor(selected.titulo) ? <img src={imageFor(selected.titulo)} alt="" className="h-full w-full object-contain p-3" /> : <span className="text-6xl">🏅</span>}
+                {getBadgeImage(selected.titulo) ? <img src={getBadgeImage(selected.titulo)} alt="" className="h-full w-full object-contain p-3" /> : <span className="text-6xl">🏅</span>}
               </div>
               <p className="mt-5 text-[9px] font-black uppercase tracking-[.18em] text-pr-gold">Insignia PR</p>
               <h2 className="mt-2 font-display text-[30px] leading-none text-white">{selected.titulo}</h2>
