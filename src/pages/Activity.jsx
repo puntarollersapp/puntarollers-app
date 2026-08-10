@@ -920,24 +920,28 @@ export default function Activity() {
 
             <div className="grid grid-cols-3 gap-2.5 mt-5">
               <HeroStat
-                value={communityStats.activities}
+                value={loading ? '—' : communityStats.activities}
                 label="Actividades"
               />
               <HeroStat
-                value={communityStats.kilometers.toLocaleString(
-                  'es-UY',
-                  { maximumFractionDigits: 0 }
-                )}
+                value={loading
+                  ? '—'
+                  : communityStats.kilometers.toLocaleString(
+                      'es-UY',
+                      { maximumFractionDigits: 0 }
+                    )}
                 label="Km rodados"
                 highlight
               />
               <HeroStat
-                value={communityStats.skaters}
+                value={loading ? '—' : communityStats.skaters}
                 label="Patinadores"
               />
             </div>
           </div>
         </section>
+
+        {loading && <RollerFeedLoading syncing={syncing} />}
 
         {myLatest && (
           <section className="rounded-[26px] border border-pr-gold/20 bg-gradient-to-r from-pr-gold/10 via-white/[0.025] to-orange-400/[0.06] p-4">
@@ -1038,9 +1042,7 @@ export default function Activity() {
           )}
 
           {loading ? (
-            <div className="space-y-4">
-              <LoadingFeedCard />
-              <LoadingFeedCard />
+            <div className="space-y-4" aria-hidden="true">
               <LoadingFeedCard />
             </div>
           ) : visibleItems.length > 0 ? (
@@ -1089,6 +1091,40 @@ function HeroStat({
         {label}
       </p>
     </div>
+  )
+}
+
+function RollerFeedLoading({ syncing }) {
+  return (
+    <section
+      className="rollerfeed-loading relative overflow-hidden rounded-[28px] border border-orange-300/20 bg-gradient-to-r from-[#211109] via-[#111015] to-[#15101d] p-5"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-orange-500/15 blur-3xl" />
+      <div className="relative flex items-center gap-4">
+        <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[22px] border border-orange-300/20 bg-black/25">
+          <span className="rollerfeed-loading-skate text-3xl" aria-hidden="true">🛼</span>
+          <span className="absolute bottom-2 left-2 right-2 h-px overflow-hidden bg-white/10">
+            <span className="rollerfeed-loading-streak block h-full w-1/2 bg-gradient-to-r from-transparent via-orange-300 to-transparent" />
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300/70">
+            RollerFeed en movimiento
+          </p>
+          <h2 className="mt-1 font-display text-[24px] leading-none text-white">
+            {syncing ? 'Sincronizando tu última vuelta…' : 'Armando la pista PR…'}
+          </h2>
+          <p className="mt-2 text-[11px] leading-5 text-white/38">
+            Estamos reuniendo actividades, kilómetros y novedades de la comunidad.
+          </p>
+        </div>
+      </div>
+      <div className="relative mt-4 h-1.5 overflow-hidden rounded-full bg-white/[.07]">
+        <span className="rollerfeed-loading-progress block h-full w-2/5 rounded-full bg-gradient-to-r from-orange-500 via-amber-200 to-orange-400" />
+      </div>
+    </section>
   )
 }
 
