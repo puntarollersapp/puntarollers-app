@@ -239,36 +239,36 @@ function drawRadar(ctx, axes, x, y, radius) {
   ctx.textAlign = 'left'
 }
 
-function drawActivityBars(ctx, trend, x, y, width, height) {
-  const values = (trend || []).map((item) => Math.max(0, Number(item?.value) || 0))
+function drawActivitySparkline(ctx, trend, x, y, width, height) {
+  const values = (trend || [])
+    .map((item) => Math.max(0, Number(item?.value) || 0))
+    .slice(-6)
+  if (!values.length || !values.some(Boolean)) return
+
   const maximum = Math.max(1, ...values)
-  const gap = 18
-  const barWidth = (width - gap * Math.max(0, values.length - 1)) / Math.max(1, values.length)
+  const step = values.length > 1 ? width / (values.length - 1) : width
+  const points = values.map((value, index) => ({
+    x: x + index * step,
+    y: y + height - (value / maximum) * height,
+  }))
 
-  ctx.strokeStyle = 'rgba(255,255,255,.08)'
-  ctx.lineWidth = 2
-  ;[0, .5, 1].forEach((level) => {
+  ctx.beginPath()
+  points.forEach((point, index) => {
+    if (index === 0) ctx.moveTo(point.x, point.y)
+    else ctx.lineTo(point.x, point.y)
+  })
+  ctx.strokeStyle = '#ff9a4a'
+  ctx.lineWidth = 4
+  ctx.lineJoin = 'round'
+  ctx.lineCap = 'round'
+  ctx.stroke()
+
+  points.forEach((point) => {
     ctx.beginPath()
-    ctx.moveTo(x, y + height * level)
-    ctx.lineTo(x + width, y + height * level)
-    ctx.stroke()
-  })
-
-  values.forEach((value, index) => {
-    const barHeight = Math.max(8, (value / maximum) * height)
-    const bx = x + index * (barWidth + gap)
-    const gradient = ctx.createLinearGradient(0, y + height - barHeight, 0, y + height)
-    gradient.addColorStop(0, '#ffb36e')
-    gradient.addColorStop(1, '#f35b10')
-    roundedRect(ctx, bx, y + height - barHeight, barWidth, barHeight, Math.min(16, barWidth / 2))
-    ctx.fillStyle = gradient
+    ctx.arc(point.x, point.y, 5, 0, Math.PI * 2)
+    ctx.fillStyle = '#ffd09c'
     ctx.fill()
-    ctx.textAlign = 'center'
-    ctx.fillStyle = 'rgba(255,255,255,.4)'
-    ctx.font = '800 13px Arial, sans-serif'
-    ctx.fillText(trend[index]?.label || `${index + 1}`, bx + barWidth / 2, y + height + 26)
   })
-  ctx.textAlign = 'left'
 }
 
 async function drawAvatarAsset(ctx, option, stage, geometry) {
@@ -384,6 +384,7 @@ async function buildShareCard({
   hasChibiAvatar,
   performance,
   activityTrend,
+  goals,
 }) {
   const canvas = document.createElement('canvas')
   canvas.width = 1080
@@ -512,45 +513,89 @@ async function buildShareCard({
     drawStoryMetric(ctx, metric, 78 + index * 312, 912, 288, index === 1)
   )
 
+  const goalItems = (goals || []).slice(0, 2)
+
   drawPanel(ctx, 78, 1120, 924, 332, 44, 'rgba(255,255,255,.035)', 'rgba(255,255,255,.09)')
   ctx.fillStyle = '#ffae68'
   ctx.font = '900 17px Arial, sans-serif'
-  ctx.fillText(hasPerformance ? 'PERFIL DE RENDIMIENTO' : 'RITMO DE ACTIVIDAD', 116, 1172)
+  ctx.fillText('PERFIL DEPORTIVO · EVOLUCIÓN A OBJETIVOS', 116, 1172)
 
   if (hasPerformance) {
-    drawRadar(ctx, performance.axes, 304, 1300, 112)
+    drawRadar(ctx, performance.axes, 300, 1320, 82)
     ctx.fillStyle = 'rgba(255,255,255,.35)'
-    ctx.font = '800 18px Arial, sans-serif'
-    ctx.fillText('ÍNDICE DE EVOLUCIÓN', 555, 1250)
+    ctx.font = '800 14px Arial, sans-serif'
+    ctx.fillText('ÍNDICE PR PERSONAL', 116, 1242)
     ctx.fillStyle = '#ffffff'
-    ctx.font = '900 78px Arial, sans-serif'
-    ctx.fillText(String(Math.round(Number(performance.index) || 0)), 555, 1332)
+    ctx.font = '900 54px Arial, sans-serif'
+    ctx.fillText(String(Math.round(Number(performance.index) || 0)), 116, 1305)
+    ctx.fillStyle = 'rgba(255,255,255,.28)'
+    ctx.font = '800 16px Arial, sans-serif'
+    ctx.fillText('/100', 180, 1305)
     ctx.fillStyle = '#ffb36e'
-    ctx.font = '900 20px Arial, sans-serif'
+    ctx.font = '800 14px Arial, sans-serif'
     const performanceMessage = Number(performance.improvementPercent) > 0
       ? `${Number(performance.improvementPercent).toFixed(1)}% de mejora en tu distancia destacada`
       : 'Cada nueva toma vuelve este perfil más preciso'
-    drawWrappedText(ctx, performanceMessage, 555, 1380, 370, 28, 2)
-  } else if ((activityTrend || []).some((item) => Number(item?.value) > 0)) {
-    drawActivityBars(ctx, activityTrend, 126, 1215, 828, 155)
-    ctx.fillStyle = 'rgba(255,255,255,.32)'
-    ctx.font = '700 16px Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('Tus últimas actividades importadas · km por sesión', 540, 1420)
-    ctx.textAlign = 'left'
+    drawWrappedText(ctx, performanceMessage, 116, 1410, 330, 22, 2)
   } else {
-    ctx.fillStyle = 'rgba(255,255,255,.62)'
-    ctx.font = '900 28px Arial, sans-serif'
-    ctx.fillText('Tu evolución está esperando nuevas marcas.', 116, 1265)
-    ctx.fillStyle = 'rgba(255,255,255,.34)'
-    ctx.font = '700 20px Arial, sans-serif'
-    drawWrappedText(ctx, 'Entrenamientos, tomas de rendimiento e insignias van completando esta placa automáticamente.', 116, 1320, 800, 32, 3)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '900 27px Arial, sans-serif'
+    ctx.fillText('Tu base deportiva ya está activa.', 116, 1250)
+    ctx.fillStyle = 'rgba(255,255,255,.32)'
+    ctx.font = '700 17px Arial, sans-serif'
+    drawWrappedText(ctx, 'Cada entrenamiento, evaluación y objetivo de tu profe irá completando este perfil sin que tengas que cargarlo.', 116, 1295, 350, 27, 4)
+    ctx.fillStyle = '#ffb36e'
+    ctx.font = '900 16px Arial, sans-serif'
+    ctx.fillText(`${Number(stats?.sessions) || 0} entrenamientos · ${(Number(stats?.kilometers) || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 })} km`, 116, 1412)
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,.34)'
+  ctx.font = '800 14px Arial, sans-serif'
+  ctx.fillText('OBJETIVOS DEL ENTRENADOR', 545, 1234)
+
+  if (goalItems.length) {
+    goalItems.forEach((goal, index) => {
+      const rowY = 1263 + index * 76
+      ctx.fillStyle = 'rgba(255,255,255,.76)'
+      ctx.font = '800 17px Arial, sans-serif'
+      const title = String(goal.title || 'Objetivo PR')
+      ctx.fillText(title.length > 31 ? `${title.slice(0, 29)}…` : title, 545, rowY)
+      ctx.fillStyle = 'rgba(255,255,255,.1)'
+      roundedRect(ctx, 545, rowY + 17, 386, 12, 6)
+      ctx.fill()
+      const progressGradient = ctx.createLinearGradient(545, 0, 931, 0)
+      progressGradient.addColorStop(0, '#10b981')
+      progressGradient.addColorStop(1, '#86efac')
+      ctx.fillStyle = progressGradient
+      roundedRect(ctx, 545, rowY + 17, Math.max(12, 386 * (Number(goal.progress) || 0) / 100), 12, 6)
+      ctx.fill()
+      ctx.fillStyle = goal.achieved ? '#86efac' : 'rgba(255,255,255,.4)'
+      ctx.font = '800 13px Arial, sans-serif'
+      ctx.fillText(goal.achieved ? 'META ALCANZADA' : `${Number(goal.progress) || 0}% EN CURSO`, 545, rowY + 51)
+    })
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.65)'
+    ctx.font = '900 21px Arial, sans-serif'
+    ctx.fillText('Próxima meta: por asignar', 545, 1284)
+    ctx.fillStyle = 'rgba(255,255,255,.3)'
+    ctx.font = '700 16px Arial, sans-serif'
+    drawWrappedText(ctx, 'Cuando tu profe defina un objetivo personalizado, aparecerá automáticamente en esta placa.', 545, 1322, 380, 25, 3)
+  }
+
+  if ((activityTrend || []).some((item) => Number(item?.value) > 0)) {
+    ctx.fillStyle = 'rgba(255,255,255,.25)'
+    ctx.font = '800 11px Arial, sans-serif'
+    ctx.fillText('RITMO RECIENTE', 545, 1403)
+    drawActivitySparkline(ctx, activityTrend, 660, 1384, 270, 34)
   }
 
   drawPanel(ctx, 78, 1484, 924, 278, 44, 'rgba(255,255,255,.035)', 'rgba(255,255,255,.09)')
   ctx.fillStyle = '#ffae68'
   ctx.font = '900 17px Arial, sans-serif'
-  ctx.fillText(`ÚLTIMAS INSIGNIAS · ${Number(badgeCount) || 0} EN TOTAL`, 116, 1538)
+  ctx.fillText(`ÚLTIMAS INSIGNIAS OBTENIDAS · ${Number(badgeCount) || 0} EN TOTAL`, 116, 1538)
+  ctx.fillStyle = 'rgba(255,255,255,.3)'
+  ctx.font = '700 14px Arial, sans-serif'
+  ctx.fillText('Reconocimientos PR que celebran tu constancia, evolución y espíritu de comunidad.', 116, 1568)
 
   const badgeItems = (recentBadges || []).slice(0, 3)
   if (badgeItems.length) {
@@ -560,23 +605,23 @@ async function buildShareCard({
     badgeItems.forEach((badge, index) => {
       const centerX = 234 + index * 306
       ctx.beginPath()
-      ctx.arc(centerX, 1632, 66, 0, Math.PI * 2)
+      ctx.arc(centerX, 1650, 60, 0, Math.PI * 2)
       ctx.fillStyle = 'rgba(255,119,23,.1)'
       ctx.fill()
       ctx.strokeStyle = 'rgba(255,174,91,.28)'
       ctx.lineWidth = 3
       ctx.stroke()
-      if (badgeImages[index]) drawContain(ctx, badgeImages[index], centerX - 56, 1576, 112, 112)
+      if (badgeImages[index]) drawContain(ctx, badgeImages[index], centerX - 51, 1599, 102, 102)
       else {
         ctx.textAlign = 'center'
         ctx.font = '46px Arial, sans-serif'
-        ctx.fillText('🏅', centerX, 1648)
+        ctx.fillText('🏅', centerX, 1666)
       }
       ctx.fillStyle = 'rgba(255,255,255,.7)'
       ctx.font = '800 16px Arial, sans-serif'
       ctx.textAlign = 'center'
       const shortTitle = String(badge.title || 'Insignia PR')
-      ctx.fillText(shortTitle.length > 22 ? `${shortTitle.slice(0, 20)}…` : shortTitle, centerX, 1727)
+      ctx.fillText(shortTitle.length > 22 ? `${shortTitle.slice(0, 20)}…` : shortTitle, centerX, 1737)
     })
     ctx.textAlign = 'left'
   } else {
@@ -650,6 +695,7 @@ export function ProfileStoryCard({
   hasChibiAvatar,
   performance,
   activityTrend,
+  goals,
 }) {
   const [open, setOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
@@ -675,6 +721,7 @@ export function ProfileStoryCard({
         hasChibiAvatar,
         performance,
         activityTrend,
+        goals,
       })
       if (cardUrl) URL.revokeObjectURL(cardUrl)
       setCardBlob(blob)
@@ -781,8 +828,8 @@ function HelpCenter() {
   )
 }
 
-function FeedbackCard({ profile }) {
-  const [open, setOpen] = useState(false)
+function FeedbackCard({ profile, initiallyOpen = false }) {
+  const [open, setOpen] = useState(initiallyOpen)
   const [type, setType] = useState('Problema')
   const [details, setDetails] = useState('')
   const [screenshot, setScreenshot] = useState(null)
@@ -835,12 +882,98 @@ function FeedbackCard({ profile }) {
   )
 }
 
-export default function ProfileLaunchSuite({ profile }) {
+function ContactsCard({ contacts }) {
   return (
-    <div className="space-y-3">
-      <InstallAppCard />
-      <HelpCenter />
-      <FeedbackCard profile={profile} />
+    <section className="rounded-[26px] border border-orange-300/15 bg-orange-400/[.045] p-4">
+      <p className="text-[8px] font-black uppercase tracking-[.17em] text-orange-200/65">CONTACTOS PR</p>
+      <h2 className="mt-1 font-display text-xl text-white">Estamos para ayudarte</h2>
+      <p className="mt-1 text-[10px] leading-4 text-white/34">Elegí el contacto indicado y abrilo directamente.</p>
+      <div className="mt-4 space-y-2">
+        {(contacts || []).length ? (contacts || []).map((contact) => (
+          <a
+            key={contact.id || contact.nombre}
+            href={contact.link || '#'}
+            target="_blank"
+            rel="noreferrer"
+            className="flex min-h-14 items-center justify-between gap-3 rounded-[18px] border border-white/[.07] bg-black/20 px-4 active:scale-[.99]"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-xs font-black text-white/72">{contact.nombre || 'Punta Rollers'}</p>
+              {contact.detalle && <p className="mt-1 truncate text-[9px] text-white/32">{contact.detalle}</p>}
+            </div>
+            <span className="shrink-0 text-xs font-black text-orange-300">Abrir →</span>
+          </a>
+        )) : (
+          <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-4 text-[10px] leading-5 text-white/38">
+            Los contactos del equipo aparecerán acá apenas estén disponibles.
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function UtilitySheet({ title, onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-[170] overflow-y-auto bg-black/85 px-4 py-[max(20px,env(safe-area-inset-top))] backdrop-blur-xl">
+      <div className="mx-auto w-full max-w-[520px] rounded-[32px] border border-white/10 bg-[#0e0d13] p-4 shadow-2xl">
+        <div className="mb-3 flex items-center justify-between gap-3 px-1">
+          <div>
+            <p className="section-label">ACCESO RÁPIDO</p>
+            <h2 className="mt-1 font-display text-2xl text-white">{title}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-xl text-white/45">×</button>
+        </div>
+        {children}
+      </div>
     </div>
+  )
+}
+
+export default function ProfileLaunchSuite({ profile, contacts = [] }) {
+  const [active, setActive] = useState('')
+  const items = [
+    { id: 'install', icon: '📲', title: 'Instalá la app', text: 'Punta Rollers en tu inicio', tone: 'border-sky-300/15 bg-sky-400/[.06]' },
+    { id: 'help', icon: '❓', title: '¿Necesitás ayuda?', text: 'Cinco respuestas rápidas', tone: 'border-violet-300/15 bg-violet-400/[.06]' },
+    { id: 'feedback', icon: '⚡', title: '¿Encontraste algo raro?', text: 'Problema o sugerencia', tone: 'border-emerald-300/15 bg-emerald-400/[.06]' },
+    { id: 'contacts', icon: '💬', title: 'Contactos PR', text: 'Hablá con el equipo', tone: 'border-orange-300/15 bg-orange-400/[.06]' },
+  ]
+  const activeItem = items.find((item) => item.id === active)
+
+  return (
+    <>
+      <section className="rounded-[28px] border border-white/[.07] bg-white/[.022] p-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="section-label">TU CENTRO PR</p>
+            <h2 className="mt-1 font-display text-2xl text-white">Todo a un toque</h2>
+          </div>
+          <p className="max-w-[145px] text-right text-[8px] leading-4 text-white/25">Abrí solamente lo que necesitás.</p>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActive(item.id)}
+              className={`min-h-[118px] rounded-[22px] border p-4 text-left transition active:scale-[.98] ${item.tone}`}
+            >
+              <span className="text-2xl" aria-hidden="true">{item.icon}</span>
+              <p className="mt-3 text-[12px] font-black leading-4 text-white/75">{item.title}</p>
+              <p className="mt-1 text-[8px] leading-3 text-white/30">{item.text}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {activeItem && (
+        <UtilitySheet title={activeItem.title} onClose={() => setActive('')}>
+          {active === 'install' && <InstallAppCard compact />}
+          {active === 'help' && <HelpCenter />}
+          {active === 'feedback' && <FeedbackCard profile={profile} initiallyOpen />}
+          {active === 'contacts' && <ContactsCard contacts={contacts} />}
+        </UtilitySheet>
+      )}
+    </>
   )
 }
