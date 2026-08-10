@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
+import PRDayModule from '../components/PRDayModule'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
@@ -147,7 +148,9 @@ export default function CommunityPage() {
       {activeTab === 'explorar' && <>
         <section><p className="mb-2 px-1 text-[9px] font-black uppercase tracking-[.18em] text-white/28">BUSCAR EN PUNTA ROLLERS</p><div className="rounded-[22px] border border-white/[.09] bg-[#0d0e13] p-2"><div className="flex items-center gap-2"><span className="pl-2 text-lg text-orange-300">⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Escribí un nombre…" className="min-h-12 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-white/25" />{query && <button onClick={()=>setQuery('')} className="px-3 text-white/30">×</button>}</div></div><p className="mt-2 px-1 text-[10px] text-white/25">Escribí al menos 2 letras. No mostramos una lista interminable de alumnos.</p></section>
 
-        {query.length < 2 && suggestions.length > 0 && <section><div className="mb-3"><p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300/70">PARA DESCUBRIR</p><h2 className="mt-1 font-display text-2xl text-white">Algunos rollers de la comunidad</h2><p className="mt-1 text-[10px] text-white/28">Una pequeña selección. Deslizá para conocer más.</p></div><div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{suggestions.map(p => <div key={p.id} className="w-[145px] shrink-0 rounded-[22px] border border-white/[.07] bg-[#0d0e13] p-3"><Avatar profile={p} className="h-16 w-16 rounded-[20px]"/><p className="mt-3 truncate text-xs font-black text-white">{fullName(p)}</p><p className="mt-1 truncate text-[9px] text-white/30">{p.ciudad || 'Punta Rollers'}</p>{p.participa_como_alumno && p.role === 'admin' && <p className="mt-1 text-[8px] font-black uppercase tracking-[.1em] text-orange-300">ADMIN · PATINADOR</p>}<button disabled={busyId} onClick={()=>sendRequest(p.id)} className="mt-3 w-full rounded-xl bg-white/[.06] py-2 text-[9px] font-black text-orange-300">+ Conectar</button></div>)}</div></section>}
+        {query.length < 2 && suggestions.length > 0 && <section><div className="mb-3"><p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300/70">PARA DESCUBRIR</p><h2 className="mt-1 font-display text-2xl text-white">Algunos Rolleros de la comunidad</h2><p className="mt-1 text-[10px] text-white/28">Una pequeña selección. Deslizá para conocer más.</p></div><div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{suggestions.map(p => <div key={p.id} className="w-[145px] shrink-0 rounded-[22px] border border-white/[.07] bg-[#0d0e13] p-3"><Avatar profile={p} className="h-16 w-16 rounded-[20px]"/><p className="mt-3 truncate text-xs font-black text-white">{fullName(p)}</p><p className="mt-1 truncate text-[9px] text-white/30">{p.ciudad || 'Punta Rollers'}</p>{p.participa_como_alumno && p.role === 'admin' && <p className="mt-1 text-[8px] font-black uppercase tracking-[.1em] text-orange-300">ADMIN · PATINADOR</p>}<button disabled={busyId} onClick={()=>sendRequest(p.id)} className="mt-3 w-full rounded-xl bg-white/[.06] py-2 text-[9px] font-black text-orange-300">+ Conectar</button></div>)}</div></section>}
+
+        {query.length < 2 && <PRDayModule user={user} onConnect={sendRequest} />}
       </>}
 
       {loading ? <div className="rounded-[24px] border border-white/[.07] p-5 text-xs text-white/35">Cargando Comunidad…</div> : <section className="space-y-3">
