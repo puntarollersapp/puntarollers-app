@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PR_LAUNCH, launchTimestamp } from '../lib/launch'
+import {
+  PR_LAUNCH,
+  hasLaunchBypass,
+  launchTimestamp,
+} from '../lib/launch'
 
 const ONBOARDING_STEPS = [
   {
@@ -67,7 +71,7 @@ function markSeen(userId) {
 
 function shouldShow(user) {
   if (!user?.id || user.role === 'admin' || user.role === 'profesor') return false
-  if (Date.now() < launchTimestamp()) return false
+  if (Date.now() < launchTimestamp() && !hasLaunchBypass(user)) return false
   return !hasSeen(user.id)
 }
 
