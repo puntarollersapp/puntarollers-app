@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { MiEvolucionContent } from './MiEvolucion'
 
 function savedUser() {
   try { return JSON.parse(localStorage.getItem('pr_user') || '{}') } catch { return {} }
@@ -32,6 +33,7 @@ function timeLabel(value) {
 }
 
 export default function MyActivity() {
+  const location = useLocation()
   const { user } = useAuth()
   const base = { ...savedUser(), ...user }
   const profileId = base.id
@@ -39,6 +41,18 @@ export default function MyActivity() {
   const [rows, setRows] = useState([])
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [historyOpen, setHistoryOpen] = useState(false)
+
+  useEffect(() => {
+    if (location.hash !== '#evolucion-deportiva') return undefined
+    const timer = window.setTimeout(() => {
+      document.getElementById('evolucion-deportiva')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [location.hash])
 
   useEffect(() => {
     let alive = true
@@ -129,19 +143,27 @@ export default function MyActivity() {
           </div>
         </section>
 
-        <section>
+        <section id="evolucion-deportiva" className="scroll-mt-24 rounded-[30px] border border-orange-300/15 bg-gradient-to-br from-orange-400/[.07] via-white/[.025] to-violet-400/[.05] p-4">
+          <p className="text-[8px] font-black uppercase tracking-[.18em] text-orange-300">TU CENTRO DE EVOLUCIÓN</p>
+          <h2 className="mt-1 font-display text-[29px] leading-none text-white">Actividad, performance y objetivos.</h2>
+          <p className="mt-2 text-[10px] leading-5 text-white/36">Tu recorrido deportivo completo vive ahora acá y se organiza solo a medida que llegan nuevas sesiones, tomas, metas y devoluciones.</p>
+        </section>
+
+        <MiEvolucionContent embedded />
+
+        <section id="historial-actividad" className="scroll-mt-24">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[.16em] text-white/25">Historial</p>
               <h2 className="mt-1 font-display text-[27px] text-white">Últimas sesiones</h2>
             </div>
-            <Link to="/app/evolucion" className="text-[9px] font-black text-orange-300">Mi evolución →</Link>
+            <span className="text-[9px] font-black text-orange-300">Strava + PR</span>
           </div>
 
           <div className="space-y-2">
             {loading ? (
               [0,1,2].map((i) => <div key={i} className="h-24 animate-pulse rounded-[22px] bg-white/[.04]"/>)
-            ) : rows.length ? rows.slice(0, 15).map((row) => (
+            ) : rows.length ? (historyOpen ? rows : rows.slice(0, 3)).map((row) => (
               <article key={row.id} className="rounded-[22px] border border-white/[.07] bg-white/[.025] p-4">
                 <div className="flex items-start gap-3">
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] border border-red-300/12 bg-red-400/[.07] text-red-300">
@@ -170,6 +192,16 @@ export default function MyActivity() {
                 <p className="mt-1 text-xs leading-5 text-white/30">Conectá Strava desde tu perfil o salí a rodar: cuando llegue la primera sesión, este espacio cobra vida.</p>
                 <Link to="/app/perfil" className="mt-4 inline-flex min-h-11 items-center rounded-2xl border border-red-300/15 bg-red-400/[.08] px-4 text-[10px] font-black text-red-200">Revisar conexión Strava →</Link>
               </div>
+            )}
+
+            {!loading && rows.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setHistoryOpen((value) => !value)}
+                className="min-h-12 w-full rounded-[20px] border border-red-300/15 bg-red-400/[.07] px-4 text-[10px] font-black text-red-200 active:scale-[.99]"
+              >
+                {historyOpen ? 'Mostrar solamente las últimas 3 ↑' : `Ver ${rows.length - 3} sesiones más ↓`}
+              </button>
             )}
           </div>
         </section>

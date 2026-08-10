@@ -811,8 +811,50 @@ export default function Profile() {
     [performance, performanceTakes]
   )
 
-  const hasPerformance =
-    Boolean(performance) || performanceTakes.length > 0
+  const storyGoals = useMemo(
+    () =>
+      [...coachGoals]
+        .filter((goal) => goal?.eliminado !== true)
+        .sort((a, b) => {
+          const priority = { Activo: 0, Pausado: 1, Completado: 2 }
+          return (priority[a.estado] ?? 3) - (priority[b.estado] ?? 3)
+        })
+        .slice(0, 2)
+        .map((goal) => {
+          const distance = normalizePerformanceDistance(goal.distancia_km)
+          const comparable = performanceTakes.filter(
+            (take) =>
+              take?.eliminado !== true &&
+              normalizePerformanceDistance(take.distancia_km) === distance
+          )
+          const best = comparable.length
+            ? comparable.reduce((currentBest, take) =>
+                Number(take.tiempo_segundos) < Number(currentBest.tiempo_segundos)
+                  ? take
+                  : currentBest
+              )
+            : null
+          const target = Number(goal.tiempo_objetivo_segundos) || 0
+          const bestSeconds = Number(best?.tiempo_segundos) || 0
+          const achieved =
+            goal.estado === 'Completado' ||
+            Boolean(bestSeconds && target && bestSeconds <= target)
+          const progress = achieved
+            ? 100
+            : bestSeconds && target
+              ? clampScore(Math.max(8, (target / bestSeconds) * 100))
+              : 0
+
+          return {
+            id: goal.id,
+            title: goal.titulo || 'Objetivo PR',
+            state: goal.estado,
+            progress,
+            achieved,
+          }
+        }),
+    [coachGoals, performanceTakes]
+  )
 
   const hasPrivateLessons =
     Boolean(privateLessons.cuponera) || privateLessons.historial.length > 0
@@ -1476,7 +1518,7 @@ export default function Profile() {
             )}
 
             <Link
-              to="/app/evolucion"
+              to="/app/entrenamiento#evolucion-deportiva"
               className="group relative mt-3 block overflow-hidden rounded-[22px] border border-orange-300/25 bg-gradient-to-r from-orange-500/[0.14] via-orange-400/[0.07] to-white/[0.025] px-4 py-3.5 shadow-[0_12px_34px_rgba(249,115,22,.08)] transition active:scale-[0.99]"
             >
               <div className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-orange-500/10 blur-2xl" />
@@ -1560,6 +1602,12 @@ export default function Profile() {
           hasChibiAvatar={hasChibiAvatar}
           performance={performanceSummary}
           activityTrend={activityTrend}
+          goals={storyGoals}
+        />
+
+        <ProfileLaunchSuite
+          profile={profile}
+          contacts={contactos}
         />
 
         <StravaActivityProfile
@@ -1576,20 +1624,6 @@ export default function Profile() {
           open={open === 'observaciones'}
           onClick={toggleNotes}
         />
-
-        {coachGoals.length > 0 && (
-          <CoachGoalsProfile
-            goals={coachGoals}
-            takes={performanceTakes}
-          />
-        )}
-
-        {hasPerformance && (
-          <PerformanceProfile
-            performance={performance}
-            summary={performanceSummary}
-          />
-        )}
 
         {hasPrivateLessons && (
           <PrivateLessonsProfile
@@ -1843,56 +1877,6 @@ export default function Profile() {
             />
           </Accordion>
         )}
-
-        <ProfileLaunchSuite
-          profile={profile}
-        />
-
-        <Accordion
-          title="Contactos PR"
-          subtitle="Estamos para ayudarte"
-          open={open === 'contactos'}
-          onClick={() =>
-            setOpen(
-              open === 'contactos' ? '' : 'contactos'
-            )
-          }
-        >
-          {contactos.length ? (
-            <div className="space-y-2">
-              {contactos.map((contact) => (
-                <a
-                  key={contact.id}
-                  href={contact.link || '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="pr-card p-4 flex justify-between"
-                >
-                  <div>
-                    <p className="text-white font-semibold text-sm">
-                      {contact.nombre}
-                    </p>
-
-                    {contact.detalle && (
-                      <p className="text-white/35 text-xs mt-1">
-                        {contact.detalle}
-                      </p>
-                    )}
-                  </div>
-
-                  <span className="text-pr-gold text-xs">
-                    Abrir →
-                  </span>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <Empty
-              title="Sin contactos cargados"
-              text="Los contactos del equipo aparecerán acá."
-            />
-          )}
-        </Accordion>
 
         <button
           type="button"
