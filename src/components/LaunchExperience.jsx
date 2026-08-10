@@ -62,7 +62,11 @@ function initialExperience(user) {
   if (Date.now() < launchTimestamp()) return null
 
   const createdAt = new Date(user.createdAt || '').getTime()
-  const isNewAccount = Number.isFinite(createdAt) && createdAt >= launchTimestamp()
+  const newUserCutoff = new Date(PR_LAUNCH.newUserSince).getTime()
+  const isNewAccount =
+    Number.isFinite(createdAt) &&
+    Number.isFinite(newUserCutoff) &&
+    createdAt >= newUserCutoff
   const kind = isNewAccount ? 'onboarding' : 'whats-new'
 
   return hasSeen(kind, user.id) ? null : kind
@@ -183,4 +187,3 @@ export default function LaunchExperience({ user }) {
     </div>
   )
 }
-
