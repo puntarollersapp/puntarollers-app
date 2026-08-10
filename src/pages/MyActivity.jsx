@@ -166,8 +166,9 @@ export default function MyActivity() {
             )) : (
               <div className="rounded-[25px] border border-white/[.08] bg-white/[.025] p-6 text-center">
                 <p className="text-3xl">🛼</p>
-                <p className="mt-3 font-bold text-white">Todavía no hay sesiones</p>
-                <p className="mt-1 text-xs text-white/30">Cuando sincronices o registres actividad, aparecerá acá.</p>
+                <p className="mt-3 font-bold text-white">La próxima vuelta puede ser la primera de tu historial.</p>
+                <p className="mt-1 text-xs leading-5 text-white/30">Conectá Strava desde tu perfil o salí a rodar: cuando llegue la primera sesión, este espacio cobra vida.</p>
+                <Link to="/app/perfil" className="mt-4 inline-flex min-h-11 items-center rounded-2xl border border-red-300/15 bg-red-400/[.08] px-4 text-[10px] font-black text-red-200">Revisar conexión Strava →</Link>
               </div>
             )}
           </div>

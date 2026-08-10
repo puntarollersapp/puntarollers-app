@@ -260,7 +260,7 @@ export default function AvatarPremiumPreview() {
           <div className="flex items-center justify-between gap-3 px-1">
             <div className="min-w-0">
               <p className="text-[7px] font-black uppercase tracking-[.2em] text-orange-300/75">
-                Avatar modular · prueba privada
+                Avatar modular · oficial PR
               </p>
               <h1 className="mt-0.5 truncate font-display text-[24px] leading-none text-white">
                 Armá tu PR Roller

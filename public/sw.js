@@ -1,4 +1,4 @@
-const CACHE_NAME = 'punta-rollers-launch-20260810'
+const CACHE_NAME = 'punta-rollers-launch-20260810-1800-v2'
 
 const APP_SHELL = [
   '/',

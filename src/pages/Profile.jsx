@@ -8,6 +8,7 @@ import {
 } from '../lib/supabase'
 import { mockUser } from '../data/mockData'
 import TreasuryPanel from '../components/treasury/TreasuryPanel'
+import ProfileLaunchSuite from '../components/profile/ProfileLaunchSuite'
 import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
 import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 
@@ -1792,6 +1793,14 @@ export default function Profile() {
             />
           </Accordion>
         )}
+
+        <ProfileLaunchSuite
+          profile={profile}
+          stats={headerStats}
+          badgeCount={badges.length}
+          chibiSelection={chibiSelection}
+          useChibiPhoto={useChibiPhoto}
+        />
 
         <Accordion
           title="Contactos PR"

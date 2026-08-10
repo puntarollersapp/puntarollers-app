@@ -137,8 +137,10 @@ export default function ContentPage() {
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-white/30 font-body">
-            No hay contenido en esta categoría
+          <div className="rounded-[24px] border border-white/[.07] bg-white/[.025] px-5 py-10 text-center font-body">
+            <div className="text-3xl">🎬</div>
+            <p className="mt-3 font-semibold text-white">La próxima pieza PR se está preparando.</p>
+            <p className="mt-1 text-xs text-white/30">Cuando publiquemos contenido en esta categoría, lo vas a encontrar acá.</p>
           </div>
         )}
       </div>

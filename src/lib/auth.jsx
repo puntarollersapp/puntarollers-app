@@ -119,6 +119,7 @@ function normalizeProfile(profile) {
     origenUsuario: profile.origen_usuario || '',
     prcardMemberId: profile.prcard_member_id || '',
     ultimoIngreso: profile.ultimo_ingreso || '',
+    createdAt: profile.created_at || '',
     prcard: {
       activa: Boolean(profile.prcard_activa),
       link: 'https://puntarollerscard.com/',

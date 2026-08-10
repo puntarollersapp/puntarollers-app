@@ -50,6 +50,9 @@ export default function Home() {
     skatersToday: 0,
     latestName: '',
     latestTitle: '',
+    totalActivities: 0,
+    totalKilometers: 0,
+    activeThisWeek: 0,
     loading: true,
   })
   const [ambientPulse, setAmbientPulse] = useState({
@@ -106,7 +109,8 @@ export default function Home() {
         const start = new Date()
         start.setHours(0, 0, 0, 0)
 
-        const [activitiesResponse, profilesResponse] = await Promise.all([
+        const weekStart = new Date(Date.now() - 7 * 86400000).toISOString()
+        const [activitiesResponse, profilesResponse, historyResponse] = await Promise.all([
           supabase
             .from('pr_activities')
             .select('*')
@@ -119,6 +123,13 @@ export default function Home() {
             .from('profiles_feed')
             .select('*')
             .limit(500),
+
+          supabase
+            .from('pr_activities')
+            .select('*')
+            .eq('eliminada', false)
+            .order('fecha_inicio', { ascending: false })
+            .limit(1000),
         ])
 
         if (!active) return
@@ -134,6 +145,15 @@ export default function Home() {
         )
 
         const profiles = profilesResponse.data || []
+        const publicHistory = (historyResponse.data || []).filter(
+          (activity) =>
+            activity &&
+            activity.eliminada !== true &&
+            activity.es_privada !== true &&
+            activity.privada !== true &&
+            activity.privado !== true &&
+            activity.visible_feed !== false
+        )
         const profilesById = new Map()
 
         profiles.forEach((profile) => {
@@ -167,12 +187,28 @@ export default function Home() {
           latest?.nombre_alumno ||
           ''
 
+        const totalKilometers = publicHistory.reduce(
+          (sum, activity) => sum + (Number(activity.distancia_metros) || 0),
+          0
+        ) / 1000
+
+        const activeThisWeek = new Set(
+          publicHistory
+            .filter((activity) => String(activity.fecha_inicio || '') >= weekStart)
+            .map((activity) => activity.alumno_id)
+            .filter(Boolean)
+            .map(String)
+        ).size
+
         setFeedPulse({
           activitiesToday: publicActivities.length,
           kilometersToday,
           skatersToday,
           latestName,
           latestTitle: latest?.nombre || 'Entrenamiento sobre ruedas',
+          totalActivities: publicHistory.length,
+          totalKilometers,
+          activeThisWeek,
           loading: false,
         })
       } catch (_) {
@@ -331,6 +367,29 @@ export default function Home() {
                     </p>
                   </div>
                   <span className="shrink-0 text-2xl">🛼</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ROLLERFEED — preview público + pulso visual */}
+          <section className="pt-9">
+            <div className="relative overflow-hidden rounded-[30px] border border-orange-300/20 bg-gradient-to-br from-[#28160d] via-[#0c0c11] to-violet-500/[.08] p-5 sm:p-7">
+              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-orange-500/15 blur-3xl" />
+              <div className="relative">
+                <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-300">MÁS QUE VENIR A CLASE</p>
+                <h2 className="mt-2 max-w-xl text-[30px] font-black leading-[.98] tracking-[-.035em] sm:text-4xl">Cada alumno tiene su propio ecosistema PR.</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/48">Actividad, objetivos, evolución, logros y comunidad. Un lugar para registrar el recorrido y acompañar todo lo que pasa entre una clase y la siguiente.</p>
+
+                <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 rounded-[24px] border border-white/10 bg-black/20 py-5">
+                  <ProofStat value={feedPulse.loading ? '…' : feedPulse.totalKilometers.toLocaleString('es-UY', { maximumFractionDigits: 1 })} label="km compartidos" />
+                  <ProofStat value={feedPulse.loading ? '…' : feedPulse.totalActivities} label="entrenamientos" />
+                  <ProofStat value={feedPulse.loading ? '…' : feedPulse.activeThisWeek} label="activos esta semana" />
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2.5">
+                  <div className="rounded-[20px] border border-white/[.08] bg-white/[.035] p-4"><span className="text-xl">🎯</span><p className="mt-2 text-xs font-black">Objetivos propios</p><p className="mt-1 text-[10px] leading-4 text-white/35">Metas y devoluciones que acompañan el proceso.</p></div>
+                  <div className="rounded-[20px] border border-white/[.08] bg-white/[.035] p-4"><span className="text-xl">📈</span><p className="mt-2 text-xs font-black">Evolución real</p><p className="mt-1 text-[10px] leading-4 text-white/35">Progreso construido con actividad y tomas.</p></div>
                 </div>
               </div>
             </div>
@@ -609,6 +668,10 @@ function PulseStat({ value, label }) {
       </p>
     </div>
   )
+}
+
+function ProofStat({ value, label }) {
+  return <div className="min-w-0 px-2 text-center"><p className="truncate text-xl font-black text-white sm:text-2xl">{value}</p><p className="mt-1 text-[7px] font-black uppercase tracking-[.1em] text-white/30 sm:text-[8px]">{label}</p></div>
 }
 
 function Place({ emoji, title, text }) {
