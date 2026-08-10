@@ -10,6 +10,90 @@ const FEED_FILTERS = [
   { key: 'Evento', label: 'Eventos' },
 ]
 
+const REACTION_OPTIONS = [
+  { key: 'aplauso', icon: '👏', label: 'Grande' },
+  { key: 'fuego', icon: '🔥', label: 'Motivador' },
+  { key: 'corazon', icon: '❤️', label: 'Me encanta' },
+  { key: 'amor', icon: '😍', label: 'Increíble' },
+]
+
+const DEFAULT_ROLLER_EVENTS = [
+  {
+    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
+    descripcion:
+      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeón mundial máster y especialista con más de 40 años de experiencia. Horarios y ubicación a confirmar.',
+    inicio: '2026-09-04T03:00:00.000Z',
+    fin: '2026-09-07T02:59:00.000Z',
+    mes_referencia:
+      'Viernes 4, sábado 5 y domingo 6 de septiembre · horario a confirmar',
+    lugar: 'Ubicación a confirmar',
+    link: '',
+    estado: 'Publicado',
+    visible_feed: true,
+    creado_por_nombre: 'Equipo Punta Rollers',
+  },
+  {
+    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
+    descripcion:
+      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clínica intensiva de patinaje. Próximamente anunciaremos fechas, horarios y ubicación.',
+    inicio: null,
+    fin: null,
+    mes_referencia: 'Octubre 2026 · fechas a confirmar',
+    lugar: 'Ubicación a confirmar',
+    link: '',
+    estado: 'Proximamente',
+    visible_feed: true,
+    creado_por_nombre: 'Equipo Punta Rollers',
+  },
+]
+
+function getReactionOption(key) {
+  return (
+    REACTION_OPTIONS.find((item) => item.key === key) ||
+    REACTION_OPTIONS[0]
+  )
+}
+
+function normalizeEventTitle(value) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('es-UY')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+function getDefaultRollerEvents() {
+  return DEFAULT_ROLLER_EVENTS.map((event, index) => ({
+    id: `default-event-${index + 1}`,
+    created_at: event.inicio || new Date().toISOString(),
+    _isFallback: true,
+    ...event,
+  }))
+}
+
+function mergeRollerEvents(databaseEvents = []) {
+  const byTitle = new Map(
+    (databaseEvents || []).map((event) => [
+      normalizeEventTitle(event.titulo),
+      event,
+    ])
+  )
+
+  const merged = getDefaultRollerEvents().map((fallback) => {
+    const key = normalizeEventTitle(fallback.titulo)
+    const databaseVersion = byTitle.get(key)
+
+    if (databaseVersion) {
+      byTitle.delete(key)
+      return databaseVersion
+    }
+
+    return fallback
+  })
+
+  return [...merged, ...byTitle.values()]
+}
+
 const EMPTY_STATES = {
   Todos: {
     icon: '🛼',
@@ -25,9 +109,9 @@ const EMPTY_STATES = {
   },
   Cumpleaños: {
     icon: '🎂',
-    title: 'Hoy la pista no sopla velitas',
+    title: 'Este mes la pista no sopla velitas',
     description:
-      'Mostraremos automáticamente los cumpleaños de hoy y de los próximos 5 días.',
+      'Acá vas a ver todos los cumpleaños del mes, con tiempo para preparar el festejo.',
   },
   Insignia: {
     icon: '🏅',
@@ -406,6 +490,74 @@ function normalizeLegacyItem(item, profilesByAnyId) {
   }
 }
 
+function isVisibleRollerEvent(event) {
+  if (
+    !event ||
+    event.visible_feed === false ||
+    event.estado === 'Cancelado'
+  ) {
+    return false
+  }
+
+  if (!event.inicio) return true
+
+  const end = event.fin
+    ? new Date(event.fin).getTime()
+    : new Date(event.inicio).getTime()
+
+  if (Number.isNaN(end)) return true
+  return Date.now() <= end + 5 * 60000
+}
+
+function formatRollerEventRange(event) {
+  if (event.mes_referencia) return event.mes_referencia
+  if (!event.inicio) return 'Fecha a confirmar'
+
+  const start = new Date(event.inicio)
+  const end = event.fin ? new Date(event.fin) : null
+  const startText = start.toLocaleString('es-UY', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  if (!end || Number.isNaN(end.getTime())) return startText
+
+  const sameDay = start.toDateString() === end.toDateString()
+  const endText = end.toLocaleString('es-UY', {
+    weekday: sameDay ? undefined : 'long',
+    day: sameDay ? undefined : 'numeric',
+    month: sameDay ? undefined : 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  return `${startText} · hasta ${endText}`
+}
+
+function normalizeRollerEvent(event) {
+  return {
+    id: `roller-event-${event.id || normalizeEventTitle(event.titulo)}`,
+    rawId: event.id,
+    type: 'Evento',
+    date: event.inicio || event.created_at || new Date().toISOString(),
+    eventStart: event.inicio || null,
+    title: event.titulo || 'Evento Punta Rollers',
+    description:
+      event.descripcion || event.mes_referencia || 'Muy pronto más información.',
+    eventLocation: event.lugar || event.ubicacion || '',
+    eventUrl: event.link || event.url || '',
+    eventRange: formatRollerEventRange(event),
+    userName: 'Punta Rollers',
+    userPhoto: '',
+    verified: true,
+    creatorName: event.creado_por_nombre || 'Equipo Punta Rollers',
+    featured: true,
+  }
+}
+
 function getBirthdayParts(profile = {}) {
   const directMonth = Number(profile.cumple_mes)
   const directDay = Number(profile.cumple_dia)
@@ -440,17 +592,8 @@ function getBirthdayParts(profile = {}) {
   }
 }
 
-function getUpcomingBirthday(month, day, today) {
-  const currentYear = today.getFullYear()
-  let birthdayDate = new Date(currentYear, month - 1, day, 12, 0, 0)
-
-  if (
-    birthdayDate.getMonth() !== month - 1 ||
-    birthdayDate.getDate() !== day
-  ) {
-    return null
-  }
-
+function buildBirthdayPosts(profiles) {
+  const today = new Date()
   const todayDate = new Date(
     today.getFullYear(),
     today.getMonth(),
@@ -460,68 +603,65 @@ function getUpcomingBirthday(month, day, today) {
     0
   )
 
-  if (birthdayDate < todayDate) {
-    birthdayDate = new Date(currentYear + 1, month - 1, day, 12, 0, 0)
-  }
-
-  const daysUntil = Math.round(
-    (birthdayDate.getTime() - todayDate.getTime()) /
-      (24 * 60 * 60 * 1000)
-  )
-
-  return {
-    date: birthdayDate,
-    daysUntil,
-  }
-}
-
-function buildBirthdayPosts(profiles) {
-  const today = new Date()
-
   return (profiles || [])
     .map((profile) => {
       const birthday = getBirthdayParts(profile)
-      if (!birthday) return null
-
-      const upcoming = getUpcomingBirthday(
-        birthday.month,
-        birthday.day,
-        today
-      )
-
-      if (!upcoming || upcoming.daysUntil > 5) {
+      if (!birthday || birthday.month !== today.getMonth() + 1) {
         return null
       }
+
+      const birthdayDate = new Date(
+        today.getFullYear(),
+        birthday.month - 1,
+        birthday.day,
+        12,
+        0,
+        0
+      )
+
+      if (
+        birthdayDate.getMonth() !== birthday.month - 1 ||
+        birthdayDate.getDate() !== birthday.day
+      ) {
+        return null
+      }
+
+      const daysUntil = Math.round(
+        (birthdayDate.getTime() - todayDate.getTime()) /
+          (24 * 60 * 60 * 1000)
+      )
 
       const name =
         getProfileName(profile) || 'un integrante PR'
 
-      const isToday = upcoming.daysUntil === 0
-      const isTomorrow = upcoming.daysUntil === 1
+      const isToday = daysUntil === 0
+      const isTomorrow = daysUntil === 1
+      const alreadyCelebrated = daysUntil < 0
+      const birthdayLabel = birthdayDate.toLocaleDateString('es-UY', {
+        day: 'numeric',
+        month: 'long',
+      })
 
       const title = isToday
         ? `¡Hoy cumple años ${name}!`
         : isTomorrow
           ? `¡Mañana cumple años ${name}!`
-          : `En ${upcoming.daysUntil} días cumple años ${name}`
+          : alreadyCelebrated
+            ? `${name} cumplió el ${birthdayLabel}`
+            : `${name} cumple el ${birthdayLabel}`
 
       const description = isToday
         ? 'Toda la comunidad Punta Rollers le desea un día increíble. Celebremos juntos. 🎉'
-        : 'Se acerca una fecha especial para nuestra comunidad. 🎈'
+        : alreadyCelebrated
+          ? 'Fue una de las fechas especiales de nuestra comunidad este mes. 🎈'
+          : 'Se acerca una fecha especial para nuestra comunidad. Hay tiempo para preparar el saludo. 🎈'
 
       return {
-        id: `birthday-${profile.id}-${upcoming.date.getFullYear()}`,
+        id: `birthday-${profile.id}-${birthdayDate.getFullYear()}`,
         type: 'Cumpleaños',
-        date: new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate(),
-          8,
-          Math.min(upcoming.daysUntil, 5),
-          0
-        ).toISOString(),
-        birthdayDate: upcoming.date.toISOString(),
-        daysUntil: upcoming.daysUntil,
+        date: birthdayDate.toISOString(),
+        birthdayDate: birthdayDate.toISOString(),
+        daysUntil,
         title,
         description,
         userId: profile.id,
@@ -532,7 +672,11 @@ function buildBirthdayPosts(profiles) {
       }
     })
     .filter(Boolean)
-    .sort((a, b) => a.daysUntil - b.daysUntil)
+    .sort(
+      (a, b) =>
+        new Date(a.birthdayDate).getTime() -
+        new Date(b.birthdayDate).getTime()
+    )
 }
 
 export default function Activity() {
@@ -543,7 +687,11 @@ export default function Activity() {
 
   const [activities, setActivities] = useState([])
   const [legacyItems, setLegacyItems] = useState([])
+  const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
+  const [reactions, setReactions] = useState([])
+  const [reactionModalItem, setReactionModalItem] = useState(null)
+  const [savingReactionKey, setSavingReactionKey] = useState('')
   const [filter, setFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -626,6 +774,8 @@ export default function Activity() {
       profilesResponse,
       activitiesResponse,
       legacyResponse,
+      eventsResponse,
+      reactionsResponse,
     ] = await Promise.all([
       supabase.from('profiles_feed').select('*').limit(500),
 
@@ -643,6 +793,14 @@ export default function Activity() {
         .order('fecha', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100),
+
+      supabase.from('rollerfeed_events').select('*').limit(100),
+
+      supabase
+        .from('rollerfeed_reactions')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(2000),
     ])
 
     if (profilesResponse.error) {
@@ -678,6 +836,29 @@ export default function Activity() {
             isVisibleEvent(item)
         )
       )
+    }
+
+    const loadedEvents = eventsResponse.error
+      ? getDefaultRollerEvents()
+      : mergeRollerEvents(eventsResponse.data || [])
+
+    setEvents(loadedEvents.filter(isVisibleRollerEvent))
+
+    if (eventsResponse.error) {
+      setMessage((current) =>
+        current ||
+        'Las clínicas se cargaron desde el respaldo seguro de la app.'
+      )
+    }
+
+    if (reactionsResponse.error) {
+      setReactions([])
+      setMessage((current) =>
+        current ||
+        `Las reacciones no pudieron cargarse: ${reactionsResponse.error.message}`
+      )
+    } else {
+      setReactions(reactionsResponse.data || [])
     }
 
     setProfiles(profilesResponse.data || [])
@@ -741,6 +922,103 @@ export default function Activity() {
     return map
   }, [profiles])
 
+  const currentProfile = useMemo(
+    () => profilesByAnyId.get(String(profileId)) || {},
+    [profilesByAnyId, profileId]
+  )
+
+  const currentReactionProfileId = currentProfile?.id || profileId || ''
+
+  const reactionsByFeedKey = useMemo(() => {
+    const map = new Map()
+
+    reactions.forEach((reaction) => {
+      const key = String(reaction.feed_key || '')
+      if (!key) return
+
+      const current = map.get(key) || []
+      current.push(reaction)
+      map.set(key, current)
+    })
+
+    return map
+  }, [reactions])
+
+  function getItemReactions(item) {
+    return reactionsByFeedKey.get(String(item?.id || '')) || []
+  }
+
+  async function selectReaction(item, reactionKey) {
+    if (!item?.id || !currentReactionProfileId) {
+      setMessage('No pudimos identificar tu perfil para guardar la reacción.')
+      return
+    }
+
+    if (savingReactionKey) return
+
+    const feedKey = String(item.id)
+    const requestKey = `${feedKey}-${reactionKey}`
+    const existing = reactions.find(
+      (reaction) =>
+        String(reaction.feed_key) === feedKey &&
+        String(reaction.profile_id) === String(currentReactionProfileId)
+    )
+
+    setSavingReactionKey(requestKey)
+    setMessage('')
+
+    try {
+      if (existing?.reaction === reactionKey) {
+        const { error } = await supabase
+          .from('rollerfeed_reactions')
+          .delete()
+          .eq('id', existing.id)
+
+        if (error) throw error
+
+        setReactions((current) =>
+          current.filter((reaction) => reaction.id !== existing.id)
+        )
+        return
+      }
+
+      const payload = {
+        feed_key: feedKey,
+        profile_id: String(currentReactionProfileId),
+        reaction: reactionKey,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { data, error } = await supabase
+        .from('rollerfeed_reactions')
+        .upsert(payload, { onConflict: 'feed_key,profile_id' })
+        .select('*')
+        .single()
+
+      if (error) throw error
+
+      setReactions((current) => [
+        ...current.filter(
+          (reaction) =>
+            !(
+              String(reaction.feed_key) === feedKey &&
+              String(reaction.profile_id) ===
+                String(currentReactionProfileId)
+            )
+        ),
+        data,
+      ])
+    } catch (error) {
+      setMessage(
+        `No pudimos guardar tu reacción: ${
+          error?.message || 'error desconocido'
+        }`
+      )
+    } finally {
+      setSavingReactionKey('')
+    }
+  }
+
   const feedItems = useMemo(() => {
     const trainingPosts = activities.map((activity) =>
       normalizeActivity(activity, profilesByAnyId)
@@ -751,9 +1029,11 @@ export default function Activity() {
     )
 
     const birthdays = buildBirthdayPosts(profiles)
+    const eventPosts = events.map(normalizeRollerEvent)
 
     return [
       ...birthdays,
+      ...eventPosts,
       ...trainingPosts,
       ...communityPosts,
     ].sort(
@@ -764,6 +1044,7 @@ export default function Activity() {
   }, [
     activities,
     legacyItems,
+    events,
     profiles,
     profilesByAnyId,
   ])
@@ -771,13 +1052,37 @@ export default function Activity() {
   const visibleItems = useMemo(() => {
     if (filter === 'Todos') {
       return feedItems.filter(
-        (item) => item.type !== 'Insignia'
+        (item) =>
+          item.type !== 'Insignia' &&
+          item.type !== 'Evento' &&
+          (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
     }
 
-    return feedItems.filter(
+    const filteredItems = feedItems.filter(
       (item) => item.type === filter
     )
+
+    if (filter === 'Cumpleaños') {
+      return [...filteredItems].sort(
+        (a, b) =>
+          new Date(a.birthdayDate).getTime() -
+          new Date(b.birthdayDate).getTime()
+      )
+    }
+
+    if (filter === 'Evento') {
+      return [...filteredItems].sort((a, b) => {
+        if (a.eventStart && b.eventStart) {
+          return new Date(a.eventStart).getTime() - new Date(b.eventStart).getTime()
+        }
+        if (a.eventStart) return -1
+        if (b.eventStart) return 1
+        return String(a.title).localeCompare(String(b.title), 'es-UY')
+      })
+    }
+
+    return filteredItems
   }, [feedItems, filter])
 
   const communityStats = useMemo(() => {
@@ -1048,7 +1353,16 @@ export default function Activity() {
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
               {visibleItems.map((item) => (
-                <FeedCard key={item.id} item={item} />
+                <FeedCard
+                  key={item.id}
+                  item={item}
+                  reactions={getItemReactions(item)}
+                  profilesByAnyId={profilesByAnyId}
+                  currentProfileId={currentReactionProfileId}
+                  savingReactionKey={savingReactionKey}
+                  onReact={selectReaction}
+                  onOpenReactions={() => setReactionModalItem(item)}
+                />
               ))}
             </div>
           ) : (
@@ -1067,6 +1381,15 @@ export default function Activity() {
             </div>
           )}
         </section>
+
+        {reactionModalItem && (
+          <ReactionsModal
+            item={reactionModalItem}
+            reactions={getItemReactions(reactionModalItem)}
+            profilesByAnyId={profilesByAnyId}
+            onClose={() => setReactionModalItem(null)}
+          />
+        )}
       </div>
     </AppLayout>
   )
@@ -1128,16 +1451,33 @@ function RollerFeedLoading({ syncing }) {
   )
 }
 
-function FeedCard({ item }) {
+function FeedCard({
+  item,
+  reactions,
+  profilesByAnyId,
+  currentProfileId,
+  savingReactionKey,
+  onReact,
+  onOpenReactions,
+}) {
+  const reactionProps = {
+    reactions,
+    profilesByAnyId,
+    currentProfileId,
+    savingReactionKey,
+    onReact,
+    onOpenReactions,
+  }
+
   if (item.type === 'Cumpleaños') {
-    return <BirthdayCard item={item} />
+    return <BirthdayCard item={item} {...reactionProps} />
   }
 
   if (item.type === 'Entrenamiento') {
-    return <TrainingCard item={item} />
+    return <TrainingCard item={item} {...reactionProps} />
   }
 
-  return <CommunityCard item={item} />
+  return <CommunityCard item={item} {...reactionProps} />
 }
 
 function ProfileAvatar({
@@ -1178,7 +1518,15 @@ function ProfileAvatar({
   )
 }
 
-function TrainingCard({ item }) {
+function TrainingCard({
+  item,
+  reactions,
+  profilesByAnyId,
+  currentProfileId,
+  savingReactionKey,
+  onReact,
+  onOpenReactions,
+}) {
   return (
     <article
       className={`relative overflow-hidden rounded-[30px] border bg-gradient-to-br from-[#171217] via-[#101014] to-[#09090d] ${
@@ -1245,14 +1593,15 @@ function TrainingCard({ item }) {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-white/[0.06]">
-          <div className="flex items-center gap-2">
-            <Reaction icon="👏" value={0} />
-            <Reaction icon="🔥" value={0} />
-            <Reaction icon="❤️" value={0} />
-          </div>
-
-          {item.stravaUrl && (
+        <ReactionPanel
+          item={item}
+          reactions={reactions}
+          profilesByAnyId={profilesByAnyId}
+          currentProfileId={currentProfileId}
+          savingReactionKey={savingReactionKey}
+          onReact={onReact}
+          onOpenReactions={onOpenReactions}
+          action={item.stravaUrl ? (
             <a
               href={item.stravaUrl}
               target="_blank"
@@ -1261,14 +1610,22 @@ function TrainingCard({ item }) {
             >
               Ver en Strava →
             </a>
-          )}
-        </div>
+          ) : null}
+        />
       </div>
     </article>
   )
 }
 
-function BirthdayCard({ item }) {
+function BirthdayCard({
+  item,
+  reactions,
+  profilesByAnyId,
+  currentProfileId,
+  savingReactionKey,
+  onReact,
+  onOpenReactions,
+}) {
   return (
     <article className="relative overflow-hidden rounded-[32px] border border-fuchsia-300/25 bg-gradient-to-br from-fuchsia-500/[0.18] via-[#17101c] to-[#0b090d] p-5">
       <div className="flex items-start justify-between gap-4">
@@ -1287,7 +1644,9 @@ function BirthdayCard({ item }) {
       <p className="section-label text-fuchsia-200 mt-5">
         {item.daysUntil === 0
           ? 'Celebración PR'
-          : 'Próximo cumpleaños'}
+          : item.daysUntil < 0
+            ? 'Cumpleaños de este mes'
+            : 'Próximo cumpleaños'}
       </p>
 
       <h3 className="font-display text-[29px] leading-tight text-white mt-2">
@@ -1297,11 +1656,29 @@ function BirthdayCard({ item }) {
       <p className="text-fuchsia-100/55 text-sm leading-relaxed mt-3">
         {item.description}
       </p>
+
+      <ReactionPanel
+        item={item}
+        reactions={reactions}
+        profilesByAnyId={profilesByAnyId}
+        currentProfileId={currentProfileId}
+        savingReactionKey={savingReactionKey}
+        onReact={onReact}
+        onOpenReactions={onOpenReactions}
+      />
     </article>
   )
 }
 
-function CommunityCard({ item }) {
+function CommunityCard({
+  item,
+  reactions,
+  profilesByAnyId,
+  currentProfileId,
+  savingReactionKey,
+  onReact,
+  onOpenReactions,
+}) {
   const isBadge = item.type === 'Insignia'
   const isEvent = item.type === 'Evento'
 
@@ -1372,12 +1749,28 @@ function CommunityCard({ item }) {
         </div>
       )}
 
+      {isEvent && item.eventRange && (
+        <p className="mt-3 text-[11px] font-semibold text-orange-200/75">
+          🗓️ {item.eventRange}
+        </p>
+      )}
+
       {item.creatorName && (
         <p className="text-white/28 text-[9px] text-right mt-4 pt-4 border-t border-white/[0.06]">
           {isBadge ? 'Otorgada por' : 'Publicado por'}{' '}
           {item.creatorName}
         </p>
       )}
+
+      <ReactionPanel
+        item={item}
+        reactions={reactions}
+        profilesByAnyId={profilesByAnyId}
+        currentProfileId={currentProfileId}
+        savingReactionKey={savingReactionKey}
+        onReact={onReact}
+        onOpenReactions={onOpenReactions}
+      />
     </article>
   )
 }
@@ -1404,14 +1797,198 @@ function Metric({
   )
 }
 
-function Reaction({ icon, value }) {
+function ReactionPanel({
+  item,
+  reactions = [],
+  profilesByAnyId,
+  currentProfileId,
+  savingReactionKey,
+  onReact,
+  onOpenReactions,
+  action = null,
+}) {
+  const myReaction = reactions.find(
+    (reaction) =>
+      String(reaction.profile_id) === String(currentProfileId)
+  )
+
+  const counts = REACTION_OPTIONS.reduce((result, option) => {
+    result[option.key] = reactions.filter(
+      (reaction) => reaction.reaction === option.key
+    ).length
+    return result
+  }, {})
+
+  const reactorProfiles = reactions
+    .map((reaction) =>
+      findProfile(profilesByAnyId, reaction.profile_id)
+    )
+    .filter(
+      (profile) => profile && Object.keys(profile).length > 0
+    )
+
+  const names = reactorProfiles.map(getProfileName).filter(Boolean)
+  const summary =
+    names.length === 0
+      ? ''
+      : names.length === 1
+        ? names[0]
+        : names.length === 2
+          ? `${names[0]} y ${names[1]}`
+          : `${names[0]}, ${names[1]} y ${names.length - 2} más`
+
   return (
-    <button
-      type="button"
-      className="rounded-full border border-white/[0.07] bg-white/[0.035] px-2.5 py-1.5 text-white/55 text-[10px] font-semibold"
+    <div className="mt-4 border-t border-white/[0.07] pt-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {REACTION_OPTIONS.map((option) => {
+            const selected = myReaction?.reaction === option.key
+            const saving =
+              savingReactionKey === `${item.id}-${option.key}`
+
+            return (
+              <button
+                key={option.key}
+                type="button"
+                disabled={Boolean(savingReactionKey)}
+                onClick={() => onReact(item, option.key)}
+                aria-label={option.label}
+                title={option.label}
+                className={`min-w-[42px] rounded-full border px-2 py-1.5 text-[11px] font-bold transition active:scale-95 disabled:opacity-60 ${
+                  selected
+                    ? 'border-orange-300/45 bg-orange-400/20 text-white'
+                    : 'border-white/[0.08] bg-white/[0.035] text-white/58'
+                }`}
+              >
+                {saving ? '…' : option.icon}{' '}
+                {counts[option.key] || ''}
+              </button>
+            )
+          })}
+        </div>
+
+        {action}
+      </div>
+
+      {reactions.length > 0 && (
+        <button
+          type="button"
+          onClick={onOpenReactions}
+          className="mt-3 flex w-full items-center gap-2 text-left"
+        >
+          <span className="flex -space-x-2">
+            {reactorProfiles.slice(0, 3).map((profile, index) => {
+              const name = getProfileName(profile)
+              const photo = getProfilePhoto(profile)
+
+              return (
+                <span
+                  key={`${profile.id || index}-${index}`}
+                  className="grid h-7 w-7 place-items-center overflow-hidden rounded-full border-2 border-[#101014] bg-pr-gold/15"
+                >
+                  {photo ? (
+                    <img
+                      src={photo}
+                      alt={name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[8px] font-black text-pr-gold">
+                      {getInitials(name)}
+                    </span>
+                  )}
+                </span>
+              )
+            })}
+          </span>
+
+          <span className="min-w-0 flex-1 truncate text-[10px] text-white/42">
+            {summary || `${reactions.length} reacciones`}
+          </span>
+          <span className="text-xs text-white/20">›</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ReactionsModal({
+  item,
+  reactions = [],
+  profilesByAnyId,
+  onClose,
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 px-3 pb-3 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
     >
-      {icon} {value}
-    </button>
+      <section
+        className="w-full max-w-md overflow-hidden rounded-[30px] border border-white/[0.10] bg-[#111117] shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+          <div className="min-w-0">
+            <p className="section-label text-orange-200">Reacciones</p>
+            <h3 className="mt-1 max-w-[260px] truncate font-display text-xl text-white">
+              {item?.title || 'Publicación'}
+            </h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar reacciones"
+            className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/55"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="max-h-[65vh] overflow-y-auto p-3">
+          {reactions.length > 0 ? (
+            reactions.map((reaction) => {
+              const profile = findProfile(
+                profilesByAnyId,
+                reaction.profile_id
+              )
+              const name = getProfileName(profile) || 'Integrante PR'
+              const option = getReactionOption(reaction.reaction)
+
+              return (
+                <div
+                  key={reaction.id}
+                  className="flex items-center gap-3 rounded-[20px] px-2 py-3"
+                >
+                  <ProfileAvatar
+                    photo={getProfilePhoto(profile)}
+                    name={name}
+                    verified={getProfileVerified(profile)}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-white">
+                      {name}
+                    </p>
+                    <p className="mt-1 text-[10px] text-white/30">
+                      {option.label}
+                    </p>
+                  </div>
+                  <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-xl">
+                    {option.icon}
+                  </span>
+                </div>
+              )
+            })
+          ) : (
+            <div className="p-8 text-center">
+              <p className="text-sm text-white/40">
+                Todavía no hay reacciones.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   )
 }
 
