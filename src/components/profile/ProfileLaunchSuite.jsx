@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CHIBI_HEADS } from '../../features/avatar/chibiCatalog'
+import ChibiAvatarStage from '../../features/avatar/components/ChibiAvatarStage'
+import {
+  CHIBI_EARRINGS,
+  CHIBI_EYEWEAR,
+  CHIBI_HEADS,
+  CHIBI_HEADWEAR,
+  CHIBI_HELMETS,
+  CHIBI_JERSEYS,
+  CHIBI_PIERCINGS,
+  CHIBI_PROTECTIONS,
+  CHIBI_SHORTS,
+  CHIBI_SKATES,
+  CHIBI_STICKERS,
+} from '../../features/avatar/chibiCatalog'
 
 const PR_WHATSAPP = '59899220929'
 
@@ -86,142 +99,502 @@ function motivation(stats, badgeCount) {
   const kilometers = Number(stats?.kilometers) || 0
   const sessions = Number(stats?.sessions) || 0
 
-  if (kilometers >= 250) return 'Tu recorrido ya inspira nuevas vueltas.'
+  if (kilometers >= 500) return 'Tu recorrido ya es parte de la historia PR.'
+  if (kilometers >= 250) return 'Tu recorrido inspira nuevas vueltas.'
   if (sessions >= 50) return 'Tu constancia ya dejó una huella PR.'
   if (badgeCount >= 5) return 'Cada logro cuenta una parte de tu historia.'
-  if (sessions > 0) return 'La próxima meta ya está un poco más cerca.'
+  if (sessions > 0) return 'La próxima meta está un poco más cerca.'
   return 'Toda historia sobre ruedas empieza con una vuelta.'
 }
 
-async function buildShareCard({ profile, stats, badgeCount, chibiSelection, useChibiPhoto }) {
+function storyEnergy(stats) {
+  const kilometers = Math.max(0, Number(stats?.kilometers) || 0)
+  const sessions = Math.max(0, Number(stats?.sessions) || 0)
+  return Math.min(100, Math.min(82, kilometers / 3) + Math.min(18, sessions * .8))
+}
+
+function percent(value, fallback = 0) {
+  const parsed = Number.parseFloat(String(value || '').replace('%', ''))
+  return Number.isFinite(parsed) ? parsed / 100 : fallback
+}
+
+function stageGeometry(option, headId) {
+  const override = option?.stageByHead?.[headId]
+  return {
+    top: override?.top || option?.stageTop,
+    width: override?.width || option?.stageWidth,
+  }
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = String(text || '').split(/\s+/).filter(Boolean)
+  const lines = []
+  let line = ''
+
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word
+    if (ctx.measureText(candidate).width <= maxWidth || !line) {
+      line = candidate
+    } else {
+      lines.push(line)
+      line = word
+    }
+  })
+  if (line) lines.push(line)
+
+  lines.slice(0, maxLines).forEach((value, index) => {
+    const isTrimmed = index === maxLines - 1 && lines.length > maxLines
+    ctx.fillText(isTrimmed ? `${value.replace(/[.,;:]?$/, '')}…` : value, x, y + index * lineHeight)
+  })
+}
+
+function drawPanel(ctx, x, y, width, height, radius = 42, fill = 'rgba(255,255,255,.045)', stroke = 'rgba(255,255,255,.1)') {
+  roundedRect(ctx, x, y, width, height, radius)
+  ctx.fillStyle = fill
+  ctx.fill()
+  ctx.strokeStyle = stroke
+  ctx.lineWidth = 2
+  ctx.stroke()
+}
+
+function drawStoryMetric(ctx, metric, x, y, width, highlight = false) {
+  drawPanel(
+    ctx,
+    x,
+    y,
+    width,
+    176,
+    34,
+    highlight ? 'rgba(255,119,23,.16)' : 'rgba(255,255,255,.045)',
+    highlight ? 'rgba(255,174,91,.34)' : 'rgba(255,255,255,.09)'
+  )
+  ctx.textAlign = 'center'
+  ctx.fillStyle = highlight ? '#ffb36e' : '#ffffff'
+  ctx.font = '900 54px Arial, sans-serif'
+  ctx.fillText(metric.value, x + width / 2, y + 78)
+  ctx.fillStyle = 'rgba(255,255,255,.42)'
+  ctx.font = '800 16px Arial, sans-serif'
+  ctx.fillText(metric.label, x + width / 2, y + 126)
+  ctx.fillStyle = 'rgba(255,255,255,.23)'
+  ctx.font = '700 14px Arial, sans-serif'
+  ctx.fillText(metric.detail, x + width / 2, y + 151)
+  ctx.textAlign = 'left'
+}
+
+function drawRadar(ctx, axes, x, y, radius) {
+  const entries = [
+    ['VELOCIDAD', Number(axes?.velocidad) || 0],
+    ['EVOLUCIÓN', Number(axes?.evolucion) || 0],
+    ['CONSTANCIA', Number(axes?.constancia) || 0],
+    ['TÉCNICA', Number(axes?.tecnica) || 0],
+    ['RESISTENCIA', Number(axes?.resistencia) || 0],
+  ]
+  const point = (index, scale = 1) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / entries.length
+    return [x + Math.cos(angle) * radius * scale, y + Math.sin(angle) * radius * scale]
+  }
+
+  ctx.lineWidth = 2
+  ;[.33, .66, 1].forEach((scale) => {
+    ctx.beginPath()
+    entries.forEach((_, index) => {
+      const [px, py] = point(index, scale)
+      if (index === 0) ctx.moveTo(px, py)
+      else ctx.lineTo(px, py)
+    })
+    ctx.closePath()
+    ctx.strokeStyle = 'rgba(255,255,255,.11)'
+    ctx.stroke()
+  })
+
+  entries.forEach((_, index) => {
+    const [px, py] = point(index)
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(px, py)
+    ctx.strokeStyle = 'rgba(255,255,255,.07)'
+    ctx.stroke()
+  })
+
+  ctx.beginPath()
+  entries.forEach(([, value], index) => {
+    const [px, py] = point(index, Math.max(.05, Math.min(1, value / 100)))
+    if (index === 0) ctx.moveTo(px, py)
+    else ctx.lineTo(px, py)
+  })
+  ctx.closePath()
+  ctx.fillStyle = 'rgba(255,119,23,.28)'
+  ctx.fill()
+  ctx.strokeStyle = '#ff9a4a'
+  ctx.lineWidth = 4
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.font = '800 12px Arial, sans-serif'
+  ctx.fillStyle = 'rgba(255,255,255,.48)'
+  entries.forEach(([label], index) => {
+    const [px, py] = point(index, 1.27)
+    ctx.fillText(label, px, py + 5)
+  })
+  ctx.textAlign = 'left'
+}
+
+function drawActivityBars(ctx, trend, x, y, width, height) {
+  const values = (trend || []).map((item) => Math.max(0, Number(item?.value) || 0))
+  const maximum = Math.max(1, ...values)
+  const gap = 18
+  const barWidth = (width - gap * Math.max(0, values.length - 1)) / Math.max(1, values.length)
+
+  ctx.strokeStyle = 'rgba(255,255,255,.08)'
+  ctx.lineWidth = 2
+  ;[0, .5, 1].forEach((level) => {
+    ctx.beginPath()
+    ctx.moveTo(x, y + height * level)
+    ctx.lineTo(x + width, y + height * level)
+    ctx.stroke()
+  })
+
+  values.forEach((value, index) => {
+    const barHeight = Math.max(8, (value / maximum) * height)
+    const bx = x + index * (barWidth + gap)
+    const gradient = ctx.createLinearGradient(0, y + height - barHeight, 0, y + height)
+    gradient.addColorStop(0, '#ffb36e')
+    gradient.addColorStop(1, '#f35b10')
+    roundedRect(ctx, bx, y + height - barHeight, barWidth, barHeight, Math.min(16, barWidth / 2))
+    ctx.fillStyle = gradient
+    ctx.fill()
+    ctx.textAlign = 'center'
+    ctx.fillStyle = 'rgba(255,255,255,.4)'
+    ctx.font = '800 13px Arial, sans-serif'
+    ctx.fillText(trend[index]?.label || `${index + 1}`, bx + barWidth / 2, y + height + 26)
+  })
+  ctx.textAlign = 'left'
+}
+
+async function drawAvatarAsset(ctx, option, stage, geometry) {
+  if (!option?.src) return
+  const image = await loadImage(option.src).catch(() => null)
+  if (!image) return
+  const width = stage.width * percent(geometry?.width, .5)
+  const height = (image.height / image.width) * width
+  const x = stage.x + (stage.width - width) / 2
+  const y = stage.y + stage.height * percent(geometry?.top, 0)
+  ctx.save()
+  ctx.filter = option.filter || 'none'
+  ctx.drawImage(image, x, y, width, height)
+  ctx.restore()
+}
+
+async function drawPrRoller(ctx, selection, x, y, width, height, energy) {
+  const stage = { x, y, width, height }
+  const head = CHIBI_HEADS[selection?.head] || CHIBI_HEADS.masculine
+  const jersey = CHIBI_JERSEYS[selection?.jersey] || CHIBI_JERSEYS.orange
+  const shorts = CHIBI_SHORTS[selection?.shorts] || CHIBI_SHORTS.orange
+  const skates = CHIBI_SKATES[selection?.skates] || CHIBI_SKATES.orange
+  const protection = CHIBI_PROTECTIONS[selection?.protection] || CHIBI_PROTECTIONS.flex
+  const earrings = CHIBI_EARRINGS[selection?.earrings] || CHIBI_EARRINGS.none
+  const eyewear = CHIBI_EYEWEAR[selection?.eyewear] || CHIBI_EYEWEAR.none
+  const headwear = CHIBI_HEADWEAR[selection?.headwear] || CHIBI_HEADWEAR.none
+  const helmet = CHIBI_HELMETS[selection?.helmet] || CHIBI_HELMETS.none
+  const piercing = CHIBI_PIERCINGS[selection?.piercing] || CHIBI_PIERCINGS.none
+  const sticker = CHIBI_STICKERS[selection?.sticker] || CHIBI_STICKERS.none
+  const scene = await loadImage('/avatar/v3/scenes/pr-locker-chibi-v1.jpg').catch(() => null)
+  const logo = await loadImage('/avatar/v3/brand/pr-logo-official-v1.png').catch(() => null)
+
+  ctx.save()
+  roundedRect(ctx, x, y, width, height, 44)
+  ctx.clip()
+  ctx.fillStyle = '#09090d'
+  ctx.fillRect(x, y, width, height)
+  if (scene) drawCover(ctx, scene, x, y, width, height)
+  if (logo) {
+    ctx.globalAlpha = .07
+    drawContain(ctx, logo, x + width * .24, y + height * .24, width * .52, width * .52)
+    ctx.globalAlpha = 1
+  }
+
+  await drawAvatarAsset(ctx, jersey, stage, { top: '21%', width: '53%' })
+  await drawAvatarAsset(ctx, shorts, stage, { top: '43%', width: '44%' })
+  await drawAvatarAsset(ctx, head, stage, { top: head.stageTop || '2%', width: head.stageWidth || '50%' })
+  await drawAvatarAsset(ctx, skates, stage, { top: skates.stageTop || '58%', width: skates.stageWidth || '52%' })
+  await drawAvatarAsset(ctx, protection, stage, { top: protection.stageTop, width: protection.stageWidth })
+  await drawAvatarAsset(ctx, earrings, stage, stageGeometry(earrings, head.id))
+  await drawAvatarAsset(ctx, eyewear, stage, stageGeometry(eyewear, head.id))
+  await drawAvatarAsset(ctx, headwear, stage, stageGeometry(headwear, head.id))
+  await drawAvatarAsset(ctx, helmet, stage, { top: helmet.stageTop, width: helmet.stageWidth })
+
+  if (sticker.kind === 'logo' && logo) {
+    drawContain(ctx, logo, x + width * .47, y + height * .365, width * .06, width * .06)
+  } else if (sticker.kind === 'bolt') {
+    ctx.fillStyle = '#ffb36e'
+    ctx.font = '900 18px Arial, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('ϟϟ', x + width / 2, y + height * .402)
+    ctx.textAlign = 'left'
+  }
+
+  if (piercing.kind === 'nose-stud') {
+    ctx.beginPath()
+    ctx.arc(x + width * .522, y + height * .238, width * .008, 0, Math.PI * 2)
+    ctx.fillStyle = '#e8eef5'
+    ctx.fill()
+  } else if (piercing.kind === 'brow-stud') {
+    ctx.save()
+    ctx.translate(x + width * .434, y + height * .186)
+    ctx.rotate(-.24)
+    ctx.beginPath()
+    ctx.arc(0, 0, width * .014, -.55, Math.PI + .55)
+    ctx.strokeStyle = '#dce4ed'
+    ctx.lineWidth = Math.max(2, width * .006)
+    ctx.stroke()
+    ctx.restore()
+  }
+
+  const shade = ctx.createLinearGradient(0, y, 0, y + height)
+  shade.addColorStop(0, 'rgba(0,0,0,.15)')
+  shade.addColorStop(.6, 'rgba(0,0,0,0)')
+  shade.addColorStop(1, 'rgba(0,0,0,.32)')
+  ctx.fillStyle = shade
+  ctx.fillRect(x, y, width, height)
+
+  ctx.fillStyle = 'rgba(0,0,0,.68)'
+  roundedRect(ctx, x + 18, y + 18, width - 36, 54, 24)
+  ctx.fill()
+  ctx.fillStyle = 'rgba(255,255,255,.62)'
+  ctx.font = '900 13px Arial, sans-serif'
+  ctx.fillText('MI PR ROLLER', x + 38, y + 51)
+  ctx.textAlign = 'right'
+  ctx.fillStyle = '#ffb36e'
+  ctx.fillText(`${Math.round(energy)}% ENERGÍA`, x + width - 38, y + 51)
+  ctx.textAlign = 'left'
+  ctx.restore()
+
+  ctx.strokeStyle = 'rgba(255,174,91,.38)'
+  ctx.lineWidth = 3
+  roundedRect(ctx, x, y, width, height, 44)
+  ctx.stroke()
+}
+
+async function buildShareCard({
+  profile,
+  stats,
+  badgeCount,
+  recentBadges,
+  chibiSelection,
+  hasChibiAvatar,
+  performance,
+  activityTrend,
+}) {
   const canvas = document.createElement('canvas')
   canvas.width = 1080
-  canvas.height = 1350
+  canvas.height = 1920
   const ctx = canvas.getContext('2d')
+  const energy = storyEnergy(stats)
+  const hasPerformance =
+    Number(performance?.index) > 0 ||
+    Object.values(performance?.axes || {}).some((value) => Number(value) > 0)
 
-  const background = ctx.createLinearGradient(0, 0, 1080, 1350)
-  background.addColorStop(0, '#07070b')
-  background.addColorStop(.52, '#15101a')
-  background.addColorStop(1, '#09090d')
+  const background = ctx.createLinearGradient(0, 0, 1080, 1920)
+  background.addColorStop(0, '#050509')
+  background.addColorStop(.45, '#171018')
+  background.addColorStop(1, '#07070b')
   ctx.fillStyle = background
-  ctx.fillRect(0, 0, 1080, 1350)
+  ctx.fillRect(0, 0, 1080, 1920)
 
-  const glow = ctx.createRadialGradient(850, 160, 10, 850, 160, 560)
-  glow.addColorStop(0, 'rgba(255,119,23,.36)')
-  glow.addColorStop(1, 'rgba(255,119,23,0)')
-  ctx.fillStyle = glow
-  ctx.fillRect(0, 0, 1080, 700)
+  const orangeGlow = ctx.createRadialGradient(860, 180, 20, 860, 180, 700)
+  orangeGlow.addColorStop(0, 'rgba(255,105,20,.42)')
+  orangeGlow.addColorStop(1, 'rgba(255,105,20,0)')
+  ctx.fillStyle = orangeGlow
+  ctx.fillRect(0, 0, 1080, 980)
+
+  const violetGlow = ctx.createRadialGradient(120, 1510, 20, 120, 1510, 560)
+  violetGlow.addColorStop(0, 'rgba(124,58,237,.2)')
+  violetGlow.addColorStop(1, 'rgba(124,58,237,0)')
+  ctx.fillStyle = violetGlow
+  ctx.fillRect(0, 1040, 800, 880)
 
   ctx.strokeStyle = 'rgba(255,174,91,.24)'
   ctx.lineWidth = 3
-  roundedRect(ctx, 48, 48, 984, 1254, 48)
+  roundedRect(ctx, 48, 48, 984, 1824, 56)
   ctx.stroke()
 
   ctx.fillStyle = '#ff7a1a'
-  ctx.fillRect(48, 48, 984, 12)
+  roundedRect(ctx, 48, 48, 984, 13, 7)
+  ctx.fill()
 
   const logo = await loadImage('/avatar/v3/brand/pr-logo-official-v1.png').catch(() => null)
   if (logo) {
     ctx.save()
-    ctx.globalAlpha = .12
-    drawContain(ctx, logo, 650, 20, 420, 420)
+    ctx.globalAlpha = .08
+    drawContain(ctx, logo, 650, 30, 450, 450)
     ctx.restore()
-    drawContain(ctx, logo, 80, 84, 104, 104)
+    drawContain(ctx, logo, 82, 90, 94, 94)
   }
 
-  ctx.fillStyle = 'rgba(255,255,255,.55)'
-  ctx.font = '700 24px Arial, sans-serif'
-  ctx.letterSpacing = '4px'
-  ctx.fillText('MI PERFIL PR', 212, 126)
+  ctx.fillStyle = 'rgba(255,255,255,.52)'
+  ctx.font = '800 20px Arial, sans-serif'
+  ctx.fillText('MI HISTORIA SOBRE RUEDAS', 204, 126)
   ctx.fillStyle = '#ffffff'
   ctx.font = '900 34px Arial, sans-serif'
-  ctx.fillText('PUNTA ROLLERS', 212, 170)
+  ctx.fillText('PUNTA ROLLERS', 204, 166)
 
-  const head = CHIBI_HEADS[chibiSelection?.head] || CHIBI_HEADS.masculine
-  const portraitSrc = useChibiPhoto ? head.src : profile?.foto || head.src
-  const portrait = await loadImage(portraitSrc).catch(() => loadImage(head.src).catch(() => null))
+  drawPanel(ctx, 78, 220, 924, 650, 52, 'rgba(12,10,15,.76)', 'rgba(255,174,91,.18)')
 
-  ctx.save()
-  roundedRect(ctx, 80, 238, 360, 360, 86)
-  ctx.clip()
-  const portraitBg = ctx.createLinearGradient(80, 238, 440, 598)
-  portraitBg.addColorStop(0, '#2b1b14')
-  portraitBg.addColorStop(1, '#11121a')
-  ctx.fillStyle = portraitBg
-  ctx.fillRect(80, 238, 360, 360)
-  if (portrait) {
-    if (!useChibiPhoto && profile?.foto) drawCover(ctx, portrait, 80, 238, 360, 360)
-    else drawContain(ctx, portrait, 80, 218, 360, 400)
+  if (hasChibiAvatar) {
+    await drawPrRoller(ctx, chibiSelection, 106, 248, 376, 564, energy)
+  } else {
+    const portrait = await loadImage(profile?.foto).catch(() => null)
+    ctx.save()
+    roundedRect(ctx, 108, 294, 370, 370, 92)
+    ctx.clip()
+    const portraitBg = ctx.createLinearGradient(108, 294, 478, 664)
+    portraitBg.addColorStop(0, '#2b1b14')
+    portraitBg.addColorStop(1, '#11121a')
+    ctx.fillStyle = portraitBg
+    ctx.fillRect(108, 294, 370, 370)
+    if (portrait) drawCover(ctx, portrait, 108, 294, 370, 370)
+    else if (logo) {
+      ctx.globalAlpha = .52
+      drawContain(ctx, logo, 190, 376, 206, 206)
+    }
+    ctx.restore()
+    ctx.strokeStyle = 'rgba(255,174,91,.42)'
+    ctx.lineWidth = 4
+    roundedRect(ctx, 108, 294, 370, 370, 92)
+    ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,.35)'
+    ctx.font = '800 17px Arial, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('CREÁ TU PR ROLLER PARA PERSONALIZAR ESTA PLACA', 293, 726, 330)
+    ctx.textAlign = 'left'
   }
-  ctx.restore()
-  ctx.strokeStyle = 'rgba(255,174,91,.5)'
-  ctx.lineWidth = 4
-  roundedRect(ctx, 80, 238, 360, 360, 86)
-  ctx.stroke()
 
   const fullName = [profile?.nombre, profile?.apellido].filter(Boolean).join(' ').trim() || 'Roller PR'
-  ctx.fillStyle = 'rgba(255,170,90,.72)'
-  ctx.font = '800 22px Arial, sans-serif'
-  ctx.fillText('ROLLER DE LA COMUNIDAD', 492, 300)
+  ctx.fillStyle = 'rgba(255,170,90,.78)'
+  ctx.font = '800 17px Arial, sans-serif'
+  ctx.fillText('PERFIL OFICIAL · COMUNIDAD PR', 530, 330)
   ctx.fillStyle = '#ffffff'
-  ctx.font = '900 58px Arial, sans-serif'
-  const displayName = fullName.length > 25 ? `${fullName.slice(0, 23)}…` : fullName
-  ctx.fillText(displayName, 492, 374)
+  ctx.font = `900 ${fullName.length > 20 ? 48 : 58}px Arial, sans-serif`
+  drawWrappedText(ctx, fullName, 530, 405, 410, 60, 2)
   ctx.fillStyle = 'rgba(255,255,255,.47)'
-  ctx.font = '600 25px Arial, sans-serif'
-  ctx.fillText(profile?.ciudad || 'Punta Rollers · Uruguay', 492, 420)
+  ctx.font = '700 23px Arial, sans-serif'
+  ctx.fillText(profile?.ciudad || 'Punta Rollers · Uruguay', 530, 510)
 
   ctx.fillStyle = '#ffb36e'
-  ctx.font = '900 34px Arial, sans-serif'
-  ctx.fillText(`“${motivation(stats, badgeCount)}”`, 492, 498, 485)
+  ctx.font = '900 31px Arial, sans-serif'
+  drawWrappedText(ctx, `“${motivation(stats, badgeCount)}”`, 530, 590, 410, 42, 3)
 
-  const metrics = [
-    { value: String(Number(stats?.sessions) || 0), label: 'ENTRENAMIENTOS' },
-    { value: (Number(stats?.kilometers) || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 }), label: 'KILÓMETROS' },
-    { value: String(Number(badgeCount) || 0), label: 'INSIGNIAS' },
-  ]
-
-  metrics.forEach((metric, index) => {
-    const x = 80 + index * 314
-    roundedRect(ctx, x, 664, 286, 196, 34)
-    ctx.fillStyle = index === 1 ? 'rgba(255,116,23,.16)' : 'rgba(255,255,255,.045)'
-    ctx.fill()
-    ctx.strokeStyle = index === 1 ? 'rgba(255,160,74,.35)' : 'rgba(255,255,255,.1)'
-    ctx.lineWidth = 2
-    ctx.stroke()
-    ctx.fillStyle = index === 1 ? '#ffb36e' : '#ffffff'
-    ctx.font = '900 60px Arial, sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(metric.value, x + 143, 752)
-    ctx.fillStyle = 'rgba(255,255,255,.42)'
-    ctx.font = '800 17px Arial, sans-serif'
-    ctx.fillText(metric.label, x + 143, 808)
-  })
+  ctx.fillStyle = 'rgba(255,255,255,.28)'
+  ctx.font = '700 16px Arial, sans-serif'
+  ctx.fillText('ENERGÍA PR', 530, 742)
+  ctx.fillStyle = 'rgba(255,255,255,.1)'
+  roundedRect(ctx, 530, 765, 410, 18, 9)
+  ctx.fill()
+  const energyGradient = ctx.createLinearGradient(530, 0, 940, 0)
+  energyGradient.addColorStop(0, '#ef5b12')
+  energyGradient.addColorStop(1, '#ffd493')
+  ctx.fillStyle = energyGradient
+  roundedRect(ctx, 530, 765, Math.max(18, 410 * energy / 100), 18, 9)
+  ctx.fill()
+  ctx.fillStyle = '#ffbd7e'
+  ctx.font = '900 25px Arial, sans-serif'
+  ctx.textAlign = 'right'
+  ctx.fillText(`${Math.round(energy)}%`, 940, 744)
   ctx.textAlign = 'left'
 
-  roundedRect(ctx, 80, 910, 920, 238, 38)
-  const panel = ctx.createLinearGradient(80, 910, 1000, 1148)
-  panel.addColorStop(0, 'rgba(255,119,23,.15)')
-  panel.addColorStop(1, 'rgba(139,92,246,.10)')
-  ctx.fillStyle = panel
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(255,255,255,.1)'
-  ctx.stroke()
-  ctx.fillStyle = '#ffb36e'
-  ctx.font = '900 21px Arial, sans-serif'
-  ctx.fillText('CADA VUELTA SUMA', 116, 970)
-  ctx.fillStyle = '#ffffff'
-  ctx.font = '900 44px Arial, sans-serif'
-  ctx.fillText('No es solo patinar.', 116, 1038)
-  ctx.fillText('Es pertenecer.', 116, 1092)
+  const metrics = [
+    { value: String(Number(stats?.sessions) || 0), label: 'ENTRENAMIENTOS', detail: 'historial total' },
+    { value: (Number(stats?.kilometers) || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 }), label: 'KILÓMETROS', detail: 'recorrido acumulado' },
+    { value: String(Number(badgeCount) || 0), label: 'INSIGNIAS', detail: 'logros obtenidos' },
+  ]
+
+  metrics.forEach((metric, index) =>
+    drawStoryMetric(ctx, metric, 78 + index * 312, 912, 288, index === 1)
+  )
+
+  drawPanel(ctx, 78, 1120, 924, 332, 44, 'rgba(255,255,255,.035)', 'rgba(255,255,255,.09)')
+  ctx.fillStyle = '#ffae68'
+  ctx.font = '900 17px Arial, sans-serif'
+  ctx.fillText(hasPerformance ? 'PERFIL DE RENDIMIENTO' : 'RITMO DE ACTIVIDAD', 116, 1172)
+
+  if (hasPerformance) {
+    drawRadar(ctx, performance.axes, 304, 1300, 112)
+    ctx.fillStyle = 'rgba(255,255,255,.35)'
+    ctx.font = '800 18px Arial, sans-serif'
+    ctx.fillText('ÍNDICE DE EVOLUCIÓN', 555, 1250)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '900 78px Arial, sans-serif'
+    ctx.fillText(String(Math.round(Number(performance.index) || 0)), 555, 1332)
+    ctx.fillStyle = '#ffb36e'
+    ctx.font = '900 20px Arial, sans-serif'
+    const performanceMessage = Number(performance.improvementPercent) > 0
+      ? `${Number(performance.improvementPercent).toFixed(1)}% de mejora en tu distancia destacada`
+      : 'Cada nueva toma vuelve este perfil más preciso'
+    drawWrappedText(ctx, performanceMessage, 555, 1380, 370, 28, 2)
+  } else if ((activityTrend || []).some((item) => Number(item?.value) > 0)) {
+    drawActivityBars(ctx, activityTrend, 126, 1215, 828, 155)
+    ctx.fillStyle = 'rgba(255,255,255,.32)'
+    ctx.font = '700 16px Arial, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('Tus últimas actividades importadas · km por sesión', 540, 1420)
+    ctx.textAlign = 'left'
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.62)'
+    ctx.font = '900 28px Arial, sans-serif'
+    ctx.fillText('Tu evolución está esperando nuevas marcas.', 116, 1265)
+    ctx.fillStyle = 'rgba(255,255,255,.34)'
+    ctx.font = '700 20px Arial, sans-serif'
+    drawWrappedText(ctx, 'Entrenamientos, tomas de rendimiento e insignias van completando esta placa automáticamente.', 116, 1320, 800, 32, 3)
+  }
+
+  drawPanel(ctx, 78, 1484, 924, 278, 44, 'rgba(255,255,255,.035)', 'rgba(255,255,255,.09)')
+  ctx.fillStyle = '#ffae68'
+  ctx.font = '900 17px Arial, sans-serif'
+  ctx.fillText(`ÚLTIMAS INSIGNIAS · ${Number(badgeCount) || 0} EN TOTAL`, 116, 1538)
+
+  const badgeItems = (recentBadges || []).slice(0, 3)
+  if (badgeItems.length) {
+    const badgeImages = await Promise.all(
+      badgeItems.map((badge) => loadImage(badge.image).catch(() => null))
+    )
+    badgeItems.forEach((badge, index) => {
+      const centerX = 234 + index * 306
+      ctx.beginPath()
+      ctx.arc(centerX, 1632, 66, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(255,119,23,.1)'
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(255,174,91,.28)'
+      ctx.lineWidth = 3
+      ctx.stroke()
+      if (badgeImages[index]) drawContain(ctx, badgeImages[index], centerX - 56, 1576, 112, 112)
+      else {
+        ctx.textAlign = 'center'
+        ctx.font = '46px Arial, sans-serif'
+        ctx.fillText('🏅', centerX, 1648)
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.7)'
+      ctx.font = '800 16px Arial, sans-serif'
+      ctx.textAlign = 'center'
+      const shortTitle = String(badge.title || 'Insignia PR')
+      ctx.fillText(shortTitle.length > 22 ? `${shortTitle.slice(0, 20)}…` : shortTitle, centerX, 1727)
+    })
+    ctx.textAlign = 'left'
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.58)'
+    ctx.font = '900 27px Arial, sans-serif'
+    ctx.fillText('Tus próximos logros van a aparecer acá.', 116, 1640)
+    ctx.fillStyle = 'rgba(255,255,255,.3)'
+    ctx.font = '700 18px Arial, sans-serif'
+    ctx.fillText('La placa crece junto con tu recorrido dentro de PR.', 116, 1680)
+  }
 
   ctx.fillStyle = 'rgba(255,255,255,.4)'
-  ctx.font = '700 22px Arial, sans-serif'
-  ctx.fillText('www.puntarollers.com', 80, 1230)
+  ctx.font = '800 21px Arial, sans-serif'
+  ctx.fillText('www.puntarollers.com', 80, 1824)
   ctx.textAlign = 'right'
   ctx.fillStyle = '#ff9a4a'
-  ctx.font = '900 22px Arial, sans-serif'
-  ctx.fillText('#MiHistoriaPR', 1000, 1230)
+  ctx.font = '900 21px Arial, sans-serif'
+  ctx.fillText('#MiHistoriaPR · CADA VUELTA SUMA', 1000, 1824)
 
   const blob = await new Promise((resolve, reject) => {
     canvas.toBlob((value) => value ? resolve(value) : reject(new Error('No se pudo crear la placa.')), 'image/png', .96)
@@ -229,7 +602,55 @@ async function buildShareCard({ profile, stats, badgeCount, chibiSelection, useC
   return blob
 }
 
-function ShareCard({ profile, stats, badgeCount, chibiSelection, useChibiPhoto }) {
+function MiniStoryPreview({ profile, stats, badgeCount, recentBadges, chibiSelection, hasChibiAvatar }) {
+  const energy = storyEnergy(stats)
+  return (
+    <div className="relative aspect-[9/16] w-[116px] shrink-0 overflow-hidden rounded-[20px] border border-orange-200/30 bg-gradient-to-b from-[#2b160e] via-[#111017] to-[#08080c] shadow-[0_18px_44px_rgba(0,0,0,.55)] sm:w-[132px]">
+      <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-orange-500/25 blur-2xl" />
+      <img src="/avatar/v3/brand/pr-logo-official-v1.png" alt="" className="absolute left-2.5 top-2.5 z-30 h-5 w-5 object-contain" />
+      <p className="absolute left-9 top-3 z-30 text-[4px] font-black uppercase tracking-[.14em] text-white/60">Mi historia PR</p>
+
+      {hasChibiAvatar ? (
+        <div className="absolute inset-x-2 top-[16%] z-10 flex h-[48%] justify-center overflow-hidden rounded-[12px]">
+          <ChibiAvatarStage selection={chibiSelection} energy={energy} showHud={false} className="!h-full !rounded-[12px] !border-orange-200/15" />
+        </div>
+      ) : profile?.foto ? (
+        <img src={profile.foto} alt="" className="absolute left-1/2 top-[22%] h-[34%] w-[72%] -translate-x-1/2 rounded-[14px] border border-orange-200/20 object-cover" />
+      ) : (
+        <img src="/avatar/v3/brand/pr-logo-official-v1.png" alt="" className="absolute left-1/2 top-[27%] w-[45%] -translate-x-1/2 opacity-25" />
+      )}
+
+      <div className="absolute inset-x-2 bottom-[23%] z-30">
+        <p className="truncate text-[7px] font-black text-white">{profile?.nombre || 'Roller PR'}</p>
+        <div className="mt-1 h-0.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-orange-400" style={{ width: `${Math.max(5, energy)}%` }} /></div>
+      </div>
+
+      <div className="absolute inset-x-2 bottom-[9%] z-30 grid grid-cols-3 gap-1">
+        {[
+          [Number(stats?.sessions) || 0, 'ENT'],
+          [(Number(stats?.kilometers) || 0).toLocaleString('es-UY', { maximumFractionDigits: 0 }), 'KM'],
+          [Number(badgeCount) || 0, 'INS'],
+        ].map(([value, label]) => <div key={label} className="rounded-md border border-white/[.07] bg-white/[.045] py-1 text-center"><p className="text-[6px] font-black text-white">{value}</p><p className="text-[3px] font-bold text-white/35">{label}</p></div>)}
+      </div>
+
+      <div className="absolute bottom-1.5 left-2 flex gap-0.5">
+        {(recentBadges || []).slice(0, 3).map((badge) => badge.image ? <img key={badge.id || badge.title} src={badge.image} alt="" className="h-2.5 w-2.5 rounded-full object-contain" /> : null)}
+      </div>
+      <p className="absolute bottom-1.5 right-2 text-[3px] font-black text-orange-300">puntarollers.com</p>
+    </div>
+  )
+}
+
+export function ProfileStoryCard({
+  profile,
+  stats,
+  badgeCount,
+  recentBadges,
+  chibiSelection,
+  hasChibiAvatar,
+  performance,
+  activityTrend,
+}) {
   const [open, setOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [cardUrl, setCardUrl] = useState('')
@@ -245,7 +666,16 @@ function ShareCard({ profile, stats, badgeCount, chibiSelection, useChibiPhoto }
     setGenerating(true)
     setNotice('')
     try {
-      const blob = await buildShareCard({ profile, stats, badgeCount, chibiSelection, useChibiPhoto })
+      const blob = await buildShareCard({
+        profile,
+        stats,
+        badgeCount,
+        recentBadges,
+        chibiSelection,
+        hasChibiAvatar,
+        performance,
+        activityTrend,
+      })
       if (cardUrl) URL.revokeObjectURL(cardUrl)
       setCardBlob(blob)
       setCardUrl(URL.createObjectURL(blob))
@@ -283,32 +713,38 @@ function ShareCard({ profile, stats, badgeCount, chibiSelection, useChibiPhoto }
     <>
       <section className="relative overflow-hidden rounded-[28px] border border-orange-300/18 bg-gradient-to-br from-[#26160e] via-[#111016] to-violet-400/[.07] p-5">
         <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full bg-orange-500/15 blur-3xl" />
-        <div className="relative flex items-start gap-4">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-orange-200/20 bg-orange-400/10 text-2xl">✨</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[8px] font-black uppercase tracking-[.17em] text-orange-200/70">MI PLACA VIRTUAL PR</p>
-            <h2 className="mt-1 font-display text-2xl leading-none text-white">Tu historia, lista para compartir.</h2>
-            <p className="mt-2 text-[10px] leading-5 text-white/36">Una placa motivadora con tus resultados reales. Nunca incluye pagos, PIN, email ni datos privados.</p>
+        <div className="relative flex items-center gap-4">
+          <MiniStoryPreview profile={profile} stats={stats} badgeCount={badgeCount} recentBadges={recentBadges} chibiSelection={chibiSelection} hasChibiAvatar={hasChibiAvatar} />
+          <div className="min-w-0 flex-1 py-1">
+            <span className="inline-flex rounded-full border border-orange-300/20 bg-orange-400/10 px-2.5 py-1 text-[7px] font-black uppercase tracking-[.15em] text-orange-200">Story 9:16 · viva</span>
+            <h2 className="mt-3 font-display text-[26px] leading-[.95] text-white">Tu Placa Virtual PR</h2>
+            <p className="mt-3 text-[10px] leading-5 text-white/40">Se actualiza con tu evolución, kilómetros, entrenamientos, rendimiento e insignias. Si todavía faltan datos, la placa irá creciendo con vos.</p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span className="rounded-full bg-white/[.045] px-2 py-1 text-[7px] font-bold text-white/38">Instagram</span>
+              <span className="rounded-full bg-white/[.045] px-2 py-1 text-[7px] font-bold text-white/38">WhatsApp</span>
+              <span className="rounded-full bg-white/[.045] px-2 py-1 text-[7px] font-bold text-white/38">Datos reales</span>
+            </div>
           </div>
         </div>
         <button type="button" onClick={generate} className="relative mt-4 flex min-h-12 w-full items-center justify-between rounded-2xl bg-gradient-to-r from-orange-500 to-amber-300 px-4 text-xs font-black text-black active:scale-[.99]">
-          <span>Crear mi placa PR</span><span>→</span>
+          <span>Ver y compartir mi Story PR</span><span>→</span>
         </button>
+        <p className="relative mt-2 text-center text-[8px] text-white/24">Nunca muestra pagos, PIN, email ni información privada.</p>
       </section>
 
       {open && (
         <div className="fixed inset-0 z-[160] overflow-y-auto bg-black/85 px-4 py-[max(20px,env(safe-area-inset-top))] backdrop-blur-xl">
           <div className="mx-auto w-full max-w-[470px] rounded-[32px] border border-white/10 bg-[#0e0d13] p-4 shadow-2xl">
             <div className="flex items-center justify-between gap-3 px-1 pb-3">
-              <div><p className="section-label">MI PERFIL PR</p><h2 className="mt-1 font-display text-2xl text-white">Lista para salir a rodar</h2></div>
+              <div><p className="section-label">STORY PR · 1080 × 1920</p><h2 className="mt-1 font-display text-2xl text-white">Tu historia, lista para rodar</h2></div>
               <button type="button" onClick={() => setOpen(false)} className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-xl text-white/45">×</button>
             </div>
             {generating ? (
-              <div className="grid aspect-[4/5] place-items-center rounded-[24px] border border-white/[.07] bg-white/[.025] text-sm text-white/40">Creando tu placa…</div>
+              <div className="grid aspect-[9/16] max-h-[68vh] w-full place-items-center rounded-[24px] border border-white/[.07] bg-white/[.025] text-sm text-white/40">Construyendo tu Story con datos reales…</div>
             ) : cardUrl ? (
-              <img src={cardUrl} alt="Placa virtual de perfil Punta Rollers" className="w-full rounded-[24px] border border-white/10" />
+              <img src={cardUrl} alt="Story virtual de perfil Punta Rollers" className="mx-auto max-h-[68vh] w-auto rounded-[24px] border border-white/10" />
             ) : (
-              <div className="grid aspect-[4/5] place-items-center rounded-[24px] border border-red-300/10 bg-red-400/[.05] p-6 text-center text-sm text-red-100/70">{notice || 'No pudimos crear la placa.'}</div>
+              <div className="grid aspect-[9/16] max-h-[68vh] place-items-center rounded-[24px] border border-red-300/10 bg-red-400/[.05] p-6 text-center text-sm text-red-100/70">{notice || 'No pudimos crear la placa.'}</div>
             )}
             {notice && cardUrl && <p className="mt-3 rounded-xl bg-white/[.04] p-3 text-[10px] text-white/45">{notice}</p>}
             {cardUrl && <div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={download} className="min-h-12 rounded-2xl border border-white/10 text-xs font-black text-white/65">Descargar</button><button type="button" onClick={share} className="min-h-12 rounded-2xl bg-orange-500 text-xs font-black text-black">Compartir</button></div>}
@@ -399,14 +835,12 @@ function FeedbackCard({ profile }) {
   )
 }
 
-export default function ProfileLaunchSuite({ profile, stats, badgeCount, chibiSelection, useChibiPhoto }) {
+export default function ProfileLaunchSuite({ profile }) {
   return (
     <div className="space-y-3">
-      <ShareCard profile={profile} stats={stats} badgeCount={badgeCount} chibiSelection={chibiSelection} useChibiPhoto={useChibiPhoto} />
       <InstallAppCard />
       <HelpCenter />
       <FeedbackCard profile={profile} />
     </div>
   )
 }
-
