@@ -19,13 +19,13 @@ const EMPTY_STATES = {
   },
   Entrenamiento: {
     icon: '⚡',
-    title: 'Todavía no hay entrenamientos',
+    title: 'La próxima vuelta puede abrir el día',
     description:
-      'Las actividades públicas sincronizadas con Strava aparecerán acá.',
+      'Cuando la comunidad comparta una actividad de Strava, aparecerá acá.',
   },
   Cumpleaños: {
     icon: '🎂',
-    title: 'No hay cumpleaños próximos',
+    title: 'Hoy la pista no sopla velitas',
     description:
       'Mostraremos automáticamente los cumpleaños de hoy y de los próximos 5 días.',
   },
@@ -37,7 +37,7 @@ const EMPTY_STATES = {
   },
   Evento: {
     icon: '📅',
-    title: 'No hay eventos próximos',
+    title: 'La próxima cita PR todavía se está armando',
     description:
       'Las salidas, clínicas, competencias y encuentros publicados aparecerán acá.',
   },

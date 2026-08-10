@@ -575,7 +575,7 @@ export default function MiEvolucion() {
               )}
             </>
           ) : (
-            <div className="mt-4"><EmptyLine icon="⏱️" title="Tu primera marca todavía está por venir" text="Cuando el equipo PR registre una toma de tiempos, esta sección se construye automáticamente." /></div>
+            <div className="mt-4"><EmptyLine icon="⏱️" title="Tu evolución empieza con una primera toma" text="Después necesitaremos una segunda marca comparable para empezar a contar tu progreso. No tenés que cargar nada por tu cuenta." /></div>
           )}
         </section>
 

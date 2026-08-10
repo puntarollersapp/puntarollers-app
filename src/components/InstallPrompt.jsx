@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'pr_install_prompt_views'
-const LEGACY_STORAGE_KEY = 'pr_install_prompt_closed'
-const MAX_VIEWS = 3
-
 function isIosDevice() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent)
 }
@@ -15,66 +11,48 @@ function isStandaloneMode() {
   )
 }
 
-function getPromptViews() {
-  const stored = Number(localStorage.getItem(STORAGE_KEY) || '0')
-  return Number.isFinite(stored) && stored >= 0 ? stored : 0
-}
-
-function registerPromptView() {
-  const next = Math.min(getPromptViews() + 1, MAX_VIEWS)
-  localStorage.setItem(STORAGE_KEY, String(next))
-  localStorage.removeItem(LEGACY_STORAGE_KEY)
-}
-
 export default function InstallPrompt() {
   const [installEvent, setInstallEvent] = useState(null)
   const [visible, setVisible] = useState(false)
   const [showIosHelp, setShowIosHelp] = useState(false)
+  const [showAndroidHelp, setShowAndroidHelp] = useState(false)
   const [installing, setInstalling] = useState(false)
 
   useEffect(() => {
-    if (isStandaloneMode()) return
-
-    localStorage.removeItem(LEGACY_STORAGE_KEY)
-
-    if (getPromptViews() >= MAX_VIEWS) return
-
-    const ios = isIosDevice()
-    let showTimer
-
-    if (ios) {
-      showTimer = setTimeout(() => setVisible(true), 1800)
-      return () => clearTimeout(showTimer)
-    }
+    if (isStandaloneMode()) return undefined
 
     function handleBeforeInstallPrompt(event) {
       event.preventDefault()
       setInstallEvent(event)
-      clearTimeout(showTimer)
-      showTimer = setTimeout(() => setVisible(true), 1200)
+    }
+
+    function handleOpenInstall() {
+      setShowIosHelp(false)
+      setShowAndroidHelp(false)
+      setVisible(true)
     }
 
     function handleInstalled() {
       setVisible(false)
       setInstallEvent(null)
       localStorage.setItem('pr_app_installed', 'true')
-      localStorage.setItem(STORAGE_KEY, String(MAX_VIEWS))
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleInstalled)
+    window.addEventListener('pr:open-install', handleOpenInstall)
 
     return () => {
-      clearTimeout(showTimer)
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleInstalled)
+      window.removeEventListener('pr:open-install', handleOpenInstall)
     }
   }, [])
 
   function closePrompt() {
     setVisible(false)
     setShowIosHelp(false)
-    registerPromptView()
+    setShowAndroidHelp(false)
   }
 
   async function installApp() {
@@ -83,7 +61,10 @@ export default function InstallPrompt() {
       return
     }
 
-    if (!installEvent) return
+    if (!installEvent) {
+      setShowAndroidHelp(true)
+      return
+    }
 
     try {
       setInstalling(true)
@@ -92,9 +73,7 @@ export default function InstallPrompt() {
 
       if (choice.outcome === 'accepted') {
         setVisible(false)
-        localStorage.setItem(STORAGE_KEY, String(MAX_VIEWS))
       } else {
-        registerPromptView()
         setVisible(false)
       }
 
@@ -144,7 +123,7 @@ export default function InstallPrompt() {
           </div>
         </div>
 
-        {!showIosHelp ? (
+        {!showIosHelp && !showAndroidHelp ? (
           <>
             <div className="my-4 grid grid-cols-3 gap-2">
               <Feature icon="⚡" label="Acceso rápido" />
@@ -155,17 +134,15 @@ export default function InstallPrompt() {
             <button
               type="button"
               onClick={installApp}
-              disabled={installing || (!installEvent && !isIosDevice())}
+              disabled={installing}
               className="btn-gold w-full disabled:opacity-50"
             >
-              {installing ? 'Preparando instalación…' : 'Instalar aplicación'}
+              {installing
+                ? 'Preparando instalación…'
+                : installEvent || isIosDevice()
+                  ? 'Instalar aplicación'
+                  : 'Ver cómo instalar'}
             </button>
-
-            {!installEvent && !isIosDevice() && (
-              <p className="mt-2 text-center text-[10px] leading-relaxed text-white/28">
-                El instalador aparecerá cuando el navegador termine de verificar la aplicación.
-              </p>
-            )}
 
             <button
               type="button"
@@ -175,11 +152,29 @@ export default function InstallPrompt() {
               Ahora no
             </button>
           </>
-        ) : (
+        ) : showIosHelp ? (
           <IosInstructions onClose={closePrompt} />
+        ) : (
+          <AndroidInstructions onClose={closePrompt} />
         )}
       </section>
     </>
+  )
+}
+
+function AndroidInstructions({ onClose }) {
+  return (
+    <div className="mt-4">
+      <div className="rounded-[18px] border border-pr-gold/20 bg-pr-gold/10 p-3.5">
+        <p className="font-display text-lg text-white">Instalación en Android</p>
+        <div className="mt-3 space-y-3">
+          <Instruction number="1" title="Abrí el menú de Chrome" text="Tocá los tres puntos de la esquina superior derecha." />
+          <Instruction number="2" title="Elegí Instalar aplicación" text="También puede aparecer como Agregar a pantalla principal." />
+          <Instruction number="3" title="Confirmá la instalación" text="Punta Rollers quedará junto a tus otras apps." />
+        </div>
+      </div>
+      <button type="button" onClick={onClose} className="btn-gold mt-3 w-full">Entendido</button>
+    </div>
   )
 }
 

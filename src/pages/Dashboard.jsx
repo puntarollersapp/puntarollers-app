@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
+import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
+import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
+import { InstallAppCard } from '../components/profile/ProfileLaunchSuite'
 
 const TYPE = {
   Evento: {
@@ -59,6 +62,27 @@ const quickAccess = [
 ]
 
 const DAY_MS = 24 * 60 * 60 * 1000
+
+function avatarObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+}
+
+function startOfUruguayToday() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Montevideo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return new Date(`${values.year}-${values.month}-${values.day}T00:00:00-03:00`).getTime()
+}
+
+function activityTimestamp(item) {
+  const value = item?.fecha_inicio || item?.fecha_clase || item?.created_at || item?.fecha
+  const timestamp = new Date(value || '').getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
 
 function QIcon({ type }) {
   const paths = {
@@ -373,6 +397,9 @@ export default function Dashboard() {
   const [allActivity, setAllActivity] =
     useState([])
 
+  const [sportsRows, setSportsRows] = useState([])
+  const [lessonHistory, setLessonHistory] = useState([])
+
   const [loading, setLoading] =
     useState(true)
 
@@ -396,6 +423,8 @@ export default function Dashboard() {
         { data: profileData },
         { data: recentRows },
         { data: totalRows },
+        sportsResponse,
+        lessonsResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -418,6 +447,16 @@ export default function Dashboard() {
           .select('id, tipo')
           .eq('alumno_id', base.id)
           .or('eliminado.is.null,eliminado.eq.false'),
+
+        supabase
+          .from('pr_activities')
+          .select('*')
+          .eq('eliminada', false)
+          .gte('fecha_inicio', new Date(Date.now() - 14 * DAY_MS).toISOString())
+          .order('fecha_inicio', { ascending: false })
+          .limit(2000),
+
+        supabase.rpc('obtener_mis_particulares'),
       ])
 
       if (profileData) {
@@ -475,6 +514,8 @@ export default function Dashboard() {
           )
             ? profileData.grupos_info
             : [],
+          pr_avatar: avatarObject(profileData.pr_avatar),
+          createdAt: profileData.created_at || base.createdAt || '',
         }
 
         setProfile(updatedProfile)
@@ -489,6 +530,15 @@ export default function Dashboard() {
 
       setActivity(recentRows || [])
       setAllActivity(totalRows || [])
+      if (!sportsResponse.error) setSportsRows(sportsResponse.data || [])
+
+      if (!lessonsResponse.error) {
+        const lessonPayload = lessonsResponse.data || {}
+        const history = Array.isArray(lessonPayload)
+          ? lessonPayload
+          : lessonPayload.historial || lessonPayload.history || []
+        setLessonHistory(Array.isArray(history) ? history : [])
+      }
       setLoading(false)
     }
 
@@ -523,6 +573,40 @@ export default function Dashboard() {
       profile.mensualidadHasta,
       profile.accesoHabilitado
     )
+
+  const savedChibi = avatarObject(avatarObject(profile.pr_avatar).chibi)
+  const chibiSelection = resolveChibiSelection(savedChibi)
+  const useChibiPhoto = Number(savedChibi.version || 0) > 0 && Boolean(savedChibi.useAsProfilePhoto)
+
+  const weekStats = useMemo(() => {
+    const now = Date.now()
+    const currentStart = now - 7 * DAY_MS
+    const previousStart = now - 14 * DAY_MS
+    const ownRows = sportsRows.filter((item) => String(item.alumno_id || '') === String(profile.id || ''))
+    const current = ownRows.filter((item) => activityTimestamp(item) >= currentStart)
+    const previous = ownRows.filter((item) => {
+      const timestamp = activityTimestamp(item)
+      return timestamp >= previousStart && timestamp < currentStart
+    })
+    const currentKm = current.reduce((sum, item) => sum + (Number(item.distancia_metros) || 0) / 1000, 0)
+    const previousKm = previous.reduce((sum, item) => sum + (Number(item.distancia_metros) || 0) / 1000, 0)
+    const classes = lessonHistory.filter((item) => item?.tipo === 'clase_dada' && activityTimestamp(item) >= currentStart).length
+    return { sessions: current.length, kilometers: currentKm, classes, difference: currentKm - previousKm }
+  }, [lessonHistory, profile.id, sportsRows])
+
+  const communityPulse = useMemo(() => {
+    const todayStart = startOfUruguayToday()
+    const weekStart = Date.now() - 7 * DAY_MS
+    const publicRows = sportsRows.filter((item) => item && item.eliminada !== true && item.es_privada !== true && item.privada !== true && item.privado !== true && item.visible_feed !== false)
+    const today = publicRows.filter((item) => activityTimestamp(item) >= todayStart)
+    const week = publicRows.filter((item) => activityTimestamp(item) >= weekStart)
+    return {
+      todayActivities: today.length,
+      todayKilometers: today.reduce((sum, item) => sum + (Number(item.distancia_metros) || 0) / 1000, 0),
+      activeThisWeek: new Set(week.map((item) => item.alumno_id).filter(Boolean).map(String)).size,
+      movementsToday: today.length,
+    }
+  }, [sportsRows])
 
   return (
     <AppLayout>
@@ -591,7 +675,12 @@ export default function Dashboard() {
 
           <div className="px-5 pb-5 relative">
             <div className="absolute -top-12 left-5 w-24 h-24 rounded-[28px] overflow-hidden border-[4px] border-[#0d0d13] bg-[#181821] shadow-2xl grid place-items-center">
-              {profile.foto ? (
+              {useChibiPhoto ? (
+                <ChibiAvatarPortrait
+                  selection={chibiSelection}
+                  className="h-full w-full"
+                />
+              ) : profile.foto ? (
                 <img
                   src={profile.foto}
                   alt={profile.nombre}
@@ -691,6 +780,10 @@ export default function Dashboard() {
           </div>
         </section>
 
+        <WeeklyPRCard stats={weekStats} loading={loading} />
+
+        <PulsePRCard stats={communityPulse} loading={loading} />
+
         <section
           className={`rounded-[26px] border p-5 ${paymentStatus.containerClass}`}
         >
@@ -737,6 +830,8 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        <InstallAppCard compact />
 
         <section>
           <div className="flex items-end justify-between mb-3">
@@ -871,4 +966,63 @@ export default function Dashboard() {
       </div>
     </AppLayout>
   )
+}
+
+function WeeklyPRCard({ stats, loading }) {
+  const hasActivity = stats.sessions > 0 || stats.classes > 0
+  const difference = Number(stats.difference) || 0
+  const differenceText = Math.abs(difference) < .05
+    ? 'Mismo recorrido que los 7 días anteriores'
+    : difference > 0
+      ? `↑ ${difference.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km más que los 7 días anteriores`
+      : `Esta semana llevás ${Math.abs(difference).toLocaleString('es-UY', { maximumFractionDigits: 1 })} km menos; todavía queda pista.`
+
+  return (
+    <section className="relative overflow-hidden rounded-[28px] border border-red-300/15 bg-gradient-to-br from-red-500/[.09] via-[#111016] to-orange-400/[.05] p-5">
+      <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-red-500/10 blur-3xl" />
+      <div className="relative flex items-start justify-between gap-4">
+        <div><p className="text-[8px] font-black uppercase tracking-[.2em] text-red-200/70">TU SEMANA PR</p><h2 className="mt-1 font-display text-[28px] leading-none text-white">{hasActivity ? 'Tu ritmo de los últimos 7 días.' : 'La pista te está esperando.'}</h2></div>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-red-200/15 bg-red-400/[.08] text-xl">🛼</span>
+      </div>
+
+      {loading ? (
+        <div className="mt-5 h-24 animate-pulse rounded-[22px] bg-white/[.04]" />
+      ) : hasActivity ? (
+        <>
+          <div className="relative mt-5 grid grid-cols-3 divide-x divide-white/[.07] rounded-[22px] border border-white/[.07] bg-black/20 py-4">
+            <HomeMetric value={stats.sessions} label="entrenamientos" />
+            <HomeMetric value={stats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 1 })} label="kilómetros" accent />
+            <HomeMetric value={stats.classes} label="clases" />
+          </div>
+          <p className="relative mt-3 text-[10px] leading-5 text-white/38">{differenceText}</p>
+        </>
+      ) : (
+        <div className="relative mt-5 rounded-[22px] border border-white/[.07] bg-black/20 p-4"><p className="text-sm font-black text-white">Tu semana todavía espera su primera vuelta 🛼</p><p className="mt-1 text-[10px] leading-5 text-white/34">Cuando sincronices una sesión o registremos una clase, este bloque se actualiza solo.</p></div>
+      )}
+    </section>
+  )
+}
+
+function PulsePRCard({ stats, loading }) {
+  return (
+    <section className="relative overflow-hidden rounded-[28px] border border-orange-300/18 bg-[#0d0d12] p-5">
+      <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-orange-500/12 blur-3xl" />
+      <div className="relative flex items-start justify-between gap-4"><div><div className="flex items-center gap-2"><span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-45"/><span className="relative h-2.5 w-2.5 rounded-full bg-emerald-400"/></span><p className="text-[8px] font-black uppercase tracking-[.2em] text-orange-300/75">PULSO PR · DATOS REALES</p></div><h2 className="mt-2 font-display text-[28px] leading-none text-white">La comunidad está en movimiento.</h2></div><span className="text-2xl">⚡</span></div>
+      <div className="relative mt-5 grid grid-cols-2 gap-2.5">
+        <PulseMetric value={loading ? '…' : stats.todayActivities} label="entrenamientos hoy" />
+        <PulseMetric value={loading ? '…' : stats.todayKilometers.toLocaleString('es-UY', { maximumFractionDigits: 1 })} label="km recorridos hoy" />
+        <PulseMetric value={loading ? '…' : stats.activeThisWeek} label="activos esta semana" />
+        <PulseMetric value={loading ? '…' : stats.movementsToday} label="movimientos en RollerFeed" />
+      </div>
+      <Link to="/app/actividad" className="relative mt-4 flex min-h-12 items-center justify-between rounded-2xl border border-orange-300/15 bg-orange-400/[.08] px-4 text-xs font-black text-orange-200"><span>Ver qué está pasando</span><span>→</span></Link>
+    </section>
+  )
+}
+
+function HomeMetric({ value, label, accent = false }) {
+  return <div className="min-w-0 px-2 text-center"><p className={`truncate font-display text-2xl ${accent ? 'text-red-300' : 'text-white'}`}>{value}</p><p className="mt-1 text-[7px] font-black uppercase tracking-[.1em] text-white/28">{label}</p></div>
+}
+
+function PulseMetric({ value, label }) {
+  return <div className="rounded-[20px] border border-white/[.07] bg-white/[.025] p-3.5"><p className="font-display text-2xl text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.1em] text-white/28">{label}</p></div>
 }

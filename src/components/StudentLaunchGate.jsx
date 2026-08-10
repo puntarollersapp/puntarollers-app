@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import LaunchExperience from './LaunchExperience'
+import { PR_LAUNCH } from '../lib/launch'
 
 export const STUDENT_LAUNCH_GATE = {
   enabled: true,
-  opensAt: '2026-08-10T00:00:00-03:00',
-  timezoneLabel: 'Uruguay',
-  bypassRoles: ['admin'],
+  opensAt: PR_LAUNCH.opensAt,
+  timezoneLabel: PR_LAUNCH.timezoneLabel,
+  bypassRoles: PR_LAUNCH.bypassRoles,
 }
 
 const SECOND = 1000
@@ -56,7 +58,14 @@ export default function StudentLaunchGate({ user, children }) {
     return () => window.clearInterval(timer)
   }, [locked])
 
-  if (!locked) return children
+  if (!locked) {
+    return (
+      <>
+        {children}
+        <LaunchExperience user={user} />
+      </>
+    )
+  }
 
   return (
     <LaunchCountdown
@@ -136,7 +145,7 @@ function LaunchCountdown({ now, target, name }) {
 
         <p className="pr-launch-copy">
           Lanzamiento oficial de la plataforma
-          <strong> este lunes.</strong>
+          <strong> hoy a las 18:00.</strong>
         </p>
 
         <section
@@ -158,12 +167,12 @@ function LaunchCountdown({ now, target, name }) {
           <span>08</span>
           <i />
           <span>2026</span>
-          <b>00:00 · {STUDENT_LAUNCH_GATE.timezoneLabel}</b>
+          <b>18:00 · {STUDENT_LAUNCH_GATE.timezoneLabel}</b>
         </div>
 
         <p className="pr-launch-safe">
           Tu cuenta, tu progreso y tus datos están seguros.
-          <br />El lunes se desbloquea todo automáticamente.
+          <br />A las 18:00 se desbloquea todo automáticamente.
         </p>
 
         <button

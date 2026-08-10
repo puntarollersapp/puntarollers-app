@@ -152,7 +152,7 @@ export default function CommunityPage() {
 
       {loading ? <div className="rounded-[24px] border border-white/[.07] p-5 text-xs text-white/35">Cargando Comunidad…</div> : <section className="space-y-3">
         {activeTab==='explorar' && query.length>=2 && searching && <div className="py-8 text-center text-xs text-white/30">Buscando rollers…</div>}
-        {activeTab==='explorar' && query.length>=2 && !searching && list.length===0 && <Empty icon="🔎" title="No encontramos ese nombre" text="Probá con nombre o apellido. Solo aparecen perfiles habilitados para Comunidad."/>}
+        {activeTab==='explorar' && query.length>=2 && !searching && list.length===0 && <Empty icon="🔎" title="Buscá a alguien con quien compartís pista" text="Probá con otro nombre o apellido. Solo aparecen perfiles habilitados para Comunidad."/>}
         {activeTab==='explorar' && query.length>=2 && list.map(p=><ProfileCard key={p.id} profile={p} {...props}/>)}
         {activeTab==='solicitudes' && list.length===0 && <Empty icon="🤝" title="Todo al día" text="Cuando alguien quiera conectar con vos, aparecerá acá."/>}
         {activeTab==='solicitudes' && list.map(p=><ProfileCard key={p.id} profile={p} {...props}/>)}

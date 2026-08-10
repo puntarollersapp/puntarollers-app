@@ -119,6 +119,7 @@ function normalizeProfile(profile) {
     origenUsuario: profile.origen_usuario || '',
     prcardMemberId: profile.prcard_member_id || '',
     ultimoIngreso: profile.ultimo_ingreso || '',
+    createdAt: profile.created_at || '',
     prcard: {
       activa: Boolean(profile.prcard_activa),
       link: 'https://puntarollerscard.com/',
@@ -127,6 +128,12 @@ function normalizeProfile(profile) {
       activo: Boolean(profile.tracking_activo),
     },
     estadisticas: parseStatistics(profile.estadisticas),
+    pr_avatar:
+      profile.pr_avatar &&
+      typeof profile.pr_avatar === 'object' &&
+      !Array.isArray(profile.pr_avatar)
+        ? profile.pr_avatar
+        : {},
   }
 }
 

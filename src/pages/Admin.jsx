@@ -216,6 +216,49 @@ function getRoleColor(role) {
   return 'text-white/55 border-white/10 bg-white/[0.04]'
 }
 
+async function getEdgeFunctionErrorMessage(error, data) {
+  const response = error?.context
+  let payload = data
+
+  if (!payload && response) {
+    try {
+      payload = await response.clone().json()
+    } catch {
+      try {
+        const text = await response.clone().text()
+        payload = text ? { error: text } : null
+      } catch {
+        payload = null
+      }
+    }
+  }
+
+  const serverMessage =
+    payload?.error ||
+    payload?.message ||
+    payload?.details ||
+    ''
+  const status = Number(response?.status || 0)
+
+  if (serverMessage) {
+    return status ? `${serverMessage} (código ${status})` : serverMessage
+  }
+
+  if (status === 401 || status === 403) {
+    return 'La sesión administrativa no fue autorizada. Cerrá sesión, volvé a ingresar e intentá nuevamente.'
+  }
+
+  if (status === 404) {
+    return 'La función gestionar-usuario-auth no está disponible en Supabase.'
+  }
+
+  if (status >= 500) {
+    return `Supabase no pudo completar la operación (código ${status}). Revisá los secretos y logs de gestionar-usuario-auth.`
+  }
+
+  return error?.message || 'La función no confirmó la operación.'
+}
+
 export default function Admin() {
   const { user, logout } = useAuth()
 
@@ -1103,6 +1146,31 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
         )
       }
 
+      const { data: existingProfile, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id, nombre, apellido')
+        .eq('documento', documento)
+        .maybeSingle()
+
+      if (lookupError) {
+        throw new Error(
+          `No pudimos verificar el documento antes de crear: ${lookupError.message}`
+        )
+      }
+
+      if (existingProfile?.id) {
+        const existingName = [
+          existingProfile.nombre,
+          existingProfile.apellido,
+        ]
+          .filter(Boolean)
+          .join(' ')
+
+        throw new Error(
+          `El documento ${documento} ya pertenece a ${existingName || existingProfile.id}. Editá ese usuario en lugar de crear otro.`
+        )
+      }
+
       const {
         data,
         error,
@@ -1151,7 +1219,9 @@ function CreateUserForm({ canCreateAdmin, reload, setMsg }) {
       )
 
       if (error) {
-        throw new Error(error.message)
+        throw new Error(
+          await getEdgeFunctionErrorMessage(error, data)
+        )
       }
 
       if (!data?.success) {
@@ -1501,7 +1571,9 @@ function EditUserTab({
       )
 
       if (error) {
-        throw new Error(error.message)
+        throw new Error(
+          await getEdgeFunctionErrorMessage(error, data)
+        )
       }
 
       if (!data?.success) {
@@ -1561,7 +1633,9 @@ function EditUserTab({
       )
 
       if (error) {
-        throw new Error(error.message)
+        throw new Error(
+          await getEdgeFunctionErrorMessage(error, data)
+        )
       }
 
       if (!data?.success) {
