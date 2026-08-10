@@ -102,7 +102,7 @@ function EmptyLine({ icon, title, text }) {
   )
 }
 
-export default function MiEvolucion() {
+export function MiEvolucionContent({ embedded = false }) {
   const { user } = useAuth()
   const base = { ...savedUser(), ...user }
   const profileId = base.id
@@ -275,8 +275,7 @@ export default function MiEvolucion() {
   const name = profile?.nombre || base.nombre || 'Patinador PR'
 
   return (
-    <AppLayout title="Mi evolución">
-      <div className="pr-page space-y-4 animate-page-enter pb-8">
+      <div className={`${embedded ? '' : 'pr-page'} space-y-4 animate-page-enter pb-8`}>
         {loading && (
           <div className="rounded-[24px] border border-orange-400/15 bg-orange-400/[.06] p-4 text-sm text-orange-100/70">
             ⚡ Construyendo tu evolución…
@@ -682,7 +681,11 @@ export default function MiEvolucion() {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Link to="/app/actividad" className="rounded-2xl border border-orange-300/20 bg-orange-400/[.08] py-4 text-center text-xs font-bold text-orange-200">Ver actividad →</Link>
+            {embedded ? (
+              <a href="#historial-actividad" className="rounded-2xl border border-orange-300/20 bg-orange-400/[.08] py-4 text-center text-xs font-bold text-orange-200">Ir al historial ↓</a>
+            ) : (
+              <Link to="/app/entrenamiento" className="rounded-2xl border border-orange-300/20 bg-orange-400/[.08] py-4 text-center text-xs font-bold text-orange-200">Ver mi actividad →</Link>
+            )}
             <Link to="/app/perfil" className="rounded-2xl border border-white/[.08] bg-white/[.035] py-4 text-center text-xs font-bold text-white/65">Volver a perfil</Link>
           </div>
         </section>
@@ -691,6 +694,13 @@ export default function MiEvolucion() {
           PR Performance compara tu progreso con vos mismo. Tus datos personales y devoluciones permanecen dentro de tu cuenta.
         </p>
       </div>
+  )
+}
+
+export default function MiEvolucion() {
+  return (
+    <AppLayout title="Mi evolución">
+      <MiEvolucionContent />
     </AppLayout>
   )
 }
