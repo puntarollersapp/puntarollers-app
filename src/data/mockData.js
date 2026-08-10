@@ -181,5 +181,5 @@ export const adminUsuarios = alumnos.map((alumno) => ({
 }))
 
 export const mensajesGlobales = [
-  { id: 1, titulo: '¡Tu espacio PR ya está activo!', contenido: 'Acá vas a ver insignias, observaciones, participaciones y contactos de Punta Rollers.', tipo: 'plataforma', visible: true, fecha: '2026-06-18' }
+  { id: 1, titulo: '¡Tu espacio PR ya está activo!', contenido: 'Acá vas a ver insignias, observaciones, participaciones y contactos de Punta Rollers.', tipo: 'plataforma', visible: false, fecha: '2026-06-18' }
 ]
