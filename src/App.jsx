@@ -27,7 +27,6 @@ import CommunityPage from './pages/Community'
 import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
 import MiEvolucion from './pages/MiEvolucion'
-import RollerAvatar from './pages/RollerAvatar'
 import AvatarPremiumPreview from './pages/AvatarPremiumPreview'
 import Insignias from './pages/Insignias'
 
@@ -140,7 +139,7 @@ function AppRoutes() {
           path="/app/avatar"
           element={
             <PrivateRoute>
-              <RollerAvatar />
+              <Navigate to="/app/avatar-premium" replace />
             </PrivateRoute>
           }
         />
