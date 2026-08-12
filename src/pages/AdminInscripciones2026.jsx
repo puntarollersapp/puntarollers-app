@@ -16,6 +16,7 @@ export default function AdminInscripciones2026() {
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('todas')
   const [query, setQuery] = useState('')
+  const [deletingId, setDeletingId] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -51,6 +52,27 @@ export default function AdminInscripciones2026() {
       .eq('id', id)
     if (updateError) return setError(updateError.message)
     setRows(prev => prev.map(row => row.id === id ? { ...row, estado, comprobante_recibido: ['pago_verificado','confirmado'].includes(estado) } : row))
+  }
+
+  const deleteRegistration = async (row) => {
+    const confirmed = window.confirm(`¿Eliminar definitivamente la inscripción de ${row.nombre_completo}?\n\nEsta acción no se puede deshacer.`)
+    if (!confirmed) return
+
+    setDeletingId(row.id)
+    setError('')
+    const { error: deleteError } = await supabase
+      .from('pr_inscripciones_2026')
+      .delete()
+      .eq('id', row.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+      setDeletingId('')
+      return
+    }
+
+    setRows(prev => prev.filter(item => item.id !== row.id))
+    setDeletingId('')
   }
 
   return (
@@ -95,6 +117,14 @@ export default function AdminInscripciones2026() {
                   {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
                 </select>
                 <a href={`https://wa.me/598${String(row.telefono).replace(/\D/g,'').replace(/^598/,'').replace(/^0/,'')}`} target="_blank" rel="noreferrer">WhatsApp</a>
+                <button
+                  type="button"
+                  className="pr-admin-delete"
+                  onClick={() => deleteRegistration(row)}
+                  disabled={deletingId === row.id}
+                >
+                  {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}
+                </button>
               </div>
             </article>
           ))}
