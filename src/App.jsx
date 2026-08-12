@@ -30,6 +30,7 @@ import MiEvolucion from './pages/MiEvolucion'
 import AvatarPremiumPreview from './pages/AvatarPremiumPreview'
 import Insignias from './pages/Insignias'
 import Inscripciones2026 from './pages/Inscripciones2026'
+import AdminInscripciones2026 from './pages/AdminInscripciones2026'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -73,7 +74,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/rollerfeed" element={<PublicRollerFeed />} />
 
-        {/* Nueva ruta aislada: solo existe en feature/inscripciones-2026 hasta aprobación. */}
+        {/* Rutas nuevas aisladas en feature/inscripciones-2026 hasta aprobación. */}
         <Route path="/inscripciones-2026" element={<Inscripciones2026 />} />
 
         <Route path="/alianza" element={<Alianza />} />
@@ -102,6 +103,7 @@ function AppRoutes() {
         <Route path="/app/mensajes" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
 
         <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+        <Route path="/admin/inscripciones-2026" element={<AdminRoute><AdminInscripciones2026 /></AdminRoute>} />
         <Route path="/app" element={<Navigate to="/app/perfil" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
