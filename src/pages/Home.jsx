@@ -332,7 +332,7 @@ export default function Home() {
 
             <div id="inscripciones" className="mt-4 grid grid-cols-2 gap-3 scroll-mt-8">
               <ActionLink href="https://form.jotform.com/Claudinio/inscripcioneskids" emoji="🎒" title="PR Kids" label="Inscripción" />
-              <ActionLink href="https://form.jotform.com/Claudinio/Inscripciones2026" emoji="🛼" title="Adultos" label="Inscripción" />
+              <ActionLink href="/inscripciones-2026" emoji="🛼" title="Adultos" label="Inscripción" internal />
             </div>
             <p className="mt-3 text-center text-[11px] leading-5 text-white/35">Las cuentas de la app son creadas por el equipo Punta Rollers. Las inscripciones no crean usuarios automáticamente.</p>
           </section>
@@ -438,7 +438,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* mini avatars anónimos / movimiento */}
                 <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-3.5">
                   <div className="flex -space-x-2">
                     {['👩🏻‍🦰', '👨🏽‍🦱', '👩🏼', '👨🏻', '👩🏽‍🦱', '👨🏼‍🦰']
@@ -466,7 +465,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* métricas reales públicas */}
                 <div className="mt-3 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[.035] py-4">
                   <PulseStat
                     value={feedPulse.loading ? '…' : feedPulse.skatersToday}
@@ -490,7 +488,6 @@ export default function Home() {
                   />
                 </div>
 
-                {/* preview tipo feed sin login */}
                 <div className="mt-3 space-y-2.5">
                   <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-orange-500/10 text-lg">
@@ -638,8 +635,10 @@ function ClassRow({ emoji, title, subtitle, time, location, seats }) {
   )
 }
 
-function ActionLink({ href, emoji, title, label }) {
-  return <a href={href} target="_blank" rel="noreferrer" className="rounded-[22px] border border-orange-400/20 bg-orange-500/[.08] p-4 transition active:scale-[.98]"><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] font-bold text-orange-300">{label} →</p></a>
+function ActionLink({ href, emoji, title, label, internal = false }) {
+  const className = 'rounded-[22px] border border-orange-400/20 bg-orange-500/[.08] p-4 transition active:scale-[.98]'
+  const content = <><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] font-bold text-orange-300">{label} →</p></>
+  return internal ? <Link to={href} className={className}>{content}</Link> : <a href={href} target="_blank" rel="noreferrer" className={className}>{content}</a>
 }
 
 function MiniCard({ to, icon, title, text }) {
@@ -657,7 +656,6 @@ function LinkMini({ to, emoji, title, text }) {
 function GalleryTile({ href, emoji, title }) {
   return <a href={href} target="_blank" rel="noreferrer" className="flex aspect-[.9] flex-col justify-between rounded-[22px] border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-3 active:scale-[.98]"><span className="text-3xl">{emoji}</span><div><p className="text-xs font-black sm:text-sm">{title}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-orange-400">Abrir ↗</p></div></a>
 }
-
 
 function PulseStat({ value, label }) {
   return (
@@ -695,4 +693,4 @@ function EventCard({ event }) {
       </div>
     </article>
   )
-              }
+}
