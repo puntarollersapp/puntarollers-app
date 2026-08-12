@@ -126,6 +126,19 @@ function FullAdminRoute({ children }) {
   )
 }
 
+function AdminRegistrationsShortcut() {
+  return (
+    <a
+      href="/admin/inscripciones-2026"
+      className="fixed bottom-[92px] right-4 z-[85] flex min-h-12 items-center gap-2 rounded-2xl border border-orange-300/25 bg-[#17120c]/95 px-4 py-3 text-xs font-black text-orange-200 shadow-[0_18px_50px_rgba(0,0,0,.48)] backdrop-blur-xl active:scale-[.98]"
+      aria-label="Ver inscripciones 2026"
+    >
+      <span className="text-lg">🛼</span>
+      <span>Inscripciones</span>
+    </a>
+  )
+}
+
 function AppRoutes() {
   return (
     <>
@@ -304,7 +317,10 @@ function AppRoutes() {
           path="/admin"
           element={
             <AdminRoute>
-              <Admin />
+              <>
+                <Admin />
+                <AdminRegistrationsShortcut />
+              </>
             </AdminRoute>
           }
         />
