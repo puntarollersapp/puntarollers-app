@@ -116,11 +116,12 @@ export default function Inscripciones2026() {
             <p className="pr-reg-kicker">INSCRIPCIONES 2026</p>
             <h1>Elegí cómo querés patinar.</h1>
             <p className="pr-reg-lead">Estas inscripciones son para comenzar en septiembre. Primero conocé cada modalidad y después decidí si querés hacer tu pre-reserva.</p>
+            <p className="pr-reg-choice-hint">Elegí la opción que más te interese para ver cómo funciona, precios y disponibilidad.</p>
             <div className="pr-reg-choice-grid">
-              <button className="pr-reg-choice" onClick={() => chooseMode('grupales')}>
+              <button className="pr-reg-choice pr-reg-choice-group" onClick={() => chooseMode('grupales')}>
                 <span className="pr-reg-choice-icon">👥</span><strong>Clases Grupales</strong><small>Hasta 2 encuentros por semana</small><b>$1.500 / mes</b>
               </button>
-              <button className="pr-reg-choice featured" onClick={() => chooseMode('personalizadas')}>
+              <button className="pr-reg-choice pr-reg-choice-private" onClick={() => chooseMode('personalizadas')}>
                 <span className="pr-reg-choice-icon">⭐</span><strong>Personalizadas 1 a 1</strong><small>Una hora enfocada 100% en vos</small><b>$2.900 / 4 clases</b>
               </button>
             </div>
