@@ -10,6 +10,13 @@ const statusLabel = {
   cancelado: 'Cancelado',
 }
 
+const modeLabel = (modalidad) => {
+  if (modalidad === 'grupales') return '👥 Grupales'
+  if (modalidad === 'personalizadas') return '⭐ Personalizadas'
+  if (modalidad === 'kids') return '🌈 PR Kids'
+  return modalidad
+}
+
 export default function AdminInscripciones2026() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -34,7 +41,7 @@ export default function AdminInscripciones2026() {
 
   const visible = useMemo(() => rows.filter(row => {
     if (filter !== 'todas' && row.modalidad !== filter) return false
-    const haystack = `${row.nombre_completo} ${row.email} ${row.telefono} ${row.localidad}`.toLowerCase()
+    const haystack = `${row.nombre_completo || ''} ${row.nombre_responsable || ''} ${row.email || ''} ${row.telefono || ''} ${row.localidad || ''}`.toLowerCase()
     return haystack.includes(query.trim().toLowerCase())
   }), [rows, filter, query])
 
@@ -42,6 +49,7 @@ export default function AdminInscripciones2026() {
     total: rows.length,
     grupales: rows.filter(r => r.modalidad === 'grupales').length,
     personalizadas: rows.filter(r => r.modalidad === 'personalizadas').length,
+    kids: rows.filter(r => r.modalidad === 'kids').length,
     confirmadas: rows.filter(r => ['pago_verificado','confirmado'].includes(r.estado)).length,
   }), [rows])
 
@@ -78,7 +86,7 @@ export default function AdminInscripciones2026() {
   return (
     <main className="pr-admin-reg">
       <header>
-        <div><p>ADMIN · PUNTA ROLLERS</p><h1>Inscripciones Septiembre 2026</h1></div>
+        <div><p>ADMIN · PUNTA ROLLERS</p><h1>Inscripciones 2026</h1></div>
         <button onClick={load}>Actualizar</button>
       </header>
 
@@ -86,48 +94,73 @@ export default function AdminInscripciones2026() {
         <article><span>Total</span><strong>{stats.total}</strong></article>
         <article><span>Grupales</span><strong>{stats.grupales}</strong></article>
         <article><span>Personalizadas</span><strong>{stats.personalizadas}</strong></article>
+        <article><span>PR Kids</span><strong>{stats.kids}</strong></article>
         <article><span>Pagos verificados</span><strong>{stats.confirmadas}</strong></article>
       </section>
 
       <section className="pr-admin-tools">
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar nombre, email, teléfono…" />
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar alumno, responsable, email, teléfono…" />
         <select value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="todas">Todas</option>
           <option value="grupales">Grupales</option>
           <option value="personalizadas">Personalizadas</option>
+          <option value="kids">PR Kids</option>
         </select>
       </section>
 
       {error && <p className="pr-admin-error">{error}</p>}
       {loading ? <p className="pr-admin-empty">Cargando inscripciones…</p> : visible.length === 0 ? <p className="pr-admin-empty">Todavía no hay inscripciones para mostrar.</p> : (
         <section className="pr-admin-list">
-          {visible.map(row => (
-            <article className="pr-admin-row" key={row.id}>
-              <div className="pr-admin-row-top">
-                <div><span className={`pr-admin-mode ${row.modalidad}`}>{row.modalidad === 'grupales' ? '👥 Grupales' : '⭐ Personalizadas'}</span><h2>{row.nombre_completo}</h2><p>{row.localidad} · {row.edad} años · {row.nivel}</p></div>
-                <time>{new Date(row.created_at).toLocaleString('es-UY')}</time>
-              </div>
-              <div className="pr-admin-grid">
-                <div><span>Contacto</span><b>{row.telefono}</b><small>{row.email}</small></div>
-                <div><span>Modalidad</span><b>{row.modalidad === 'grupales' ? row.turno_sabado : '4 clases · $2.900'}</b><small>{row.modalidad === 'personalizadas' ? row.objetivo_personalizadas : 'Miércoles 19:30 incluido'}</small></div>
-                <div><span>Pago</span><b>Prex · ${Number(row.monto).toLocaleString('es-UY')}</b><small>{row.comprobante_recibido ? 'Comprobante recibido' : 'Comprobante pendiente'}</small></div>
-              </div>
-              <div className="pr-admin-actions">
-                <select value={row.estado} onChange={e => setStatus(row.id, e.target.value)}>
-                  {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
-                </select>
-                <a href={`https://wa.me/598${String(row.telefono).replace(/\D/g,'').replace(/^598/,'').replace(/^0/,'')}`} target="_blank" rel="noreferrer">WhatsApp</a>
-                <button
-                  type="button"
-                  className="pr-admin-delete"
-                  onClick={() => deleteRegistration(row)}
-                  disabled={deletingId === row.id}
-                >
-                  {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}
-                </button>
-              </div>
-            </article>
-          ))}
+          {visible.map(row => {
+            const isKids = row.modalidad === 'kids'
+            return (
+              <article className="pr-admin-row" key={row.id}>
+                <div className="pr-admin-row-top">
+                  <div>
+                    <span className={`pr-admin-mode ${row.modalidad}`}>{modeLabel(row.modalidad)}</span>
+                    <h2>{row.nombre_completo}</h2>
+                    <p>{isKids ? `${row.edad} años · ${row.nivel}` : `${row.localidad || 'Sin localidad'} · ${row.edad} años · ${row.nivel}`}</p>
+                  </div>
+                  <time>{new Date(row.created_at).toLocaleString('es-UY')}</time>
+                </div>
+
+                <div className="pr-admin-grid">
+                  <div>
+                    <span>{isKids ? 'Adulto responsable' : 'Contacto'}</span>
+                    <b>{isKids ? (row.nombre_responsable || 'No indicado') : row.telefono}</b>
+                    <small>{isKids ? `${row.telefono} · ${row.email}` : row.email}</small>
+                  </div>
+                  <div>
+                    <span>Modalidad</span>
+                    <b>{isKids ? 'Sábado 19:00–20:00' : row.modalidad === 'grupales' ? row.turno_sabado : '4 clases · $2.900'}</b>
+                    <small>{isKids ? 'Pista cerrada · Maldonado' : row.modalidad === 'personalizadas' ? row.objetivo_personalizadas : 'Miércoles 19:30 incluido'}</small>
+                  </div>
+                  {isKids && (
+                    <div>
+                      <span>Remera PR Kids</span>
+                      <b>{row.quiere_remera ? 'Sí · agregar remera' : 'No por ahora'}</b>
+                      <small>{row.quiere_remera ? '$690 · personalizada' : 'Solo mensualidad'}</small>
+                    </div>
+                  )}
+                  <div>
+                    <span>Pago</span>
+                    <b>Prex · ${Number(row.monto).toLocaleString('es-UY')}</b>
+                    <small>{row.comprobante_recibido ? 'Comprobante recibido' : 'Comprobante pendiente'}</small>
+                  </div>
+                </div>
+
+                <div className="pr-admin-actions">
+                  <select value={row.estado} onChange={e => setStatus(row.id, e.target.value)}>
+                    {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
+                  </select>
+                  <a href={`https://wa.me/598${String(row.telefono).replace(/\D/g,'').replace(/^598/,'').replace(/^0/,'')}`} target="_blank" rel="noreferrer">WhatsApp</a>
+                  <button type="button" className="pr-admin-delete" onClick={() => deleteRegistration(row)} disabled={deletingId === row.id}>
+                    {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}
+                  </button>
+                </div>
+              </article>
+            )
+          })}
         </section>
       )}
     </main>
