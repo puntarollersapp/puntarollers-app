@@ -26,6 +26,7 @@ export default function Inscripciones2026() {
   const [form, setForm] = useState(initialForm)
   const [accepted, setAccepted] = useState(false)
   const [sending, setSending] = useState(false)
+  const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
 
   const amount = mode === 'personalizadas' ? 2900 : 1500
@@ -36,6 +37,8 @@ export default function Inscripciones2026() {
   const chooseMode = (value) => {
     setMode(value)
     setForm(initialForm)
+    setAccepted(false)
+    setRegistrationId('')
     setError('')
     setStep(1)
   }
@@ -67,34 +70,56 @@ export default function Inscripciones2026() {
     return true
   }
 
+  const buildPayload = () => ({
+    modalidad: mode,
+    nombre_completo: form.nombre_completo.trim(),
+    edad: Number(form.edad),
+    localidad: form.localidad.trim(),
+    email: form.email.trim().toLowerCase(),
+    telefono: form.telefono.trim(),
+    nivel: form.nivel,
+    turno_sabado: mode === 'grupales' ? form.turno_sabado : null,
+    objetivo_personalizadas: mode === 'personalizadas' ? form.objetivo_personalizadas.trim() : null,
+    monto: amount,
+    metodo_pago: 'Prex',
+    estado: 'pre_reserva',
+    comprobante_recibido: false,
+  })
+
+  const createPreReservation = async () => {
+    if (registrationId) {
+      setStep(4)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    setSending(true)
+    setError('')
+
+    const { data, error: insertError } = await supabase
+      .from('pr_inscripciones_2026')
+      .insert(buildPayload())
+      .select('id')
+      .single()
+
+    setSending(false)
+
+    if (insertError) {
+      setError('No pudimos guardar tu pre-reserva. Probá nuevamente en unos minutos.')
+      return
+    }
+
+    setRegistrationId(data?.id || '')
+    setStep(4)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const submit = async () => {
     if (!accepted) {
       setError('Confirmá que entendés cómo funciona la pre-reserva.')
       return
     }
-    setSending(true)
     setError('')
-    const payload = {
-      modalidad: mode,
-      nombre_completo: form.nombre_completo.trim(),
-      edad: Number(form.edad),
-      localidad: form.localidad.trim(),
-      email: form.email.trim().toLowerCase(),
-      telefono: form.telefono.trim(),
-      nivel: form.nivel,
-      turno_sabado: mode === 'grupales' ? form.turno_sabado : null,
-      objetivo_personalizadas: mode === 'personalizadas' ? form.objetivo_personalizadas.trim() : null,
-      monto: amount,
-      metodo_pago: 'Prex',
-      estado: 'pre_reserva',
-      comprobante_recibido: false,
-    }
-    const { error: insertError } = await supabase.from('pr_inscripciones_2026').insert(payload)
-    setSending(false)
-    if (insertError) {
-      setError('No pudimos guardar tu inscripción. Probá nuevamente en unos minutos.')
-      return
-    }
     setStep(5)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -192,7 +217,7 @@ export default function Inscripciones2026() {
             <p className="pr-reg-kicker">TU MODALIDAD</p>
             {mode === 'grupales' ? <><h1>Elegí tu turno de los sábados.</h1><p className="pr-reg-lead">El miércoles 19:30 está incluido para todos.</p><div className="pr-reg-radio-list">{saturdayOptions.map(option => <label key={option} className={form.turno_sabado === option ? 'selected' : ''}><input type="radio" name="turno" checked={form.turno_sabado === option} onChange={() => update('turno_sabado', option)} /><span>{option}</span></label>)}</div></> : <><h1>¿Qué te gustaría conseguir?</h1><p className="pr-reg-lead">Así podemos preparar mejor tu experiencia desde el primer encuentro.</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e => update('objetivo_personalizadas', e.target.value)} placeholder="Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…" /></>}
             {error && <p className="pr-reg-error">{error}</p>}
-            <button className="pr-reg-primary" onClick={() => validateSpecific() && setStep(4)}>Ver pago y confirmar →</button>
+            <button className="pr-reg-primary" disabled={sending} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : 'Ver pago y confirmar →'}</button>
           </div>
         )}
 
@@ -200,12 +225,13 @@ export default function Inscripciones2026() {
           <div className="pr-reg-stage">
             <button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button>
             <p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Pre-reservá tu lugar para septiembre.</h1>
+            <div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Desde este momento tus datos ya aparecen en nuestro panel de inscripciones. Ahora podés realizar la transferencia y enviarnos el comprobante con tranquilidad.</p></div>
             <div className="pr-reg-payment"><span>Importe a abonar</span><strong>${amount.toLocaleString('es-UY')}</strong><div><b>Tarjeta Prex</b><p>Claudio Facelli</p><p>Cuenta Prex: <strong>70658</strong></p></div></div>
             <div className="pr-reg-info"><b>📲 Después de transferir</b><p>Identificá la transferencia con el <strong>nombre del alumno</strong> y enviá el comprobante al WhatsApp de Punta Rollers:</p><a href="https://wa.me/59898971505" target="_blank" rel="noreferrer">098 971 505</a></div>
-            <p className="pr-reg-lead">Completar este formulario genera una <strong>pre-reserva</strong>. Tu lugar queda confirmado cuando Punta Rollers verifica el pago. Quedarás en el listado de nuevos ingresos hasta la convocatoria de septiembre.</p>
+            <p className="pr-reg-lead">Tu lugar queda confirmado cuando Punta Rollers verifica el pago. Quedarás en el listado de nuevos ingresos hasta la convocatoria de septiembre.</p>
             <label className="pr-reg-check"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} /><span>Entiendo que la inscripción corresponde a septiembre de 2026 y que la reserva se confirma luego de verificar el pago.</span></label>
             {error && <p className="pr-reg-error">{error}</p>}
-            <button className="pr-reg-primary" disabled={sending} onClick={submit}>{sending ? 'Guardando…' : 'Enviar pre-reserva ✓'}</button>
+            <button className="pr-reg-primary" disabled={sending} onClick={submit}>{sending ? 'Finalizando…' : 'Ya transferí · finalizar ✓'}</button>
           </div>
         )}
 
