@@ -38,25 +38,30 @@ export default function PRKidsInscripciones2026() {
         <div className="prk-progress"><span style={{ width: `${((step + 1) / 4) * 100}%` }} /><small>{progress}</small></div>
 
         {step === 0 && (
-          <div className="prk-stage">
-            <div className="prk-hero-icon">🌈</div>
-            <p className="prk-kicker">INSCRIPCIONES PR KIDS</p>
-            <h1>Su próxima aventura puede empezar sobre ruedas.</h1>
-            <p className="prk-lead">Un espacio pensado para aprender patinaje con seguridad, confianza y muchísima diversión. Juegos, movimiento, nuevos amigos y cada logro celebrado.</p>
+          <div className="prk-stage prk-stage-home">
+            <div className="prk-home-topline"><span>🌈</span> INSCRIPCIONES PR KIDS 2026</div>
+            <h1 className="prk-home-title">Aprendé, divertite y hacé amigos <em>sobre ruedas.</em></h1>
+            <p className="prk-lead prk-home-lead">Un espacio pensado para aprender patinaje con <strong>seguridad</strong>, ganar <strong>confianza</strong> y disfrutar cada logro. Acá aprender también se siente como jugar.</p>
 
-            <div className="prk-quick-grid">
-              <article className="blue"><span>🗓️</span><b>Sábados</b><small>19:00 a 20:00</small></article>
-              <article className="pink"><span>🏟️</span><b>Pista cerrada</b><small>Maldonado · Indoor</small></article>
-              <article className="yellow"><span>💛</span><b>$2.000</b><small>mensual por niño</small></article>
-              <article className="green"><span>☔</span><b>Sin clima</b><small>Siempre bajo techo</small></article>
+            <div className="prk-home-ribbon">✨ Cada logro se celebra</div>
+
+            <div className="prk-quick-grid prk-quick-grid-home">
+              <article className="blue"><span>🗓️</span><div><b>Sábados</b><small>19:00 a 20:00</small></div></article>
+              <article className="pink"><span>🏟️</span><div><b>Pista cerrada</b><small>Maldonado · Indoor</small></div></article>
+              <article className="yellow"><span>💛</span><div><b>$2.000</b><small>mensual por niño</small></div></article>
+              <article className="green"><span>☔</span><div><b>Siempre bajo techo</b><small>Sin depender del clima</small></div></article>
             </div>
 
-            <div className="prk-note-card">
-              <span>✨</span>
-              <div><b>Antes de inscribir</b><p>Conocé cómo funciona PR Kids, qué incluye y toda la información importante para las familias.</p></div>
+            <div className="prk-home-values">
+              <span>🛡️ Seguridad</span><span>🎮 Diversión</span><span>🤝 Amigos</span>
             </div>
 
-            <button className="prk-primary" onClick={() => setStep(1)}>Conocer PR Kids →</button>
+            <div className="prk-note-card prk-home-note">
+              <span>💫</span>
+              <div><b>Conocé PR Kids antes de inscribir</b><p>Te mostramos cómo funcionan las clases, qué incluye la mensualidad y toda la información importante para las familias.</p></div>
+            </div>
+
+            <button className="prk-primary" onClick={() => setStep(1)}>Descubrir PR Kids →</button>
           </div>
         )}
 
