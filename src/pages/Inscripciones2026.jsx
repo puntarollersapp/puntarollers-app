@@ -119,10 +119,18 @@ export default function Inscripciones2026() {
             <p className="pr-reg-choice-hint">Elegí la opción que más te interese para ver cómo funciona, precios y disponibilidad.</p>
             <div className="pr-reg-choice-grid">
               <button className="pr-reg-choice pr-reg-choice-group" onClick={() => chooseMode('grupales')}>
-                <span className="pr-reg-choice-icon">👥</span><strong>Clases Grupales</strong><small>Hasta 2 encuentros por semana</small><b>$1.500 / mes</b>
+                <span className="pr-reg-promo pr-reg-promo-group">🔥 2 días por semana</span>
+                <span className="pr-reg-choice-icon">👥</span>
+                <strong>Clases Grupales</strong>
+                <small>Hasta 2 encuentros por semana</small>
+                <b>$1.500 / mes</b>
               </button>
               <button className="pr-reg-choice pr-reg-choice-private" onClick={() => chooseMode('personalizadas')}>
-                <span className="pr-reg-choice-icon">⭐</span><strong>Personalizadas 1 a 1</strong><small>Una hora enfocada 100% en vos</small><b>$2.900 / 4 clases</b>
+                <span className="pr-reg-promo pr-reg-promo-private">✨ Precio especial septiembre</span>
+                <span className="pr-reg-choice-icon">⭐</span>
+                <strong>Personalizadas 1 a 1</strong>
+                <small>Una hora enfocada 100% en vos</small>
+                <b>$2.900 / 4 clases</b>
               </button>
             </div>
             <p className="pr-reg-note">Tu lugar se confirma únicamente después de que verifiquemos el pago.</p>
