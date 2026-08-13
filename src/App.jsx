@@ -31,6 +31,7 @@ import AvatarPremiumPreview from './pages/AvatarPremiumPreview'
 import Insignias from './pages/Insignias'
 import Inscripciones2026 from './pages/Inscripciones2026'
 import AdminInscripciones2026 from './pages/AdminInscripciones2026'
+import PRKidsInscripciones2026 from './pages/PRKidsInscripciones2026'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -149,6 +150,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/rollerfeed" element={<PublicRollerFeed />} />
         <Route path="/inscripciones-2026" element={<Inscripciones2026 />} />
+        <Route path="/inscripciones-kids-2026" element={<PRKidsInscripciones2026 />} />
 
         <Route path="/alianza" element={<Alianza />} />
         <Route path="/cuponeras" element={<Cuponeras />} />
@@ -293,7 +295,6 @@ function AppRoutes() {
             </PrivateRoute>
           }
         />
-
 
         <Route
           path="/app/comunidad"
