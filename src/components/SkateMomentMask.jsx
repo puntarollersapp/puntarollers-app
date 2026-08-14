@@ -1,5 +1,7 @@
+import { useId } from 'react'
+
 export default function SkateMomentMask({ children, className = '', glow = '#8b5cf6' }) {
-  const id = `skate-mask-${Math.random().toString(36).slice(2)}`
+  const id = `skate-mask-${useId().replace(/:/g, '')}`
 
   return (
     <div className={`relative ${className}`}>

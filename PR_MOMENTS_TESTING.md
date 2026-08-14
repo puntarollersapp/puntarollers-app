@@ -1,0 +1,46 @@
+# PR Moments — guía de prueba previa
+
+## Alcance incluido
+
+- Moments de texto, foto y video con vencimiento de 24 horas.
+- Visibilidad: Todos PR, Solo amigos y Solo yo.
+- Media privada con URLs firmadas de una hora y límite de 15 MB.
+- Reacciones exclusivas por usuario y comentarios de texto libre.
+- Comentarios separados para RollerFeed, sin modificar las tablas de Strava.
+- Borrado propio y moderación para roles `admin` y `profesor`.
+- Carrusel de Moments encima del RollerFeed, estados vacíos y errores recuperables.
+
+## Orden seguro para habilitar una prueba
+
+1. Crear o seleccionar un proyecto Supabase de preview/staging.
+2. Aplicar `supabase/migrations/20260813203000_pr_moments_and_comments.sql` en ese proyecto.
+3. Confirmar que `profiles.auth_user_id` esté vinculado para cada cuenta de prueba.
+4. Configurar en Vercel Preview `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` del proyecto de staging.
+5. Desplegar esta rama como Preview; no promover ni fusionar a `main`.
+
+## Matriz manual recomendada
+
+- Alumno A publica texto, foto y video; Alumno B puede verlos y reaccionar.
+- Un Moment `self` solo aparece para su autor.
+- Un Moment `friends` solo aparece después de existir una amistad `accepted`.
+- Cambiar una reacción reemplaza la anterior; tocar la misma la elimina.
+- Comentarios aceptan texto libre, saltos de línea y hasta 1000 caracteres.
+- Un alumno no puede editar/eliminar contenido ajeno; admin/profesor sí puede moderarlo.
+- Pasadas 24 horas, el Moment y su media dejan de ser legibles por RLS.
+- Una actividad sincronizada desde Strava conserva su contenido y admite comentarios por `feed_key`.
+- Archivos mayores a 15 MB o tipos no permitidos son rechazados.
+- Probar viewport móvil (360 × 800), video vertical y foto horizontal.
+
+## Verificación realizada en esta rama
+
+- Build de producción Vite completado correctamente.
+- Revisión estática de rutas, imports y componentes completada.
+- `git diff --check` sin errores de whitespace.
+
+## Pendiente antes de lanzamiento oficial
+
+- Aplicar y probar la migración contra un Supabase de staging con al menos dos alumnos y un moderador.
+- Ejecutar la matriz manual autenticada, incluida la política `friends`.
+- Crear la Vercel Preview con variables exclusivas de staging.
+- Opcional: programar limpieza física de archivos expirados; actualmente quedan inaccesibles al vencer, pero no se borran automáticamente del bucket.
+- Revisar la advertencia existente de bundle grande y separar rutas en chunks; no bloquea esta prueba.

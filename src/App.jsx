@@ -32,6 +32,7 @@ import Insignias from './pages/Insignias'
 import Inscripciones2026 from './pages/Inscripciones2026'
 import AdminInscripciones2026 from './pages/AdminInscripciones2026'
 import PRKidsInscripciones2026 from './pages/PRKidsInscripciones2026'
+import PRMoments from './pages/PRMoments'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -256,6 +257,15 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <Tracking />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/app/moments"
+          element={
+            <PrivateRoute>
+              <PRMoments />
             </PrivateRoute>
           }
         />

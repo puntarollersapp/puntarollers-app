@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function RollerFeedComments({ feedKey, currentProfileId }) {
+export default function RollerFeedComments({ feedKey, currentProfileId, canModerate = false }) {
   const [open, setOpen] = useState(false)
   const [comments, setComments] = useState([])
   const [profiles, setProfiles] = useState({})
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   async function loadComments() {
     if (!feedKey) return
-    const { data } = await supabase
+    const { data, error: loadError } = await supabase
       .from('rollerfeed_comments')
       .select('id,feed_key,profile_id,body,created_at')
       .eq('feed_key', String(feedKey))
       .is('deleted_at', null)
       .order('created_at', { ascending: true })
+    if (loadError) { setError('No pudimos cargar los comentarios.'); return }
+    setError('')
     const rows = data || []
     setComments(rows)
     const ids = [...new Set(rows.map((row) => row.profile_id).filter(Boolean))]
@@ -45,7 +48,16 @@ export default function RollerFeedComments({ feedKey, currentProfileId }) {
     if (!error) {
       setText('')
       await loadComments()
-    }
+    } else setError('No pudimos publicar tu comentario.')
+    setBusy(false)
+  }
+
+  async function remove(comment) {
+    if (busy) return
+    setBusy(true)
+    const { error: removeError } = await supabase.from('rollerfeed_comments').update({ deleted_at: new Date().toISOString(), deleted_by_profile_id: String(currentProfileId) }).eq('id', comment.id)
+    if (removeError) setError('No pudimos eliminar el comentario.')
+    else setComments((rows) => rows.filter((row) => row.id !== comment.id))
     setBusy(false)
   }
 
@@ -56,6 +68,8 @@ export default function RollerFeedComments({ feedKey, currentProfileId }) {
       </button>
       {open && (
         <div className="mt-3 space-y-3">
+          {error && <p role="alert" className="rounded-xl bg-amber-400/10 px-3 py-2 text-[10px] text-amber-100">{error}</p>}
+          {!comments.length && !error && <p className="text-[10px] text-white/25">Todavía no hay comentarios. Podés escribir el primero.</p>}
           {comments.map((comment) => {
             const profile = profiles[String(comment.profile_id)] || {}
             const name = [profile.nombre, profile.apellido].filter(Boolean).join(' ') || 'Roller PR'
@@ -65,7 +79,7 @@ export default function RollerFeedComments({ feedKey, currentProfileId }) {
                   {profile.foto ? <img src={profile.foto} alt={name} className="h-full w-full object-cover" /> : <span className="grid h-full place-items-center text-xs">🛼</span>}
                 </div>
                 <div className="min-w-0 flex-1 rounded-2xl bg-white/[.035] px-3 py-2.5">
-                  <p className="text-[10px] font-black text-white/70">{name}</p>
+                  <div className="flex gap-2"><p className="min-w-0 flex-1 text-[10px] font-black text-white/70">{name}</p>{(String(comment.profile_id) === String(currentProfileId) || canModerate) && <button type="button" onClick={() => remove(comment)} className="text-[9px] text-red-300/65">Eliminar</button>}</div>
                   <p className="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/65">{comment.body}</p>
                 </div>
               </div>

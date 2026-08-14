@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import PRMomentsRail from '../components/PRMomentsRail'
+import RollerFeedComments from '../components/RollerFeedComments'
 
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
@@ -1287,6 +1289,8 @@ export default function Activity() {
           </section>
         )}
 
+        <PRMomentsRail currentProfileId={currentReactionProfileId} />
+
         <section className="overflow-x-auto -mx-[18px] px-[18px]">
           <div className="flex gap-2 min-w-max">
             {FEED_FILTERS.map((item) => {
@@ -1353,16 +1357,18 @@ export default function Activity() {
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
               {visibleItems.map((item) => (
-                <FeedCard
-                  key={item.id}
-                  item={item}
-                  reactions={getItemReactions(item)}
-                  profilesByAnyId={profilesByAnyId}
-                  currentProfileId={currentReactionProfileId}
-                  savingReactionKey={savingReactionKey}
-                  onReact={selectReaction}
-                  onOpenReactions={() => setReactionModalItem(item)}
-                />
+                <div key={item.id}>
+                  <FeedCard
+                    item={item}
+                    reactions={getItemReactions(item)}
+                    profilesByAnyId={profilesByAnyId}
+                    currentProfileId={currentReactionProfileId}
+                    savingReactionKey={savingReactionKey}
+                    onReact={selectReaction}
+                    onOpenReactions={() => setReactionModalItem(item)}
+                  />
+                  <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />
+                </div>
               ))}
             </div>
           ) : (
