@@ -14,6 +14,7 @@ import ProfileLaunchSuite, {
 import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
 import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 import { getBadgeImage } from '../lib/badges'
+import VerifiedBadge from '../components/VerifiedBadge'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -1361,11 +1362,7 @@ export default function Profile() {
                 <h1 className="font-display text-[34px] leading-none text-white">
                   {profile.nombre}
 
-                  {profile.verificado && (
-                    <span className="text-sky-400 text-xl ml-1">
-                      ✓
-                    </span>
-                  )}
+                  {profile.verificado && <VerifiedBadge size={23} className="ml-1" />}
                 </h1>
 
                 <div className="flex flex-wrap items-center gap-2 mt-3">
