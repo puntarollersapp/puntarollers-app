@@ -34,10 +34,17 @@
 - Build de producción Vite completado correctamente.
 - Revisión estática de rutas, imports y componentes completada.
 - `git diff --check` sin errores de whitespace.
+- Preview móvil autenticada verificada en Vercel sin errores de consola.
+- Publicación real de un Moment de texto confirmada.
+- Visor, vencimiento mostrado a 24 h, reacción y comentario confirmados.
+- Borrado del comentario y limpieza completa del Moment temporal confirmados.
+- Política de lectura de amistades corregida para participantes y moderadores.
+- El contenido de prueba dejó cero filas remanentes.
 
 ## Pendiente antes de lanzamiento oficial
 
-- Ejecutar la matriz manual autenticada con al menos dos alumnos y un moderador, incluida la política `friends`.
+- Completar la matriz con un segundo alumno, incluida la visibilidad `friends`.
+- Probar carga real de foto y video desde un teléfono.
 - Mantener la Vercel Preview separada de `main`.
 - Opcional: programar limpieza física de archivos expirados; actualmente quedan inaccesibles al vencer, pero no se borran automáticamente del bucket.
 - Revisar la advertencia existente de bundle grande y separar rutas en chunks; no bloquea esta prueba.
