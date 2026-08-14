@@ -126,8 +126,10 @@ export default function PRMoments() {
 
   async function removeMoment() {
     if (!selected || !window.confirm('¿Eliminar este Moment?')) return
-    const { error } = await supabase.from('pr_moments').update({ deleted_at: new Date().toISOString() }).eq('id', selected.id)
+    const mediaPath = selected.media_url
+    const { error } = await supabase.from('pr_moments').delete().eq('id', selected.id)
     if (error) return setMessage(error.message)
+    if (mediaPath) await supabase.storage.from('pr-moments').remove([mediaPath])
     closeViewer(); await load()
   }
 
