@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import VerifiedBadge from '../components/VerifiedBadge'
 
 const tabs = [
   { id: 'explorar', label: 'Descubrir', icon: '✨' },
@@ -29,10 +30,9 @@ function ProfileCard({ profile, busy, onSendRequest, onCancelRequest, onAcceptRe
     <div className="flex gap-3">
       <Avatar profile={profile} />
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-black text-white">{fullName(profile)}</h3>
+        <div className="flex items-center gap-1.5"><h3 className="truncate text-sm font-black text-white">{fullName(profile)}</h3>{profile.verificado && <VerifiedBadge size={18} />}</div>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {profile.ciudad && <Pill>{profile.ciudad}</Pill>}
-          {profile.verificado && <Pill tone="sky">Verificado</Pill>}
           {profile.participa_como_alumno && profile.role === 'admin' && <Pill tone="orange">Admin · Patinador</Pill>}
           {profile.participa_como_alumno && profile.role === 'profesor' && <Pill tone="orange">Profe · Patinador</Pill>}
           {relationship === 'friend' && <Pill tone="green">Amigo PR</Pill>}
