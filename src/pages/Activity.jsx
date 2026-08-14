@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import PRMomentsRail from '../components/PRMomentsRail'
 import RollerFeedComments from '../components/RollerFeedComments'
+import { loadActiveMoments, timeLeft } from '../lib/moments'
 
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
@@ -608,11 +610,11 @@ function buildBirthdayPosts(profiles) {
   return (profiles || [])
     .map((profile) => {
       const birthday = getBirthdayParts(profile)
-      if (!birthday || birthday.month !== today.getMonth() + 1) {
+      if (!birthday) {
         return null
       }
 
-      const birthdayDate = new Date(
+      let birthdayDate = new Date(
         today.getFullYear(),
         birthday.month - 1,
         birthday.day,
@@ -620,6 +622,10 @@ function buildBirthdayPosts(profiles) {
         0,
         0
       )
+
+      if (birthdayDate < todayDate) {
+        birthdayDate = new Date(today.getFullYear() + 1, birthday.month - 1, birthday.day, 12, 0, 0)
+      }
 
       if (
         birthdayDate.getMonth() !== birthday.month - 1 ||
@@ -638,7 +644,6 @@ function buildBirthdayPosts(profiles) {
 
       const isToday = daysUntil === 0
       const isTomorrow = daysUntil === 1
-      const alreadyCelebrated = daysUntil < 0
       const birthdayLabel = birthdayDate.toLocaleDateString('es-UY', {
         day: 'numeric',
         month: 'long',
@@ -648,15 +653,11 @@ function buildBirthdayPosts(profiles) {
         ? `¡Hoy cumple años ${name}!`
         : isTomorrow
           ? `¡Mañana cumple años ${name}!`
-          : alreadyCelebrated
-            ? `${name} cumplió el ${birthdayLabel}`
-            : `${name} cumple el ${birthdayLabel}`
+          : `${name} cumple el ${birthdayLabel}`
 
       const description = isToday
         ? 'Toda la comunidad Punta Rollers le desea un día increíble. Celebremos juntos. 🎉'
-        : alreadyCelebrated
-          ? 'Fue una de las fechas especiales de nuestra comunidad este mes. 🎈'
-          : 'Se acerca una fecha especial para nuestra comunidad. Hay tiempo para preparar el saludo. 🎈'
+        : 'Se acerca una fecha especial para nuestra comunidad. Hay tiempo para preparar el saludo. 🎈'
 
       return {
         id: `birthday-${profile.id}-${birthdayDate.getFullYear()}`,
@@ -673,7 +674,7 @@ function buildBirthdayPosts(profiles) {
         featured: isToday,
       }
     })
-    .filter(Boolean)
+    .filter((item) => item && item.daysUntil >= 0 && item.daysUntil <= 60)
     .sort(
       (a, b) =>
         new Date(a.birthdayDate).getTime() -
@@ -691,6 +692,7 @@ export default function Activity() {
   const [legacyItems, setLegacyItems] = useState([])
   const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
+  const [moments, setMoments] = useState([])
   const [reactions, setReactions] = useState([])
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
@@ -700,6 +702,14 @@ export default function Activity() {
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
   const initialSyncDone = useRef(false)
+
+  useEffect(() => {
+    let active = true
+    loadActiveMoments()
+      .then((rows) => { if (active) setMoments(rows) })
+      .catch((error) => { if (active) setMessage(error?.message || 'No pudimos cargar PR Moments.') })
+    return () => { active = false }
+  }, [])
 
   async function syncStrava() {
     if (!profileId) {
@@ -1032,8 +1042,23 @@ export default function Activity() {
 
     const birthdays = buildBirthdayPosts(profiles)
     const eventPosts = events.map(normalizeRollerEvent)
+    const momentPosts = moments.map((moment) => {
+      const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
+      return {
+        ...moment,
+        id: `moment-${moment.id}`,
+        momentId: moment.id,
+        type: 'Moment',
+        date: moment.created_at,
+        userId: moment.profile_id,
+        userName: getProfileName(profile) || 'Roller PR',
+        userPhoto: getProfilePhoto(profile),
+        verified: getProfileVerified(profile),
+      }
+    })
 
     return [
+      ...momentPosts,
       ...birthdays,
       ...eventPosts,
       ...trainingPosts,
@@ -1047,18 +1072,22 @@ export default function Activity() {
     activities,
     legacyItems,
     events,
+    moments,
     profiles,
     profilesByAnyId,
   ])
 
   const visibleItems = useMemo(() => {
     if (filter === 'Todos') {
-      return feedItems.filter(
+      const available = feedItems.filter(
         (item) =>
           item.type !== 'Insignia' &&
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
+      const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 3)
+      const rest = available.filter((item) => item.type !== 'Cumpleaños')
+      return [...birthdays, ...rest]
     }
 
     const filteredItems = feedItems.filter(
@@ -1367,7 +1396,7 @@ export default function Activity() {
                     onReact={selectReaction}
                     onOpenReactions={() => setReactionModalItem(item)}
                   />
-                  <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />
+                  {item.type !== 'Moment' && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
             </div>
@@ -1483,7 +1512,33 @@ function FeedCard({
     return <TrainingCard item={item} {...reactionProps} />
   }
 
+  if (item.type === 'Moment') {
+    return <MomentCard item={item} />
+  }
+
   return <CommunityCard item={item} {...reactionProps} />
+}
+
+function MomentCard({ item }) {
+  const navigate = useNavigate()
+  const openMoment = () => navigate(`/app/moments?moment=${item.momentId}`)
+
+  return (
+    <article className="overflow-hidden rounded-[28px] border border-violet-300/20 bg-gradient-to-br from-violet-500/[.14] via-[#121018] to-[#09090d]">
+      <button type="button" onClick={openMoment} className="w-full text-left">
+        <div className="flex items-center gap-3 p-4">
+          <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} />
+          <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{item.userName}</p><p className="mt-1 text-[10px] text-white/35">PR Moment · queda {timeLeft(item.expires_at)}</p></div>
+          <span className="rounded-full bg-violet-400/10 px-3 py-2 text-[10px] font-bold text-violet-200">Ver</span>
+        </div>
+        {item.media_type === 'photo' && <img src={item.signed_media_url} alt={item.caption || 'PR Moment'} className="max-h-[460px] w-full bg-black object-contain" />}
+        {item.media_type === 'video' && <video src={item.signed_media_url} playsInline preload="metadata" className="max-h-[460px] w-full bg-black object-contain" />}
+        {item.media_type === 'text' && <p className="whitespace-pre-wrap break-words px-5 py-8 text-center font-display text-3xl leading-tight text-white">{item.caption}</p>}
+        {item.media_type !== 'text' && item.caption && <p className="whitespace-pre-wrap break-words p-4 text-sm text-white/70">{item.caption}</p>}
+      </button>
+      <button type="button" onClick={openMoment} className="flex w-full items-center justify-between border-t border-white/[.07] px-4 py-3 text-left text-xs text-white/45"><span>Reaccionar o comentar</span><span className="text-violet-200">Abrir Moment →</span></button>
+    </article>
+  )
 }
 
 function ProfileAvatar({
@@ -1633,21 +1688,20 @@ function BirthdayCard({
   onOpenReactions,
 }) {
   return (
-    <article className="relative overflow-hidden rounded-[32px] border border-fuchsia-300/25 bg-gradient-to-br from-fuchsia-500/[0.18] via-[#17101c] to-[#0b090d] p-5">
+    <article className="relative overflow-hidden rounded-[26px] border border-fuchsia-300/25 bg-gradient-to-br from-fuchsia-500/[0.18] via-[#17101c] to-[#0b090d] p-4">
       <div className="flex items-start justify-between gap-4">
         <ProfileAvatar
           photo={item.userPhoto}
           name={item.userName}
           verified={item.verified}
-          size="large"
         />
 
-        <div className="w-14 h-14 rounded-[20px] border border-fuchsia-300/25 bg-fuchsia-400/15 grid place-items-center text-2xl">
+        <div className="grid h-11 w-11 place-items-center rounded-[16px] border border-fuchsia-300/25 bg-fuchsia-400/15 text-xl">
           🎂
         </div>
       </div>
 
-      <p className="section-label text-fuchsia-200 mt-5">
+      <p className="section-label mt-4 text-fuchsia-200">
         {item.daysUntil === 0
           ? 'Celebración PR'
           : item.daysUntil < 0
@@ -1655,11 +1709,11 @@ function BirthdayCard({
             : 'Próximo cumpleaños'}
       </p>
 
-      <h3 className="font-display text-[29px] leading-tight text-white mt-2">
+      <h3 className="mt-2 font-display text-[25px] leading-tight text-white">
         {item.title}
       </h3>
 
-      <p className="text-fuchsia-100/55 text-sm leading-relaxed mt-3">
+      <p className="mt-2 text-xs leading-relaxed text-fuchsia-100/55">
         {item.description}
       </p>
 
