@@ -4,7 +4,7 @@
 
 - Moments de texto, foto y video con vencimiento de 24 horas.
 - Visibilidad: Todos PR, Solo amigos y Solo yo.
-- Media privada con URLs firmadas de una hora y límite de 15 MB.
+- Media privada con URLs firmadas de una hora y límite de 15 MB, usando el backend existente.
 - Reacciones exclusivas por usuario y comentarios de texto libre.
 - Comentarios separados para RollerFeed, sin modificar las tablas de Strava.
 - Borrado propio y moderación para roles `admin` y `profesor`.
@@ -12,11 +12,9 @@
 
 ## Orden seguro para habilitar una prueba
 
-1. Crear o seleccionar un proyecto Supabase de preview/staging.
-2. Aplicar `supabase/migrations/20260813203000_pr_moments_and_comments.sql` en ese proyecto.
-3. Confirmar que `profiles.auth_user_id` esté vinculado para cada cuenta de prueba.
-4. Configurar en Vercel Preview `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` del proyecto de staging.
-5. Desplegar esta rama como Preview; no promover ni fusionar a `main`.
+1. Confirmar que `profiles.auth_user_id` esté vinculado para cada cuenta de prueba.
+2. Configurar Vercel Preview con las variables públicas de Supabase.
+3. Desplegar esta rama como Preview; no promover ni fusionar a `main`.
 
 ## Matriz manual recomendada
 
@@ -39,8 +37,7 @@
 
 ## Pendiente antes de lanzamiento oficial
 
-- Aplicar y probar la migración contra un Supabase de staging con al menos dos alumnos y un moderador.
-- Ejecutar la matriz manual autenticada, incluida la política `friends`.
-- Crear la Vercel Preview con variables exclusivas de staging.
+- Ejecutar la matriz manual autenticada con al menos dos alumnos y un moderador, incluida la política `friends`.
+- Mantener la Vercel Preview separada de `main`.
 - Opcional: programar limpieza física de archivos expirados; actualmente quedan inaccesibles al vencer, pero no se borran automáticamente del bucket.
 - Revisar la advertencia existente de bundle grande y separar rutas en chunks; no bloquea esta prueba.

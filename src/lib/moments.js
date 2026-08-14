@@ -22,18 +22,18 @@ export function timeLeft(value) {
 }
 
 export async function signMomentMedia(rows) {
-  const paths = [...new Set(rows.map((row) => row.storage_path).filter(Boolean))]
+  const paths = [...new Set(rows.map((row) => row.media_url).filter(Boolean))]
   if (!paths.length) return rows
   const { data, error } = await supabase.storage.from('pr-moments').createSignedUrls(paths, 3600)
   if (error) throw error
   const urls = new Map((data || []).map((item) => [item.path, item.signedUrl]))
-  return rows.map((row) => ({ ...row, media_url: urls.get(row.storage_path) || '' }))
+  return rows.map((row) => ({ ...row, signed_media_url: urls.get(row.media_url) || '' }))
 }
 
 export async function loadActiveMoments() {
   const { data, error } = await supabase
     .from('pr_moments')
-    .select('id,profile_id,media_type,caption,storage_path,visibility,created_at,expires_at')
+    .select('id,profile_id,media_type,caption,media_url,visibility,created_at,expires_at')
     .is('deleted_at', null)
     .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: true })
@@ -41,4 +41,3 @@ export async function loadActiveMoments() {
   if (error) throw error
   return signMomentMedia(data || [])
 }
-

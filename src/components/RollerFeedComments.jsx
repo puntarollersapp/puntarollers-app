@@ -15,7 +15,6 @@ export default function RollerFeedComments({ feedKey, currentProfileId, canModer
       .from('rollerfeed_comments')
       .select('id,feed_key,profile_id,body,created_at')
       .eq('feed_key', String(feedKey))
-      .is('deleted_at', null)
       .order('created_at', { ascending: true })
     if (loadError) { setError('No pudimos cargar los comentarios.'); return }
     setError('')
@@ -55,7 +54,7 @@ export default function RollerFeedComments({ feedKey, currentProfileId, canModer
   async function remove(comment) {
     if (busy) return
     setBusy(true)
-    const { error: removeError } = await supabase.from('rollerfeed_comments').update({ deleted_at: new Date().toISOString(), deleted_by_profile_id: String(currentProfileId) }).eq('id', comment.id)
+    const { error: removeError } = await supabase.from('rollerfeed_comments').delete().eq('id', comment.id)
     if (removeError) setError('No pudimos eliminar el comentario.')
     else setComments((rows) => rows.filter((row) => row.id !== comment.id))
     setBusy(false)
