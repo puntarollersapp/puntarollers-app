@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import VerifiedBadge from '../components/VerifiedBadge'
 
 const GOLD = '#D8B85A'
 
@@ -724,11 +725,7 @@ export default function HistoriaSobreRuedas() {
                           'Alumno Punta Rollers'}
                       </h1>
 
-                      {profile.verificado && (
-                        <span className="text-pr-gold text-base">
-                          ✓
-                        </span>
-                      )}
+                      {profile.verificado && <VerifiedBadge size={20} />}
                     </div>
 
                     <p className="text-white/45 text-xs mt-2">
