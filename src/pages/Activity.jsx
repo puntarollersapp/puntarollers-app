@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase'
 import PRMomentsRail from '../components/PRMomentsRail'
 import RollerFeedComments from '../components/RollerFeedComments'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
+import VerifiedBadge from '../components/VerifiedBadge'
+import RollerFeedWelcome from '../components/RollerFeedWelcome'
 
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
@@ -693,6 +695,7 @@ export default function Activity() {
   const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
   const [moments, setMoments] = useState([])
+  const [showWelcome, setShowWelcome] = useState(false)
   const [reactions, setReactions] = useState([])
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
@@ -702,6 +705,16 @@ export default function Activity() {
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
   const initialSyncDone = useRef(false)
+
+  useEffect(() => {
+    const key = `pr-rollerfeed-welcome-v1:${profileId || 'guest'}`
+    if (window.localStorage.getItem(key) !== 'seen') setShowWelcome(true)
+  }, [profileId])
+
+  function closeWelcome() {
+    window.localStorage.setItem(`pr-rollerfeed-welcome-v1:${profileId || 'guest'}`, 'seen')
+    setShowWelcome(false)
+  }
 
   useEffect(() => {
     let active = true
@@ -1318,7 +1331,10 @@ export default function Activity() {
           </section>
         )}
 
-        <PRMomentsRail currentProfileId={currentReactionProfileId} />
+        <div>
+          <div className="mb-2 flex justify-end"><button type="button" onClick={() => setShowWelcome(true)} className="rounded-full border border-violet-300/15 bg-violet-400/[.06] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-violet-200/70">¿Qué hay de nuevo?</button></div>
+          <PRMomentsRail currentProfileId={currentReactionProfileId} />
+        </div>
 
         <section className="overflow-x-auto -mx-[18px] px-[18px]">
           <div className="flex gap-2 min-w-max">
@@ -1425,6 +1441,7 @@ export default function Activity() {
             onClose={() => setReactionModalItem(null)}
           />
         )}
+        {showWelcome && <RollerFeedWelcome onClose={closeWelcome} />}
       </div>
     </AppLayout>
   )
@@ -1570,11 +1587,7 @@ function ProfileAvatar({
         )}
       </div>
 
-      {verified && (
-        <span className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full bg-sky-500 border-[2px] border-[#111117] grid place-items-center text-white text-[9px] font-bold">
-          ✓
-        </span>
-      )}
+      {verified && <VerifiedBadge size={22} className="absolute -bottom-1.5 -right-1.5" />}
     </div>
   )
 }
