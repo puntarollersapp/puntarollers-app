@@ -6,6 +6,7 @@ import AppLayout from '../layouts/AppLayout'
 import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
 import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 import { InstallAppCard } from '../components/profile/ProfileLaunchSuite'
+import VerifiedBadge from '../components/VerifiedBadge'
 
 const TYPE = {
   Evento: {
@@ -698,11 +699,7 @@ export default function Dashboard() {
                 <h2 className="font-display text-[28px] leading-none text-white">
                   {profile.nombre}
 
-                  {profile.verificado && (
-                    <span className="text-sky-400 text-lg ml-1">
-                      ✓
-                    </span>
-                  )}
+                  {profile.verificado && <VerifiedBadge size={21} className="ml-1" />}
                 </h2>
 
                 <p className="text-white/38 text-xs mt-2">
