@@ -17,6 +17,7 @@ export default function PRKidsInscripciones2026() {
   const [form, setForm] = useState(initialForm)
   const [accepted, setAccepted] = useState(false)
   const [sending, setSending] = useState(false)
+  const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
   const progress = useMemo(() => `${Math.min(step + 1, 4)} / 4`, [step])
   const total = 2000 + (form.quiere_remera ? 690 : 0)
@@ -37,41 +38,61 @@ export default function PRKidsInscripciones2026() {
     return true
   }
 
-  const submit = async () => {
-    if (!accepted) {
-      setError('Confirmá que entendés cómo se completa la reserva.')
+  const buildPayload = () => ({
+    modalidad: 'kids',
+    nombre_completo: form.nombre_nino.trim(),
+    edad: Number(form.edad),
+    localidad: null,
+    email: form.email.trim().toLowerCase(),
+    telefono: form.telefono.trim(),
+    nivel: form.nivel,
+    turno_sabado: 'Sábado 19:00–20:00 · Pista cerrada Maldonado',
+    objetivo_personalizadas: null,
+    monto: total,
+    metodo_pago: 'Prex',
+    estado: 'pre_reserva',
+    comprobante_recibido: false,
+    nombre_responsable: form.nombre_responsable.trim(),
+    quiere_remera: form.quiere_remera,
+  })
+
+  const createPreReservation = async () => {
+    if (!validateData()) return
+
+    if (registrationId) {
+      setStep(3)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
 
     setSending(true)
     setError('')
 
-    const payload = {
-      modalidad: 'kids',
-      nombre_completo: form.nombre_nino.trim(),
-      edad: Number(form.edad),
-      localidad: null,
-      email: form.email.trim().toLowerCase(),
-      telefono: form.telefono.trim(),
-      nivel: form.nivel,
-      turno_sabado: 'Sábado 19:00–20:00 · Pista cerrada Maldonado',
-      objetivo_personalizadas: null,
-      monto: total,
-      metodo_pago: 'Prex',
-      estado: 'pre_reserva',
-      comprobante_recibido: false,
-      nombre_responsable: form.nombre_responsable.trim(),
-      quiere_remera: form.quiere_remera,
-    }
+    const { data, error: insertError } = await supabase
+      .from('pr_inscripciones_2026')
+      .insert(buildPayload())
+      .select('id')
+      .single()
 
-    const { error: insertError } = await supabase.from('pr_inscripciones_2026').insert(payload)
     setSending(false)
 
     if (insertError) {
-      setError('No pudimos guardar la inscripción. Probá nuevamente en unos minutos.')
+      setError('No pudimos guardar la pre-reserva. Probá nuevamente en unos minutos.')
       return
     }
 
+    setRegistrationId(data?.id || '')
+    setStep(3)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const submit = () => {
+    if (!accepted) {
+      setError('Confirmá que entendés cómo se completa la reserva.')
+      return
+    }
+
+    setError('')
     setStep(4)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -166,7 +187,7 @@ export default function PRKidsInscripciones2026() {
               <p>Viene seleccionada porque forma parte del uniforme de la escuela, pero podés destildarla si preferís adquirirla más adelante.</p>
             </div>
             {error && <p className="prk-error">{error}</p>}
-            <button className="prk-primary" onClick={() => validateData() && setStep(3)}>Ver pago y confirmar →</button>
+            <button className="prk-primary" disabled={sending} onClick={createPreReservation}>{sending ? 'Guardando pre-reserva…' : 'Continuar al pago →'}</button>
           </div>
         )}
 
@@ -176,7 +197,8 @@ export default function PRKidsInscripciones2026() {
             <div className="prk-final-icon">🏁</div>
             <p className="prk-kicker">ÚLTIMO PASO</p>
             <h1>Reservá su lugar en PR Kids.</h1>
-            <p className="prk-lead">Revisá los datos y realizá la transferencia para completar la reserva.</p>
+            <p className="prk-lead">La pre-reserva ya quedó registrada. Ahora realizá la transferencia para completar la reserva.</p>
+            <div className="prk-note-card prk-success-note"><span>✅</span><div><b>Pre-reserva registrada</b><p>Aunque cierres esta página, los datos del alumno ya quedaron guardados en Punta Rollers.</p></div></div>
             <div className="prk-summary">
               <div><span>🧒 Alumno/a</span><b>{form.nombre_nino}</b></div>
               <div><span>🗓️ Horario</span><b>Sábado · 19:00 a 20:00</b></div>
@@ -194,7 +216,7 @@ export default function PRKidsInscripciones2026() {
             <div className="prk-note-card"><span>📲</span><div><b>Después de transferir</b><p>Identificá la transferencia con el nombre del alumno y enviá el comprobante al WhatsApp de Punta Rollers: <strong>098 971 505</strong>.</p></div></div>
             <label className="prk-accept"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} /><span>Entiendo que el lugar se confirma una vez que Punta Rollers verifica el pago.</span></label>
             {error && <p className="prk-error">{error}</p>}
-            <button className="prk-primary" disabled={sending} onClick={submit}>{sending ? 'Guardando…' : 'Enviar inscripción ✓'}</button>
+            <button className="prk-primary" onClick={submit}>Ya transferí · finalizar ✓</button>
           </div>
         )}
 
