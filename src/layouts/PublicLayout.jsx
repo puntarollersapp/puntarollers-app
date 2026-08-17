@@ -1,7 +1,20 @@
+import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 export default function PublicLayout({ children }) {
   const location = useLocation()
+
+  useEffect(() => {
+    const legacyKidsLinks = document.querySelectorAll(
+      'a[href="https://form.jotform.com/Claudinio/inscripcioneskids"]'
+    )
+
+    legacyKidsLinks.forEach((link) => {
+      link.setAttribute('href', '/inscripciones-kids-2026')
+      link.removeAttribute('target')
+      link.removeAttribute('rel')
+    })
+  }, [location.pathname])
 
   const goTo = (target) => (event) => {
     event.preventDefault()
