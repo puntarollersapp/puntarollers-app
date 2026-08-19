@@ -32,6 +32,7 @@ import Insignias from './pages/Insignias'
 import Inscripciones2026 from './pages/Inscripciones2026'
 import AdminInscripciones2026 from './pages/AdminInscripciones2026'
 import PRKidsInscripciones2026 from './pages/PRKidsInscripciones2026'
+import ClinicaMiguelSept2026 from './pages/ClinicaMiguelSept2026'
 import PRMoments from './pages/PRMoments'
 
 function ScrollToTop() {
@@ -152,6 +153,7 @@ function AppRoutes() {
         <Route path="/rollerfeed" element={<PublicRollerFeed />} />
         <Route path="/inscripciones-2026" element={<Inscripciones2026 />} />
         <Route path="/inscripciones-kids-2026" element={<PRKidsInscripciones2026 />} />
+        <Route path="/clinica-miguel-septiembre" element={<ClinicaMiguelSept2026 />} />
 
         <Route path="/alianza" element={<Alianza />} />
         <Route path="/cuponeras" element={<Cuponeras />} />
