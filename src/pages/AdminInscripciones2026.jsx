@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import ClinicaAdminMini from '../components/ClinicaAdminMini'
 import './AdminInscripciones2026.css'
 
 const statusLabel = {
@@ -97,6 +98,8 @@ export default function AdminInscripciones2026() {
         <article><span>PR Kids</span><strong>{stats.kids}</strong></article>
         <article><span>Pagos verificados</span><strong>{stats.confirmadas}</strong></article>
       </section>
+
+      <ClinicaAdminMini />
 
       <section className="pr-admin-tools">
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar alumno, responsable, email, teléfono…" />
