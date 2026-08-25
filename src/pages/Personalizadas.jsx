@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import PublicLayout from '../layouts/PublicLayout'
 import { supabase } from '../lib/supabase'
+import './Personalizadas.css'
 
 const callPersonal = async (payload) => {
   const { data, error } = await supabase.functions.invoke('pr-personal-public', { body: payload })
@@ -14,36 +15,53 @@ const formatTime = (value) => String(value || '').slice(0, 5)
 
 function PassCard({ student, pass }) {
   const total = Math.max(0, Number(pass?.clases_cargadas || 0))
-  const used = Math.max(0, Number(pass?.clases_utilizadas || 0))
+  const used = Math.min(total, Math.max(0, Number(pass?.clases_utilizadas || 0)))
+  const left = Math.max(0, Number(pass?.clases_disponibles || 0))
+  const cols = total <= 2 ? 'grid-cols-2' : total <= 4 ? 'grid-cols-4' : 'grid-cols-4 sm:grid-cols-5'
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-white/[.10] via-white/[.04] to-black p-5 shadow-2xl">
-      <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-red-500/15 blur-3xl" />
+    <section className="pr-pass-enter pr-pass-sheen relative overflow-hidden rounded-[30px] border border-white/10 bg-gradient-to-br from-[#251010] via-[#111] to-black p-5 shadow-[0_28px_90px_rgba(0,0,0,.45)]">
+      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-red-500/20 blur-3xl" />
+      <div className="absolute -bottom-20 -left-16 h-44 w-44 rounded-full bg-white/[.04] blur-3xl" />
       <div className="relative">
-        <p className="text-[10px] font-black uppercase tracking-[.28em] text-red-300">PR PASS · PERSONAL</p>
-        <div className="mt-3 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-white">{student?.nombre || 'Alumno'} {student?.apellido || ''}</h2>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[10px] font-black uppercase tracking-[.3em] text-red-300">PR PASS · PERSONAL</p>
+          <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[9px] font-black uppercase tracking-[.18em] text-white/35">Activa</span>
+        </div>
+
+        <div className="mt-4 flex items-end justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="truncate text-2xl font-black text-white">{student?.nombre || 'Alumno'} {student?.apellido || ''}</h2>
             <p className="mt-1 text-sm text-white/45">{pass?.nombre_cuponera || `Cuponera de ${total} clases`}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-black/30 px-3 py-2 text-right">
-            <p className="text-[10px] uppercase tracking-widest text-white/35">Disponibles</p>
-            <p className="text-2xl font-black text-white">{pass?.clases_disponibles ?? 0}</p>
+          <div className="shrink-0 rounded-2xl border border-white/10 bg-black/35 px-4 py-2 text-right">
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/30">Te quedan</p>
+            <p className="text-2xl font-black text-white">{left}</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-4 gap-3">
+
+        <div className={`mt-6 grid ${cols} gap-3`}>
           {Array.from({ length: total }).map((_, index) => {
             const completed = index < used
             return (
-              <div key={index} className={`aspect-square rounded-2xl border flex items-center justify-center transition-all ${completed ? 'border-red-400/60 bg-red-500/20 shadow-[0_0_28px_rgba(239,68,68,.16)]' : 'border-white/10 bg-white/[.035]'}`}>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-black ${completed ? 'rotate-[-9deg] border-red-300 text-red-200' : 'border-white/15 text-white/25'}`}>
-                  {completed ? 'PR' : index + 1}
-                </div>
+              <div key={index} className={`pr-pass-slot relative aspect-square overflow-hidden rounded-2xl border flex items-center justify-center ${completed ? 'border-red-400/45 bg-red-500/15 shadow-[inset_0_0_24px_rgba(239,68,68,.07)]' : 'border-white/10 bg-white/[.035]'}`}>
+                <div className="absolute left-2 top-2 text-[8px] font-black uppercase tracking-widest text-white/20">{String(index + 1).padStart(2, '0')}</div>
+                {completed ? (
+                  <div className="pr-pass-stamp flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-300/80 text-[11px] font-black tracking-tight text-red-200 shadow-lg">
+                    PR
+                  </div>
+                ) : (
+                  <div className="h-11 w-11 rounded-full border border-dashed border-white/15" />
+                )}
               </div>
             )
           })}
         </div>
-        <p className="mt-4 text-xs text-white/35">Cada clase realizada recibe su sello PR. Reservar no descuenta una clase hasta que la clase se complete.</p>
+
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+          <p className="text-xs text-white/35">{used} de {total} clases realizadas</p>
+          <p className="text-[9px] font-black uppercase tracking-[.18em] text-white/25">Punta Rollers</p>
+        </div>
       </div>
     </section>
   )
@@ -92,6 +110,7 @@ export default function Personalizadas() {
     event.preventDefault()
     setBusy(true)
     setMessage('')
+    setConfirmed(null)
     try {
       const data = await callPersonal({ action: 'identify', phone })
       if (!data.found) {
@@ -176,7 +195,7 @@ export default function Personalizadas() {
                 <p className="mb-3 text-sm font-black uppercase tracking-wider text-white">{formatDay(date)}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {daySlots.map((slot) => (
-                    <button key={slot.id} onClick={() => setSelected(slot)} className={`rounded-2xl border px-3 py-4 text-left transition ${selected?.id === slot.id ? 'border-red-400 bg-red-500/15' : 'border-white/10 bg-black/25'}`}>
+                    <button key={slot.id} onClick={() => setSelected(slot)} className={`rounded-2xl border px-3 py-4 text-left transition ${selected?.id === slot.id ? 'border-red-400 bg-red-500/15 shadow-[0_12px_35px_rgba(239,68,68,.12)]' : 'border-white/10 bg-black/25'}`}>
                       <p className="text-lg font-black text-white">{formatTime(slot.hora_inicio)}</p>
                       <p className="text-xs text-white/35">hasta {formatTime(slot.hora_fin)}</p>
                     </button>
@@ -191,11 +210,11 @@ export default function Personalizadas() {
         )}
 
         {student && pass && Number(pass.clases_disponibles) <= 0 && (
-          <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5 text-sm text-amber-100">Tu cuponera está completa. Contactanos para cargar una nueva y seguir reservando.</div>
+          <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-5 text-sm text-amber-100">Tu PR Pass está completa. Contactanos para cargar una nueva y seguir reservando.</div>
         )}
 
         {confirmed && (
-          <div className="rounded-[28px] border border-emerald-300/20 bg-emerald-400/10 p-6">
+          <div className="pr-pass-enter rounded-[28px] border border-emerald-300/20 bg-emerald-400/10 p-6">
             <p className="text-[10px] font-black uppercase tracking-[.28em] text-emerald-200">Reserva confirmada</p>
             <h2 className="mt-2 text-2xl font-black text-white">¡Nos vemos sobre ruedas! 🛼</h2>
             <p className="mt-2 text-sm text-white/55">{formatDay(confirmed.slot.fecha)} · {formatTime(confirmed.slot.hora_inicio)} a {formatTime(confirmed.slot.hora_fin)}.</p>
