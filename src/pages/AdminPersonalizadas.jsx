@@ -7,6 +7,17 @@ const hhmm = (v) => String(v || '').slice(0, 5)
 const iso = (d) => d.toISOString().slice(0, 10)
 const day = (v) => new Intl.DateTimeFormat('es-UY', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' }).format(new Date(`${v}T12:00:00Z`))
 const dateTime = (v) => v ? new Intl.DateTimeFormat('es-UY', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Montevideo' }).format(new Date(v)) : '—'
+const TIME_OPTIONS = Array.from({ length: 46 }, (_, i) => {
+  const hours = Math.floor(i / 2)
+  const minutes = i % 2 === 0 ? '00' : '30'
+  return `${String(hours).padStart(2, '0')}:${minutes}`
+})
+
+function addOneHour(value) {
+  const [hours, minutes] = String(value || '').split(':').map(Number)
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return ''
+  return `${String(hours + 1).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
 
 function mondayOf(date = new Date()) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
@@ -34,7 +45,7 @@ export default function AdminPersonalizadas() {
   const [students, setStudents] = useState([])
   const [passes, setPasses] = useState([])
   const [history, setHistory] = useState([])
-  const [slot, setSlot] = useState({ fecha: '', hora_inicio: '', hora_fin: '' })
+  const [slot, setSlot] = useState({ fecha: '', hora_inicio: '' })
   const [student, setStudent] = useState({ nombre: '', apellido: '', telefono: '', email: '', clases: 4 })
   const [selectedStudentId, setSelectedStudentId] = useState(null)
   const [creditAmount, setCreditAmount] = useState(4)
@@ -113,17 +124,21 @@ export default function AdminPersonalizadas() {
 
   const addSlot = async (e) => {
     e.preventDefault()
-    if (!slot.fecha || !slot.hora_inicio || !slot.hora_fin) return
-    if (slot.hora_fin <= slot.hora_inicio) return setNotice('La hora de fin debe ser posterior a la hora de inicio.')
+    if (!slot.fecha || !slot.hora_inicio) return setNotice('Elegí una fecha y una hora de inicio.')
+    const minute = slot.hora_inicio.slice(3, 5)
+    if (!['00', '30'].includes(minute)) return setNotice('Los turnos solo pueden comenzar en punto o y media.')
+    const hora_fin = addOneHour(slot.hora_inicio)
+    if (!hora_fin) return setNotice('La hora seleccionada no es válida.')
+
     setBusy(true)
-    const existing = slots.find((x) => x.fecha === slot.fecha && hhmm(x.hora_inicio) === slot.hora_inicio && hhmm(x.hora_fin) === slot.hora_fin)
+    const existing = slots.find((x) => x.fecha === slot.fecha && hhmm(x.hora_inicio) === slot.hora_inicio && hhmm(x.hora_fin) === hora_fin)
     let error = null
     if (existing) ({ error } = await supabase.from('pr_personal_disponibilidad').update({ habilitado: true, updated_at: new Date().toISOString() }).eq('id', existing.id))
-    else ({ error } = await supabase.from('pr_personal_disponibilidad').insert({ ...slot, habilitado: true }))
+    else ({ error } = await supabase.from('pr_personal_disponibilidad').insert({ fecha: slot.fecha, hora_inicio: slot.hora_inicio, hora_fin, habilitado: true }))
     setBusy(false)
     if (error) return setNotice(error.message)
-    setSlot({ fecha: '', hora_inicio: '', hora_fin: '' })
-    setNotice('Turno publicado.')
+    setSlot({ fecha: '', hora_inicio: '' })
+    setNotice(`Turno publicado · ${slot.hora_inicio}–${hora_fin}.`)
     await load()
   }
 
@@ -238,7 +253,7 @@ export default function AdminPersonalizadas() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-[28px] border border-white/10 bg-white/[.035] p-5"><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">Nueva cuponera</p><h2 className="mt-1 text-xl font-black">Crear PR Pass</h2><form onSubmit={addPass} className="mt-4 grid grid-cols-2 gap-3"><input placeholder="Nombre" value={student.nombre} onChange={(e) => setStudent({ ...student, nombre: e.target.value })} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><input placeholder="Apellido" value={student.apellido} onChange={(e) => setStudent({ ...student, apellido: e.target.value })} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><input placeholder="WhatsApp" value={student.telefono} onChange={(e) => setStudent({ ...student, telefono: e.target.value })} className="col-span-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><input placeholder="Email (opcional)" value={student.email} onChange={(e) => setStudent({ ...student, email: e.target.value })} className="col-span-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><select value={student.clases} onChange={(e) => setStudent({ ...student, clases: Number(e.target.value) })} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm">{[1,2,4,5,8,10].map((n) => <option key={n} value={n}>{n} clase{n === 1 ? '' : 's'}</option>)}</select><button disabled={busy} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-black">Crear</button></form></section>
-          <section className="rounded-[28px] border border-white/10 bg-white/[.035] p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">Agenda semanal</p><h2 className="mt-1 text-xl font-black">Agregar horario</h2></div><button disabled={busy} onClick={duplicatePreviousWeek} className="rounded-xl border border-white/10 bg-white/[.04] px-3 py-2 text-[11px] font-black">Duplicar semana</button></div><form onSubmit={addSlot} className="mt-4 grid grid-cols-2 gap-3"><input type="date" value={slot.fecha} onChange={(e) => setSlot({ ...slot, fecha: e.target.value })} className="col-span-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><input type="time" value={slot.hora_inicio} onChange={(e) => setSlot({ ...slot, hora_inicio: e.target.value })} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><input type="time" value={slot.hora_fin} onChange={(e) => setSlot({ ...slot, hora_fin: e.target.value })} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><button disabled={busy} className="col-span-2 rounded-2xl bg-red-500 px-4 py-3 text-sm font-black">Publicar turno</button></form><div className="mt-4 max-h-64 space-y-2 overflow-auto">{futureSlots.map((x) => <div key={x.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3"><div><p className="text-sm font-black">{day(x.fecha)}</p><p className="text-xs text-white/40">{hhmm(x.hora_inicio)}–{hhmm(x.hora_fin)}</p></div><button onClick={async () => { await supabase.from('pr_personal_disponibilidad').update({ habilitado: false }).eq('id', x.id); load() }} className="text-xs font-bold text-red-300">Ocultar</button></div>)}</div></section>
+          <section className="rounded-[28px] border border-white/10 bg-white/[.035] p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">Agenda semanal</p><h2 className="mt-1 text-xl font-black">Agregar horario</h2></div><button disabled={busy} onClick={duplicatePreviousWeek} className="rounded-xl border border-white/10 bg-white/[.04] px-3 py-2 text-[11px] font-black">Duplicar semana</button></div><form onSubmit={addSlot} className="mt-4 grid grid-cols-2 gap-3"><input type="date" value={slot.fecha} onChange={(e) => setSlot({ ...slot, fecha: e.target.value })} className="col-span-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm" /><select value={slot.hora_inicio} onChange={(e) => setSlot({ ...slot, hora_inicio: e.target.value })} className="col-span-2 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm"><option value="">Hora de inicio</option>{TIME_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select><div className="col-span-2 rounded-2xl border border-white/10 bg-white/[.03] px-4 py-3"><p className="text-[10px] font-black uppercase tracking-widest text-white/30">Duración automática</p><p className="mt-1 text-sm font-black text-white/70">{slot.hora_inicio ? `${slot.hora_inicio}–${addOneHour(slot.hora_inicio)} · 1 hora` : 'Todas las clases duran 1 hora'}</p></div><button disabled={busy} className="col-span-2 rounded-2xl bg-red-500 px-4 py-3 text-sm font-black">Publicar turno</button></form><div className="mt-4 max-h-64 space-y-2 overflow-auto">{futureSlots.map((x) => <div key={x.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3"><div><p className="text-sm font-black">{day(x.fecha)}</p><p className="text-xs text-white/40">{hhmm(x.hora_inicio)}–{hhmm(x.hora_fin)}</p></div><button onClick={async () => { await supabase.from('pr_personal_disponibilidad').update({ habilitado: false }).eq('id', x.id); load() }} className="text-xs font-bold text-red-300">Ocultar</button></div>)}</div></section>
         </div>
 
         <section className="rounded-[28px] border border-white/10 bg-white/[.035] p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">Alumnos</p><h2 className="mt-1 text-xl font-black">PR Personal</h2><p className="mt-1 text-xs text-white/35">Entrá a la ficha para ver saldo, próximas clases, teléfono e historial.</p></div><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar nombre o teléfono" className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm sm:max-w-xs" /></div><div className="mt-4 grid gap-2 md:grid-cols-2">{filteredStudents.map((s) => { const p = passes.find((x) => x.alumno_id === s.id && x.habilitada && x.estado === 'activa'); const next = reservations.find((r) => r.alumno_id === s.id && r.estado === 'reservada'); const nextSlot = next ? slotMap[next.disponibilidad_id] : null; return <button key={s.id} onClick={() => setSelectedStudentId(s.id)} className={`rounded-2xl border p-4 text-left transition ${selectedStudentId === s.id ? 'border-red-400/40 bg-red-500/10' : 'border-white/10 bg-black/20'}`}><div className="flex items-start gap-3"><Avatar student={s} /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-black">{s.nombre} {s.apellido || ''}</p><p className={`mt-1 text-xs ${s.telefono ? 'text-white/40' : 'font-bold text-amber-300'}`}>{s.telefono || '⚠ Sin teléfono'}</p></div><span className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-[10px] font-black">{p ? `${p.clases_disponibles} clases` : 'Sin pass'}</span></div>{nextSlot && <p className="mt-3 text-xs text-red-200">Próxima: {day(nextSlot.fecha)} · {hhmm(nextSlot.hora_inicio)}</p>}</div></div></button>})}</div></section>
