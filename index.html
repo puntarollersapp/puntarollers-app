@@ -2,86 +2,48 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-
-    <meta
-      name="description"
-      content="Punta Rollers App — La aplicación oficial de Punta Rollers."
-    />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Punta Rollers App — La aplicación oficial de Punta Rollers." />
     <meta name="theme-color" content="#0a0a0f" />
-
-    <meta
-      name="mobile-web-app-capable"
-      content="yes"
-    />
-
-    <meta
-      name="apple-mobile-web-app-capable"
-      content="yes"
-    />
-
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-
-    <meta
-      name="apple-mobile-web-app-title"
-      content="PR App"
-    />
-
-    <link
-      rel="manifest"
-      href="/manifest.webmanifest"
-    />
-
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="64x64"
-      href="/favicon-64x64.png"
-    />
-
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/apple-touch-icon.png"
-    />
-
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PR App" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64x64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="/pr-personal-overrides.css" />
-
     <title>Punta Rollers App</title>
   </head>
-
   <body>
     <div id="root"></div>
-
-    <script
-      type="module"
-      src="/src/main.jsx"
-    ></script>
+    <script type="module" src="/src/main.jsx"></script>
     <script>
       (() => {
-        const upgradeAdminPersonal = () => {
-          if (location.pathname !== '/admin/personalizadas') return
-          document.querySelectorAll('button').forEach((button) => {
-            if (button.textContent.trim() === 'Avisó') {
-              button.textContent = 'Cancelar y liberar turno'
-              button.classList.add('pr-admin-cancel-release')
-              button.setAttribute('title', 'Cancela la reserva y vuelve a dejar este horario disponible')
-              button.setAttribute('aria-label', 'Cancelar y liberar turno')
+        const upgradeUI = () => {
+          if (location.pathname === '/admin/personalizadas') {
+            document.querySelectorAll('button').forEach((button) => {
+              if (button.textContent.trim() === 'Avisó') {
+                button.textContent = 'Cancelar y liberar turno'
+                button.classList.add('pr-admin-cancel-release')
+                button.setAttribute('title', 'Cancela la reserva y vuelve a dejar este horario disponible')
+                button.setAttribute('aria-label', 'Cancelar y liberar turno')
+              }
+            })
+          }
+          if (location.pathname === '/personalizadas') {
+            const title = document.querySelector('.pr-hero h1')
+            if (title && title.textContent.includes('Tu entrenamiento.')) {
+              title.childNodes.forEach((node) => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('Tu entrenamiento.')) node.textContent = node.textContent.replace('Tu entrenamiento.', 'Tu clase.')
+              })
             }
-          })
+          }
         }
-        const observer = new MutationObserver(upgradeAdminPersonal)
+        const observer = new MutationObserver(upgradeUI)
         observer.observe(document.documentElement, { childList: true, subtree: true })
-        addEventListener('popstate', upgradeAdminPersonal)
-        upgradeAdminPersonal()
+        addEventListener('popstate', upgradeUI)
+        upgradeUI()
       })()
     </script>
   </body>
