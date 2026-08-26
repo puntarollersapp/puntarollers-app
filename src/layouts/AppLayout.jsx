@@ -320,6 +320,12 @@ export default function AppLayout({
     navigate('/')
   }
 
+  const showPrPersonalShortcut =
+    !checkingAccess &&
+    !accessBlocked &&
+    accessProfile?.role === 'admin' &&
+    location.pathname === '/admin'
+
   return (
     <div className="app-shell pb-24">
       <Header
@@ -358,6 +364,19 @@ export default function AppLayout({
 
       {!checkingAccess &&
         !accessBlocked && <BottomNav />}
+
+      {showPrPersonalShortcut && (
+        <button
+          type="button"
+          onClick={() => navigate('/admin/personalizadas')}
+          className="fixed bottom-[88px] left-4 z-[72] rounded-[20px] border border-red-300/20 bg-[#191012]/95 px-4 py-3 text-left shadow-[0_18px_55px_rgba(0,0,0,.55)] backdrop-blur-xl transition active:scale-[0.98]"
+          aria-label="Abrir PR Personal"
+        >
+          <p className="text-[9px] font-black uppercase tracking-[.2em] text-red-300">ADMIN</p>
+          <p className="mt-0.5 text-sm font-black text-white">PR Personal</p>
+          <p className="mt-0.5 text-[10px] text-white/40">Agenda · reservas · alumnos</p>
+        </button>
+      )}
 
       {dmToast && (
         <button
