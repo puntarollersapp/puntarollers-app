@@ -147,7 +147,7 @@ export default function Personalizadas() {
   }
 
   const reserve = async () => {
-    if (!selected) return
+    if (!selected || selected.ocupado) return
     setBusy(true)
     setMessage('')
     try {
@@ -187,7 +187,7 @@ export default function Personalizadas() {
           <p className="text-[10px] font-black uppercase tracking-[.34em] text-red-300">PR PERSONAL</p>
           {demoMode && <p className="inline-flex rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.2em] text-amber-100">Demo controlada · Preview</p>}
           <h1 className="text-4xl font-black tracking-tight text-white">Tu entrenamiento.<br />Tu horario.</h1>
-          <p className="max-w-md text-sm leading-relaxed text-white/45">Ingresá tu teléfono, revisá tu PR Pass y reservá uno de los turnos disponibles de esta semana.</p>
+          <p className="max-w-md text-sm leading-relaxed text-white/45">Ingresá tu teléfono, revisá tu PR Pass y reservá hasta 2 clases por semana.</p>
         </header>
 
         {!student && (
@@ -214,7 +214,7 @@ export default function Personalizadas() {
             <div>
               <p className="text-[10px] font-black uppercase tracking-[.28em] text-white/35">Disponibilidad</p>
               <h2 className="mt-1 text-2xl font-black text-white">Elegí tu próxima clase</h2>
-              <p className="mt-1 text-xs text-white/35">Podés reservar {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} más con tu PR Pass actual.</p>
+              <p className="mt-1 text-xs text-white/35">Los turnos ocupados siguen visibles para que puedas organizarte. Cada horario admite una sola persona.</p>
             </div>
             {days.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/[.035] p-5 text-sm text-white/45">Todavía no hay horarios publicados.</div>
@@ -222,16 +222,33 @@ export default function Personalizadas() {
               <div key={date} className="rounded-[26px] border border-white/10 bg-white/[.035] p-4">
                 <p className="mb-3 text-sm font-black uppercase tracking-wider text-white">{formatDay(date)}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {daySlots.map((slot) => (
-                    <button key={slot.id} onClick={() => setSelected(slot)} className={`rounded-2xl border px-3 py-4 text-left transition ${selected?.id === slot.id ? 'border-red-400 bg-red-500/15 shadow-[0_12px_35px_rgba(239,68,68,.12)]' : 'border-white/10 bg-black/25'}`}>
-                      <p className="text-lg font-black text-white">{formatTime(slot.hora_inicio)}</p>
-                      <p className="text-xs text-white/35">hasta {formatTime(slot.hora_fin)}</p>
-                    </button>
-                  ))}
+                  {daySlots.map((slot) => {
+                    const occupied = Boolean(slot.ocupado)
+                    const selectedNow = selected?.id === slot.id
+                    return (
+                      <button
+                        key={slot.id}
+                        type="button"
+                        disabled={occupied}
+                        onClick={() => !occupied && setSelected(slot)}
+                        className={`rounded-2xl border px-3 py-4 text-left transition ${occupied ? 'cursor-not-allowed border-white/5 bg-white/[.025] opacity-55' : selectedNow ? 'border-red-400 bg-red-500/15 shadow-[0_12px_35px_rgba(239,68,68,.12)]' : 'border-white/10 bg-black/25 hover:border-white/20'}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className={`text-lg font-black ${occupied ? 'text-white/45' : 'text-white'}`}>{formatTime(slot.hora_inicio)}</p>
+                            <p className="text-xs text-white/35">hasta {formatTime(slot.hora_fin)}</p>
+                          </div>
+                          <span className={`rounded-full px-2 py-1 text-[8px] font-black uppercase tracking-wider ${occupied ? 'border border-red-300/20 bg-red-500/10 text-red-200/75' : 'border border-emerald-300/20 bg-emerald-400/10 text-emerald-200'}`}>
+                            {occupied ? 'Reservado' : 'Disponible'}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             ))}
-            {selected && <button disabled={busy} onClick={reserve} className="w-full rounded-2xl bg-red-500 px-5 py-4 text-sm font-black text-white shadow-[0_18px_50px_rgba(239,68,68,.22)] disabled:opacity-50">{busy ? 'Reservando…' : `Confirmar ${formatDay(selected.fecha)} · ${formatTime(selected.hora_inicio)}`}</button>}
+            {selected && !selected.ocupado && <button disabled={busy} onClick={reserve} className="w-full rounded-2xl bg-red-500 px-5 py-4 text-sm font-black text-white shadow-[0_18px_50px_rgba(239,68,68,.22)] disabled:opacity-50">{busy ? 'Reservando…' : `Confirmar ${formatDay(selected.fecha)} · ${formatTime(selected.hora_inicio)}`}</button>}
           </section>
         )}
 
