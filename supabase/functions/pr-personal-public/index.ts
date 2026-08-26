@@ -12,6 +12,7 @@ const FROM_EMAIL = 'Punta Rollers <onboarding@resend.dev>'
 const DEMO_PROFILE_ID = 'pr_personal_demo_v1'
 const DEMO_MARKER = '[DEMO PR PERSONAL]'
 const DEMO_PREVIEW_HOST = 'puntarollers-app-git-feature-p-6b1f8f-puntarollersapps-projects.vercel.app'
+const WEEKLY_BOOKING_LIMIT = 2
 
 const normalizePhone = (value: unknown) => String(value ?? '').replace(/\D/g, '')
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: cors })
@@ -26,6 +27,20 @@ function demoAllowed(req: Request, body: any) {
   } catch {
     return false
   }
+}
+
+function isoDateUTC(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function weekBounds(dateValue: string) {
+  const d = new Date(`${dateValue}T12:00:00Z`)
+  const day = d.getUTCDay() || 7
+  const monday = new Date(d)
+  monday.setUTCDate(d.getUTCDate() - day + 1)
+  const sunday = new Date(monday)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+  return { from: isoDateUTC(monday), to: isoDateUTC(sunday) }
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -81,7 +96,7 @@ Deno.serve(async (req) => {
       .single()
     if (configError) throw configError
 
-    const config = { ...storedConfig, reservas_habilitadas: demo || storedConfig.reservas_habilitadas, demo }
+    const config = { ...storedConfig, reservas_habilitadas: demo || storedConfig.reservas_habilitadas, demo, limite_semanal: WEEKLY_BOOKING_LIMIT }
     if (action === 'config') return json({ config })
 
     if (action === 'availability') {
@@ -108,7 +123,15 @@ Deno.serve(async (req) => {
         if (rError) throw rError
         occupied = new Set((reservations || []).map((r: any) => Number(r.disponibilidad_id)))
       }
-      return json({ config, slots: slots.filter((s: any) => !occupied.has(Number(s.id))).map(({ nota_interna: _note, ...s }: any) => s) })
+
+      return json({
+        config,
+        slots: slots.map(({ nota_interna: _note, ...s }: any) => ({
+          ...s,
+          ocupado: occupied.has(Number(s.id)),
+          estado_publico: occupied.has(Number(s.id)) ? 'reservado' : 'disponible',
+        })),
+      })
     }
 
     if (action === 'identify') {
@@ -161,6 +184,7 @@ Deno.serve(async (req) => {
         upcoming: upcomingDetailed,
         reservedCredits: upcomingDetailed.length,
         bookableCredits: Math.max(0, Number(pass?.clases_disponibles || 0) - upcomingDetailed.length),
+        weeklyLimit: WEEKLY_BOOKING_LIMIT,
       })
     }
 
@@ -185,27 +209,6 @@ Deno.serve(async (req) => {
       if (!pass) return json({ error: 'Tu cuponera no tiene clases disponibles.' }, 409)
 
       const today = new Date().toISOString().slice(0, 10)
-      const { data: activeReservations, error: activeError } = await db
-        .from('pr_personal_reservas')
-        .select('disponibilidad_id')
-        .eq('alumno_id', profile.id)
-        .eq('estado', 'reservada')
-      if (activeError) throw activeError
-
-      let activeFutureCount = 0
-      if ((activeReservations || []).length) {
-        const activeIds = (activeReservations || []).map((r: any) => r.disponibilidad_id)
-        const { data: activeSlots, error: activeSlotsError } = await db
-          .from('pr_personal_disponibilidad')
-          .select('id,fecha')
-          .in('id', activeIds)
-        if (activeSlotsError) throw activeSlotsError
-        activeFutureCount = (activeSlots || []).filter((s: any) => s.fecha >= today).length
-      }
-      if (activeFutureCount >= Number(pass.clases_disponibles || 0)) {
-        return json({ error: 'Ya tenés reservadas todas las clases disponibles de tu PR Pass. Si necesitás cambiar un turno, contactanos.' }, 409)
-      }
-
       const { data: slot, error: slotError } = await db
         .from('pr_personal_disponibilidad')
         .select('id,fecha,hora_inicio,hora_fin,habilitado,nota_interna')
@@ -216,13 +219,42 @@ Deno.serve(async (req) => {
       const correctSlotScope = demo ? slot?.nota_interna === DEMO_MARKER : slot?.nota_interna !== DEMO_MARKER
       if (slotError || !slot || !correctSlotScope) return json({ error: 'Ese turno ya no está disponible.' }, 409)
 
+      const { from: weekFrom, to: weekTo } = weekBounds(slot.fecha)
+      const { data: activeReservations, error: activeError } = await db
+        .from('pr_personal_reservas')
+        .select('disponibilidad_id')
+        .eq('alumno_id', profile.id)
+        .eq('estado', 'reservada')
+      if (activeError) throw activeError
+
+      let activeFutureCount = 0
+      let weeklyCount = 0
+      if ((activeReservations || []).length) {
+        const activeIds = (activeReservations || []).map((r: any) => r.disponibilidad_id)
+        const { data: activeSlots, error: activeSlotsError } = await db
+          .from('pr_personal_disponibilidad')
+          .select('id,fecha')
+          .in('id', activeIds)
+        if (activeSlotsError) throw activeSlotsError
+        activeFutureCount = (activeSlots || []).filter((s: any) => s.fecha >= today).length
+        weeklyCount = (activeSlots || []).filter((s: any) => s.fecha >= weekFrom && s.fecha <= weekTo).length
+      }
+
+      if (weeklyCount >= WEEKLY_BOOKING_LIMIT) {
+        return json({ error: `Ya tenés ${WEEKLY_BOOKING_LIMIT} clases reservadas para esa semana. Podés elegir otro horario de una semana diferente.` }, 409)
+      }
+
+      if (activeFutureCount >= Number(pass.clases_disponibles || 0)) {
+        return json({ error: 'Ya tenés reservadas todas las clases disponibles de tu PR Pass. Si necesitás cambiar un turno, contactanos.' }, 409)
+      }
+
       const { data: reservation, error: reserveError } = await db
         .from('pr_personal_reservas')
         .insert({ disponibilidad_id: slot.id, alumno_id: profile.id, cuponera_id: pass.id, estado: 'reservada', nota_interna: demo ? DEMO_MARKER : null })
         .select('id,estado,fecha_reserva')
         .single()
       if (reserveError) {
-        if (reserveError.code === '23505') return json({ error: 'Ese turno acaba de ser reservado. Elegí otro horario.' }, 409)
+        if (reserveError.code === '23505') return json({ error: 'Ese turno acaba de ser reservado por otra persona. Elegí otro horario.' }, 409)
         throw reserveError
       }
 
@@ -245,6 +277,8 @@ Deno.serve(async (req) => {
         slot: { id: slot.id, fecha: slot.fecha, hora_inicio: slot.hora_inicio, hora_fin: slot.hora_fin },
         student: { nombre: profile.nombre, apellido: profile.apellido },
         pass,
+        weeklyLimit: WEEKLY_BOOKING_LIMIT,
+        weeklyReservedAfter: weeklyCount + 1,
         email: { admin: adminSent, alumno: studentSent, alumno_tiene_email: Boolean(profile.email) },
       })
     }
