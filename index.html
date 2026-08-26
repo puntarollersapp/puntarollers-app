@@ -53,6 +53,8 @@
       href="/apple-touch-icon.png"
     />
 
+    <link rel="stylesheet" href="/pr-personal-overrides.css" />
+
     <title>Punta Rollers App</title>
   </head>
 
@@ -63,5 +65,24 @@
       type="module"
       src="/src/main.jsx"
     ></script>
+    <script>
+      (() => {
+        const upgradeAdminPersonal = () => {
+          if (location.pathname !== '/admin/personalizadas') return
+          document.querySelectorAll('button').forEach((button) => {
+            if (button.textContent.trim() === 'Avisó') {
+              button.textContent = 'Cancelar y liberar turno'
+              button.classList.add('pr-admin-cancel-release')
+              button.setAttribute('title', 'Cancela la reserva y vuelve a dejar este horario disponible')
+              button.setAttribute('aria-label', 'Cancelar y liberar turno')
+            }
+          })
+        }
+        const observer = new MutationObserver(upgradeAdminPersonal)
+        observer.observe(document.documentElement, { childList: true, subtree: true })
+        addEventListener('popstate', upgradeAdminPersonal)
+        upgradeAdminPersonal()
+      })()
+    </script>
   </body>
 </html>
