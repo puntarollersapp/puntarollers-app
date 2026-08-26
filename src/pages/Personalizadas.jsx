@@ -14,6 +14,7 @@ const callPersonal = async (payload) => {
 const formatDay = (date) => new Intl.DateTimeFormat('es-UY', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))
 const formatShort = (date) => new Intl.DateTimeFormat('es-UY', { day: '2-digit', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))
 const formatTime = (value) => String(value || '').slice(0, 5)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function shiftIso(value, amount) {
   const d = new Date(`${value}T12:00:00Z`)
@@ -33,6 +34,16 @@ function publishedWeek() {
   let start = shiftIso(today, currentMondayOffset)
   if (weekday === 0 || (weekday === 6 && hour >= 15)) start = shiftIso(start, 7)
   return { start, end: shiftIso(start, 6) }
+}
+
+function resolveDisplayedWeek(slots) {
+  const base = publishedWeek()
+  const hasBase = slots.some((s) => s.fecha >= base.start && s.fecha <= base.end)
+  if (hasBase) return base
+
+  const next = { start: shiftIso(base.start, 7), end: shiftIso(base.end, 7) }
+  const hasNext = slots.some((s) => s.fecha >= next.start && s.fecha <= next.end)
+  return hasNext ? next : base
 }
 
 function SkateLoader({ label = 'Preparando tu PR Pass…' }) {
@@ -84,15 +95,18 @@ export default function Personalizadas() {
   const [confirmed, setConfirmed] = useState(null)
   const [termsOpen, setTermsOpen] = useState(false)
   const [accepted, setAccepted] = useState(() => localStorage.getItem('pr_personal_terms') === PR_PERSONAL_TERMS_VERSION)
-  const week = useMemo(() => publishedWeek(), [])
+  const week = useMemo(() => resolveDisplayedWeek(slots), [slots])
 
   const visibleSlots = useMemo(() => slots.filter((s) => s.fecha >= week.start && s.fecha <= week.end), [slots, week])
   const days = useMemo(() => { const map = new Map(); visibleSlots.forEach((slot) => { if (!map.has(slot.fecha)) map.set(slot.fecha, []); map.get(slot.fecha).push(slot) }); return [...map.entries()] }, [visibleSlots])
 
   const loadBase = async () => {
     setLoading(true)
+    const started = Date.now()
     try {
       const [{ config: cfg }, availability] = await Promise.all([callPersonal({ action: 'config', demo: demoMode }), callPersonal({ action: 'availability', demo: demoMode })])
+      const wait = Math.max(0, 850 - (Date.now() - started))
+      if (wait) await sleep(wait)
       setConfig(cfg); setSlots(availability?.slots || [])
     } catch (error) { setMessage(error.message || 'No pudimos cargar los turnos.') } finally { setLoading(false) }
   }
@@ -109,9 +123,13 @@ export default function Personalizadas() {
     if (!accepted) return setMessage('Primero aceptá los Términos y Condiciones de PR Personal.')
     localStorage.setItem('pr_personal_terms', PR_PERSONAL_TERMS_VERSION)
     setBusy(true); setMessage(''); setConfirmed(null)
+    const started = Date.now()
     try {
-      const data = await refreshIdentity()
+      const data = await callPersonal({ action: 'identify', phone, demo: demoMode })
+      const wait = Math.max(0, 1100 - (Date.now() - started))
+      if (wait) await sleep(wait)
       if (!data.found) { setStudent(null); setPass(null); setUpcoming([]); setReservedCredits(0); setBookableCredits(0); setMessage('No encontramos una cuponera activa asociada a ese número. Escribinos por WhatsApp y te ayudamos.'); return }
+      setStudent(data.student); setPass(data.pass); setUpcoming(data.upcoming || []); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0))
       if (!data.pass) setMessage('Te reconocimos, pero todavía no tenés una cuponera activa visible.')
     } catch (error) { setMessage(error.message) } finally { setBusy(false) }
   }
@@ -119,8 +137,13 @@ export default function Personalizadas() {
   const reserve = async () => {
     if (!selected) return
     setBusy(true); setMessage('')
-    try { const data = await callPersonal({ action: 'reserve', phone, slotId: selected.id, demo: demoMode }); setConfirmed(data); setSelected(null); await Promise.all([loadBase(), refreshIdentity()]) }
-    catch (error) { setMessage(error.message) } finally { setBusy(false) }
+    const started = Date.now()
+    try {
+      const data = await callPersonal({ action: 'reserve', phone, slotId: selected.id, demo: demoMode })
+      const wait = Math.max(0, 950 - (Date.now() - started))
+      if (wait) await sleep(wait)
+      setConfirmed(data); setSelected(null); await Promise.all([loadBase(), refreshIdentity()])
+    } catch (error) { setMessage(error.message) } finally { setBusy(false) }
   }
 
   if (loading) return <PublicLayout><div className="px-4 py-20"><SkateLoader /></div></PublicLayout>
@@ -129,9 +152,8 @@ export default function Personalizadas() {
   return (
     <PublicLayout>
       <div className="pr-personal-shell px-4 pb-20 pt-5 space-y-6">
-        <section className="pr-hero">
-          <div className="pr-hero-grid" /><div className="pr-hero-glow" />
-          <div className="relative z-10"><div className="flex items-center justify-between"><p className="pr-kicker">PUNTA ROLLERS · PR PERSONAL</p><span className="pr-week-pill">{formatShort(week.start)} → {formatShort(week.end)}</span></div>
+        <section className="pr-hero pr-hero-clean" style={{ backgroundImage: 'none' }}>
+          <div className="relative z-10"><div className="flex items-start justify-between gap-3"><p className="pr-kicker">PUNTA ROLLERS · PR PERSONAL</p><span className="pr-week-pill">{formatShort(week.start)} → {formatShort(week.end)}</span></div>
           <div className="mt-8 max-w-lg"><p className="pr-hero-eyebrow">CLASES PERSONALIZADAS</p><h1>Tu entrenamiento.<br/><span>Tu horario.</span></h1><p>Tu PR Pass, tus clases y tu semana en un solo lugar. Elegí el momento. Nosotros hacemos que cuente.</p></div>
           <div className="pr-hero-skate">🛼<span /></div></div>
         </section>
