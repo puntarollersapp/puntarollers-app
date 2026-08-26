@@ -19,7 +19,7 @@ import Admin from './pages/Admin'
 import Alianza from './pages/Alianza'
 import Cuponeras from './pages/Cuponeras'
 import Personalizadas from './pages/Personalizadas'
-import AdminPersonalizadas from './pages/AdminPersonalizadas'
+import AdminPersonalizadasBulk from './pages/AdminPersonalizadasBulk'
 import PasaporteKids from './pages/PasaporteKids'
 import Uniformes from './pages/Uniformes'
 import Tracking from './pages/Tracking'
@@ -161,7 +161,7 @@ function AppRoutes() {
         />
 
         <Route path="/admin/inscripciones-2026" element={<FullAdminRoute><AdminInscripciones2026 /></FullAdminRoute>} />
-        <Route path="/admin/personalizadas" element={<FullAdminRoute><AdminPersonalizadas /></FullAdminRoute>} />
+        <Route path="/admin/personalizadas" element={<FullAdminRoute><AdminPersonalizadasBulk /></FullAdminRoute>} />
 
         <Route path="/app" element={<Navigate to="/app/perfil" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
