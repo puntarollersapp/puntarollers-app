@@ -58,7 +58,6 @@ export default function AdminPersonalizadas() {
 
   const slotMap = useMemo(() => Object.fromEntries(slots.map((x) => [x.id, x])), [slots])
   const studentMap = useMemo(() => Object.fromEntries(students.map((x) => [x.id, x])), [students])
-  const passMap = useMemo(() => Object.fromEntries(passes.map((x) => [x.id, x])), [passes])
   const futureSlots = useMemo(() => slots.filter((x) => x.habilitado && x.fecha >= new Date().toISOString().slice(0, 10)), [slots])
   const upcomingReservations = useMemo(() => reservations.filter((r) => r.estado === 'reservada').length, [reservations])
 
@@ -263,39 +262,18 @@ export default function AdminPersonalizadas() {
     setBusy(true)
     setNotice('')
     try {
-      const update = { estado: next, motivo_estado: reason, updated_at: new Date().toISOString() }
-      if (next === 'realizada') update.realizada_en = new Date().toISOString()
-      if (next === 'suspendida') update.suspendida_en = new Date().toISOString()
-      if (next === 'cancelada') update.cancelada_en = new Date().toISOString()
-
-      if (next === 'realizada' && !r.credito_consumido && r.cuponera_id) {
-        const p = passMap[r.cuponera_id]
-        if (!p || Number(p.clases_disponibles) <= 0) throw new Error('La cuponera no tiene clases disponibles.')
-        const before = Number(p.clases_disponibles)
-        const { error } = await supabase.from('cuponeras_particulares').update({
-          clases_utilizadas: Number(p.clases_utilizadas) + 1,
-          clases_disponibles: before - 1,
-          ultima_clase: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }).eq('id', r.cuponera_id)
-        if (error) throw error
-        await supabase.from('clases_particulares_historial').insert({
-          alumno_id: r.alumno_id,
-          cuponera_id: r.cuponera_id,
-          tipo: 'uso',
-          cantidad: 1,
-          saldo_anterior: before,
-          saldo_despues: before - 1,
-          fecha_clase: new Date().toISOString(),
-          observacion: 'Clase realizada desde PR Personal',
-        })
-        update.credito_consumido = true
-        update.credito_devuelto = false
-      }
-
-      const { error } = await supabase.from('pr_personal_reservas').update(update).eq('id', r.id)
+      const { data, error } = await supabase.rpc('pr_personal_cambiar_estado', {
+        p_reserva_id: r.id,
+        p_estado: next,
+        p_motivo: reason,
+      })
       if (error) throw error
-      setNotice(next === 'realizada' ? 'Clase realizada: se aplicó el sello PR.' : `Clase ${next}. El crédito no fue consumido.`)
+      const changed = Number(data?.saldo_anterior) !== Number(data?.saldo_despues)
+      setNotice(next === 'realizada'
+        ? `Clase realizada: sello PR aplicado · saldo ${data?.saldo_anterior} → ${data?.saldo_despues}.`
+        : changed
+          ? `Clase ${next}: crédito devuelto · saldo ${data?.saldo_anterior} → ${data?.saldo_despues}.`
+          : `Clase ${next}. El crédito se preservó.`)
       await load()
     } catch (err) {
       setNotice(err.message)
@@ -308,45 +286,7 @@ export default function AdminPersonalizadas() {
     if (!r.credito_consumido || !r.cuponera_id) return status(r, 'suspendida', 'Corrección administrativa')
     const reason = window.prompt('Motivo de la corrección:', 'Clase suspendida / no realizada')
     if (!reason) return
-    setBusy(true)
-    setNotice('')
-    try {
-      const p = passMap[r.cuponera_id]
-      if (!p) throw new Error('No se encontró la cuponera de esta reserva.')
-      const before = Number(p.clases_disponibles || 0)
-      const { error: passError } = await supabase.from('cuponeras_particulares').update({
-        clases_utilizadas: Math.max(0, Number(p.clases_utilizadas) - 1),
-        clases_disponibles: before + 1,
-        updated_at: new Date().toISOString(),
-      }).eq('id', r.cuponera_id)
-      if (passError) throw passError
-
-      await supabase.from('clases_particulares_historial').insert({
-        alumno_id: r.alumno_id,
-        cuponera_id: r.cuponera_id,
-        tipo: 'devolucion',
-        cantidad: 1,
-        saldo_anterior: before,
-        saldo_despues: before + 1,
-        observacion: reason,
-      })
-
-      const { error } = await supabase.from('pr_personal_reservas').update({
-        estado: 'suspendida',
-        motivo_estado: reason,
-        credito_consumido: false,
-        credito_devuelto: true,
-        suspendida_en: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('id', r.id)
-      if (error) throw error
-      setNotice('Corrección hecha: el crédito volvió a la PR Pass.')
-      await load()
-    } catch (err) {
-      setNotice(err.message)
-    } finally {
-      setBusy(false)
-    }
+    return status(r, 'suspendida', reason)
   }
 
   const otherReason = (r, next) => {
@@ -364,7 +304,7 @@ export default function AdminPersonalizadas() {
             <h1 className="mt-1 text-3xl font-black">PR Personal</h1>
             <p className="mt-1 text-sm text-white/35">Cuponeras, agenda y seguimiento de clases.</p>
           </div>
-          <a href="/personalizadas" target="_blank" rel="noreferrer" className="rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-xs font-black">Ver página ↗</a>
+          <a href="/personalizadas?demo=1" target="_blank" rel="noreferrer" className="rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-xs font-black">Ver demo ↗</a>
         </header>
 
         <div className="grid grid-cols-4 gap-2">

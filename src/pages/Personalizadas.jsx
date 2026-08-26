@@ -69,6 +69,7 @@ function PassCard({ student, pass, reservedCredits = 0 }) {
 }
 
 export default function Personalizadas() {
+  const demoMode = useMemo(() => new URLSearchParams(window.location.search).get('demo') === '1', [])
   const [config, setConfig] = useState(null)
   const [phone, setPhone] = useState('')
   const [student, setStudent] = useState(null)
@@ -87,8 +88,8 @@ export default function Personalizadas() {
     setLoading(true)
     try {
       const [{ config: cfg }, availability] = await Promise.all([
-        callPersonal({ action: 'config' }),
-        callPersonal({ action: 'availability' }),
+        callPersonal({ action: 'config', demo: demoMode }),
+        callPersonal({ action: 'availability', demo: demoMode }),
       ])
       setConfig(cfg)
       setSlots(availability?.slots || [])
@@ -111,7 +112,7 @@ export default function Personalizadas() {
   }, [slots])
 
   const refreshIdentity = async () => {
-    const data = await callPersonal({ action: 'identify', phone })
+    const data = await callPersonal({ action: 'identify', phone, demo: demoMode })
     if (!data.found) return data
     setStudent(data.student)
     setPass(data.pass)
@@ -150,7 +151,7 @@ export default function Personalizadas() {
     setBusy(true)
     setMessage('')
     try {
-      const data = await callPersonal({ action: 'reserve', phone, slotId: selected.id })
+      const data = await callPersonal({ action: 'reserve', phone, slotId: selected.id, demo: demoMode })
       setConfirmed(data)
       setSelected(null)
       await Promise.all([loadBase(), refreshIdentity()])
@@ -184,6 +185,7 @@ export default function Personalizadas() {
       <div className="px-4 pb-20 pt-7 space-y-6">
         <header className="space-y-2">
           <p className="text-[10px] font-black uppercase tracking-[.34em] text-red-300">PR PERSONAL</p>
+          {demoMode && <p className="inline-flex rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.2em] text-amber-100">Demo controlada · Preview</p>}
           <h1 className="text-4xl font-black tracking-tight text-white">Tu entrenamiento.<br />Tu horario.</h1>
           <p className="max-w-md text-sm leading-relaxed text-white/45">Ingresá tu teléfono, revisá tu PR Pass y reservá uno de los turnos disponibles de esta semana.</p>
         </header>
