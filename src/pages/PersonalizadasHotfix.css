@@ -1,0 +1,19 @@
+.pr-hero,
+.pr-hero-clean {
+  background-image: none !important;
+  isolation: isolate;
+}
+
+.pr-hero::before,
+.pr-hero::after,
+.pr-hero-clean::before,
+.pr-hero-clean::after {
+  content: none !important;
+  display: none !important;
+  background-image: none !important;
+}
+
+.pr-hero > * {
+  position: relative;
+  z-index: 2;
+}
