@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs>
+  <radialGradient id="bg" cx="72%" cy="24%" r="88%"><stop offset="0" stop-color="#1f0b0d"/><stop offset=".42" stop-color="#080808"/><stop offset="1" stop-color="#020202"/></radialGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6d27e"/><stop offset=".5" stop-color="#d7a247"/><stop offset="1" stop-color="#8b5b17"/></linearGradient>
+  <linearGradient id="white" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#d8d8da"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1200" height="630" fill="url(#bg)"/>
+<rect x="18" y="18" width="1164" height="594" rx="34" fill="none" stroke="#454545" stroke-width="2"/>
+<g fill="none" stroke="#db1f2a" opacity=".9">
+ <path d="M-90 530 C80 345 95 190 55 -5" stroke-width="7"/>
+ <path d="M-45 565 C135 365 145 185 100 -25" stroke-width="5" opacity=".78"/>
+ <path d="M5 605 C185 390 195 175 150 -45" stroke-width="4" opacity=".62"/>
+ <path d="M60 630 C235 405 245 185 205 -55" stroke-width="3" opacity=".48"/>
+ <path d="M115 650 C285 425 300 205 260 -60" stroke-width="2" opacity=".32"/>
+</g>
+<g transform="translate(600 304)">
+  <path d="M-235 35 A260 260 0 0 1 225 -125" fill="none" stroke="url(#gold)" stroke-width="18" stroke-linecap="round"/>
+  <text x="0" y="82" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="285" font-weight="900" font-style="italic" letter-spacing="-30" fill="url(#white)" stroke="#ffffff" stroke-width="1">PR</text>
+  <path d="M150 50 l38 -62 -12 43 36 -9 -57 70 13 -43z" fill="url(#gold)" filter="url(#glow)"/>
+</g>
+<g text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-style="italic" font-weight="800">
+ <line x1="320" y1="492" x2="385" y2="492" stroke="#d6a13a" stroke-width="5"/>
+ <line x1="815" y1="492" x2="880" y2="492" stroke="#d6a13a" stroke-width="5"/>
+ <text x="600" y="508" font-size="40" letter-spacing="11" fill="#fff">PUNTA ROLLERS</text>
+ <line x1="420" y1="556" x2="505" y2="556" stroke="#d6a13a" stroke-width="4"/>
+ <line x1="695" y1="556" x2="780" y2="556" stroke="#d6a13a" stroke-width="4"/>
+ <text x="600" y="575" font-size="58" letter-spacing="10" fill="url(#gold)">APP</text>
+</g>
+</svg>
