@@ -50,6 +50,20 @@
               }
             })
           }
+
+          if (location.pathname === '/rollerfeed' && !document.querySelector('.pr-weekly-ranking-shortcut')) {
+            const anchor = document.createElement('a')
+            anchor.href = '/ranking-semanal'
+            anchor.className = 'pr-weekly-ranking-shortcut'
+            anchor.textContent = '🏆 Ranking semanal'
+            anchor.setAttribute('aria-label', 'Ver ranking semanal de kilómetros')
+            document.body.appendChild(anchor)
+          }
+
+          if (location.pathname !== '/rollerfeed') {
+            document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
+          }
+
           if (location.pathname === '/personalizadas') {
             const title = document.querySelector('.pr-hero h1')
             if (title && title.textContent.includes('Tu entrenamiento.')) {
@@ -100,5 +114,9 @@
         upgradeUI()
       })()
     </script>
+    <style>
+      .pr-weekly-ranking-shortcut{position:fixed;right:16px;bottom:96px;z-index:90;display:flex;align-items:center;min-height:48px;padding:0 16px;border-radius:16px;border:1px solid rgba(251,191,36,.28);background:rgba(28,18,5,.94);color:#fde68a;font:900 12px/1 system-ui,-apple-system,sans-serif;text-decoration:none;box-shadow:0 18px 48px rgba(0,0,0,.45);backdrop-filter:blur(16px)}
+      .pr-weekly-ranking-shortcut:active{transform:scale(.98)}
+    </style>
   </body>
 </html>
