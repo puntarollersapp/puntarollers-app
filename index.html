@@ -51,16 +51,17 @@
             })
           }
 
-          if (location.pathname === '/rollerfeed' && !document.querySelector('.pr-weekly-ranking-shortcut')) {
+          const rankingVisible = location.pathname === '/rollerfeed' || location.pathname.startsWith('/app/')
+          if (rankingVisible && location.pathname !== '/ranking-semanal' && !document.querySelector('.pr-weekly-ranking-shortcut')) {
             const anchor = document.createElement('a')
             anchor.href = '/ranking-semanal'
             anchor.className = 'pr-weekly-ranking-shortcut'
-            anchor.textContent = '🏆 Ranking semanal'
-            anchor.setAttribute('aria-label', 'Ver ranking semanal de kilómetros')
+            anchor.innerHTML = '<span class="pr-ranking-trophy">🏆</span><span><strong>Ranking PR</strong><small>Semana · Mes</small></span>'
+            anchor.setAttribute('aria-label', 'Ver ranking PR de kilómetros')
             document.body.appendChild(anchor)
           }
 
-          if (location.pathname !== '/rollerfeed') {
+          if (!rankingVisible || location.pathname === '/ranking-semanal') {
             document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
           }
 
@@ -115,7 +116,10 @@
       })()
     </script>
     <style>
-      .pr-weekly-ranking-shortcut{position:fixed;right:16px;bottom:96px;z-index:90;display:flex;align-items:center;min-height:48px;padding:0 16px;border-radius:16px;border:1px solid rgba(251,191,36,.28);background:rgba(28,18,5,.94);color:#fde68a;font:900 12px/1 system-ui,-apple-system,sans-serif;text-decoration:none;box-shadow:0 18px 48px rgba(0,0,0,.45);backdrop-filter:blur(16px)}
+      .pr-weekly-ranking-shortcut{position:fixed;right:14px;bottom:92px;z-index:90;display:flex;align-items:center;gap:9px;min-height:52px;padding:7px 13px 7px 9px;border-radius:18px;border:1px solid rgba(251,191,36,.28);background:linear-gradient(135deg,rgba(45,25,7,.97),rgba(15,12,10,.97));color:#fde68a;font:900 12px/1 system-ui,-apple-system,sans-serif;text-decoration:none;box-shadow:0 18px 48px rgba(0,0,0,.45),0 0 28px rgba(245,158,11,.09);backdrop-filter:blur(16px)}
+      .pr-weekly-ranking-shortcut .pr-ranking-trophy{display:grid;width:36px;height:36px;place-items:center;border-radius:13px;background:rgba(251,191,36,.12);font-size:18px}
+      .pr-weekly-ranking-shortcut strong{display:block;font-size:11px;color:#fff}
+      .pr-weekly-ranking-shortcut small{display:block;margin-top:4px;font-size:8px;letter-spacing:.08em;color:rgba(255,255,255,.42)}
       .pr-weekly-ranking-shortcut:active{transform:scale(.98)}
     </style>
   </body>
