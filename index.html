@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PR App" />
-
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Punta Rollers App" />
     <meta property="og:title" content="Punta Rollers App" />
@@ -21,12 +20,10 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Punta Rollers App" />
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Punta Rollers App" />
     <meta name="twitter:description" content="La app oficial de Punta Rollers. No es solo patinar. Es pertenecer." />
     <meta name="twitter:image" content="https://wsrv.nl/?url=https%3A%2F%2Fraw.githubusercontent.com%2Fpuntarollersapp%2Fpuntarollers-app%2Fmain%2Fpublic%2Fpr-social-card-v3.svg&amp;w=1200&amp;h=630&amp;fit=cover&amp;output=jpg&amp;q=90" />
-
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64x64.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -40,11 +37,9 @@
       (() => {
         let handledConfirmation = false
         let rankingLoading = false
-        let rankingLoadedAt = 0
         const rankingEndpoint = 'https://ycgxnzeaihuwlwfwalom.supabase.co/functions/v1/public-ranking'
-
         const initials = (name) => String(name || 'PR').split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join('') || 'PR'
-        const avatarHtml = (row, place) => row?.photo
+        const avatarHtml = (row) => row?.photo
           ? `<img class="pr-feed-rank-avatar" src="${row.photo}" alt="${row.name || ''}">`
           : `<span class="pr-feed-rank-avatar pr-feed-rank-initials">${initials(row?.name)}</span>`
 
@@ -56,37 +51,50 @@
           const latestLabel = [...document.querySelectorAll('p')].find((el) => el.textContent.trim() === 'Tu última actividad')
           const latestSection = latestLabel?.closest('section')
           if (!latestSection || document.querySelector('.pr-feed-ranking') || rankingLoading) return
-
           rankingLoading = true
           try {
             const response = await fetch(rankingEndpoint, { cache: 'no-store' })
             if (!response.ok) throw new Error('ranking')
             const data = await response.json()
-            const rows = Array.isArray(data?.week?.ranking) ? data.week.ranking.slice(0, 3) : []
-            if (!rows.length) return
-
+            const weekly = Array.isArray(data?.week?.ranking) ? data.week.ranking.slice(0, 3) : []
+            const monthly = Array.isArray(data?.month?.ranking) ? data.month.ranking.slice(0, 3) : []
+            if (!weekly.length && !monthly.length) return
+            const rows = weekly.length ? weekly : monthly
+            const monthlyLeader = monthly[0]
             const section = document.createElement('section')
             section.className = 'pr-feed-ranking'
             section.innerHTML = `
-              <a href="/ranking-semanal" class="pr-feed-ranking-link" aria-label="Abrir ranking PR">
+              <div class="pr-feed-ranking-glow"></div>
+              <a href="/ranking-semanal" class="pr-feed-ranking-link" aria-label="Abrir ranking PR completo">
                 <div class="pr-feed-ranking-head">
-                  <div><small>🏆 TOP RANKING · ESTA SEMANA</small><strong>El podio PR</strong></div>
-                  <span>Ver ranking →</span>
+                  <div>
+                    <small>🏆 PUNTA ROLLERS · TOP RANKING</small>
+                    <strong>El podio de la semana</strong>
+                  </div>
+                  <span class="pr-feed-live">EN VIVO</span>
                 </div>
                 <div class="pr-feed-ranking-podium">
                   ${rows.map((row, index) => `
                     <div class="pr-feed-rank-person pr-place-${index + 1}">
-                      <div class="pr-feed-rank-photo">${avatarHtml(row, index + 1)}<b>${index + 1}</b></div>
+                      <div class="pr-feed-rank-photo">${avatarHtml(row)}<b>${index + 1}</b></div>
                       <strong>${String(row.name || 'Integrante PR').split(' ')[0]}</strong>
                       <span>${Number(row.km || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</span>
                     </div>`).join('')}
                 </div>
-                <div class="pr-feed-ranking-foot">Kilómetros sincronizados con Strava · se actualiza automáticamente</div>
+                <div class="pr-feed-ranking-actions">
+                  <span class="pr-feed-ranking-cta">VER RANKING COMPLETO <b>→</b></span>
+                  <span class="pr-feed-ranking-sub">Semana + mes · kilómetros Strava</span>
+                </div>
+              </a>
+              <a href="/ranking-semanal?period=month" class="pr-feed-monthly" aria-label="Ver podio mensual">
+                <div>
+                  <small>📆 PODIO MENSUAL</small>
+                  <strong>${monthlyLeader ? `#1 ${String(monthlyLeader.name || 'Integrante PR').split(' ')[0]} · ${Number(monthlyLeader.km || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 })} km` : 'Ver clasificación del mes'}</strong>
+                </div>
+                <span>VER MES →</span>
               </a>`
             latestSection.insertAdjacentElement('afterend', section)
-            rankingLoadedAt = Date.now()
           } catch (_) {
-            // El RollerFeed sigue funcionando aunque el ranking tarde en responder.
           } finally {
             rankingLoading = false
           }
@@ -108,7 +116,6 @@
               }
             })
           }
-
           const rankingVisible = location.pathname === '/rollerfeed' || (location.pathname.startsWith('/app/') && location.pathname !== '/app/actividad')
           if (rankingVisible && location.pathname !== '/ranking-semanal' && !document.querySelector('.pr-weekly-ranking-shortcut')) {
             const anchor = document.createElement('a')
@@ -118,14 +125,9 @@
             anchor.setAttribute('aria-label', 'Ver ranking PR de kilómetros')
             document.body.appendChild(anchor)
           }
-
-          if (!rankingVisible || location.pathname === '/ranking-semanal') {
-            document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
-          }
-
+          if (!rankingVisible || location.pathname === '/ranking-semanal') document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
           ensureInlineRanking()
           compactBirthdays()
-
           if (location.pathname === '/personalizadas') {
             const title = document.querySelector('.pr-hero h1')
             if (title && title.textContent.includes('Tu entrenamiento.')) {
@@ -133,21 +135,16 @@
                 if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('Tu entrenamiento.')) node.textContent = node.textContent.replace('Tu entrenamiento.', 'Tu clase.')
               })
             }
-
             const success = document.querySelector('.pr-success')
             if (success && !handledConfirmation) {
               handledConfirmation = true
               const shell = document.querySelector('.pr-personal-shell')
               const pass = shell?.querySelector('.pr-pass-enter:not(.pr-success)')
               const scheduleSection = [...(shell?.querySelectorAll('section.space-y-4') || [])].find((section) => section.textContent.includes('Elegí tu próxima clase'))
-
               success.classList.add('pr-success-focus')
               if (pass && pass.parentNode) pass.parentNode.insertBefore(success, pass)
-
               if (scheduleSection) {
-                scheduleSection.dataset.prScheduleCollapsed = 'true'
                 scheduleSection.style.display = 'none'
-
                 if (!document.querySelector('.pr-book-another')) {
                   const button = document.createElement('button')
                   button.type = 'button'
@@ -161,12 +158,8 @@
                   success.appendChild(button)
                 }
               }
-
-              requestAnimationFrame(() => {
-                success.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              })
+              requestAnimationFrame(() => success.scrollIntoView({ behavior: 'smooth', block: 'start' }))
             }
-
             if (!document.querySelector('.pr-success')) handledConfirmation = false
           }
         }
@@ -178,41 +171,15 @@
     </script>
     <style>
       .pr-weekly-ranking-shortcut{position:fixed;right:14px;bottom:92px;z-index:90;display:flex;align-items:center;gap:9px;min-height:52px;padding:7px 13px 7px 9px;border-radius:18px;border:1px solid rgba(251,191,36,.28);background:linear-gradient(135deg,rgba(45,25,7,.97),rgba(15,12,10,.97));color:#fde68a;font:900 12px/1 system-ui,-apple-system,sans-serif;text-decoration:none;box-shadow:0 18px 48px rgba(0,0,0,.45),0 0 28px rgba(245,158,11,.09);backdrop-filter:blur(16px)}
-      .pr-weekly-ranking-shortcut .pr-ranking-trophy{display:grid;width:36px;height:36px;place-items:center;border-radius:13px;background:rgba(251,191,36,.12);font-size:18px}
-      .pr-weekly-ranking-shortcut strong{display:block;font-size:11px;color:#fff}
-      .pr-weekly-ranking-shortcut small{display:block;margin-top:4px;font-size:8px;letter-spacing:.08em;color:rgba(255,255,255,.42)}
-      .pr-weekly-ranking-shortcut:active{transform:scale(.98)}
-
-      .pr-feed-ranking{overflow:hidden;border:1px solid rgba(251,191,36,.18);border-radius:26px;background:linear-gradient(135deg,rgba(67,33,8,.48),rgba(14,12,14,.98) 44%,rgba(28,11,7,.9));box-shadow:0 18px 55px rgba(0,0,0,.28)}
-      .pr-feed-ranking-link{display:block;padding:15px 15px 12px;color:#fff;text-decoration:none}
-      .pr-feed-ranking-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-      .pr-feed-ranking-head small{display:block;color:#fdba74;font:900 8px/1.2 system-ui;letter-spacing:.16em}
-      .pr-feed-ranking-head strong{display:block;margin-top:6px;font:900 20px/1 system-ui}
-      .pr-feed-ranking-head>span{color:rgba(255,255,255,.42);font:800 9px/1 system-ui}
-      .pr-feed-ranking-podium{display:grid;grid-template-columns:1fr 1.08fr 1fr;align-items:end;gap:7px;margin-top:15px}
-      .pr-feed-rank-person{display:flex;min-width:0;flex-direction:column;align-items:center;padding:9px 4px 8px;border:1px solid rgba(255,255,255,.07);border-radius:18px;background:rgba(255,255,255,.025)}
-      .pr-feed-rank-person.pr-place-1{order:2;padding-top:5px;background:linear-gradient(180deg,rgba(251,191,36,.14),rgba(255,255,255,.025));border-color:rgba(251,191,36,.2)}
-      .pr-feed-rank-person.pr-place-2{order:1}
-      .pr-feed-rank-person.pr-place-3{order:3}
-      .pr-feed-rank-photo{position:relative}
-      .pr-feed-rank-avatar{display:grid;width:42px;height:42px;place-items:center;border-radius:50%;border:2px solid rgba(255,255,255,.12);object-fit:cover;background:#1a1515;color:#fdba74;font:900 12px/1 system-ui}
-      .pr-place-1 .pr-feed-rank-avatar{width:50px;height:50px;border-color:rgba(251,191,36,.45)}
-      .pr-feed-rank-photo b{position:absolute;right:-5px;bottom:-4px;display:grid;width:19px;height:19px;place-items:center;border:2px solid #0d0b0b;border-radius:50%;background:#d6d3d1;color:#111;font:900 8px/1 system-ui}
-      .pr-place-1 .pr-feed-rank-photo b{background:#fcd34d}
-      .pr-place-3 .pr-feed-rank-photo b{background:#b45309;color:#fff}
-      .pr-feed-rank-person>strong{max-width:100%;overflow:hidden;margin-top:9px;text-overflow:ellipsis;white-space:nowrap;font:900 10px/1 system-ui}
-      .pr-feed-rank-person>span{margin-top:5px;color:#fdba74;font:900 12px/1 system-ui}
-      .pr-feed-ranking-foot{margin-top:10px;text-align:center;color:rgba(255,255,255,.28);font:700 8px/1.4 system-ui}
-
-      .pr-birthday-compact{padding:10px 12px!important;border-radius:20px!important}
-      .pr-birthday-compact>div:first-child{align-items:center!important}
-      .pr-birthday-compact>div:first-child>div:first-child>div:first-child{width:34px!important;height:34px!important;border-radius:12px!important}
-      .pr-birthday-compact>div:first-child>div:last-child{width:34px!important;height:34px!important;border-radius:12px!important;font-size:16px!important}
-      .pr-birthday-compact>.section-label{margin-top:8px!important;font-size:7px!important;letter-spacing:.13em!important}
-      .pr-birthday-compact>h3{margin-top:5px!important;font-size:17px!important;line-height:1.08!important}
-      .pr-birthday-compact>p:not(.section-label){display:none!important}
-      .pr-birthday-compact>div:last-child{margin-top:8px!important;padding-top:7px!important}
-      .pr-birthday-compact button{min-height:30px!important;padding-top:5px!important;padding-bottom:5px!important;font-size:9px!important}
+      .pr-weekly-ranking-shortcut .pr-ranking-trophy{display:grid;width:36px;height:36px;place-items:center;border-radius:13px;background:rgba(251,191,36,.12);font-size:18px}.pr-weekly-ranking-shortcut strong{display:block;font-size:11px;color:#fff}.pr-weekly-ranking-shortcut small{display:block;margin-top:4px;font-size:8px;letter-spacing:.08em;color:rgba(255,255,255,.42)}
+      .pr-feed-ranking{position:relative;overflow:hidden;border:1px solid rgba(250,204,21,.28);border-radius:28px;background:radial-gradient(circle at 75% 0%,rgba(93,63,211,.24),transparent 40%),linear-gradient(135deg,#201603 0%,#10101b 44%,#110719 100%);box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 35px rgba(168,85,247,.07)}
+      .pr-feed-ranking:before{content:"";position:absolute;inset:-60% -30%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.05) 50%,transparent 60%);transform:translateX(-55%);animation:prRankShine 7s ease-in-out infinite;pointer-events:none}.pr-feed-ranking-glow{position:absolute;width:150px;height:150px;left:50%;top:70px;transform:translateX(-50%);border-radius:999px;background:rgba(251,191,36,.12);filter:blur(40px);pointer-events:none}
+      @keyframes prRankShine{0%,72%,100%{transform:translateX(-65%)}85%{transform:translateX(65%)}}
+      .pr-feed-ranking-link{position:relative;display:block;padding:17px 16px 13px;color:#fff;text-decoration:none}.pr-feed-ranking-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.pr-feed-ranking-head small{display:block;color:#facc15;font:900 8px/1.2 system-ui;letter-spacing:.16em}.pr-feed-ranking-head strong{display:block;margin-top:6px;font:900 21px/1 system-ui}.pr-feed-live{padding:6px 8px;border-radius:99px;border:1px solid rgba(52,211,153,.18);background:rgba(16,185,129,.08);color:#6ee7b7;font:900 7px/1 system-ui;letter-spacing:.1em}
+      .pr-feed-ranking-podium{display:grid;grid-template-columns:1fr 1.08fr 1fr;align-items:end;gap:7px;margin-top:16px}.pr-feed-rank-person{display:flex;min-width:0;flex-direction:column;align-items:center;padding:10px 4px 9px;border:1px solid rgba(255,255,255,.08);border-radius:19px;background:rgba(255,255,255,.028)}.pr-feed-rank-person.pr-place-1{order:2;padding-top:6px;background:linear-gradient(180deg,rgba(250,204,21,.17),rgba(255,255,255,.025));border-color:rgba(250,204,21,.28);box-shadow:0 10px 30px rgba(250,204,21,.06)}.pr-feed-rank-person.pr-place-2{order:1}.pr-feed-rank-person.pr-place-3{order:3}.pr-feed-rank-photo{position:relative}.pr-feed-rank-avatar{display:grid;width:43px;height:43px;place-items:center;border-radius:50%;border:2px solid rgba(255,255,255,.15);object-fit:cover;background:#1a1515;color:#fdba74;font:900 12px/1 system-ui}.pr-place-1 .pr-feed-rank-avatar{width:54px;height:54px;border-color:rgba(250,204,21,.55);box-shadow:0 0 24px rgba(250,204,21,.12)}.pr-feed-rank-photo b{position:absolute;right:-5px;bottom:-4px;display:grid;width:20px;height:20px;place-items:center;border:2px solid #0d0b0b;border-radius:50%;background:#d6d3d1;color:#111;font:900 8px/1 system-ui}.pr-place-1 .pr-feed-rank-photo b{background:#facc15}.pr-place-3 .pr-feed-rank-photo b{background:#b45309;color:#fff}.pr-feed-rank-person>strong{max-width:100%;overflow:hidden;margin-top:9px;text-overflow:ellipsis;white-space:nowrap;font:900 10px/1 system-ui}.pr-feed-rank-person>span{margin-top:5px;color:#fdba74;font:900 13px/1 system-ui}
+      .pr-feed-ranking-actions{margin-top:14px;text-align:center}.pr-feed-ranking-cta{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border-radius:15px;background:linear-gradient(90deg,#facc15,#fb923c);color:#09090b;font:950 11px/1 system-ui;letter-spacing:.04em;box-shadow:0 9px 30px rgba(251,191,36,.12)}.pr-feed-ranking-cta b{font-size:16px}.pr-feed-ranking-sub{display:block;margin-top:7px;color:rgba(255,255,255,.33);font:700 8px/1 system-ui}
+      .pr-feed-monthly{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 12px 12px;padding:11px 12px;border:1px solid rgba(168,85,247,.2);border-radius:16px;background:linear-gradient(90deg,rgba(88,28,135,.18),rgba(30,27,75,.22));color:#fff;text-decoration:none}.pr-feed-monthly small{display:block;color:#c4b5fd;font:900 7px/1 system-ui;letter-spacing:.14em}.pr-feed-monthly strong{display:block;margin-top:5px;font:850 10px/1.2 system-ui;color:rgba(255,255,255,.82)}.pr-feed-monthly>span{flex-shrink:0;color:#d8b4fe;font:900 8px/1 system-ui}
+      .pr-birthday-compact{padding:10px 12px!important;border-radius:20px!important}.pr-birthday-compact>div:first-child{align-items:center!important}.pr-birthday-compact>div:first-child>div:first-child>div:first-child{width:34px!important;height:34px!important;border-radius:12px!important}.pr-birthday-compact>div:first-child>div:last-child{width:34px!important;height:34px!important;border-radius:12px!important;font-size:16px!important}.pr-birthday-compact>.section-label{margin-top:8px!important;font-size:7px!important;letter-spacing:.13em!important}.pr-birthday-compact>h3{margin-top:5px!important;font-size:17px!important;line-height:1.08!important}.pr-birthday-compact>p:not(.section-label){display:none!important}.pr-birthday-compact>div:last-child{margin-top:8px!important;padding-top:7px!important}.pr-birthday-compact button{min-height:30px!important;padding-top:5px!important;padding-bottom:5px!important;font-size:9px!important}
     </style>
   </body>
 </html>
