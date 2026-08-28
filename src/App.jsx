@@ -28,6 +28,7 @@ import StravaCallback from './pages/StravaCallback'
 import CommunityPage from './pages/Community'
 import MessagesPage from './pages/Messages'
 import PublicRollerFeed from './pages/PublicRollerFeed'
+import PublicWeeklyRanking from './pages/PublicWeeklyRanking'
 import MiEvolucion from './pages/MiEvolucion'
 import AvatarPremiumPreview from './pages/AvatarPremiumPreview'
 import Insignias from './pages/Insignias'
@@ -116,6 +117,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/rollerfeed" element={<PublicRollerFeed />} />
+        <Route path="/ranking-semanal" element={<PublicWeeklyRanking />} />
         <Route path="/inscripciones-2026" element={<Inscripciones2026 />} />
         <Route path="/inscripciones-kids-2026" element={<PRKidsInscripciones2026 />} />
         <Route path="/clinica-miguel-septiembre" element={<ClinicaMiguelSept2026 />} />
