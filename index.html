@@ -38,6 +38,7 @@
     <script type="module" src="/src/main.jsx"></script>
     <script>
       (() => {
+        let handledConfirmation = false
         const upgradeUI = () => {
           if (location.pathname === '/admin/personalizadas') {
             document.querySelectorAll('button').forEach((button) => {
@@ -56,6 +57,41 @@
                 if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('Tu entrenamiento.')) node.textContent = node.textContent.replace('Tu entrenamiento.', 'Tu clase.')
               })
             }
+
+            const success = document.querySelector('.pr-success')
+            if (success && !handledConfirmation) {
+              handledConfirmation = true
+              const shell = document.querySelector('.pr-personal-shell')
+              const pass = shell?.querySelector('.pr-pass-enter:not(.pr-success)')
+              const scheduleSection = [...(shell?.querySelectorAll('section.space-y-4') || [])].find((section) => section.textContent.includes('Elegí tu próxima clase'))
+
+              success.classList.add('pr-success-focus')
+              if (pass && pass.parentNode) pass.parentNode.insertBefore(success, pass)
+
+              if (scheduleSection) {
+                scheduleSection.dataset.prScheduleCollapsed = 'true'
+                scheduleSection.style.display = 'none'
+
+                if (!document.querySelector('.pr-book-another')) {
+                  const button = document.createElement('button')
+                  button.type = 'button'
+                  button.className = 'pr-book-another'
+                  button.textContent = 'Reservar otra clase'
+                  button.addEventListener('click', () => {
+                    scheduleSection.style.display = ''
+                    button.remove()
+                    scheduleSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  })
+                  success.appendChild(button)
+                }
+              }
+
+              requestAnimationFrame(() => {
+                success.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              })
+            }
+
+            if (!document.querySelector('.pr-success')) handledConfirmation = false
           }
         }
         const observer = new MutationObserver(upgradeUI)
