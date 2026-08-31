@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
 import StudentLaunchGate from './components/StudentLaunchGate'
@@ -84,42 +85,73 @@ function FullAdminRoute({ children }) {
   return <StudentLaunchGate user={user}>{children}</StudentLaunchGate>
 }
 
-function AdminRegistrationsShortcut() {
-  return (
-    <a
-      href="/admin/inscripciones-2026"
-      className="fixed bottom-[92px] right-4 z-[85] flex min-h-12 items-center gap-2 rounded-2xl border border-orange-300/25 bg-[#17120c]/95 px-4 py-3 text-xs font-black text-orange-200 shadow-[0_18px_50px_rgba(0,0,0,.48)] backdrop-blur-xl active:scale-[.98]"
-      aria-label="Ver inscripciones 2026"
-    >
-      <span className="text-lg">🛼</span>
-      <span>Inscripciones</span>
-    </a>
-  )
-}
+function AdminInlineShortcuts() {
+  const [mount, setMount] = useState(null)
 
-function AdminPersonalShortcut() {
-  return (
-    <a
-      href="/admin/personalizadas"
-      className="fixed bottom-[152px] right-4 z-[85] flex min-h-12 items-center gap-2 rounded-2xl border border-red-300/25 bg-[#180d0d]/95 px-4 py-3 text-xs font-black text-red-100 shadow-[0_18px_50px_rgba(0,0,0,.48)] backdrop-blur-xl active:scale-[.98]"
-      aria-label="Administrar clases personalizadas"
-    >
-      <span className="text-lg">🎟️</span>
-      <span>Personalizadas</span>
-    </a>
-  )
-}
+  useEffect(() => {
+    const container = document.querySelector('.animate-page-enter')
+    if (!container) return undefined
 
-function AdminAccessShortcut() {
-  return (
-    <a
-      href="/admin/nuevos-accesos"
-      className="fixed bottom-[212px] right-4 z-[85] flex min-h-12 items-center gap-2 rounded-2xl border border-sky-300/25 bg-[#0c1418]/95 px-4 py-3 text-xs font-black text-sky-100 shadow-[0_18px_50px_rgba(0,0,0,.48)] backdrop-blur-xl active:scale-[.98]"
-      aria-label="Administrar nuevos accesos"
-    >
-      <span className="text-lg">🔐</span>
-      <span>Nuevos accesos</span>
-    </a>
+    const host = document.createElement('div')
+    host.setAttribute('data-admin-inline-shortcuts', 'true')
+
+    const quickNav = Array.from(container.children).find((element) => {
+      const text = element?.textContent || ''
+      return element.tagName === 'SECTION' && text.includes('Inicio') && (text.includes('Usuarios') || text.includes('Alumnos'))
+    })
+
+    if (quickNav) container.insertBefore(host, quickNav)
+    else container.appendChild(host)
+
+    setMount(host)
+
+    return () => host.remove()
+  }, [])
+
+  if (!mount) return null
+
+  return createPortal(
+    <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <a
+        href="/admin/nuevos-accesos"
+        className="group rounded-3xl border border-sky-300/20 bg-gradient-to-br from-sky-400/[0.10] to-white/[0.025] p-4 shadow-[0_18px_45px_rgba(0,0,0,.28)] transition active:scale-[.99]"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-300/15 bg-sky-300/10 text-xl">🔐</div>
+          <span className="text-sky-200/45 text-lg">→</span>
+        </div>
+        <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-sky-200/55">Alumnos nuevos</p>
+        <h3 className="mt-1 text-lg font-black text-white">Nuevos accesos</h3>
+        <p className="mt-1 text-xs leading-5 text-white/35">Importar registros y crear perfiles.</p>
+      </a>
+
+      <a
+        href="/admin/personalizadas"
+        className="group rounded-3xl border border-red-300/20 bg-gradient-to-br from-red-400/[0.10] to-white/[0.025] p-4 shadow-[0_18px_45px_rgba(0,0,0,.28)] transition active:scale-[.99]"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-red-300/15 bg-red-300/10 text-xl">🎟️</div>
+          <span className="text-red-200/45 text-lg">→</span>
+        </div>
+        <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-red-200/55">Clases</p>
+        <h3 className="mt-1 text-lg font-black text-white">Personalizadas</h3>
+        <p className="mt-1 text-xs leading-5 text-white/35">Gestionar alumnos, cupos y reservas.</p>
+      </a>
+
+      <a
+        href="/admin/inscripciones-2026"
+        className="group rounded-3xl border border-orange-300/20 bg-gradient-to-br from-orange-400/[0.10] to-white/[0.025] p-4 shadow-[0_18px_45px_rgba(0,0,0,.28)] transition active:scale-[.99]"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-300/15 bg-orange-300/10 text-xl">🛼</div>
+          <span className="text-orange-200/45 text-lg">→</span>
+        </div>
+        <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-orange-200/55">Formularios</p>
+        <h3 className="mt-1 text-lg font-black text-white">Inscripciones</h3>
+        <p className="mt-1 text-xs leading-5 text-white/35">Ver y administrar inscripciones recibidas.</p>
+      </a>
+    </section>,
+    mount
   )
 }
 
@@ -172,9 +204,7 @@ function AppRoutes() {
             <AdminRoute>
               <>
                 <Admin />
-                <AdminRegistrationsShortcut />
-                <AdminPersonalShortcut />
-                <AdminAccessShortcut />
+                <AdminInlineShortcuts />
               </>
             </AdminRoute>
           }
