@@ -39,21 +39,17 @@ export default function PRKidsInscripciones2026() {
   }
 
   const buildPayload = () => ({
-    modalidad: 'kids',
-    nombre_completo: form.nombre_nino.trim(),
-    edad: Number(form.edad),
-    localidad: null,
-    email: form.email.trim().toLowerCase(),
-    telefono: form.telefono.trim(),
-    nivel: form.nivel,
-    turno_sabado: 'Sábado 19:00–20:00 · Pista cerrada Maldonado',
-    objetivo_personalizadas: null,
-    monto: total,
-    metodo_pago: 'Prex',
-    estado: 'pre_reserva',
-    comprobante_recibido: false,
-    nombre_responsable: form.nombre_responsable.trim(),
-    quiere_remera: form.quiere_remera,
+    p_modalidad: 'kids',
+    p_nombre_completo: form.nombre_nino.trim(),
+    p_edad: Number(form.edad),
+    p_localidad: null,
+    p_email: form.email.trim().toLowerCase(),
+    p_telefono: form.telefono.trim(),
+    p_nivel: form.nivel,
+    p_turno_sabado: 'Sábado 19:00–20:00 · Pista cerrada Maldonado',
+    p_objetivo_personalizadas: null,
+    p_nombre_responsable: form.nombre_responsable.trim(),
+    p_quiere_remera: form.quiere_remera,
   })
 
   const createPreReservation = async () => {
@@ -68,20 +64,17 @@ export default function PRKidsInscripciones2026() {
     setSending(true)
     setError('')
 
-    const { data, error: insertError } = await supabase
-      .from('pr_inscripciones_2026')
-      .insert(buildPayload())
-      .select('id')
-      .single()
+    const { data, error: insertError } = await supabase.rpc('registrar_inscripcion_2026_v3', buildPayload())
 
     setSending(false)
 
-    if (insertError) {
+    if (insertError || !data?.id) {
+      console.error('PR Kids registration error', insertError)
       setError('No pudimos guardar la pre-reserva. Probá nuevamente en unos minutos.')
       return
     }
 
-    setRegistrationId(data?.id || '')
+    setRegistrationId(data.id)
     setStep(3)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
