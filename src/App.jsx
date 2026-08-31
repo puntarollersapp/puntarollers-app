@@ -37,6 +37,8 @@ import AdminInscripciones2026 from './pages/AdminInscripciones2026'
 import PRKidsInscripciones2026 from './pages/PRKidsInscripciones2026'
 import ClinicaMiguelSept2026 from './pages/ClinicaMiguelSept2026'
 import PRMoments from './pages/PRMoments'
+import WelcomeAccess from './pages/WelcomeAccess'
+import AdminAccessRequests from './pages/AdminAccessRequests'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -108,6 +110,19 @@ function AdminPersonalShortcut() {
   )
 }
 
+function AdminAccessShortcut() {
+  return (
+    <a
+      href="/admin/nuevos-accesos"
+      className="fixed bottom-[212px] right-4 z-[85] flex min-h-12 items-center gap-2 rounded-2xl border border-sky-300/25 bg-[#0c1418]/95 px-4 py-3 text-xs font-black text-sky-100 shadow-[0_18px_50px_rgba(0,0,0,.48)] backdrop-blur-xl active:scale-[.98]"
+      aria-label="Administrar nuevos accesos"
+    >
+      <span className="text-lg">🔐</span>
+      <span>Nuevos accesos</span>
+    </a>
+  )
+}
+
 function AppRoutes() {
   return (
     <>
@@ -122,6 +137,8 @@ function AppRoutes() {
         <Route path="/inscripciones-kids-2026" element={<PRKidsInscripciones2026 />} />
         <Route path="/clinica-miguel-septiembre" element={<ClinicaMiguelSept2026 />} />
         <Route path="/personalizadas" element={<Personalizadas />} />
+        <Route path="/bienvenido" element={<WelcomeAccess />} />
+        <Route path="/soy-nuevo" element={<Navigate to="/bienvenido" replace />} />
 
         <Route path="/alianza" element={<Alianza />} />
         <Route path="/cuponeras" element={<Cuponeras />} />
@@ -157,6 +174,7 @@ function AppRoutes() {
                 <Admin />
                 <AdminRegistrationsShortcut />
                 <AdminPersonalShortcut />
+                <AdminAccessShortcut />
               </>
             </AdminRoute>
           }
@@ -164,6 +182,7 @@ function AppRoutes() {
 
         <Route path="/admin/inscripciones-2026" element={<FullAdminRoute><AdminInscripciones2026 /></FullAdminRoute>} />
         <Route path="/admin/personalizadas" element={<FullAdminRoute><AdminPersonalizadasBulk /></FullAdminRoute>} />
+        <Route path="/admin/nuevos-accesos" element={<FullAdminRoute><AdminAccessRequests /></FullAdminRoute>} />
 
         <Route path="/app" element={<Navigate to="/app/perfil" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
