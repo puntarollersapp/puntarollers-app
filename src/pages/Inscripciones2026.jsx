@@ -71,19 +71,17 @@ export default function Inscripciones2026() {
   }
 
   const buildPayload = () => ({
-    modalidad: mode,
-    nombre_completo: form.nombre_completo.trim(),
-    edad: Number(form.edad),
-    localidad: form.localidad.trim(),
-    email: form.email.trim().toLowerCase(),
-    telefono: form.telefono.trim(),
-    nivel: form.nivel,
-    turno_sabado: mode === 'grupales' ? form.turno_sabado : null,
-    objetivo_personalizadas: mode === 'personalizadas' ? form.objetivo_personalizadas.trim() : null,
-    monto: amount,
-    metodo_pago: 'Prex',
-    estado: 'pre_reserva',
-    comprobante_recibido: false,
+    p_modalidad: mode,
+    p_nombre_completo: form.nombre_completo.trim(),
+    p_edad: Number(form.edad),
+    p_localidad: form.localidad.trim(),
+    p_email: form.email.trim().toLowerCase(),
+    p_telefono: form.telefono.trim(),
+    p_nivel: form.nivel,
+    p_turno_sabado: mode === 'grupales' ? form.turno_sabado : null,
+    p_objetivo_personalizadas: mode === 'personalizadas' ? form.objetivo_personalizadas.trim() : null,
+    p_nombre_responsable: null,
+    p_quiere_remera: null,
   })
 
   const createPreReservation = async () => {
@@ -96,20 +94,17 @@ export default function Inscripciones2026() {
     setSending(true)
     setError('')
 
-    const { data, error: insertError } = await supabase
-      .from('pr_inscripciones_2026')
-      .insert(buildPayload())
-      .select('id')
-      .single()
+    const { data, error: insertError } = await supabase.rpc('registrar_inscripcion_2026_v3', buildPayload())
 
     setSending(false)
 
-    if (insertError) {
+    if (insertError || !data?.id) {
+      console.error('Registration error', insertError)
       setError('No pudimos guardar tu pre-reserva. Probá nuevamente en unos minutos.')
       return
     }
 
-    setRegistrationId(data?.id || '')
+    setRegistrationId(data.id)
     setStep(4)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
