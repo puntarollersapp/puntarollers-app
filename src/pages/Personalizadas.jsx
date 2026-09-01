@@ -15,6 +15,13 @@ const formatDay = (date) => new Intl.DateTimeFormat('es-UY', { weekday: 'short',
 const formatShort = (date) => new Intl.DateTimeFormat('es-UY', { day: '2-digit', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))
 const formatTime = (value) => String(value || '').slice(0, 5)
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+const MIN_NOTICE_MS = 2 * 60 * 60 * 1000
+
+function slotStartMs(slot) {
+  if (!slot?.fecha || !slot?.hora_inicio) return 0
+  const value = new Date(`${slot.fecha}T${formatTime(slot.hora_inicio)}:00-03:00`).getTime()
+  return Number.isFinite(value) ? value : 0
+}
 
 function shiftIso(value, amount) {
   const d = new Date(`${value}T12:00:00Z`)
@@ -95,9 +102,15 @@ export default function Personalizadas() {
   const [confirmed, setConfirmed] = useState(null)
   const [termsOpen, setTermsOpen] = useState(false)
   const [accepted, setAccepted] = useState(() => localStorage.getItem('pr_personal_terms') === PR_PERSONAL_TERMS_VERSION)
+  const [nowTick, setNowTick] = useState(() => Date.now())
   const week = useMemo(() => resolveDisplayedWeek(slots), [slots])
 
-  const visibleSlots = useMemo(() => slots.filter((s) => s.fecha >= week.start && s.fecha <= week.end), [slots, week])
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowTick(Date.now()), 60000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const visibleSlots = useMemo(() => slots.filter((s) => s.fecha >= week.start && s.fecha <= week.end && slotStartMs(s) >= nowTick + MIN_NOTICE_MS), [slots, week, nowTick])
   const days = useMemo(() => { const map = new Map(); visibleSlots.forEach((slot) => { if (!map.has(slot.fecha)) map.set(slot.fecha, []); map.get(slot.fecha).push(slot) }); return [...map.entries()] }, [visibleSlots])
 
   const loadBase = async () => {
@@ -135,7 +148,7 @@ export default function Personalizadas() {
   }
 
   const reserve = async () => {
-    if (!selected) return
+    if (!selected || selected.ocupado) return
     setBusy(true); setMessage('')
     const started = Date.now()
     try {
@@ -166,8 +179,11 @@ export default function Personalizadas() {
 
         {student && upcoming.length > 0 && <section className="pr-section-card"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div><strong>{formatDay(item.slot.fecha)}</strong><small>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</small></div><b>RESERVADA</b></div>)}</div></section>}
 
-        {student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tu próxima clase</h2><p className="pr-muted">Podés reservar {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} más.</p></div></div>
-          {days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Horarios aún no publicados</h3><p>Estamos armando la próxima semana. Cuando Punta Rollers publique los primeros turnos, van a aparecer acá automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.length} turno{daySlots.length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => <button key={slot.id} onClick={() => setSelected(slot)} className={selected?.id === slot.id ? 'is-selected' : ''}><span>{formatTime(slot.hora_inicio)}</span><small>{formatTime(slot.hora_inicio)} → {formatTime(slot.hora_fin)}</small><em>Disponible</em></button>)}</div></div>)}
+        {student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tu próxima clase</h2><p className="pr-muted">Podés reservar {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} más. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
+          {days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Sin turnos disponibles por ahora</h3><p>Los horarios que ya pasaron o están a menos de 2 horas de comenzar dejan de mostrarse automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.filter((slot) => !slot.ocupado).length} disponible{daySlots.filter((slot) => !slot.ocupado).length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => {
+            const occupied = Boolean(slot.ocupado)
+            return <button key={slot.id} disabled={occupied} onClick={() => !occupied && setSelected(slot)} className={`${selected?.id === slot.id ? 'is-selected' : ''} ${occupied ? 'opacity-45 cursor-not-allowed border-white/5 bg-white/[.02]' : ''}`}><span>{formatTime(slot.hora_inicio)}</span><small>{formatTime(slot.hora_inicio)} → {formatTime(slot.hora_fin)}</small><em className={occupied ? '!text-white/35' : ''}>{occupied ? 'Reservado' : 'Disponible'}</em></button>
+          })}</div></div>)}
           {selected && <button disabled={busy} onClick={reserve} className="pr-primary pr-confirm">{busy ? 'Confirmando…' : `Reservar ${formatDay(selected.fecha)} · ${formatTime(selected.hora_inicio)}`}</button>}{busy && <SkateLoader label="Confirmando tu turno…" />}</section>}
 
         {student && pass && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
