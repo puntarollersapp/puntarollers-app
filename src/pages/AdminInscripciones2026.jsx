@@ -25,6 +25,16 @@ export default function AdminInscripciones2026() {
   const [filter, setFilter] = useState('todas')
   const [query, setQuery] = useState('')
   const [deletingId, setDeletingId] = useState('')
+  const [personalizadasAbiertas, setPersonalizadasAbiertas] = useState(true)
+  const [toggleLoading, setToggleLoading] = useState(true)
+
+  const loadRegistrationStatus = async () => {
+    setToggleLoading(true)
+    const { data, error: statusError } = await supabase.rpc('estado_inscripciones_2026')
+    if (statusError) setError(statusError.message)
+    else setPersonalizadasAbiertas(data?.personalizadas_abiertas !== false)
+    setToggleLoading(false)
+  }
 
   const load = async () => {
     setLoading(true)
@@ -38,7 +48,10 @@ export default function AdminInscripciones2026() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    loadRegistrationStatus()
+  }, [])
 
   const visible = useMemo(() => rows.filter(row => {
     if (filter !== 'todas' && row.modalidad !== filter) return false
@@ -53,6 +66,20 @@ export default function AdminInscripciones2026() {
     kids: rows.filter(r => r.modalidad === 'kids').length,
     confirmadas: rows.filter(r => ['pago_verificado','confirmado'].includes(r.estado)).length,
   }), [rows])
+
+  const togglePersonalizadas = async () => {
+    const nextValue = !personalizadasAbiertas
+    const action = nextValue ? 'ABRIR' : 'PAUSAR'
+    const confirmed = window.confirm(`${action} las nuevas inscripciones de Clases Personalizadas?`)
+    if (!confirmed) return
+
+    setToggleLoading(true)
+    setError('')
+    const { data, error: toggleError } = await supabase.rpc('set_personalizadas_abiertas_2026', { p_abiertas: nextValue })
+    if (toggleError) setError(toggleError.message)
+    else setPersonalizadasAbiertas(data?.personalizadas_abiertas === true)
+    setToggleLoading(false)
+  }
 
   const setStatus = async (id, estado) => {
     const { error: updateError } = await supabase
@@ -90,6 +117,17 @@ export default function AdminInscripciones2026() {
         <div><p>ADMIN · PUNTA ROLLERS</p><h1>Inscripciones 2026</h1></div>
         <button onClick={load}>Actualizar</button>
       </header>
+
+      <section className="pr-admin-registration-control">
+        <div>
+          <span>CLASES PERSONALIZADAS</span>
+          <h2>{toggleLoading ? 'Consultando estado…' : personalizadasAbiertas ? 'Inscripciones abiertas' : 'Inscripciones pausadas'}</h2>
+          <p>{personalizadasAbiertas ? 'Se están aceptando nuevas preinscripciones.' : 'No pueden entrar nuevas preinscripciones. Podés volver a abrirlas el domingo de tarde.'}</p>
+        </div>
+        <button className={personalizadasAbiertas ? 'is-open' : 'is-closed'} onClick={togglePersonalizadas} disabled={toggleLoading}>
+          {toggleLoading ? 'Procesando…' : personalizadasAbiertas ? 'Pausar inscripciones' : 'Abrir inscripciones'}
+        </button>
+      </section>
 
       <section className="pr-admin-stats">
         <article><span>Total</span><strong>{stats.total}</strong></article>
