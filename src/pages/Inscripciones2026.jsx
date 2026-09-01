@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import './Inscripciones2026.css'
 
@@ -28,13 +28,23 @@ export default function Inscripciones2026() {
   const [sending, setSending] = useState(false)
   const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
+  const [personalizadasAbiertas, setPersonalizadasAbiertas] = useState(true)
 
   const amount = mode === 'personalizadas' ? 2900 : 1500
   const progress = useMemo(() => `${Math.min(step + 1, 5)} / 5`, [step])
 
+  useEffect(() => {
+    const loadStatus = async () => {
+      const { data } = await supabase.rpc('estado_inscripciones_2026')
+      if (data?.personalizadas_abiertas === false) setPersonalizadasAbiertas(false)
+    }
+    loadStatus()
+  }, [])
+
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
 
   const chooseMode = (value) => {
+    if (value === 'personalizadas' && !personalizadasAbiertas) return
     setMode(value)
     setForm(initialForm)
     setAccepted(false)
@@ -100,7 +110,12 @@ export default function Inscripciones2026() {
 
     if (insertError || !data?.id) {
       console.error('Registration error', insertError)
-      setError('No pudimos guardar tu pre-reserva. Probá nuevamente en unos minutos.')
+      if (mode === 'personalizadas' && String(insertError?.message || '').includes('PERSONALIZADAS_CERRADAS')) {
+        setPersonalizadasAbiertas(false)
+        setError('Las inscripciones para Personalizadas están pausadas. Los nuevos cupos se publican el domingo de tarde.')
+      } else {
+        setError('No pudimos guardar tu pre-reserva. Probá nuevamente en unos minutos.')
+      }
       return
     }
 
@@ -145,12 +160,12 @@ export default function Inscripciones2026() {
                 <small>Hasta 2 encuentros por semana</small>
                 <b>$1.500 / mes</b>
               </button>
-              <button className="pr-reg-choice pr-reg-choice-private" onClick={() => chooseMode('personalizadas')}>
-                <span className="pr-reg-promo pr-reg-promo-private">✨ Precio especial septiembre</span>
+              <button className={`pr-reg-choice pr-reg-choice-private ${!personalizadasAbiertas ? 'is-closed' : ''}`} onClick={() => chooseMode('personalizadas')} disabled={!personalizadasAbiertas}>
+                <span className="pr-reg-promo pr-reg-promo-private">{personalizadasAbiertas ? '✨ Precio especial septiembre' : '🔒 Inscripciones pausadas'}</span>
                 <span className="pr-reg-choice-icon">⭐</span>
                 <strong>Personalizadas 1 a 1</strong>
-                <small>Una hora enfocada 100% en vos</small>
-                <b>$2.900 / 4 clases</b>
+                <small>{personalizadasAbiertas ? 'Una hora enfocada 100% en vos' : 'Nuevos cupos el domingo de tarde'}</small>
+                <b>{personalizadasAbiertas ? '$2.900 / 4 clases' : 'Volvé el domingo'}</b>
               </button>
             </div>
             <p className="pr-reg-note">Tu lugar se confirma únicamente después de que verifiquemos el pago.</p>
@@ -185,7 +200,8 @@ export default function Inscripciones2026() {
               <article><b>🔒 Cupos reales</b><p>Es una persona por hora, por eso la disponibilidad es más limitada.</p></article>
             </div>
             <div className="pr-reg-info"><b>Cancelaciones</b><p>Si avisás con anticipación, el cupón no se pierde. Si no asistís o cancelás cuando ya llegó el horario, el encuentro se descuenta.</p></div>
-            <button className="pr-reg-primary" onClick={() => setStep(2)}>Quiero hacer mi pre-reserva →</button>
+            {!personalizadasAbiertas && <div className="pr-reg-info pr-reg-closed-info"><b>🔒 Inscripciones pausadas</b><p>Durante la semana no tomamos nuevas preinscripciones. Los nuevos cupos se publican el domingo de tarde.</p></div>}
+            <button className="pr-reg-primary" disabled={!personalizadasAbiertas} onClick={() => setStep(2)}>{personalizadasAbiertas ? 'Quiero hacer mi pre-reserva →' : 'Inscripciones pausadas'}</button>
           </div>
         )}
 
@@ -212,7 +228,7 @@ export default function Inscripciones2026() {
             <p className="pr-reg-kicker">TU MODALIDAD</p>
             {mode === 'grupales' ? <><h1>Elegí tu turno de los sábados.</h1><p className="pr-reg-lead">El miércoles 19:30 está incluido para todos.</p><div className="pr-reg-radio-list">{saturdayOptions.map(option => <label key={option} className={form.turno_sabado === option ? 'selected' : ''}><input type="radio" name="turno" checked={form.turno_sabado === option} onChange={() => update('turno_sabado', option)} /><span>{option}</span></label>)}</div></> : <><h1>¿Qué te gustaría conseguir?</h1><p className="pr-reg-lead">Así podemos preparar mejor tu experiencia desde el primer encuentro.</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e => update('objetivo_personalizadas', e.target.value)} placeholder="Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…" /></>}
             {error && <p className="pr-reg-error">{error}</p>}
-            <button className="pr-reg-primary" disabled={sending} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : 'Ver pago y confirmar →'}</button>
+            <button className="pr-reg-primary" disabled={sending || (mode === 'personalizadas' && !personalizadasAbiertas)} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : mode === 'personalizadas' && !personalizadasAbiertas ? 'Inscripciones pausadas' : 'Ver pago y confirmar →'}</button>
           </div>
         )}
 
