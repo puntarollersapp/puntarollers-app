@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const PODIUM_SLUG = 'toma-3-2026-09-02'
 const REFRESH_MS = 20000
+const LEADER_KEY = `pr_live_podium_leader:${PODIUM_SLUG}`
+const COMPLETE_KEY = `pr_live_podium_complete:${PODIUM_SLUG}`
 
 function formatTime(totalSeconds) {
   const seconds = Math.max(0, Math.round(Number(totalSeconds) || 0))
@@ -45,7 +47,7 @@ function PodiumAvatar({ item, size = 'normal' }) {
   )
 }
 
-function PlaceCard({ item, rank }) {
+function PlaceCard({ item, rank, newLeader = false }) {
   const winner = rank === 1
   const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'
   const label = rank === 1 ? '1ER PUESTO' : rank === 2 ? '2DO PUESTO' : '3ER PUESTO'
@@ -61,9 +63,14 @@ function PlaceCard({ item, rank }) {
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-[24px] border p-3 text-center ${winner ? 'border-amber-300/30 bg-gradient-to-b from-amber-300/[.13] via-orange-400/[.07] to-black/15 shadow-[0_20px_50px_rgba(251,191,36,.11)]' : 'border-white/[.08] bg-white/[.025]'}`}>
+    <div className={`relative overflow-hidden rounded-[24px] border p-3 text-center transition-all duration-500 ${winner ? 'border-amber-300/30 bg-gradient-to-b from-amber-300/[.13] via-orange-400/[.07] to-black/15 shadow-[0_20px_50px_rgba(251,191,36,.11)]' : 'border-white/[.08] bg-white/[.025]'} ${newLeader ? 'ring-2 ring-amber-300/60 shadow-[0_0_55px_rgba(251,191,36,.28)]' : ''}`}>
       {winner && <div className="pointer-events-none absolute -top-12 left-1/2 h-28 w-28 -translate-x-1/2 rounded-full bg-amber-300/15 blur-3xl" />}
       <div className="relative">
+        {winner && newLeader && (
+          <div className="mb-2 inline-flex animate-pulse items-center gap-1.5 rounded-full border border-amber-200/30 bg-amber-300/15 px-2.5 py-1 text-[7px] font-black uppercase tracking-[.14em] text-amber-100">
+            ⚡ NUEVO LÍDER
+          </div>
+        )}
         <div className="absolute -right-1 -top-1 text-2xl drop-shadow-lg">{medal}</div>
         <div className="mx-auto w-fit"><PodiumAvatar item={item} size={winner ? 'winner' : 'normal'} /></div>
         <p className={`mt-3 truncate text-xs font-black ${winner ? 'text-amber-100' : 'text-white'}`}>{item.display_name}</p>
@@ -84,6 +91,10 @@ export default function RollerFeedLivePodium() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [newLeaderId, setNewLeaderId] = useState('')
+  const [justCompleted, setJustCompleted] = useState(false)
+  const celebrationTimer = useRef(null)
+  const leaderTimer = useRef(null)
 
   useEffect(() => {
     let active = true
@@ -94,7 +105,29 @@ export default function RollerFeedLivePodium() {
       })
       if (!active) return
       if (!error) {
-        setRows(Array.isArray(data) ? data : [])
+        const nextRows = Array.isArray(data) ? data : []
+        const ranked = nextRows.filter((row) => Number(row.rank) >= 1 && Number(row.rank) <= 3)
+        const first = ranked.find((row) => Number(row.rank) === 1) || null
+
+        if (first?.alumno_id) {
+          const currentLeader = String(first.alumno_id)
+          const previousLeader = window.localStorage.getItem(LEADER_KEY)
+          if (previousLeader && previousLeader !== currentLeader) {
+            setNewLeaderId(currentLeader)
+            if (leaderTimer.current) window.clearTimeout(leaderTimer.current)
+            leaderTimer.current = window.setTimeout(() => setNewLeaderId(''), 9000)
+          }
+          window.localStorage.setItem(LEADER_KEY, currentLeader)
+        }
+
+        if (ranked.length === 3 && window.localStorage.getItem(COMPLETE_KEY) !== '1') {
+          window.localStorage.setItem(COMPLETE_KEY, '1')
+          setJustCompleted(true)
+          if (celebrationTimer.current) window.clearTimeout(celebrationTimer.current)
+          celebrationTimer.current = window.setTimeout(() => setJustCompleted(false), 12000)
+        }
+
+        setRows(nextRows)
         setLastUpdated(new Date())
       }
       setLoading(false)
@@ -109,6 +142,8 @@ export default function RollerFeedLivePodium() {
       active = false
       window.clearInterval(timer)
       window.removeEventListener('focus', onFocus)
+      if (celebrationTimer.current) window.clearTimeout(celebrationTimer.current)
+      if (leaderTimer.current) window.clearTimeout(leaderTimer.current)
     }
   }, [])
 
@@ -123,13 +158,17 @@ export default function RollerFeedLivePodium() {
     }
   }, [rows])
 
+  const podiumComplete = podium.count === 3
+  const firstIsNewLeader = Boolean(podium.first?.alumno_id && String(podium.first.alumno_id) === String(newLeaderId))
+
   if (!loading && !post) return null
 
   return (
     <section className="mx-auto w-full max-w-3xl px-[18px] pt-4">
-      <article className="relative overflow-hidden rounded-[34px] border border-amber-300/25 bg-gradient-to-br from-[#311505] via-[#15100d] to-[#07070a] p-5 shadow-[0_30px_100px_rgba(249,115,22,.16)] animate-page-enter">
+      <article className={`relative overflow-hidden rounded-[34px] border bg-gradient-to-br from-[#311505] via-[#15100d] to-[#07070a] p-5 shadow-[0_30px_100px_rgba(249,115,22,.16)] animate-page-enter transition-all duration-500 ${justCompleted ? 'border-amber-200/55 ring-2 ring-amber-300/20' : 'border-amber-300/25'}`}>
         <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-orange-500/18 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-amber-300/[.08] blur-3xl" />
+        {justCompleted && <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-amber-200 to-transparent animate-pulse" />}
 
         <div className="relative">
           <div className="flex items-start justify-between gap-4">
@@ -140,6 +179,11 @@ export default function RollerFeedLivePodium() {
                   <span className="text-[8px] font-black uppercase tracking-[.18em] text-red-200">EN VIVO</span>
                 </span>
                 <span className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[8px] font-black uppercase tracking-[.14em] text-white/35">📌 ANCLADO</span>
+                {podiumComplete && (
+                  <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-[.14em] ${justCompleted ? 'animate-pulse border-amber-200/40 bg-amber-300/20 text-amber-100' : 'border-orange-300/20 bg-orange-400/[.10] text-orange-200'}`}>
+                    🔥 PODIO COMPLETO
+                  </span>
+                )}
               </div>
 
               <p className="mt-4 text-[9px] font-black uppercase tracking-[.22em] text-orange-300">
@@ -153,16 +197,23 @@ export default function RollerFeedLivePodium() {
               </p>
             </div>
 
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-[22px] border border-amber-300/20 bg-amber-300/[.08] text-3xl shadow-[0_0_35px_rgba(251,191,36,.12)]">🏆</div>
+            <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-[22px] border border-amber-300/20 bg-amber-300/[.08] text-3xl shadow-[0_0_35px_rgba(251,191,36,.12)] ${justCompleted ? 'animate-bounce' : ''}`}>🏆</div>
           </div>
 
           <p className="mt-4 max-w-xl text-xs leading-5 text-white/42">
             {post?.subtitle || 'El podio se actualiza automáticamente a medida que llegan nuevas tomas desde Strava.'}
           </p>
 
+          {justCompleted && (
+            <div className="mt-4 rounded-[20px] border border-amber-200/25 bg-gradient-to-r from-amber-300/[.14] via-orange-400/[.09] to-amber-300/[.06] px-4 py-3 text-center shadow-[0_12px_35px_rgba(251,191,36,.10)]">
+              <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-100">🔥 PODIO COMPLETO</p>
+              <p className="mt-1 text-[11px] font-black text-white">Ya tenemos tres marcas en pista. Y esto todavía puede cambiar.</p>
+            </div>
+          )}
+
           <div className="mt-5 grid grid-cols-3 items-end gap-2.5">
             <PlaceCard item={podium.second} rank={2} />
-            <div className="-translate-y-3"><PlaceCard item={podium.first} rank={1} /></div>
+            <div className="-translate-y-3"><PlaceCard item={podium.first} rank={1} newLeader={firstIsNewLeader} /></div>
             <PlaceCard item={podium.third} rank={3} />
           </div>
 
@@ -171,7 +222,11 @@ export default function RollerFeedLivePodium() {
               <span className="text-lg">⚡</span>
               <div>
                 <p className="text-[10px] font-black text-orange-100/75">
-                  {podium.count ? 'Podio provisional · puede cambiar en cualquier momento.' : 'La pista está abierta: esperando las primeras tomas válidas de Strava.'}
+                  {podiumComplete
+                    ? 'Podio completo · sigue siendo provisional hasta que terminen de entrar las tomas.'
+                    : podium.count
+                      ? 'Podio provisional · puede cambiar en cualquier momento.'
+                      : 'La pista está abierta: esperando las primeras tomas válidas de Strava.'}
                 </p>
                 <p className="mt-1 text-[9px] leading-4 text-white/30">
                   Ordenado por velocidad promedio de la toma de hoy para poder comparar registros de distintas distancias de forma más justa.
