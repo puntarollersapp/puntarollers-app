@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import BottomNav from '../components/BottomNav'
 import MessagePopup from '../components/MessagePopup'
 import InstallPrompt from '../components/InstallPrompt'
+import RollerFeedLivePodium from '../components/RollerFeedLivePodium'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
@@ -326,6 +327,11 @@ export default function AppLayout({
     accessProfile?.role === 'admin' &&
     location.pathname === '/admin'
 
+  const showRollerFeedPodium =
+    !checkingAccess &&
+    !accessBlocked &&
+    location.pathname === '/app/actividad'
+
   return (
     <div className="app-shell pb-24">
       <Header
@@ -358,7 +364,10 @@ export default function AppLayout({
             onPublicHome={handlePublicHome}
           />
         ) : (
-          children
+          <>
+            {showRollerFeedPodium && <RollerFeedLivePodium />}
+            {children}
+          </>
         )}
       </main>
 
