@@ -5,7 +5,7 @@ import AmigosPRCard from './AmigosPRCard'
 
 export default function AmigosPRProfilePortal() {
   const { user } = useAuth()
-  const [host, setHost] = useState(null)
+  const [stack, setStack] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -15,29 +15,27 @@ export default function AmigosPRProfilePortal() {
     function arrangeProfile() {
       if (cancelled) return false
 
-      const stack = document.querySelector('.pr-page')
-      if (!stack) return false
+      const profileStack = document.querySelector('.pr-page')
+      if (!profileStack) return false
 
-      const directChildren = Array.from(stack.children)
+      if (!stack) setStack(profileStack)
+
+      const directChildren = Array.from(profileStack.children)
       const profilePanel = directChildren.find(
         (node) => node.matches?.('section.pr-panel')
       )
       if (!profilePanel) return false
 
-      // 1) AMIGOS PR: bloque independiente inmediatamente después del perfil principal.
-      let amigosNode = stack.querySelector(':scope > [data-amigos-pr="true"]')
-      if (!amigosNode) {
-        amigosNode = document.createElement('div')
-        amigosNode.setAttribute('data-amigos-pr', 'true')
-        amigosNode.className = 'w-full'
+      // AMIGOS PR es un hijo React real del stack (portal), no un nodo manual.
+      // Solo lo reubicamos visualmente para que quede inmediatamente después
+      // del bloque principal de perfil sin que React pueda eliminarlo al rerenderizar.
+      const amigosNode = profileStack.querySelector(':scope > [data-amigos-pr="true"]')
+      if (amigosNode && profilePanel.nextElementSibling !== amigosNode) {
+        profileStack.insertBefore(amigosNode, profilePanel.nextElementSibling)
       }
-      if (profilePanel.nextElementSibling !== amigosNode) {
-        profilePanel.insertAdjacentElement('afterend', amigosNode)
-      }
-      if (!cancelled) setHost(amigosNode)
 
-      // 2) PR ROLLER: si ya existe el bloque "Mi PR Roller", quitamos el acceso duplicado
-      // "Modificar mi PR Roller". El botón Modificar del bloque principal sigue funcionando.
+      // Si ya existe "Mi PR Roller", el acceso grande "Modificar mi PR Roller"
+      // es redundante: el bloque principal ya tiene su botón Modificar.
       const avatarLinks = Array.from(profilePanel.querySelectorAll('a[href="/app/avatar-premium"]'))
       avatarLinks.forEach((link) => {
         const text = (link.textContent || '').replace(/\s+/g, ' ').trim()
@@ -46,41 +44,38 @@ export default function AmigosPRProfilePortal() {
         }
       })
 
-      // 3) PLACA VIRTUAL: función secundaria. La movemos al final real del contenido,
-      // justo antes de "Cerrar sesión" para que no compita con las herramientas principales.
-      const storyCard = Array.from(stack.children).find(
+      // La Placa Virtual PR queda como función secundaria al final real del perfil.
+      const storyCard = Array.from(profileStack.children).find(
         (child) => (child.textContent || '').includes('Tu Placa Virtual PR')
       )
-      const logoutButton = Array.from(stack.children).find(
+      const logoutButton = Array.from(profileStack.children).find(
         (child) => child.tagName === 'BUTTON' && (child.textContent || '').includes('Cerrar sesión')
       )
 
       if (storyCard) {
         if (logoutButton) {
           if (storyCard.nextElementSibling !== logoutButton) {
-            stack.insertBefore(storyCard, logoutButton)
+            profileStack.insertBefore(storyCard, logoutButton)
           }
-        } else if (storyCard !== stack.lastElementChild) {
-          stack.appendChild(storyCard)
+        } else if (storyCard !== profileStack.lastElementChild) {
+          profileStack.appendChild(storyCard)
         }
       }
 
       return true
     }
 
-    // El perfil puede terminar de montarse después del layout/loading screen.
-    // Reintentamos durante unos segundos en vez de depender de un único timeout.
     const retry = window.setInterval(() => {
       attempts += 1
       const ready = arrangeProfile()
       if (ready || attempts >= 40) {
         window.clearInterval(retry)
-        const stack = document.querySelector('.pr-page')
-        if (stack && !observer) {
+        const profileStack = document.querySelector('.pr-page')
+        if (profileStack && !observer) {
           observer = new MutationObserver(() => {
             window.requestAnimationFrame(arrangeProfile)
           })
-          observer.observe(stack, { childList: true, subtree: true })
+          observer.observe(profileStack, { childList: true, subtree: true })
         }
       }
     }, 150)
@@ -91,10 +86,15 @@ export default function AmigosPRProfilePortal() {
       cancelled = true
       window.clearInterval(retry)
       observer?.disconnect()
-      document.querySelector('[data-amigos-pr="true"]')?.remove()
     }
-  }, [])
+  }, [stack])
 
-  if (!host || !user?.id) return null
-  return createPortal(<AmigosPRCard profileId={user.id} />, host)
+  if (!stack || !user?.id) return null
+
+  return createPortal(
+    <div data-amigos-pr="true" className="w-full">
+      <AmigosPRCard profileId={user.id} />
+    </div>,
+    stack
+  )
 }
