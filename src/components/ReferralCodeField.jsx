@@ -35,7 +35,7 @@ export default function ReferralCodeField({ value, onChange, onValidated, compac
           value={value}
           onChange={(e) => { onChange(e.target.value.toUpperCase()); setStatus(null); onValidated?.(null) }}
           onBlur={() => value && validate()}
-          placeholder="Ej.: CLAUDINIOPR"
+          placeholder="Ej.: AMIGOEJEMPLOPR"
           autoCapitalize="characters"
           style={{ minWidth: 0, flex: 1, borderRadius: 14, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(0,0,0,.25)', color: 'white', padding: '12px 13px', fontSize: 13, fontWeight: 800, outline: 'none' }}
         />
