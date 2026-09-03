@@ -45,21 +45,77 @@ function Place({ item, rank }) {
   )
 }
 
+function normalizeText(value) {
+  return String(value || '')
+    .toLocaleLowerCase('es-UY')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+function findFeedListAndBirthdays() {
+  const labels = [...document.querySelectorAll('p')].filter((node) => {
+    const text = normalizeText(node.textContent)
+    return text.includes('proximo cumpleanos') || text.includes('celebracion pr') || text.includes('cumpleanos de este mes')
+  })
+
+  const wrappers = []
+  let feedList = null
+
+  labels.forEach((label) => {
+    let node = label
+    while (node?.parentElement && !node.parentElement.classList.contains('space-y-4')) {
+      node = node.parentElement
+    }
+
+    if (node?.parentElement?.classList.contains('space-y-4')) {
+      feedList = node.parentElement
+      if (!wrappers.includes(node)) wrappers.push(node)
+    }
+  })
+
+  if (!feedList) {
+    const candidates = [...document.querySelectorAll('div.space-y-4')]
+    feedList = candidates.find((node) => node.querySelector('article, section, [class*="rounded-"]')) || null
+  }
+
+  return { feedList, birthdayWrappers: wrappers.slice(0, 3) }
+}
+
 export default function RollerFeedPinnedPodium() {
   const [host, setHost] = useState(null)
   const [rows, setRows] = useState([])
   const [lastUpdated, setLastUpdated] = useState(null)
 
   useEffect(() => {
-    const main = document.querySelector('.app-shell > main')
-    if (!main) return undefined
-
     const node = document.createElement('div')
     node.setAttribute('data-pr-pinned-podium', 'true')
-    main.insertBefore(node, main.firstChild)
     setHost(node)
 
-    return () => node.remove()
+    function placeHost() {
+      const { feedList, birthdayWrappers } = findFeedListAndBirthdays()
+      if (!feedList) return
+
+      const lastBirthday = birthdayWrappers[birthdayWrappers.length - 1]
+      if (lastBirthday) {
+        if (lastBirthday.nextSibling !== node) {
+          feedList.insertBefore(node, lastBirthday.nextSibling)
+        }
+      } else if (feedList.firstChild !== node) {
+        feedList.insertBefore(node, feedList.firstChild)
+      }
+    }
+
+    placeHost()
+    const observer = new MutationObserver(placeHost)
+    observer.observe(document.body, { childList: true, subtree: true })
+    const timer = window.setInterval(placeHost, 1000)
+
+    return () => {
+      observer.disconnect()
+      window.clearInterval(timer)
+      node.remove()
+    }
   }, [])
 
   useEffect(() => {
@@ -99,16 +155,18 @@ export default function RollerFeedPinnedPodium() {
   if (!host || !post) return null
 
   return createPortal(
-    <section className="mx-auto w-full max-w-3xl px-[18px] pt-4">
-      <article className="relative overflow-hidden rounded-[30px] border border-amber-300/25 bg-gradient-to-br from-[#351704] via-[#16100d] to-[#08080b] p-5 shadow-[0_24px_80px_rgba(249,115,22,.14)]">
+    <div className="pt-1 pb-1">
+      <article className="relative overflow-hidden rounded-[30px] border border-amber-300/30 bg-gradient-to-br from-[#351704] via-[#16100d] to-[#08080b] p-5 shadow-[0_24px_80px_rgba(249,115,22,.18)]">
         <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-orange-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-violet-500/[.08] blur-3xl" />
+
         <div className="relative">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-orange-300/20 bg-orange-400/[.10] px-3 py-1 text-[8px] font-black uppercase tracking-[.16em] text-orange-200">📌 ANCLADO · 72 H</span>
+            <span className="rounded-full border border-orange-300/25 bg-orange-400/[.12] px-3 py-1 text-[8px] font-black uppercase tracking-[.16em] text-orange-100">📌 FIJO · 72 HORAS</span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-red-300/20 bg-red-400/[.09] px-3 py-1 text-[8px] font-black uppercase tracking-[.16em] text-red-200"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-300" /> EN VIVO</span>
           </div>
 
-          <p className="mt-4 text-[9px] font-black uppercase tracking-[.20em] text-orange-300">⚡ CLASIFICACIÓN TOMA DE TIEMPO</p>
+          <p className="mt-4 text-[9px] font-black uppercase tracking-[.20em] text-orange-300">⚡ RANKING ESPECIAL · STRAVA</p>
           <div className="mt-1 flex items-end justify-between gap-3">
             <div>
               <h2 className="font-display text-[32px] leading-none text-white">PODIO · TOMA 3</h2>
@@ -117,6 +175,8 @@ export default function RollerFeedPinnedPodium() {
             <span className="text-3xl">🏆</span>
           </div>
 
+          <p className="mt-3 text-[10px] leading-4 text-white/38">Este post se mantiene fijo después de los cumpleaños y se actualiza con cada nueva marca válida de la Toma 3 que entra al sistema.</p>
+
           <div className="mt-5 grid grid-cols-3 items-end gap-2">
             <Place item={podium.second} rank={2} />
             <div className="-translate-y-2"><Place item={podium.first} rank={1} /></div>
@@ -124,12 +184,14 @@ export default function RollerFeedPinnedPodium() {
           </div>
 
           <div className="mt-3 rounded-[18px] border border-white/[.07] bg-black/20 px-4 py-3">
-            <p className="text-[9px] font-black text-white/60">El podio se actualiza automáticamente con cada marca válida registrada.</p>
-            <p className="mt-1 text-[8px] text-white/25">{lastUpdated ? `Actualizado ${lastUpdated.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}` : 'Actualizando…'} · visible solo durante 72 horas</p>
+            <p className="text-[9px] font-black text-white/60">Podio provisional · se recalcula automáticamente según las tomas registradas.</p>
+            <p className="mt-1 text-[8px] text-white/25">{lastUpdated ? `Actualizado ${lastUpdated.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit' })}` : 'Actualizando…'} · Strava + PR Performance</p>
           </div>
+
+          <p className="mt-3 text-center text-[8px] font-semibold tracking-[.04em] text-white/20">No es solo patinar. Es pertenecer.</p>
         </div>
       </article>
-    </section>,
+    </div>,
     host
   )
 }
