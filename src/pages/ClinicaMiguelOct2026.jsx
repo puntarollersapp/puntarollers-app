@@ -8,6 +8,17 @@ const PRICE = 2000
 const niveles = ['Primera vez', 'Principiante', 'Intermedio', 'Avanzado', 'Competitivo']
 const initialForm = { nombre_completo:'', edad:'', nivel:'', telefono:'', email:'', asistencia_completa:false, opcion_pago:'' }
 
+const trainingBlocks = [
+  { n:'01', title:'Técnica de base', text:'Fundamentos, postura, centro de gravedad y eficiencia del movimiento.' },
+  { n:'02', title:'Frenado + control', text:'Recursos de frenado, estabilidad, dominio del cuerpo y seguridad sobre ruedas.' },
+  { n:'03', title:'Curvas + trayectoria', text:'Entrada, salida, inclinación, transferencia de peso y lectura de línea.' },
+  { n:'04', title:'Progresión técnica', text:'Correcciones para que cada patinador avance desde su nivel actual.' },
+  { n:'05', title:'SlideBoards', text:'Trabajo específico de empuje lateral, transferencia de peso, coordinación y estabilidad fuera del patín.' },
+  { n:'06', title:'Aplicación real', text:'Ejercicios progresivos en pista y situaciones concretas de patinaje.' },
+  { n:'07', title:'Corrección personalizada', text:'Observación, devolución técnica y ajustes individuales durante la clínica.' },
+  { n:'08', title:'Segunda parte · más nivel', text:'Más precisión, fluidez, economía de movimiento y herramientas para seguir entrenando después.' },
+]
+
 export default function ClinicaMiguelOct2026(){
   const [step,setStep]=useState(0)
   const [form,setForm]=useState(initialForm)
@@ -52,17 +63,25 @@ export default function ClinicaMiguelOct2026(){
     {step<3&&<div className="oct-progress"><div><span>{loadingCupos?'—':cupos.disponibles}</span><small>lugares disponibles</small></div><div className="oct-progress-track"><i style={{width:`${percent}%`}}/></div><b>{loadingCupos?'Cargando':waitlistActive?'Lista de espera abierta':`${cupos.ocupados}/${cupos.total}`}</b></div>}
 
     {step===0&&<div className="oct-hero">
-      <div className="oct-hero-copy"><p className="oct-overline">PUNTA ROLLERS × MIGUEL FLORES</p><h1><span>CLÍNICA</span><strong>02</strong></h1><h2>Más técnica.<br/>Más control.<br/><em>Más nivel.</em></h2><p className="oct-intro">Una nueva experiencia intensiva de tres jornadas junto a Miguel Ángel Flores, entrenador argentino y Subcampeón Mundial Máster con más de 40 años dentro del patinaje.</p></div>
+      <div className="oct-hero-copy"><p className="oct-overline">PUNTA ROLLERS × MIGUEL FLORES</p><h1><span>CLÍNICA</span><strong>02</strong></h1><h2>Más técnica.<br/>Más control.<br/><em>Más nivel.</em></h2><p className="oct-intro">La segunda parte de una experiencia intensiva de tres jornadas junto a Miguel Ángel Flores, entrenador argentino y Subcampeón Mundial Máster con más de 40 años dentro del patinaje. No es repetir la primera clínica: es profundizar, corregir y llevar cada herramienta un paso más allá.</p></div>
       <aside className="oct-date-card"><span>OCT</span><div><b>28</b><small>MIÉRCOLES</small></div><div><b>29</b><small>JUEVES</small></div><div><b>30</b><small>VIERNES</small></div><p>2026 · MALDONADO / PUNTA DEL ESTE</p></aside>
       <div className="oct-manifesto"><div><b>3</b><span>jornadas</span></div><div><b>6H</b><span>de trabajo</span></div><div><b>30</b><span>cupos</span></div><div><b>ALL</b><span>niveles</span></div></div>
-      <div className="oct-price-strip"><div><small>EXPERIENCIA COMPLETA</small><strong>${PRICE.toLocaleString('es-UY')}</strong></div><p>Una inscripción · tres jornadas · seguimiento técnico</p></div>
+
+      <section className="oct-program">
+        <div className="oct-program-head"><div><p className="oct-overline">CONTENIDO · CLÍNICA 02</p><h3>Lo que vas a trabajar</h3></div><p>Una progresión pensada para transformar correcciones en herramientas concretas que puedas seguir usando después de la clínica.</p></div>
+        <div className="oct-program-grid">{trainingBlocks.map(item=><article key={item.n} className={item.title==='SlideBoards'?'featured':''}><span>{item.n}</span><div><h4>{item.title}</h4><p>{item.text}</p></div></article>)}</div>
+        <div className="oct-slideboard"><div className="oct-slideboard-mark">SB</div><div><b>ENTRENAMIENTO EN SLIDEBOARDS</b><p>Por primera vez dentro de la clínica incorporamos trabajo específico fuera del patín para sentir y mejorar el empuje lateral, la transferencia de peso, la estabilidad y la coordinación. Después, llevamos esas sensaciones nuevamente a los patines.</p></div><strong>OFF SKATE → ON SKATE</strong></div>
+      </section>
+
+      <div className="oct-value-strip"><span>PARA PRINCIPIANTES</span><span>INTERMEDIOS</span><span>AVANZADOS</span><span>COMPETITIVOS</span><span>NIÑOS + ADULTOS</span></div>
+      <div className="oct-price-strip"><div><small>EXPERIENCIA COMPLETA</small><strong>${PRICE.toLocaleString('es-UY')}</strong></div><p>Una inscripción · tres jornadas · seguimiento técnico · SlideBoards</p></div>
       {waitlistActive&&<Notice text="Los 30 lugares principales están completos. Podés registrarte y quedar en lista de espera sin realizar un nuevo pago hasta que PR confirme disponibilidad."/>}
       <button className="oct-cta" onClick={()=>setStep(1)}><span>{waitlistActive?'QUIERO ENTRAR EN LISTA DE ESPERA':'QUIERO SER PARTE'}</span><b>→</b></button>
     </div>}
 
     {step===1&&<div className="oct-stage"><button className="oct-back" onClick={()=>setStep(0)}>← Volver</button><p className="oct-overline">01 · TU LUGAR</p><h2 className="oct-title">¿Quién se suma?</h2><p className="oct-stage-copy">No necesitás tener cuenta en PuntaRollers.com. Completá tus datos y seguí al último paso.</p>
       <div className="oct-fields"><label className="wide"><span>Nombre completo</span><input value={form.nombre_completo} onChange={e=>update('nombre_completo',e.target.value)} autoComplete="name" placeholder="Tu nombre y apellido"/></label><label><span>Edad</span><input type="number" inputMode="numeric" value={form.edad} onChange={e=>update('edad',e.target.value)} placeholder="Ej. 32"/></label><label><span>Nivel actual</span><select value={form.nivel} onChange={e=>update('nivel',e.target.value)}><option value="">Elegí tu nivel</option>{niveles.map(n=><option key={n}>{n}</option>)}</select></label><label><span>WhatsApp</span><input type="tel" inputMode="tel" value={form.telefono} onChange={e=>update('telefono',e.target.value)} autoComplete="tel" placeholder="09X XXX XXX"/></label><label><span>Email <small>opcional</small></span><input type="email" inputMode="email" value={form.email} onChange={e=>update('email',e.target.value)} autoComplete="email" placeholder="tu@email.com"/></label></div>
-      <div className="oct-topics">{['Técnica','Centro de gravedad','Curvas','Frenado','Control','Aplicación a tu nivel'].map(item=><span key={item}>+ {item}</span>)}</div>{error&&<p className="oct-error">{error}</p>}<button className="oct-cta" onClick={()=>validateData()&&setStep(2)}><span>CONTINUAR</span><b>→</b></button>
+      <div className="oct-topics">{['Técnica de base','Centro de gravedad','Frenado','Curvas','Control','SlideBoards','Transferencia de peso','Corrección personalizada','Aplicación a tu nivel'].map(item=><span key={item}>+ {item}</span>)}</div>{error&&<p className="oct-error">{error}</p>}<button className="oct-cta" onClick={()=>validateData()&&setStep(2)}><span>CONTINUAR</span><b>→</b></button>
     </div>}
 
     {step===2&&<div className="oct-stage"><button className="oct-back" onClick={()=>setStep(1)}>← Volver a mis datos</button><p className="oct-overline">02 · CONFIRMACIÓN</p><h2 className="oct-title">Reservá la experiencia.</h2>
