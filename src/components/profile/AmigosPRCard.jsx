@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 function ProgressBar({ value, max }) {
@@ -20,24 +19,9 @@ function RewardPill({ unlocked, children }) {
 }
 
 export default function AmigosPRCard({ profileId }) {
-  const anchorRef = useRef(null)
-  const [host, setHost] = useState(null)
   const [code, setCode] = useState('')
   const [copied, setCopied] = useState(false)
   const [progress, setProgress] = useState({ confirmed_total: 0, confirmed_last_12m: 0, reward_50_status: null, reward_free_status: null })
-
-  useEffect(() => {
-    const anchor = anchorRef.current
-    if (!anchor) return undefined
-    const profileHero = anchor.closest('section')
-    if (!profileHero?.parentElement) return undefined
-    const node = document.createElement('div')
-    node.setAttribute('data-amigos-pr-top', 'true')
-    node.className = 'w-full'
-    profileHero.insertAdjacentElement('afterend', node)
-    setHost(node)
-    return () => node.remove()
-  }, [])
 
   useEffect(() => {
     let active = true
@@ -74,7 +58,7 @@ export default function AmigosPRCard({ profileId }) {
     return `🤝 Vas ${firstGoalValue}/5 · próximo premio: 50% OFF`
   }, [firstUnlocked, secondUnlocked, firstGoalValue, secondGoalValue])
 
-  const card = (
+  return (
     <section className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-emerald-300/20 bg-gradient-to-br from-emerald-500/[.10] via-[#111217] to-orange-400/[.06] p-5 shadow-[0_18px_55px_rgba(16,185,129,.06)]">
       <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-emerald-400/10 blur-3xl" />
       <div className="relative">
@@ -113,6 +97,4 @@ export default function AmigosPRCard({ profileId }) {
       </div>
     </section>
   )
-
-  return <><span ref={anchorRef} className="hidden" />{host ? createPortal(card, host) : null}</>
 }
