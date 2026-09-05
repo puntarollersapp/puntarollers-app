@@ -95,6 +95,12 @@ const OFFICIAL_BADGES = [
     description:
       'Demostro liderazgo, responsabilidad y capacidad para acompanar a otros.',
   },
+  {
+    title: 'Primera Clínica 2026',
+    image: '/insignias-pr/primera-clinica-2026.webp?v=1',
+    description:
+      'Completó la primera Clínica Internacional de Patinaje Punta Rollers 2026, edición septiembre, dictada por Miguel Flores.',
+  },
 ]
 
 
