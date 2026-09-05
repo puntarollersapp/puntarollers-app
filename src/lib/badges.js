@@ -12,6 +12,7 @@ const BADGE_IMAGES = {
   'buen companero': '/insignias-pr/buen-companero.png',
   'actitud positiva': '/insignias-pr/actitud-positiva.png',
   'entrenador potencial': '/insignias-pr/entrenador-potencial.png',
+  'primera clinica 2026': '/insignias-pr/primera-clinica-2026.webp?v=1',
 }
 
 export function normalizeBadgeTitle(value) {
