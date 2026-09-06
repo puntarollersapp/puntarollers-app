@@ -49,6 +49,7 @@ const adultScores = [
   ['Macarena', '4,5'],
   ['María José', '4'],
   ['Elizabeth', '6'],
+  ['Alis', '5'],
   ['Camila Iglesias', '6'],
   ['Claudia', '4'],
   ['Eva', '5'],
