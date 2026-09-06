@@ -20,8 +20,8 @@ const DAYS = [
     place: 'Pista cerrada',
     drive: 'https://drive.google.com/drive/folders/13aObjyrPEgL9P24Sx8Yl6M7lomy9QxT2',
     accent: 'from-[#FFD45B] via-[#FF8A3D] to-[#FF4E8A]',
-    chip: 'Curvas + frenado',
-    copy: 'Segunda jornada con foco en curvas, frenado, precisión, transferencia de peso y dominio técnico.',
+    chip: 'Curvas + técnica',
+    copy: 'Segunda jornada con foco en curvas, precisión, transferencia de peso, dominio técnico y control corporal.',
   },
   {
     id: 'dia-3',
@@ -37,12 +37,12 @@ const DAYS = [
 ]
 
 const CONTENT = [
-  { label: 'Técnica de patinaje', value: 24, tone: 'from-cyan-300 to-blue-500' },
-  { label: 'Curvas y control', value: 18, tone: 'from-violet-400 to-fuchsia-500' },
-  { label: 'Centro de gravedad', value: 16, tone: 'from-amber-300 to-orange-500' },
-  { label: 'Frenado', value: 14, tone: 'from-rose-400 to-red-500' },
-  { label: 'Aplicación pista/calle', value: 16, tone: 'from-emerald-300 to-cyan-500' },
-  { label: 'Entrenamiento recreativo + competitivo', value: 12, tone: 'from-lime-300 to-emerald-500' },
+  { label: 'Técnica de patinaje', level: 'Foco principal', width: '96%', tone: 'from-cyan-300 to-blue-500' },
+  { label: 'Curvas y control', level: 'Foco alto', width: '82%', tone: 'from-violet-400 to-fuchsia-500' },
+  { label: 'Centro de gravedad', level: 'Foco alto', width: '76%', tone: 'from-amber-300 to-orange-500' },
+  { label: 'Aplicación pista / calle', level: 'Foco alto', width: '74%', tone: 'from-emerald-300 to-cyan-500' },
+  { label: 'Entrenamiento recreativo + competitivo', level: 'Foco medio', width: '58%', tone: 'from-lime-300 to-emerald-500' },
+  { label: 'Frenado', level: 'Trabajo puntual', width: '18%', tone: 'from-rose-400 to-red-500' },
 ]
 
 export default function ClinicaSeptExperience() {
@@ -102,7 +102,7 @@ export default function ClinicaSeptExperience() {
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#6B4EFF]">LO QUE SE TRABAJÓ</p>
                 <h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">El mapa técnico de la clínica.</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-black/45">Resumen visual aproximado de los ejes trabajados durante las tres jornadas.</p>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-black/45">Una lectura visual de los ejes trabajados durante las tres jornadas, sin porcentajes forzados: cuanto más larga la barra, mayor fue el foco técnico.</p>
               </div>
               <div className="rounded-2xl border border-black/[.06] bg-[#F6F7FB] px-4 py-3 text-right">
                 <p className="text-[9px] font-black uppercase tracking-[.18em] text-black/35">Entrenamiento total</p>
@@ -115,10 +115,10 @@ export default function ClinicaSeptExperience() {
                 <div key={item.label} className="rounded-[22px] border border-black/[.06] bg-[#FAFBFD] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-black text-black/70">{item.label}</p>
-                    <p className="text-sm font-black text-[#0B1020]">≈ {item.value}%</p>
+                    <span className="rounded-full bg-black/[.05] px-2.5 py-1 text-[9px] font-black uppercase tracking-[.08em] text-black/45">{item.level}</span>
                   </div>
                   <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-black/[.06]">
-                    <div className={`h-full rounded-full bg-gradient-to-r ${item.tone}`} style={{ width: `${item.value * 3.7}%` }} />
+                    <div className={`h-full rounded-full bg-gradient-to-r ${item.tone}`} style={{ width: item.width }} />
                   </div>
                 </div>
               ))}
@@ -139,7 +139,7 @@ export default function ClinicaSeptExperience() {
             {DAYS.map((day) => (
               <article key={day.id} className="group overflow-hidden rounded-[30px] border border-black/[.06] bg-white shadow-[0_20px_70px_rgba(18,26,43,.08)] transition hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(18,26,43,.14)]">
                 <div className={`h-2 bg-gradient-to-r ${day.accent}`} />
-                <div className="p-5">
+                <div className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[.18em] text-black/35">{day.label}</p>
@@ -149,8 +149,8 @@ export default function ClinicaSeptExperience() {
                   </div>
                   <p className="mt-4 text-sm font-black text-[#0B1020]">{day.time} · {day.place}</p>
                   <p className="mt-3 min-h-[72px] text-sm leading-6 text-black/45">{day.copy}</p>
-                  <a href={day.drive} target="_blank" rel="noreferrer" className={`mt-5 flex min-h-13 items-center justify-between rounded-2xl bg-gradient-to-r ${day.accent} px-4 text-xs font-black uppercase tracking-[.08em] text-[#06101A] shadow-[0_14px_35px_rgba(45,69,120,.12)]`}>
-                    <span>Ver fotos y videos</span><span>↗</span>
+                  <a href={day.drive} target="_blank" rel="noreferrer" className={`mt-6 flex min-h-[58px] items-center justify-between rounded-[20px] bg-gradient-to-r ${day.accent} px-5 text-[13px] font-black uppercase tracking-[.08em] text-[#06101A] shadow-[0_16px_36px_rgba(45,69,120,.16)] transition active:scale-[.99]`}>
+                    <span>Ver fotos y videos</span><span className="text-lg">↗</span>
                   </a>
                 </div>
               </article>
@@ -167,7 +167,7 @@ export default function ClinicaSeptExperience() {
                 <h2 className="mt-2 max-w-3xl text-3xl font-black tracking-[-.04em] sm:text-4xl">Consultá tus tomas de tiempo en clínica y el puntaje otorgado por Miguel.</h2>
                 <p className="mt-3 text-sm leading-6 text-white/45">Resultados individuales y devolución técnica de la experiencia.</p>
               </div>
-              <button type="button" disabled className="min-h-13 shrink-0 rounded-2xl border border-white/15 bg-white/[.08] px-5 text-xs font-black uppercase tracking-[.08em] text-white/55">
+              <button type="button" disabled className="min-h-[56px] shrink-0 rounded-2xl border border-white/15 bg-white/[.08] px-5 text-xs font-black uppercase tracking-[.08em] text-white/55">
                 Clic aquí · Próximamente
               </button>
             </div>
@@ -175,28 +175,32 @@ export default function ClinicaSeptExperience() {
         </section>
 
         <section className="pt-10">
-          <div className="relative overflow-hidden rounded-[34px] border border-black/[.06] bg-gradient-to-br from-[#FFF6D8] via-white to-[#E8F8FF] p-6 shadow-[0_24px_80px_rgba(18,26,43,.1)] sm:p-8">
-            <div className="absolute -right-14 -top-12 h-44 w-44 rounded-full bg-violet-300/25 blur-3xl" />
-            <div className="relative grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#A26B00]">DIPLOMA DIGITAL</p>
-                <h2 className="mt-2 text-3xl font-black tracking-[-.045em] sm:text-4xl">Si completaste los 3 días, llevate tu versión digital.</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-black/50">Personalizalo con tu nombre y guardalo como PDF para conservarlo o compartirlo.</p>
-                <Link to="/clinica-septiembre-2026/diploma" className="mt-6 inline-flex min-h-13 items-center rounded-2xl bg-[#0B1020] px-5 text-xs font-black uppercase tracking-[.08em] text-white">Descargar mi diploma →</Link>
+          <div className="grid gap-4 lg:grid-cols-[.85fr_1.15fr]">
+            <div className="relative overflow-hidden rounded-[34px] border border-[#D8B24B]/20 bg-gradient-to-br from-[#071429] via-[#112345] to-[#5B49CF] p-6 text-white shadow-[0_24px_80px_rgba(18,26,43,.16)] sm:p-8">
+              <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-cyan-300/20 blur-3xl" />
+              <div className="relative">
+                <div className="grid h-16 w-16 place-items-center rounded-[20px] border border-white/15 bg-white/10 text-3xl">🏅</div>
+                <p className="mt-5 text-[10px] font-black uppercase tracking-[.2em] text-[#FFD45B]">INSIGNIA OFICIAL PR</p>
+                <h2 className="mt-2 text-3xl font-black tracking-[-.045em]">Si completaste los 3 días, tu insignia ya forma parte de tu perfil.</h2>
+                <p className="mt-3 text-sm leading-6 text-white/60">La insignia “Primera Clínica 2026 realizada” queda cargada en tu perfil Punta Rollers como reconocimiento por haber completado la experiencia.</p>
               </div>
-              <div className="rounded-[26px] border border-black/[.06] bg-white/80 p-5 backdrop-blur">
-                <div className="h-2 rounded-full bg-gradient-to-r from-cyan-300 via-violet-400 to-amber-300" />
-                <p className="mt-5 text-[10px] font-black uppercase tracking-[.18em] text-black/35">Primera Clínica Internacional</p>
-                <p className="mt-2 text-2xl font-black leading-tight">Punta del Este · Setiembre 2026</p>
-                <p className="mt-3 text-xs leading-5 text-black/45">Avalada y dictada por Miguel Flores · Subcampeón Máster Mundial · +40 años de experiencia.</p>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[34px] border border-black/[.06] bg-gradient-to-br from-[#FFF9E8] via-white to-[#EDF8FF] p-6 shadow-[0_24px_80px_rgba(18,26,43,.1)] sm:p-8">
+              <div className="absolute -right-14 -top-12 h-44 w-44 rounded-full bg-violet-300/20 blur-3xl" />
+              <div className="relative">
+                <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#A26B00]">DIPLOMA DIGITAL</p>
+                <h2 className="mt-2 text-3xl font-black tracking-[-.045em] sm:text-4xl">Tu diploma, inspirado en la versión oficial entregada en papel.</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-black/50">Claro, elegante y pensado para guardar o compartir. Personalizalo con tu nombre y exportalo como PDF.</p>
+                <Link to="/clinica-septiembre-2026/diploma" className="mt-6 inline-flex min-h-[56px] items-center rounded-[20px] bg-[#0B1020] px-6 text-[12px] font-black uppercase tracking-[.08em] text-white shadow-[0_14px_35px_rgba(11,16,32,.16)]">Abrir mi diploma digital →</Link>
               </div>
             </div>
           </div>
         </section>
 
         <footer className="mt-12 border-t border-black/[.08] py-8 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[.22em] text-black/35">PUNTA ROLLERS · PUNTA DEL ESTE · URUGUAY</p>
-          <p className="mt-2 text-sm font-black">No es solo patinar. Es pertenecer.</p>
+          <p className="text-[10px] font-black uppercase tracking-[.22em] text-black/30">PUNTA ROLLERS · PUNTA DEL ESTE · URUGUAY</p>
+          <p className="mt-2 text-sm font-black text-[#0B1020]">No es solo patinar. Es pertenecer.</p>
         </footer>
       </div>
     </main>
@@ -205,7 +209,7 @@ export default function ClinicaSeptExperience() {
 
 function Stat({ value, label, highlight = false }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[.05] p-3 text-center">
+    <div className={`rounded-2xl border p-3 text-center ${highlight ? 'border-cyan-300/25 bg-cyan-300/10' : 'border-white/10 bg-white/[.04]'}`}>
       <p className={`text-2xl font-black ${highlight ? 'text-cyan-300' : 'text-white'}`}>{value}</p>
       <p className="mt-1 text-[8px] font-black uppercase tracking-[.14em] text-white/35">{label}</p>
     </div>
