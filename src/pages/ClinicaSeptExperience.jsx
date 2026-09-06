@@ -8,7 +8,7 @@ const DAYS = [
     time: '20:30',
     place: 'Pista cerrada',
     drive: 'https://drive.google.com/drive/folders/1yCUJM18L5_1zxDTc2M4FBeNmViA_j9FH',
-    accent: 'from-[#FF8A2A] via-[#FF5E1A] to-[#FFB13B]',
+    accent: 'from-[#42D6FF] via-[#4C8DFF] to-[#7B5CFF]',
     chip: 'Técnica + control',
     copy: 'Inicio de la clínica con trabajo técnico, postura, centro de gravedad, control y adaptación al ritmo de la pista.',
   },
@@ -19,7 +19,7 @@ const DAYS = [
     time: '19:00',
     place: 'Pista cerrada',
     drive: 'https://drive.google.com/drive/folders/13aObjyrPEgL9P24Sx8Yl6M7lomy9QxT2',
-    accent: 'from-[#FFB13B] via-[#FF7A22] to-[#FF4D6D]',
+    accent: 'from-[#FFD45A] via-[#FF9A3A] to-[#FF6A5A]',
     chip: 'Curvas + técnica',
     copy: 'Segunda jornada con foco en curvas, precisión, transferencia de peso, dominio técnico y control corporal.',
   },
@@ -30,25 +30,25 @@ const DAYS = [
     time: '09:00',
     place: 'Parada 2 · Aire libre',
     drive: 'https://drive.google.com/drive/folders/14dl9PTK8YjAm3_XvA1J_8vTCzW0vmAm_',
-    accent: 'from-[#FF7A22] via-[#FF5A1F] to-[#FBCB45]',
+    accent: 'from-[#4BE59A] via-[#24C7B8] to-[#3DA8FF]',
     chip: 'Aplicación real',
     copy: 'Cierre al aire libre: ritmo, control, aplicación de lo trabajado y transferencia al entorno real.',
   },
 ]
 
 const CONTENT = [
-  { label: 'Técnica de patinaje', level: 'Foco principal', width: '96%', tone: 'from-[#FF7A22] to-[#FFB13B]' },
-  { label: 'Curvas y control', level: 'Foco alto', width: '82%', tone: 'from-[#FF5E1A] to-[#FF8A2A]' },
-  { label: 'Centro de gravedad', level: 'Foco alto', width: '76%', tone: 'from-[#F6B73C] to-[#FF7A22]' },
-  { label: 'Aplicación pista / calle', level: 'Foco alto', width: '74%', tone: 'from-[#FF8A2A] to-[#FF4D6D]' },
-  { label: 'Entrenamiento recreativo + competitivo', level: 'Foco medio', width: '58%', tone: 'from-[#FFC857] to-[#FF8A2A]' },
-  { label: 'Frenado', level: 'Trabajo puntual', width: '14%', tone: 'from-[#FF6B6B] to-[#FF7A22]' },
+  { label: 'Técnica de patinaje', level: 'Foco principal', width: '96%', tone: 'from-[#42D6FF] to-[#4C8DFF]' },
+  { label: 'Curvas y control', level: 'Foco alto', width: '82%', tone: 'from-[#8B5CFF] to-[#C75CFF]' },
+  { label: 'Centro de gravedad', level: 'Foco alto', width: '76%', tone: 'from-[#FFD45A] to-[#FF9A3A]' },
+  { label: 'Aplicación pista / calle', level: 'Foco alto', width: '74%', tone: 'from-[#4BE59A] to-[#24C7B8]' },
+  { label: 'Entrenamiento recreativo + competitivo', level: 'Foco medio', width: '58%', tone: 'from-[#B7F14A] to-[#4BE59A]' },
+  { label: 'Frenado', level: 'Trabajo puntual', width: '14%', tone: 'from-[#F6C45A] to-[#FF8E55]' },
 ]
 
 export default function ClinicaSeptExperience() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#070707] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(255,110,30,.22),transparent_26%),radial-gradient(circle_at_92%_10%,rgba(255,177,59,.16),transparent_23%),radial-gradient(circle_at_50%_70%,rgba(104,44,17,.16),transparent_32%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(255,110,30,.16),transparent_26%),radial-gradient(circle_at_92%_10%,rgba(67,214,255,.12),transparent_23%),radial-gradient(circle_at_50%_70%,rgba(94,70,255,.08),transparent_32%)]" />
 
       <div className="relative mx-auto w-full max-w-7xl px-4 pb-16 pt-5 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between rounded-[24px] border border-white/[.08] bg-[#111113]/92 px-4 py-3 shadow-[0_18px_55px_rgba(0,0,0,.28)] backdrop-blur-xl">
@@ -79,7 +79,7 @@ export default function ClinicaSeptExperience() {
             <div className="self-end rounded-[28px] border border-[#FF8A2A]/20 bg-[#09090b]/92 p-5 text-white shadow-[0_26px_70px_rgba(0,0,0,.28)]">
               <p className="text-[9px] font-black uppercase tracking-[.2em] text-white/38">La clínica en números</p>
               <div className="mt-5 grid grid-cols-3 gap-2"><Stat value="3" label="días" /><Stat value="+6" label="horas" highlight /><Stat value="2+1" label="pista/calle" /></div>
-              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-full bg-gradient-to-r from-[#FF6A1A] via-[#FF8A2A] to-[#FFC857]" /></div>
+              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-full bg-gradient-to-r from-[#42D6FF] via-[#8B5CFF] to-[#FFC857]" /></div>
               <p className="mt-3 text-xs leading-5 text-white/46">Técnica, evolución, aplicación real y una experiencia compartida por toda la comunidad PR.</p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function ClinicaSeptExperience() {
                 <h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">El mapa técnico de la clínica.</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-white/45">Una lectura visual de los ejes trabajados durante las tres jornadas. Cuanto más larga la barra, mayor fue el foco técnico.</p>
               </div>
-              <div className="rounded-2xl border border-white/[.08] bg-[#0d0d0f] px-4 py-3 text-right shadow-inner"><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/34">Entrenamiento total</p><p className="mt-1 text-2xl font-black text-[#FFB13B]">+6 HORAS</p></div>
+              <div className="rounded-2xl border border-white/[.08] bg-[#0d0d0f] px-4 py-3 text-right shadow-inner"><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/34">Entrenamiento total</p><p className="mt-1 text-2xl font-black text-[#42D6FF]">+6 HORAS</p></div>
             </div>
             <div className="mt-7 grid gap-3 md:grid-cols-2">
               {CONTENT.map((item) => (
@@ -107,16 +107,16 @@ export default function ClinicaSeptExperience() {
         </section>
 
         <section className="pt-10">
-          <div className="flex items-end justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#FF8A2A]">ARCHIVO DE LA EXPERIENCIA</p><h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">Cada día, su historia.</h2></div><span className="hidden text-xs font-black text-white/32 sm:block">Fotos + videos oficiales</span></div>
+          <div className="flex items-end justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#42D6FF]">ARCHIVO DE LA EXPERIENCIA</p><h2 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">Cada día, su historia.</h2></div><span className="hidden text-xs font-black text-white/32 sm:block">Fotos + videos oficiales</span></div>
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             {DAYS.map((day) => (
-              <article key={day.id} className="group overflow-hidden rounded-[30px] border border-white/[.08] bg-[linear-gradient(145deg,#121214_0%,#17100d_100%)] shadow-[0_24px_70px_rgba(0,0,0,.2)] transition hover:-translate-y-1 hover:border-[#FF8A2A]/35 hover:shadow-[0_30px_90px_rgba(255,106,26,.12)]">
+              <article key={day.id} className="group overflow-hidden rounded-[30px] border border-white/[.08] bg-[linear-gradient(145deg,#121214_0%,#17100d_100%)] shadow-[0_24px_70px_rgba(0,0,0,.2)] transition hover:-translate-y-1 hover:border-[#42D6FF]/35 hover:shadow-[0_30px_90px_rgba(66,214,255,.1)]">
                 <div className={`h-2.5 bg-gradient-to-r ${day.accent}`} />
                 <div className="p-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-white/34">{day.label}</p><h3 className="mt-1 text-[28px] font-black tracking-[-.04em]">{day.date}</h3></div><span className="rounded-full border border-[#FF8A2A]/18 bg-[#FF6A1A]/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[.1em] text-[#FFB13B]">{day.chip}</span></div>
-                  <p className="mt-4 text-sm font-black text-[#FF9A3A]">{day.time} · {day.place}</p>
+                  <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-white/34">{day.label}</p><h3 className="mt-1 text-[28px] font-black tracking-[-.04em]">{day.date}</h3></div><span className="rounded-full border border-white/[.08] bg-white/[.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[.1em] text-white/70">{day.chip}</span></div>
+                  <p className="mt-4 text-sm font-black text-white/82">{day.time} · {day.place}</p>
                   <p className="mt-3 min-h-[72px] text-sm leading-6 text-white/46">{day.copy}</p>
-                  <a href={day.drive} target="_blank" rel="noreferrer" className={`mt-6 flex min-h-[62px] items-center justify-between rounded-[20px] bg-gradient-to-r ${day.accent} px-5 text-[13px] font-black uppercase tracking-[.08em] text-white shadow-[0_16px_36px_rgba(255,106,26,.18)] transition active:scale-[.99]`}><span>Ver fotos y videos</span><span className="text-lg">↗</span></a>
+                  <a href={day.drive} target="_blank" rel="noreferrer" className={`mt-6 flex min-h-[62px] items-center justify-between rounded-[20px] bg-gradient-to-r ${day.accent} px-5 text-[13px] font-black uppercase tracking-[.08em] text-white shadow-[0_16px_36px_rgba(0,0,0,.2)] transition active:scale-[.99]`}><span>Ver fotos y videos</span><span className="text-lg">↗</span></a>
                 </div>
               </article>
             ))}
@@ -124,11 +124,11 @@ export default function ClinicaSeptExperience() {
         </section>
 
         <section className="pt-10">
-          <div className="relative overflow-hidden rounded-[34px] border border-[#FF8A2A]/25 bg-[linear-gradient(135deg,#321307_0%,#131315_46%,#3a1607_100%)] p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,.28)] sm:p-8">
-            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_50%,rgba(255,118,24,.28),transparent_40%),radial-gradient(circle_at_95%_20%,rgba(255,203,73,.18),transparent_28%)]" />
+          <div className="relative overflow-hidden rounded-[34px] border border-[#42D6FF]/28 bg-[linear-gradient(135deg,#071722_0%,#0A1529_44%,#15133A_100%)] p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,.28)] sm:p-8">
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_72%_48%,rgba(66,214,255,.26),transparent_40%),radial-gradient(circle_at_92%_16%,rgba(139,92,255,.2),transparent_30%)]" />
             <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FFB13B]">TOMAS DE TIEMPO · PERFORMANCE</p><h2 className="mt-2 max-w-3xl text-3xl font-black tracking-[-.04em] sm:text-4xl">Consultá tus tomas de tiempo en clínica y el puntaje otorgado por Miguel.</h2><p className="mt-3 text-sm leading-6 text-white/46">Niños: 500 m · Adultos: 1.000 m · Evaluación técnica del Día 3.</p></div>
-              <Link to="/clinica-septiembre-2026/resultados" className="flex min-h-[58px] shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-r from-[#FF6A1A] via-[#FF8A2A] to-[#FFC857] px-6 text-xs font-black uppercase tracking-[.08em] text-white shadow-[0_16px_36px_rgba(255,106,26,.24)] transition active:scale-[.99]">Ver resultados →</Link>
+              <div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#63E3FF]">TOMAS DE TIEMPO · PERFORMANCE</p><h2 className="mt-2 max-w-3xl text-3xl font-black tracking-[-.04em] sm:text-4xl">Consultá tus tomas de tiempo en clínica y el puntaje otorgado por Miguel.</h2><p className="mt-3 text-sm leading-6 text-white/52">Niños: 500 m · Adultos: 1.000 m · Evaluación técnica del Día 3.</p></div>
+              <Link to="/clinica-septiembre-2026/resultados" className="flex min-h-[58px] shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-r from-[#42D6FF] via-[#4C8DFF] to-[#8B5CFF] px-6 text-xs font-black uppercase tracking-[.08em] text-white shadow-[0_16px_36px_rgba(76,141,255,.28)] transition active:scale-[.99]">Ver resultados →</Link>
             </div>
           </div>
         </section>
@@ -151,8 +151,8 @@ export default function ClinicaSeptExperience() {
 
 function Stat({ value, label, highlight = false }) {
   return (
-    <div className={`rounded-2xl border p-3 text-center ${highlight ? 'border-[#FF8A2A]/25 bg-[#FF6A1A]/10' : 'border-white/10 bg-white/[.04]'}`}>
-      <p className={`text-2xl font-black ${highlight ? 'text-[#FFB13B]' : 'text-white'}`}>{value}</p>
+    <div className={`rounded-2xl border p-3 text-center ${highlight ? 'border-[#42D6FF]/25 bg-[#42D6FF]/10' : 'border-white/10 bg-white/[.04]'}`}>
+      <p className={`text-2xl font-black ${highlight ? 'text-[#63E3FF]' : 'text-white'}`}>{value}</p>
       <p className="mt-1 text-[8px] font-black uppercase tracking-[.14em] text-white/35">{label}</p>
     </div>
   )
