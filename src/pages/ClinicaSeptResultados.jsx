@@ -22,7 +22,6 @@ const adultTimes = [
   ['Macarena', '3:31'],
   ['Elizabeth', '3:36'],
   ['Alis', '4:04'],
-  ['Gabriela', '5:51'],
   ['Fernanda', '4:41'],
   ['Damián', '2:58'],
   ['Richard', '2:44'],
