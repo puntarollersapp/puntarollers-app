@@ -17,6 +17,7 @@ const adultTimes = [
   ['Eva', '4:30'],
   ['María José', '5:15'],
   ['Emilia', '4:15'],
+  ['Gabriela', '5:51'],
   ['Claudia', '4:52'],
   ['Macarena', '3:31'],
   ['Elizabeth', '3:36'],
