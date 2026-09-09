@@ -13,6 +13,7 @@ export type PaymentState = "created" | "pending" | "paid" | "failed" | "cancelle
 export function isAllowedBrowserOrigin(origin: string | null): boolean {
   if (!origin) return false;
   if (productionOrigins.has(origin)) return true;
+  if (/^https:\/\/puntarollers-app-[a-z0-9-]+-puntarollersapps-projects\.vercel\.app$/.test(origin)) return true;
   return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 }
 
@@ -141,4 +142,3 @@ export function safeProviderCode(payload: unknown, fallback: string): string {
   }
   return fallback;
 }
-
