@@ -83,6 +83,58 @@ function readPaymentResult(order: Record<string, unknown>) {
   };
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "-")
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+
+async function notifyPaidRegistration(
+  supabase: ReturnType<typeof adminClient>,
+  attempt: { id: string; registrationType: RegistrationType; registrationId: string; amount: number; paymentId: string | null },
+): Promise<void> {
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendKey) return;
+  const { data: claimed, error: claimError } = await supabase
+    .rpc("claim_pr_mp_payment_notification", { p_attempt_id: attempt.id });
+  if (claimError || claimed !== true) return;
+
+  const table = attempt.registrationType === "inscripciones_2026"
+    ? "pr_inscripciones_2026"
+    : "pr_clinica_oct_2026_inscripciones";
+  const { data, error } = await supabase.from(table)
+    .select(attempt.registrationType === "inscripciones_2026"
+      ? "nombre_completo, modalidad, telefono, email"
+      : "nombre_completo, telefono, email")
+    .eq("id", attempt.registrationId).maybeSingle();
+  if (error || !data) {
+    await supabase.from("pr_mercadopago_payments")
+      .update({ payment_notification_claimed_at: null }).eq("id", attempt.id);
+    return;
+  }
+
+  const program = attempt.registrationType === "clinica_oct_2026"
+    ? "Clínica de Octubre"
+    : data.modalidad === "kids" ? "PR Kids" : data.modalidad === "grupales" ? "Adultos" : "Personalizadas";
+  const amount = attempt.amount.toLocaleString("es-UY");
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "Punta Rollers <onboarding@resend.dev>",
+      to: [Deno.env.get("PAYMENT_NOTIFICATION_EMAIL") ?? "claudiofaccelli@gmail.com"],
+      subject: `✅ Pago Mercado Pago acreditado — ${program} — ${data.nombre_completo}`,
+      html: `<div style="font-family:Arial,sans-serif;background:#f6f7f9;padding:24px;color:#151515"><div style="max-width:620px;margin:auto;background:white;border-radius:18px;padding:28px;border:1px solid #ececec"><div style="font-size:13px;font-weight:700;color:#00a650">PUNTA ROLLERS · PAGO ACREDITADO</div><h1>${escapeHtml(program)}</h1><p><strong>Alumno/a:</strong> ${escapeHtml(data.nombre_completo)}</p><p><strong>Monto:</strong> $${escapeHtml(amount)} UYU</p><p><strong>WhatsApp:</strong> ${escapeHtml(data.telefono)}</p><p><strong>Email:</strong> ${escapeHtml(data.email)}</p><p><strong>ID de inscripción:</strong> ${escapeHtml(attempt.registrationId)}</p><p><strong>ID de pago:</strong> ${escapeHtml(attempt.paymentId)}</p></div></div>`,
+    }),
+    signal: AbortSignal.timeout(8_000),
+  }).catch(() => null);
+
+  await supabase.from("pr_mercadopago_payments").update(response?.ok
+    ? { payment_notification_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    : { payment_notification_claimed_at: null, updated_at: new Date().toISOString() })
+    .eq("id", attempt.id);
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   const headers = corsHeaders(origin);
@@ -283,6 +335,15 @@ Deno.serve(async (req: Request) => {
   }).eq("id", attemptId);
 
   await markRegistrationFromPayment(supabase, registrationType, registrationId, result.paymentState);
+  if (result.paymentState === "paid") {
+    await notifyPaidRegistration(supabase, {
+      id: attemptId,
+      registrationType,
+      registrationId,
+      amount,
+      paymentId: result.providerPaymentId,
+    });
+  }
 
   return jsonResponse({
     attemptId,
@@ -294,4 +355,3 @@ Deno.serve(async (req: Request) => {
     registrationSaved: true,
   }, result.paymentState === "pending" ? 202 : 200, headers);
 });
-
