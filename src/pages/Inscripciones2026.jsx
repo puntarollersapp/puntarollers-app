@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ReferralCodeField from '../components/ReferralCodeField'
+import RegistrationPayment from '../components/RegistrationPayment'
 import './Inscripciones2026.css'
 
 const groupSchedules = [
@@ -25,7 +26,6 @@ export default function Inscripciones2026() {
   const [step, setStep] = useState(0)
   const [mode, setMode] = useState(null)
   const [form, setForm] = useState(initialForm)
-  const [accepted, setAccepted] = useState(false)
   const [sending, setSending] = useState(false)
   const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
@@ -34,6 +34,7 @@ export default function Inscripciones2026() {
   const [referralValid, setReferralValid] = useState(null)
   const [paymentAmount, setPaymentAmount] = useState(null)
   const [paymentOriginal, setPaymentOriginal] = useState(null)
+  const [finishedWith, setFinishedWith] = useState('')
 
   const baseAmount = mode === 'personalizadas' ? 2900 : 1500
   const amount = paymentAmount ?? baseAmount
@@ -53,7 +54,6 @@ export default function Inscripciones2026() {
     if (value === 'personalizadas' && !personalizadasAbiertas) return
     setMode(value)
     setForm(initialForm)
-    setAccepted(false)
     setRegistrationId('')
     setReferralCode('')
     setReferralValid(null)
@@ -143,12 +143,8 @@ export default function Inscripciones2026() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const submit = async () => {
-    if (!accepted) {
-      setError('Confirmá que entendés cómo funciona la pre-reserva.')
-      return
-    }
-    setError('')
+  const finishPayment = (method) => {
+    setFinishedWith(method)
     setStep(5)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -171,9 +167,9 @@ export default function Inscripciones2026() {
 
         {step === 3 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(2)}>← Volver a mis datos</button><p className="pr-reg-kicker">TU MODALIDAD</p>{mode === 'grupales' ? <><h1>Elegí tu turno de los sábados.</h1><p className="pr-reg-lead">El miércoles 19:30 está incluido para todos.</p><div className="pr-reg-radio-list">{saturdayOptions.map(option => <label key={option} className={form.turno_sabado === option ? 'selected' : ''}><input type="radio" name="turno" checked={form.turno_sabado === option} onChange={() => update('turno_sabado', option)} /><span>{option}</span></label>)}</div></> : <><h1>¿Qué te gustaría conseguir?</h1><p className="pr-reg-lead">Así podemos preparar mejor tu experiencia desde el primer encuentro.</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e => update('objetivo_personalizadas', e.target.value)} placeholder="Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…" /></>}{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" disabled={sending || (mode === 'personalizadas' && !personalizadasAbiertas)} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : mode === 'personalizadas' && !personalizadasAbiertas ? 'Inscripciones pausadas' : 'Ver pago y confirmar →'}</button></div>}
 
-        {step === 4 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button><p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Pre-reservá tu lugar para septiembre.</h1><div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Desde este momento tus datos ya aparecen en nuestro panel de inscripciones. Ahora podés realizar la transferencia y enviarnos el comprobante con tranquilidad.</p></div>{paymentOriginal > amount && <div className="pr-reg-info"><b>🤝 Amigos PR aplicado</b><p>Precio normal: <s>${paymentOriginal.toLocaleString('es-UY')}</s> · Descuento: 10% · <strong>Ahorrás ${(paymentOriginal - amount).toLocaleString('es-UY')}</strong>.</p></div>}<div className="pr-reg-payment"><span>Importe a abonar</span><strong>${amount.toLocaleString('es-UY')}</strong><div><b>Tarjeta Prex</b><p>Claudio Facelli</p><p>Cuenta Prex: <strong>70658</strong></p></div></div><div className="pr-reg-info"><b>📲 Después de transferir</b><p>Identificá la transferencia con el <strong>nombre del alumno</strong> y enviá el comprobante al WhatsApp de Punta Rollers:</p><a href="https://wa.me/59898971505" target="_blank" rel="noreferrer">098 971 505</a></div><p className="pr-reg-lead">Tu lugar queda confirmado cuando Punta Rollers verifica el pago. Quedarás en el listado de nuevos ingresos hasta la convocatoria de septiembre.</p><label className="pr-reg-check"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} /><span>Entiendo que la inscripción corresponde a septiembre de 2026 y que la reserva se confirma luego de verificar el pago.</span></label>{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" disabled={sending} onClick={submit}>{sending ? 'Finalizando…' : 'Ya transferí · finalizar ✓'}</button></div>}
+        {step === 4 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button><p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Aunque cierres esta página, tus datos ya aparecen en nuestro panel. Ahora elegí Mercado Pago o transferencia.</p></div>{paymentOriginal > amount && <div className="pr-reg-info"><b>🤝 Amigos PR aplicado</b><p>Precio normal: <s>${paymentOriginal.toLocaleString('es-UY')}</s> · Descuento: 10% · <strong>Ahorrás ${(paymentOriginal - amount).toLocaleString('es-UY')}</strong>.</p></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={amount} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment} /></div>}
 
-        {step === 5 && <div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">SOLICITUD RECIBIDA</p><h1>¡Ya estás en la lista para septiembre!</h1><p className="pr-reg-lead">Recibimos tu pre-reserva. Cuando corroboremos el pago, Punta Rollers se pondrá en contacto contigo para confirmar tu lugar.</p><div className="pr-reg-info"><b>¿Qué sigue?</b><p>Te vamos a mantener en el listado de nuevos ingresos y, antes de comenzar en septiembre, recibirás la información necesaria para incorporarte a tu grupo.</p></div><a className="pr-reg-primary pr-reg-link" href="https://wa.me/59898971505" target="_blank" rel="noreferrer">Enviar comprobante por WhatsApp</a></div>}
+        {step === 5 && <div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">SOLICITUD RECIBIDA</p><h1>¡Ya estás en la lista para septiembre!</h1><p className="pr-reg-lead">{finishedWith === 'mercadopago' ? 'Tu pago quedó acreditado y recibiremos la confirmación automáticamente.' : finishedWith === 'mercadopago_pending' ? 'Tu pago está siendo procesado. Tu inscripción quedó guardada y te avisaremos cuando se acredite.' : 'Recibimos tu pre-reserva. Cuando verifiquemos la transferencia, te contactaremos para confirmar tu lugar.'}</p><div className="pr-reg-info"><b>¿Qué sigue?</b><p>Antes de comenzar en septiembre, recibirás la información necesaria para incorporarte a tu grupo.</p></div></div>}
       </section>
     </main>
   )

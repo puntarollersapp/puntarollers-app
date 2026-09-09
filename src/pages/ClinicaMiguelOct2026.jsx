@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import RegistrationPayment from '../components/RegistrationPayment'
 import mfLogo from '../assets/mfLogoData'
 import './ClinicaMiguelOct2026.css'
 
 const MAX_CUPOS = 30
 const PRICE = 2000
 const niveles = ['Primera vez', 'Principiante', 'Intermedio', 'Avanzado', 'Competitivo']
-const initialForm = { nombre_completo:'', edad:'', nivel:'', telefono:'', email:'', asistencia_completa:false, opcion_pago:'' }
+const initialForm = { nombre_completo:'', edad:'', nivel:'', telefono:'', email:'', asistencia_completa:false }
 
 const trainingBlocks = [
   { n:'01', title:'Técnica de base', text:'Fundamentos, postura, centro de gravedad y eficiencia del movimiento.' },
@@ -27,6 +28,7 @@ export default function ClinicaMiguelOct2026(){
   const [sending,setSending]=useState(false)
   const [error,setError]=useState('')
   const [done,setDone]=useState(null)
+  const [finishedWith,setFinishedWith]=useState('')
   const waitlistActive=!loadingCupos&&cupos.disponibles<=0
   const percent=useMemo(()=>Math.min(100,Math.round((Math.min(cupos.ocupados,cupos.total)/cupos.total)*100)),[cupos])
   const update=(key,value)=>setForm(prev=>({...prev,[key]:value}))
@@ -41,7 +43,6 @@ export default function ClinicaMiguelOct2026(){
   }
   const validateFinal=()=>{
     if(!form.asistencia_completa){setError('Confirmá que participás de las tres jornadas para continuar.');return false}
-    if(!form.opcion_pago){setError('Elegí una modalidad para registrar tu lugar.');return false}
     setError('');return true
   }
 
@@ -49,18 +50,19 @@ export default function ClinicaMiguelOct2026(){
     if(!validateFinal())return
     setSending(true);setError('')
     const{data,error:submitError}=await supabase.rpc('registrar_clinica_oct_2026_v1',{
-      p_nombre_completo:form.nombre_completo.trim(),p_edad:Number(form.edad),p_nivel:form.nivel,p_telefono:form.telefono.trim(),p_email:form.email.trim(),p_asistencia_completa:true,p_opcion_pago:form.opcion_pago,
+      p_nombre_completo:form.nombre_completo.trim(),p_edad:Number(form.edad),p_nivel:form.nivel,p_telefono:form.telefono.trim(),p_email:form.email.trim(),p_asistencia_completa:true,p_opcion_pago:'pagar_ahora',
     })
     setSending(false)
     if(submitError){setError('No pudimos guardar la inscripción. Probá nuevamente o escribinos por WhatsApp.');await loadCupos();return}
     if(data?.id){supabase.functions.invoke('notificar-clinica-oct-2026',{body:{id:data.id}}).catch(()=>{})}
-    setDone({id:data?.id,payment:form.opcion_pago,waitlist:Boolean(data?.lista_espera),estado:data?.estado,numeroRegistro:data?.numero_registro})
-    await loadCupos();setStep(3);window.scrollTo({top:0,behavior:'smooth'})
+    setDone({id:data?.id,waitlist:Boolean(data?.lista_espera),estado:data?.estado,numeroRegistro:data?.numero_registro})
+    await loadCupos();setStep(data?.lista_espera?4:3);window.scrollTo({top:0,behavior:'smooth'})
   }
+  const finishPayment=(method)=>{setFinishedWith(method);setStep(4);window.scrollTo({top:0,behavior:'smooth'})}
 
   return <main className="oct-shell"><div className="oct-noise" aria-hidden="true"/><section className="oct-wrap">
     <header className="oct-nav"><img src="/logo.png" alt="Punta Rollers"/><span>CLÍNICA 02 · OCTUBRE 2026</span><img className="oct-mf" src={mfLogo} alt="Patin's Club Miguel Flores"/></header>
-    {step<3&&<div className="oct-progress"><div><span>{loadingCupos?'—':cupos.disponibles}</span><small>lugares disponibles</small></div><div className="oct-progress-track"><i style={{width:`${percent}%`}}/></div><b>{loadingCupos?'Cargando':waitlistActive?'Lista de espera abierta':`${cupos.ocupados}/${cupos.total}`}</b></div>}
+    {step<4&&<div className="oct-progress"><div><span>{loadingCupos?'—':cupos.disponibles}</span><small>lugares disponibles</small></div><div className="oct-progress-track"><i style={{width:`${percent}%`}}/></div><b>{loadingCupos?'Cargando':waitlistActive?'Lista de espera abierta':`${cupos.ocupados}/${cupos.total}`}</b></div>}
 
     {step===0&&<div className="oct-hero">
       <div className="oct-hero-copy"><p className="oct-overline">PUNTA ROLLERS × MIGUEL FLORES</p><h1><span>CLÍNICA</span><strong>02</strong></h1><h2>Más técnica.<br/>Más control.<br/><em>Más nivel.</em></h2><p className="oct-intro">La segunda parte de una experiencia intensiva de tres jornadas junto a Miguel Ángel Flores, entrenador argentino y Subcampeón Mundial Máster con más de 40 años dentro del patinaje. No es repetir la primera clínica: es profundizar, corregir y llevar cada herramienta un paso más allá.</p></div>
@@ -93,14 +95,13 @@ export default function ClinicaMiguelOct2026(){
     {step===2&&<div className="oct-stage"><button className="oct-back" onClick={()=>setStep(1)}>← Volver a mis datos</button><p className="oct-overline">02 · CONFIRMACIÓN</p><h2 className="oct-title">Reservá la experiencia.</h2>
       <div className="oct-summary"><div><span>CLÍNICA 02 · PREVIA SHIFTER</span><b>28 · 29 · 30 OCT</b><small>Entrenamiento final · sábado de recuperación · carrera el domingo</small></div><strong>${PRICE.toLocaleString('es-UY')}</strong></div>
       <label className={`oct-check ${form.asistencia_completa?'active':''}`}><input type="checkbox" checked={form.asistencia_completa} onChange={e=>update('asistencia_completa',e.target.checked)}/><i>{form.asistencia_completa?'✓':''}</i><div><b>Confirmo mi participación en las tres jornadas</b><small>Miércoles 28 · jueves 29 · viernes 30 de octubre</small></div></label>
-      <div className="oct-payment-grid"><Choice active={form.opcion_pago==='pagar_ahora'} onClick={()=>update('opcion_pago','pagar_ahora')} index="01" title="Transferencia" text={waitlistActive?'Quedo registrado en espera. No transfiero hasta recibir confirmación de PR.':`Transfiero $${PRICE.toLocaleString('es-UY')} y PR valida mi pago.`}/><Choice active={form.opcion_pago==='bonificacion_rifa'} onClick={()=>update('opcion_pago','bonificacion_rifa')} index="02" title="Bonificación PR" text="Soy alumno PR y corresponde validar mi modalidad de bonificación de rifa."/><Choice active={form.opcion_pago==='ya_pague'} onClick={()=>update('opcion_pago','ya_pague')} index="03" title="Ya pagué" text="Ya realicé el pago previamente y quiero registrar mi lugar."/></div>
-      {!waitlistActive&&form.opcion_pago==='pagar_ahora'&&<div className="oct-bank"><span>DATOS DE TRANSFERENCIA</span><div><b>PREX · Claudio Facelli</b><strong>70658</strong></div><small>El registro se guarda ahora. El cupo se confirma cuando Punta Rollers verifica la acreditación.</small></div>}
-      <p className="oct-no-coupon">Esta inscripción no utiliza códigos ni cupones de descuento.</p>{error&&<p className="oct-error">{error}</p>}<button className="oct-cta" disabled={sending} onClick={submit}><span>{sending?'GUARDANDO…':waitlistActive?'ENTRAR EN LISTA DE ESPERA':'CONFIRMAR INSCRIPCIÓN'}</span><b>→</b></button>
+      <div className="oct-bank"><span>ORDEN CORRECTO</span><small>Primero guardamos tu inscripción. En la pantalla siguiente elegís pagar con Mercado Pago o hacer una transferencia.</small></div>
+      <p className="oct-no-coupon">Esta inscripción no utiliza códigos ni cupones de descuento.</p>{error&&<p className="oct-error">{error}</p>}<button className="oct-cta" disabled={sending} onClick={submit}><span>{sending?'GUARDANDO…':waitlistActive?'ENTRAR EN LISTA DE ESPERA':'GUARDAR Y ELEGIR PAGO'}</span><b>→</b></button>
     </div>}
-    {step===3&&done&&<Success result={done}/>} 
+    {step===3&&done&&<div className="oct-stage"><p className="oct-overline">03 · PAGO</p><h2 className="oct-title">Elegí cómo querés pagar.</h2><div className="oct-summary"><div><span>INSCRIPCIÓN YA GUARDADA</span><b>{form.nombre_completo}</b><small>Clínica 02 · 28, 29 y 30 de octubre</small></div><strong>${PRICE.toLocaleString('es-UY')}</strong></div><RegistrationPayment registrationType="clinica_oct_2026" registrationId={done.id} amount={PRICE} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment}/><p className="oct-no-coupon">Importe fijo. La Clínica de Octubre no admite códigos de descuento.</p></div>}
+    {step===4&&done&&<Success result={done} finishedWith={finishedWith}/>}
   </section></main>
 }
 
-function Choice({active,onClick,index,title,text}){return <button type="button" className={`oct-choice ${active?'active':''}`} onClick={onClick}><span>{index}</span><div><b>{title}</b><p>{text}</p></div><i>{active?'✓':'→'}</i></button>}
 function Notice({text}){return <div className="oct-notice"><b>LISTA DE ESPERA</b><p>{text}</p></div>}
-function Success({result}){const wait=result.waitlist||result.estado==='lista_espera';const paid=result.payment==='ya_pague'&&!wait;const raffle=result.payment==='bonificacion_rifa'&&!wait;return <div className="oct-success"><p className="oct-overline">REGISTRO #{result.numeroRegistro||'—'}</p><div className="oct-success-mark">{wait?'…':'✓'}</div><h1>{wait?'Estás en espera.':'Ya sos parte.'}</h1><p>{wait?'Guardamos tu registro. Punta Rollers te contactará si se libera o amplía un lugar.':paid?'Tu inscripción quedó registrada como pago realizado.':raffle?'Tu lugar quedó registrado y ahora validaremos la bonificación PR.':'Tu lugar quedó pre-reservado. Confirmaremos el cupo al verificar la transferencia.'}</p><div className="oct-success-date"><b>28 · 29 · 30 OCT</b><span>CLÍNICA 02 · PUESTA A PUNTO PRE-SHIFTER</span></div><a href="/" className="oct-cta"><span>VOLVER A PUNTA ROLLERS</span><b>→</b></a></div>}
+function Success({result,finishedWith}){const wait=result.waitlist||result.estado==='lista_espera';const copy=finishedWith==='mercadopago'?'Tu pago quedó acreditado y recibiremos la confirmación automáticamente.':finishedWith==='mercadopago_pending'?'El pago está siendo procesado. Tu inscripción sigue guardada y te avisaremos cuando se acredite.':'Tu lugar quedó pre-reservado. Confirmaremos el cupo al verificar la transferencia.';return <div className="oct-success"><p className="oct-overline">REGISTRO #{result.numeroRegistro||'—'}</p><div className="oct-success-mark">{wait?'…':'✓'}</div><h1>{wait?'Estás en espera.':'Ya sos parte.'}</h1><p>{wait?'Guardamos tu registro. Punta Rollers te contactará si se libera o amplía un lugar.':copy}</p><div className="oct-success-date"><b>28 · 29 · 30 OCT</b><span>CLÍNICA 02 · PUESTA A PUNTO PRE-SHIFTER</span></div><a href="/" className="oct-cta"><span>VOLVER A PUNTA ROLLERS</span><b>→</b></a></div>}

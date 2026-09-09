@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ReferralCodeField from '../components/ReferralCodeField'
+import RegistrationPayment from '../components/RegistrationPayment'
 import './PRKidsInscripciones2026.css'
 
 const initialForm = {
@@ -16,7 +17,6 @@ const initialForm = {
 export default function PRKidsInscripciones2026() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(initialForm)
-  const [accepted, setAccepted] = useState(false)
   const [sending, setSending] = useState(false)
   const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
@@ -24,6 +24,7 @@ export default function PRKidsInscripciones2026() {
   const [referralValid, setReferralValid] = useState(null)
   const [paymentAmount, setPaymentAmount] = useState(null)
   const [paymentOriginal, setPaymentOriginal] = useState(null)
+  const [finishedWith, setFinishedWith] = useState('')
   const progress = useMemo(() => `${Math.min(step + 1, 4)} / 4`, [step])
   const baseTotal = 2000 + (form.quiere_remera ? 690 : 0)
   const total = paymentAmount ?? baseTotal
@@ -94,12 +95,8 @@ export default function PRKidsInscripciones2026() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const submit = () => {
-    if (!accepted) {
-      setError('Confirmá que entendés cómo se completa la reserva.')
-      return
-    }
-    setError('')
+  const finishPayment = (method) => {
+    setFinishedWith(method)
     setStep(4)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -119,9 +116,9 @@ export default function PRKidsInscripciones2026() {
 
         {step === 2 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(1)}>← Volver a la info</button><p className="prk-kicker">AHORA SÍ 💫</p><h1>Contanos quién se suma a la aventura.</h1><p className="prk-lead">Primero los datos del niño o niña. Después, los del adulto responsable.</p><div className="prk-section-label"><span>🧒</span><b>Datos del niño/a</b></div><div className="prk-form-grid"><label>Nombre completo<input value={form.nombre_nino} onChange={e => update('nombre_nino', e.target.value)} autoComplete="name" /></label><label>Edad<input type="number" inputMode="numeric" value={form.edad} onChange={e => update('edad', e.target.value)} /></label><label className="full">Nivel de patín<select value={form.nivel} onChange={e => update('nivel', e.target.value)}><option value="">Seleccioná una opción</option><option>Primera vez</option><option>Principiante</option><option>Intermedio</option></select></label></div><div className="prk-section-label adult"><span>👨‍👩‍👧</span><b>Adulto responsable</b></div><div className="prk-form-grid"><label className="full">Nombre del padre, madre o tutor<input value={form.nombre_responsable} onChange={e => update('nombre_responsable', e.target.value)} /></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e => update('email', e.target.value)} autoComplete="email" /></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e => update('telefono', e.target.value)} autoComplete="tel" /></label></div><div className={`prk-shirt-option ${form.quiere_remera ? 'selected' : ''}`}><label><input type="checkbox" checked={form.quiere_remera} onChange={e => update('quiere_remera', e.target.checked)} /><span className="prk-shirt-check">✓</span><span className="prk-shirt-copy"><b>👕 Quiero agregar la remera PR Kids</b><small>$690 · única vez · personalizada con el nombre del niño/a</small></span></label><p>Viene seleccionada porque forma parte del uniforme de la escuela, pero podés destildarla si preferís adquirirla más adelante.</p></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid} compact />{referralValid && <div className="prk-note-card prk-success-note"><span>🤝</span><div><b>Amigos PR aplicado</b><p>El niño/a obtiene 10% OFF en sus primeras 2 mensualidades. La remera no entra en el descuento. El alumno que lo invitó recibe su beneficio cuando confirmemos el pago.</p></div></div>}{error && <p className="prk-error">{error}</p>}<button className="prk-primary" disabled={sending} onClick={createPreReservation}>{sending ? 'Guardando pre-reserva…' : 'Continuar al pago →'}</button></div>}
 
-        {step === 3 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(2)}>← Volver a los datos</button><div className="prk-final-icon">🏁</div><p className="prk-kicker">ÚLTIMO PASO</p><h1>Reservá su lugar en PR Kids.</h1><p className="prk-lead">La pre-reserva ya quedó registrada. Ahora realizá la transferencia para completar la reserva.</p><div className="prk-note-card prk-success-note"><span>✅</span><div><b>Pre-reserva registrada</b><p>Aunque cierres esta página, los datos del alumno ya quedaron guardados en Punta Rollers.</p></div></div><div className="prk-summary"><div><span>🧒 Alumno/a</span><b>{form.nombre_nino}</b></div><div><span>🗓️ Horario</span><b>Sábado · 19:00 a 20:00</b></div><div><span>💛 Mensualidad</span><b>{paymentOriginal > total ? <><s>$2.000</s> · $1.800</> : '$2.000'}</b></div><div><span>👕 Remera</span><b>{form.quiere_remera ? 'Sí · $690' : 'No por ahora'}</b></div></div>{paymentOriginal > total && <div className="prk-note-card prk-success-note"><span>🎉</span><div><b>10% OFF Amigos PR</b><p>Se descontaron $200 de la mensualidad. La remera mantiene su precio normal.</p></div></div>}<div className="prk-payment-card"><span>Importe de esta reserva</span><strong>${total.toLocaleString('es-UY')}</strong><small>{form.quiere_remera ? (paymentOriginal > total ? '$1.800 mensualidad + $690 remera' : '$2.000 mensualidad + $690 remera') : (paymentOriginal > total ? '$1.800 mensualidad' : '$2.000 mensualidad')}</small><hr /><b>Tarjeta Prex · Claudio Facelli</b><p>Cuenta Prex: <strong>70658</strong></p></div><div className="prk-note-card"><span>📲</span><div><b>Después de transferir</b><p>Identificá la transferencia con el nombre del alumno y enviá el comprobante al WhatsApp de Punta Rollers: <strong>098 971 505</strong>.</p></div></div><label className="prk-accept"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} /><span>Entiendo que el lugar se confirma una vez que Punta Rollers verifica el pago.</span></label>{error && <p className="prk-error">{error}</p>}<button className="prk-primary" onClick={submit}>Ya transferí · finalizar ✓</button></div>}
+        {step === 3 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(2)}>← Volver a los datos</button><div className="prk-final-icon">🏁</div><p className="prk-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><p className="prk-lead">La pre-reserva ya quedó registrada. El importe incluye automáticamente el descuento y la remera elegida.</p><div className="prk-note-card prk-success-note"><span>✅</span><div><b>Pre-reserva registrada</b><p>Aunque cierres esta página, los datos del alumno ya quedaron guardados en Punta Rollers.</p></div></div><div className="prk-summary"><div><span>🧒 Alumno/a</span><b>{form.nombre_nino}</b></div><div><span>🗓️ Horario</span><b>Sábado · 19:00 a 20:00</b></div><div><span>💛 Mensualidad</span><b>{paymentOriginal > total ? <><s>$2.000</s> · $1.800</> : '$2.000'}</b></div><div><span>👕 Remera</span><b>{form.quiere_remera ? 'Sí · $690' : 'No por ahora'}</b></div></div>{paymentOriginal > total && <div className="prk-note-card prk-success-note"><span>🎉</span><div><b>10% OFF Amigos PR</b><p>Se descontaron $200 de la mensualidad. La remera mantiene su precio normal.</p></div></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={total} payerEmail={form.email} payerName={form.nombre_nino} onFinished={finishPayment} /></div>}
 
-        {step === 4 && <div className="prk-stage prk-final"><div className="prk-final-icon">🎉</div><p className="prk-kicker">INSCRIPCIÓN RECIBIDA</p><h1>¡Bienvenido/a a PR Kids!</h1><p className="prk-lead">Recibimos la solicitud de {form.nombre_nino}. Cuando corroboremos el pago, Punta Rollers se pondrá en contacto con el adulto responsable para confirmar el lugar.</p><div className="prk-note-card prk-success-note"><span>💬</span><div><b>Último detalle</b><p>Si todavía no lo hiciste, enviá el comprobante por WhatsApp para que podamos verificar la reserva.</p></div></div><a className="prk-primary prk-link" href="https://wa.me/59898971505" target="_blank" rel="noreferrer">Enviar comprobante por WhatsApp</a></div>}
+        {step === 4 && <div className="prk-stage prk-final"><div className="prk-final-icon">🎉</div><p className="prk-kicker">INSCRIPCIÓN RECIBIDA</p><h1>¡Bienvenido/a a PR Kids!</h1><p className="prk-lead">{finishedWith === 'mercadopago' ? `El pago de ${form.nombre_nino} quedó acreditado.` : finishedWith === 'mercadopago_pending' ? 'El pago está siendo procesado y te avisaremos cuando se acredite.' : 'Guardamos la inscripción y verificaremos el comprobante enviado por WhatsApp.'}</p></div>}
       </section>
     </main>
   )
