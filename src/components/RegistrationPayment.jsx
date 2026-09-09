@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabaseAnonKey, supabaseUrl } from '../lib/supabase'
 import './RegistrationPayment.css'
 
-const MP_PUBLIC_KEY = String(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || 'APP_USR-8f3e4d25-9dcc-401f-8ac2-36134d4c0c6e').trim()
+const MP_PUBLIC_KEY = String(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || 'APP_USR-ceb5b5a3-7bad-4f78-abee-c1767b154db8').trim()
 const WHATSAPP = '59898971505'
 
 let sdkPromise
