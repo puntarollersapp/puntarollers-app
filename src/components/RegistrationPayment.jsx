@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabaseAnonKey, supabaseUrl } from '../lib/supabase'
 import './RegistrationPayment.css'
+import './PaidClassAccess.css'
 
 const MP_PUBLIC_KEY = String(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || 'APP_USR-ceb5b5a3-7bad-4f78-abee-c1767b154db8').trim()
 const WHATSAPP = '59898971505'
@@ -129,4 +130,16 @@ export default function RegistrationPayment({ registrationType, registrationId, 
       <button type="button" className="registration-payment__finish" onClick={() => onFinished?.('transferencia')}>Ya transferí · finalizar</button>
     </div>}
   </div>
+}
+
+export function PaidClassAccess({ items = [] }) {
+  if (!Array.isArray(items) || items.length === 0) return null
+  return <section className="paid-access" aria-labelledby="paid-access-title">
+    <div className="paid-access__hero"><span>✓ PAGO ACREDITADO</span><h2 id="paid-access-title">Tus ruedas ya tienen destino.</h2><p>Entrá a tus grupos y guardá las ubicaciones. Todo lo necesario para tu primera clase está acá.</p></div>
+    <div className="paid-access__grid">{items.map(item => <article className="paid-access__card" key={item.id}>
+      <div className="paid-access__top"><small>{item.eyebrow}</small><span>🛼</span></div><h3>{item.title}</h3><p className="paid-access__schedule">{item.schedule}</p><p className="paid-access__place">📍 {item.place}</p>
+      <div className="paid-access__actions"><a className="whatsapp" href={item.whatsappUrl} target="_blank" rel="noreferrer">Entrar al grupo <b>↗</b></a><a className="maps" href={item.mapsUrl} target="_blank" rel="noreferrer">Cómo llegar <b>→</b></a></div>
+    </article>)}</div>
+    <p className="paid-access__private">🔒 Estos accesos se habilitaron porque Mercado Pago confirmó tu pago. No compartas los enlaces fuera de tu grupo.</p>
+  </section>
 }

@@ -12,6 +12,7 @@ import {
   safeProviderCode,
   type RegistrationType,
 } from "../_shared/mercadopago.ts";
+import { classAccessForRegistration, type ClassAccessItem } from "../_shared/classAccess.ts";
 
 type CardPayload = {
   registrationType?: unknown;
@@ -181,11 +182,12 @@ Deno.serve(async (req: Request) => {
 
   let amount: number;
   let registrationEmail: string | null = null;
+  let classAccess: ClassAccessItem[] = [];
 
   if (registrationType === "inscripciones_2026") {
     const { data, error } = await supabase
       .from("pr_inscripciones_2026")
-      .select("id, email, monto, monto_final, estado")
+      .select("id, email, monto, monto_final, estado, modalidad, turno_sabado")
       .eq("id", registrationId)
       .maybeSingle();
     if (error || !data) return jsonResponse({ error: "registration_not_found" }, 404, headers);
@@ -194,6 +196,7 @@ Deno.serve(async (req: Request) => {
     }
     amount = Number(data.monto_final ?? data.monto);
     registrationEmail = typeof data.email === "string" ? data.email : null;
+    classAccess = classAccessForRegistration(data.modalidad, data.turno_sabado);
   } else {
     const { data, error } = await supabase
       .from("pr_clinica_oct_2026_inscripciones")
@@ -353,5 +356,6 @@ Deno.serve(async (req: Request) => {
     status: result.providerStatus,
     statusDetail: result.providerStatusDetail,
     registrationSaved: true,
+    classAccess: result.paymentState === "paid" ? classAccess : [],
   }, result.paymentState === "pending" ? 202 : 200, headers);
 });

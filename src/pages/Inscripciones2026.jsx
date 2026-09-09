@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ReferralCodeField from '../components/ReferralCodeField'
-import RegistrationPayment from '../components/RegistrationPayment'
+import RegistrationPayment, { PaidClassAccess } from '../components/RegistrationPayment'
 import './Inscripciones2026.css'
 
 const groupSchedules = [
@@ -35,6 +35,7 @@ export default function Inscripciones2026() {
   const [paymentAmount, setPaymentAmount] = useState(null)
   const [paymentOriginal, setPaymentOriginal] = useState(null)
   const [finishedWith, setFinishedWith] = useState('')
+  const [classAccess, setClassAccess] = useState([])
 
   const baseAmount = mode === 'personalizadas' ? 2900 : 1500
   const amount = paymentAmount ?? baseAmount
@@ -143,8 +144,9 @@ export default function Inscripciones2026() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const finishPayment = (method) => {
+  const finishPayment = (method, result) => {
     setFinishedWith(method)
+    setClassAccess(method === 'mercadopago' && Array.isArray(result?.classAccess) ? result.classAccess : [])
     setStep(5)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -169,7 +171,7 @@ export default function Inscripciones2026() {
 
         {step === 4 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button><p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Aunque cierres esta página, tus datos ya aparecen en nuestro panel. Ahora elegí Mercado Pago o transferencia.</p></div>{paymentOriginal > amount && <div className="pr-reg-info"><b>🤝 Amigos PR aplicado</b><p>Precio normal: <s>${paymentOriginal.toLocaleString('es-UY')}</s> · Descuento: 10% · <strong>Ahorrás ${(paymentOriginal - amount).toLocaleString('es-UY')}</strong>.</p></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={amount} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment} /></div>}
 
-        {step === 5 && <div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">SOLICITUD RECIBIDA</p><h1>¡Ya estás en la lista para septiembre!</h1><p className="pr-reg-lead">{finishedWith === 'mercadopago' ? 'Tu pago quedó acreditado y recibiremos la confirmación automáticamente.' : finishedWith === 'mercadopago_pending' ? 'Tu pago está siendo procesado. Tu inscripción quedó guardada y te avisaremos cuando se acredite.' : 'Recibimos tu pre-reserva. Cuando verifiquemos la transferencia, te contactaremos para confirmar tu lugar.'}</p><div className="pr-reg-info"><b>¿Qué sigue?</b><p>Antes de comenzar en septiembre, recibirás la información necesaria para incorporarte a tu grupo.</p></div></div>}
+        {step === 5 && <div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">SOLICITUD RECIBIDA</p><h1>¡Ya estás en la lista para septiembre!</h1><p className="pr-reg-lead">{finishedWith === 'mercadopago' ? 'Tu pago quedó acreditado y tu lugar está confirmado.' : finishedWith === 'mercadopago_pending' ? 'Tu pago está siendo procesado. Tu inscripción quedó guardada y te avisaremos cuando se acredite.' : 'Recibimos tu pre-reserva. Cuando verifiquemos la transferencia, te contactaremos para confirmar tu lugar.'}</p><PaidClassAccess items={classAccess} />{classAccess.length === 0 && <div className="pr-reg-info"><b>¿Qué sigue?</b><p>Antes de comenzar en septiembre, recibirás la información necesaria para incorporarte.</p></div>}</div>}
       </section>
     </main>
   )

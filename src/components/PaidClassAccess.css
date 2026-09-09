@@ -1,0 +1,14 @@
+.paid-access{margin-top:22px;overflow:hidden;border:1px solid rgba(255,255,255,.16);border-radius:24px;background:linear-gradient(145deg,#11121a,#1a1422 55%,#111827);color:#fff;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.paid-access__hero{padding:24px 24px 18px;background:radial-gradient(circle at 90% 10%,rgba(255,83,145,.3),transparent 42%)}
+.paid-access__hero>span{display:inline-flex;padding:7px 10px;border-radius:999px;background:#bbf7d0;color:#14532d;font-size:10px;font-weight:950;letter-spacing:.12em}
+.paid-access__hero h2{margin:13px 0 7px;font-size:clamp(25px,5vw,38px);line-height:1}
+.paid-access__hero p{max-width:580px;margin:0;color:rgba(255,255,255,.7);line-height:1.55}
+.paid-access__grid{display:grid;gap:12px;padding:0 16px 16px}
+.paid-access__card{padding:18px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(255,255,255,.065);backdrop-filter:blur(12px)}
+.paid-access__top{display:flex;align-items:center;justify-content:space-between}.paid-access__top small{font-size:9px;font-weight:950;letter-spacing:.14em;color:#f9a8d4}.paid-access__top span{font-size:22px}
+.paid-access__card h3{margin:5px 0 4px;font-size:19px}.paid-access__schedule{margin:0;font-size:14px;font-weight:850;color:#fff}.paid-access__place{margin:9px 0 14px;font-size:13px;color:rgba(255,255,255,.63)}
+.paid-access__actions{display:grid;grid-template-columns:1.25fr 1fr;gap:9px}.paid-access__actions a{display:flex;min-height:46px;align-items:center;justify-content:space-between;padding:0 14px;border-radius:12px;color:#fff;text-decoration:none;font-size:13px;font-weight:900}
+.paid-access__actions .whatsapp{background:#20ad62}.paid-access__actions .maps{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08)}
+.paid-access__private{margin:0;padding:0 20px 20px;color:rgba(255,255,255,.48);font-size:11px;line-height:1.45}
+@media(min-width:720px){.paid-access__grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 24px 20px}.paid-access__private{padding:0 24px 24px}}
+@media(max-width:520px){.paid-access__actions{grid-template-columns:1fr}.paid-access__hero{padding:21px 18px 16px}.paid-access__grid{padding:0 10px 12px}.paid-access__private{padding:0 16px 18px}}

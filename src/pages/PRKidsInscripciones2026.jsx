@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ReferralCodeField from '../components/ReferralCodeField'
-import RegistrationPayment from '../components/RegistrationPayment'
+import RegistrationPayment, { PaidClassAccess } from '../components/RegistrationPayment'
 import './PRKidsInscripciones2026.css'
 
 const initialForm = {
@@ -25,6 +25,7 @@ export default function PRKidsInscripciones2026() {
   const [paymentAmount, setPaymentAmount] = useState(null)
   const [paymentOriginal, setPaymentOriginal] = useState(null)
   const [finishedWith, setFinishedWith] = useState('')
+  const [classAccess, setClassAccess] = useState([])
   const progress = useMemo(() => `${Math.min(step + 1, 4)} / 4`, [step])
   const baseTotal = 2000 + (form.quiere_remera ? 690 : 0)
   const total = paymentAmount ?? baseTotal
@@ -95,8 +96,9 @@ export default function PRKidsInscripciones2026() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const finishPayment = (method) => {
+  const finishPayment = (method, result) => {
     setFinishedWith(method)
+    setClassAccess(method === 'mercadopago' && Array.isArray(result?.classAccess) ? result.classAccess : [])
     setStep(4)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -118,7 +120,7 @@ export default function PRKidsInscripciones2026() {
 
         {step === 3 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(2)}>← Volver a los datos</button><div className="prk-final-icon">🏁</div><p className="prk-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><p className="prk-lead">La pre-reserva ya quedó registrada. El importe incluye automáticamente el descuento y la remera elegida.</p><div className="prk-note-card prk-success-note"><span>✅</span><div><b>Pre-reserva registrada</b><p>Aunque cierres esta página, los datos del alumno ya quedaron guardados en Punta Rollers.</p></div></div><div className="prk-summary"><div><span>🧒 Alumno/a</span><b>{form.nombre_nino}</b></div><div><span>🗓️ Horario</span><b>Sábado · 19:00 a 20:00</b></div><div><span>💛 Mensualidad</span><b>{paymentOriginal > total ? <><s>$2.000</s> · $1.800</> : '$2.000'}</b></div><div><span>👕 Remera</span><b>{form.quiere_remera ? 'Sí · $690' : 'No por ahora'}</b></div></div>{paymentOriginal > total && <div className="prk-note-card prk-success-note"><span>🎉</span><div><b>10% OFF Amigos PR</b><p>Se descontaron $200 de la mensualidad. La remera mantiene su precio normal.</p></div></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={total} payerEmail={form.email} payerName={form.nombre_nino} onFinished={finishPayment} /></div>}
 
-        {step === 4 && <div className="prk-stage prk-final"><div className="prk-final-icon">🎉</div><p className="prk-kicker">INSCRIPCIÓN RECIBIDA</p><h1>¡Bienvenido/a a PR Kids!</h1><p className="prk-lead">{finishedWith === 'mercadopago' ? `El pago de ${form.nombre_nino} quedó acreditado.` : finishedWith === 'mercadopago_pending' ? 'El pago está siendo procesado y te avisaremos cuando se acredite.' : 'Guardamos la inscripción y verificaremos el comprobante enviado por WhatsApp.'}</p></div>}
+        {step === 4 && <div className="prk-stage prk-final"><div className="prk-final-icon">🎉</div><p className="prk-kicker">INSCRIPCIÓN RECIBIDA</p><h1>¡Bienvenido/a a PR Kids!</h1><p className="prk-lead">{finishedWith === 'mercadopago' ? `El pago de ${form.nombre_nino} quedó acreditado.` : finishedWith === 'mercadopago_pending' ? 'El pago está siendo procesado y te avisaremos cuando se acredite.' : 'Guardamos la inscripción y verificaremos el comprobante enviado por WhatsApp.'}</p><PaidClassAccess items={classAccess} /></div>}
       </section>
     </main>
   )
