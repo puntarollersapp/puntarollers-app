@@ -53,7 +53,7 @@ export default function RegistrationPayment({ registrationType, registrationId, 
               setStatus('error')
               setMessage('No pudimos cargar Mercado Pago. Podés reintentar o elegir transferencia.')
             },
-            onSubmit: async ({ formData }) => {
+            onSubmit: async (formData, additionalData) => {
               setStatus('processing')
               setMessage('')
               try {
@@ -65,7 +65,7 @@ export default function RegistrationPayment({ registrationType, registrationId, 
                     registrationId,
                     token: formData.token,
                     payment_method_id: formData.payment_method_id,
-                    payment_type_id: formData.payment_type_id,
+                    payment_type_id: additionalData?.paymentTypeId,
                     installments: formData.installments,
                     payer: formData.payer,
                   }),
