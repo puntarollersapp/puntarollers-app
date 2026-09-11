@@ -94,6 +94,7 @@ function normalizeProfile(profile) {
     apellido: profile.apellido || '',
     documento: profile.documento || '',
     role,
+    esTesoreria: Boolean(profile.es_tesoreria),
     profesorId:
       profile.profesor_id ||
       (role === 'profesor'
@@ -427,6 +428,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(user),
         isAdmin: user?.role === 'admin',
         isProfessor: user?.role === 'profesor',
+        isTreasury: Boolean(user?.esTesoreria) || user?.role === 'admin',
         hasPrivateAccess: Boolean(user?.accesoHabilitado),
         professores,
       }}
