@@ -4,6 +4,7 @@ import './closed-status.css'
 import { AuthProvider, useAuth } from './lib/auth'
 import LoadingScreen from './components/LoadingScreen'
 import StudentLaunchGate from './components/StudentLaunchGate'
+import RequiredEmailGate from './components/RequiredEmailGate'
 import PRControlHub from './components/admin/PRControlHub'
 import RollerFeedPinnedPodium from './components/RollerFeedPinnedPodium'
 import AmigosPRProfilePortal from './components/profile/AmigosPRProfilePortal'
@@ -50,10 +51,10 @@ import AdminAccessRequests from './pages/AdminAccessRequests'
 import PRTesoreria from './pages/PRTesoreria'
 
 function ScrollToTop(){const{pathname}=useLocation();useEffect(()=>{window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0},[pathname]);return null}
-function PrivateRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;return <StudentLaunchGate user={user}>{children}</StudentLaunchGate>}
-function AdminRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(!['admin','profesor'].includes(user.role))return <Navigate to="/app/perfil" replace/>;return <StudentLaunchGate user={user}>{children}</StudentLaunchGate>}
-function FullAdminRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(user.role!=='admin')return <Navigate to="/admin" replace/>;return <StudentLaunchGate user={user}>{children}</StudentLaunchGate>}
-function TreasuryRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(user.role!=='admin'&&!user.esTesoreria)return <Navigate to="/app/perfil" replace/>;return children}
+function PrivateRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;return <RequiredEmailGate><StudentLaunchGate user={user}>{children}</StudentLaunchGate></RequiredEmailGate>}
+function AdminRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(!['admin','profesor'].includes(user.role))return <Navigate to="/app/perfil" replace/>;return <RequiredEmailGate><StudentLaunchGate user={user}>{children}</StudentLaunchGate></RequiredEmailGate>}
+function FullAdminRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(user.role!=='admin')return <Navigate to="/admin" replace/>;return <RequiredEmailGate><StudentLaunchGate user={user}>{children}</StudentLaunchGate></RequiredEmailGate>}
+function TreasuryRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;if(user.role!=='admin'&&!user.esTesoreria)return <Navigate to="/app/perfil" replace/>;return <RequiredEmailGate>{children}</RequiredEmailGate>}
 function AdminProfileShortcut(){return <a href="/app/perfil" className="fixed bottom-[88px] left-5 z-[230] flex min-h-12 items-center gap-2 rounded-2xl border border-pr-gold/25 bg-[#15130d]/95 px-4 py-3 text-xs font-black text-pr-gold shadow-[0_18px_50px_rgba(0,0,0,.55)] backdrop-blur-xl active:scale-[.98]" aria-label="Volver a mi perfil"><span className="text-base">👤</span><span>Mi perfil</span></a>}
 function ActivityWithPinnedPodium(){return <><RollerFeedPinnedPodium/><ActivityPage/></>}
 function ProfileWithAmigosPR(){return <><Profile/><AmigosPRProfilePortal/></>}
