@@ -74,6 +74,10 @@ export default function PRTesoreria(){
   },[dues,moves])
 
   async function registerPayment(profile, form){
+    if(!Number(form.monto) || Number(form.monto) <= 0){
+      setMsg('Ingresá el importe real que pagó el alumno.')
+      return
+    }
     setBusy(true)
     const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
     const {error}=await supabase.rpc('pr_registrar_mensualidad',{
@@ -170,11 +174,11 @@ export default function PRTesoreria(){
           return <article key={p.id} className="rounded-[26px] border border-white/10 bg-[#111] p-4">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl overflow-hidden bg-white/5 grid place-items-center">{p.foto?<img src={p.foto} className="h-full w-full object-cover"/>:'👤'}</div>
-              <div className="min-w-0 flex-1"><p className="font-black truncate">{p.nombre} {p.apellido||''}</p><p className="text-xs text-white/35">{p.telefono||'Sin teléfono'}</p></div>
+              <div className="min-w-0 flex-1"><p className="font-black truncate">{p.nombre} {p.apellido||''}</p><p className="text-xs text-white/35">{p.telefono||'Sin teléfono'}</p><p className={`mt-1 text-[10px] font-black ${p.email?'text-emerald-300':'text-amber-300'}`}>{p.email?'Email OK':'Sin email'}</p></div>
               <span className={`rounded-full border px-3 py-1 text-[9px] font-black ${cls}`}>{lab}</span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <Mini label="Cuota" value={money(due?.monto||config?.monto_default||0)}/>
+              <Mini label="Cuota" value={due?.estado==='pagado' ? money(due?.monto) : 'Definir monto'}/>
               <Mini label="Vence" value={due?.vencimiento?new Date(due.vencimiento+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'10'}/>
               <Mini label="Pago" value={due?.fecha_pago?new Date(due.fecha_pago+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'—'}/>
             </div>
@@ -203,7 +207,7 @@ function Money({label,value,strong}){return <div className={`rounded-[24px] bord
 function Mini({label,value}){return <div className="rounded-2xl bg-white/[.04] p-3"><p className="text-[9px] text-white/30 uppercase">{label}</p><p className="mt-1 text-xs font-black">{value}</p></div>}
 
 function PaymentSheet({item,config,busy,onClose,onPay,onSpecial}){
- const [monto,setMonto]=useState(item.due?.monto||config?.monto_default||2000)
+ const [monto,setMonto]=useState(item.due?.estado==='pagado' && item.due?.monto ? item.due.monto : '')
  const [fecha,setFecha]=useState(today())
  const [metodo,setMetodo]=useState('Transferencia Claudio')
  const [observacion,setObservacion]=useState('')
@@ -211,7 +215,8 @@ function PaymentSheet({item,config,busy,onClose,onPay,onSpecial}){
  return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center">
   <div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5 max-h-[90vh] overflow-y-auto">
    <div className="flex justify-between gap-3"><div><p className="text-[10px] text-orange-300 font-black tracking-[.15em]">REGISTRAR / GESTIONAR</p><h3 className="text-2xl font-black mt-1">{item.profile.nombre} {item.profile.apellido||''}</h3></div><button onClick={onClose}>✕</button></div>
-   <div className="grid grid-cols-2 gap-3 mt-5"><Field label="Importe"><input type="number" value={monto} onChange={e=>setMonto(e.target.value)}/></Field><Field label="Fecha"><input type="date" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field></div>
+   <div className="rounded-2xl border border-orange-400/20 bg-orange-500/10 p-3 mt-4 text-xs text-orange-100">El importe no es fijo. Ingresá el monto real de este alumno según su cuota, descuento o modalidad.</div>
+   <div className="grid grid-cols-2 gap-3 mt-2"><Field label="Importe"><input type="number" inputMode="numeric" placeholder="Ej. 1500" value={monto} onChange={e=>setMonto(e.target.value)}/></Field><Field label="Fecha"><input type="date" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field></div>
    <Field label="Método"><select value={metodo} onChange={e=>setMetodo(e.target.value)}><option>Transferencia Claudio</option><option>Transferencia Lucía</option><option>Mercado Pago</option><option>Efectivo</option><option>Otro</option></select></Field>
    <Field label="Observación"><input value={observacion} onChange={e=>setObservacion(e.target.value)} placeholder="Opcional"/></Field>
    <button disabled={busy} onClick={()=>onPay(item.profile,{monto,fecha,metodo,observacion})} className="w-full mt-4 rounded-2xl bg-emerald-500 py-4 text-black font-black">✓ CONFIRMAR PAGO DEL MES</button>
