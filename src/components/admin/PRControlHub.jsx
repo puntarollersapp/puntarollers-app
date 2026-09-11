@@ -219,7 +219,7 @@ export default function PRControlHub() {
   const gestionView = <AreaPage title="Gestión" subtitle="Nuevos ingresos, accesos y seguimiento." tone="inscripciones" onBack={() => setView('inicio')}>
     <Tool title="Inscripciones 2026" desc="Adultos, Personalizadas, Kids y clínica." badge={pendingRegistrations ? `${pendingRegistrations} pendientes` : null} onClick={() => go('/admin/inscripciones-2026')} />
     <Tool title="Nuevos accesos" desc="Solicitud → perfil → acceso activo." badge={pendingAccess ? `${pendingAccess} por resolver` : null} onClick={() => go('/admin/nuevos-accesos')} />
-    <Tool title="Pagos" desc="Mensualidades, vencimientos y comprobantes." onClick={() => clickLegacy('Pagos')} />
+    <Tool title="PR Tesorería" desc="Mensualidades por mes, vencimientos, ingresos y gastos." onClick={() => go('/tesoreria')} />
   </AreaPage>
 
   const comunidadView = <AreaPage title="Comunidad" subtitle="Seguimiento, logros y participación PR." tone="comunidad" onBack={() => setView('inicio')}>
