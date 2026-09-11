@@ -152,6 +152,7 @@ export default function AppLayout({
   const [checkingAccess, setCheckingAccess] =
     useState(Boolean(user?.id))
   const [enforcementEnabled, setEnforcementEnabled] = useState(false)
+  const [monthlyDue, setMonthlyDue] = useState(null)
 
   const [dmUnread, setDmUnread] = useState(0)
   const [dmToast, setDmToast] = useState(null)
@@ -172,7 +173,8 @@ export default function AppLayout({
 
       setCheckingAccess(true)
 
-      const [{ data, error }, { data: treasuryConfig }] = await Promise.all([
+      const currentPeriod = new Date().toISOString().slice(0, 7) + '-01'
+      const [{ data, error }, { data: treasuryConfig }, { data: dueRow }] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, role, nombre, apellido, mensualidad_hasta, acceso_habilitado')
@@ -183,8 +185,15 @@ export default function AppLayout({
           .select('enforcement_enabled')
           .eq('id', 1)
           .maybeSingle(),
+        supabase
+          .from('pr_mensualidades')
+          .select('periodo,monto,vencimiento,estado,gracia_hasta,fecha_pago')
+          .eq('alumno_id', user.id)
+          .eq('periodo', currentPeriod)
+          .maybeSingle(),
       ])
       setEnforcementEnabled(Boolean(treasuryConfig?.enforcement_enabled))
+      setMonthlyDue(dueRow || null)
 
       if (!active) {
         return
@@ -275,48 +284,23 @@ export default function AppLayout({
   }, [user?.id, location.pathname])
 
   const accessBlocked = useMemo(() => {
-    if (!accessProfile || !enforcementEnabled) {
+    if (!accessProfile) return false
+
+    if (accessProfile.role === 'admin' || accessProfile.role === 'profesor') {
       return false
     }
 
-    if (
-      accessProfile.role === 'admin' ||
-      accessProfile.role === 'profesor'
-    ) {
-      return false
-    }
+    const manuallyDisabled = accessProfile.accesoHabilitado === false
+    if (manuallyDisabled) return true
 
-    if (
-      accessProfile.role !== 'alumno'
-    ) {
-      return false
-    }
+    if (!enforcementEnabled || !monthlyDue) return false
+    if (['pagado', 'bonificado', 'acuerdo'].includes(monthlyDue.estado)) return false
 
-    const expirationDate =
-      parseExpirationDate(
-        accessProfile.mensualidadHasta
-      )
+    const limitDate = parseExpirationDate(monthlyDue.gracia_hasta || monthlyDue.vencimiento)
+    if (!limitDate) return false
 
-    /*
-     * Los alumnos que todavía no tienen una
-     * fecha cargada permanecen habilitados.
-     * Esto evita bloquear a todos los perfiles
-     * importados antes de registrar sus pagos.
-     */
-    if (!expirationDate) {
-      return false
-    }
-
-    const expired =
-      expirationDate.getTime() <
-      Date.now()
-
-    const manuallyDisabled =
-      accessProfile.accesoHabilitado ===
-      false
-
-    return expired || manuallyDisabled
-  }, [accessProfile, enforcementEnabled])
+    return limitDate.getTime() < Date.now()
+  }, [accessProfile, enforcementEnabled, monthlyDue])
 
   async function handleLogout() {
     await logout?.()
@@ -359,7 +343,15 @@ export default function AppLayout({
             onPublicHome={handlePublicHome}
           />
         ) : (
-          children
+          <>
+            {monthlyDue && monthlyDue.estado === 'pendiente' && (
+              <div className="mx-4 mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3">
+                <p className="text-[10px] font-black uppercase tracking-[.14em] text-amber-200">Mensualidad PR pendiente</p>
+                <p className="mt-1 text-xs text-white/55">Tenés hasta el día 10 para regularizar el mes. Si ya pagaste, Tesorería lo acreditará en tu perfil.</p>
+              </div>
+            )}
+            {children}
+          </>
         )}
       </main>
 
