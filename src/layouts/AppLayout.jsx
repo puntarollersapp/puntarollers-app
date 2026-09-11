@@ -84,8 +84,8 @@ function AccessBlocked({
           Hola, {profile?.nombre || 'alumno'}.
           Para volver a ingresar a tu perfil,
           actividad, PRCard y demás servicios
-          privados, necesitás regularizar tu
-          mensualidad.
+          privados, necesitás regularizar la
+          mensualidad de este mes.
         </p>
 
         <div className="rounded-2xl bg-black/25 border border-white/[0.06] p-4 mt-5">
@@ -102,9 +102,9 @@ function AccessBlocked({
         </div>
 
         <p className="text-white/35 text-xs mt-4 leading-relaxed">
-          Una vez que el pago sea registrado por
-          Administración, tu acceso se reactivará
-          automáticamente.
+          Una vez que Tesorería registre el pago,
+          tu acceso se reactivará automáticamente.
+          Si ya pagaste, escribinos para verificarlo.
         </p>
 
         <a
@@ -293,7 +293,8 @@ export default function AppLayout({
     const manuallyDisabled = accessProfile.accesoHabilitado === false
     if (manuallyDisabled) return true
 
-    if (!enforcementEnabled || !monthlyDue) return false
+    const automaticEnforcement = new Date().getDate() >= 11
+    if ((!enforcementEnabled && !automaticEnforcement) || !monthlyDue) return false
     if (['pagado', 'bonificado', 'acuerdo'].includes(monthlyDue.estado)) return false
 
     const limitDate = parseExpirationDate(monthlyDue.gracia_hasta || monthlyDue.vencimiento)
