@@ -31,6 +31,7 @@ export default function PRTesoreria(){
   const [selected,setSelected]=useState(null)
   const [expenseOpen,setExpenseOpen]=useState(false)
   const [msg,setMsg]=useState('')
+  const [testEmail,setTestEmail]=useState(user?.email||'')
 
   const isAdmin = user?.role==='admin'
 
@@ -138,11 +139,16 @@ export default function PRTesoreria(){
   }
 
   async function sendTest(){
+    const target=testEmail.trim()
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)){
+      setMsg('Ingresá un email válido para la prueba.')
+      return
+    }
     setBusy(true);setMsg('Enviando prueba…')
-    const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo,modo_prueba:true}})
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo,modo_prueba:true,test_email:target}})
     if(error)setMsg('No se pudo enviar la prueba: '+error.message)
     else if(!data?.test)setMsg('La función respondió, pero no confirmó el modo de prueba.')
-    else setMsg('✓ Prueba enviada a '+(data?.recipient||'tu email de administrador'))
+    else setMsg('✓ Prueba enviada a '+(data?.recipient||target))
     setBusy(false)
   }
 
@@ -186,9 +192,19 @@ export default function PRTesoreria(){
       </section>
 
       <section className="rounded-[26px] border border-white/10 bg-white/[.035] p-4">
-        <div className="flex flex-col md:flex-row gap-3">
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-          <button disabled={busy} onClick={sendTest} className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-200 px-4 py-3 font-black">🧪 Enviar prueba</button><button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
+            <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
+            <button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
+          </div>
+          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[.06] p-3">
+            <p className="text-[10px] font-black tracking-[.14em] text-emerald-300">PRUEBA DE EMAIL</p>
+            <div className="mt-2 flex flex-col sm:flex-row gap-2">
+              <input type="email" value={testEmail} onChange={e=>setTestEmail(e.target.value)} placeholder="Email para recibir la prueba" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
+              <button disabled={busy} onClick={sendTest} className="rounded-2xl bg-emerald-500 px-4 py-3 font-black text-black disabled:opacity-50">{busy?'Enviando…':'🧪 Enviar prueba'}</button>
+            </div>
+            <p className="mt-2 text-xs text-white/35">No selecciona alumnos ni registra recordatorios. Solo envía al email que escribas acá.</p>
+          </div>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {['todos','pagado','pendiente','vencido','acuerdo','bonificado','pausado'].map(x=><button key={x} onClick={()=>setFilter(x)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===x?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{x.toUpperCase()}</button>)}
