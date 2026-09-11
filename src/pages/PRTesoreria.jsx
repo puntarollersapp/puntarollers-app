@@ -8,7 +8,8 @@ const monthLabel = (d) => new Date(d+'T12:00:00').toLocaleDateString('es-UY',{mo
 const today = () => new Date().toISOString().slice(0,10)
 const currentPeriod = () => new Date().toISOString().slice(0,7)+'-01'
 
-function statusMeta(row){
+function statusMeta(row,profile){
+  if(String(profile?.estado||'').toLowerCase()==='pausado') return ['PAUSADO','bg-white/10 text-white/50 border-white/10']
   if(row?.estado==='pagado') return ['PAGADO','bg-emerald-500/15 text-emerald-300 border-emerald-400/20']
   if(row?.estado==='bonificado') return ['BONIFICADO','bg-sky-500/15 text-sky-300 border-sky-400/20']
   if(row?.estado==='acuerdo') return ['ACUERDO','bg-violet-500/15 text-violet-300 border-violet-400/20']
@@ -58,8 +59,9 @@ export default function PRTesoreria(){
   const shown=useMemo(()=>merged.filter(x=>{
     const q=query.trim().toLowerCase()
     const okq=!q||`${x.nombre||''} ${x.apellido||''} ${x.telefono||''}`.toLowerCase().includes(q)
+    const paused=String(x.estado||'').toLowerCase()==='pausado'
     const st=x.due?.estado||'pendiente'
-    const okf=filter==='todos'||st===filter
+    const okf=filter==='pausado' ? paused : (!paused && (filter==='todos'||st===filter))
     return okq&&okf
   }),[merged,query,filter])
 
@@ -82,7 +84,7 @@ export default function PRTesoreria(){
     const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
     const {error}=await supabase.rpc('pr_registrar_mensualidad',{
       p_alumno_id:profile.id,p_periodo:periodo,p_monto:Number(form.monto||0),
-      p_fecha_pago:form.fecha,p_metodo:form.metodo,p_observacion:form.observacion||null,
+      p_fecha_pago:today(),p_metodo:form.metodo,p_observacion:form.observacion||null,
       p_registrado_por_id:user?.id||null,p_registrado_por_nombre:by
     })
     if(error)setMsg(error.message);else{setMsg('✓ Pago registrado y alumno habilitado');setSelected(null);await load()}
@@ -101,6 +103,22 @@ export default function PRTesoreria(){
     setBusy(false)
   }
 
+  async function updateStudent(profile, updates){
+    setBusy(true)
+    const {error}=await supabase.from('profiles').update(updates).eq('id',profile.id)
+    if(error)setMsg('No se pudo actualizar el perfil: '+error.message)
+    else{setMsg('✓ Perfil actualizado');setSelected(null);await load()}
+    setBusy(false)
+  }
+
+  async function pauseStudent(profile){
+    await updateStudent(profile,{estado:'Pausado'})
+  }
+
+  async function resumeStudent(profile){
+    await updateStudent(profile,{estado:'Activo'})
+  }
+
   async function addExpense(form){
     const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
     const {error}=await supabase.from('pr_tesoreria_movimientos').insert({
@@ -116,6 +134,15 @@ export default function PRTesoreria(){
     const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo}})
     if(error) setMsg('No se pudieron enviar: '+error.message)
     else setMsg(`✓ Recordatorios enviados: ${data?.sent||0} · omitidos: ${data?.skipped||0}`)
+    setBusy(false)
+  }
+
+  async function sendTest(){
+    setBusy(true);setMsg('Enviando prueba…')
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo,modo_prueba:true}})
+    if(error)setMsg('No se pudo enviar la prueba: '+error.message)
+    else if(!data?.test)setMsg('La función respondió, pero no confirmó el modo de prueba.')
+    else setMsg('✓ Prueba enviada a '+(data?.recipient||'tu email de administrador'))
     setBusy(false)
   }
 
@@ -161,16 +188,16 @@ export default function PRTesoreria(){
       <section className="rounded-[26px] border border-white/10 bg-white/[.035] p-4">
         <div className="flex flex-col md:flex-row gap-3">
           <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-          <button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
+          <button disabled={busy} onClick={sendTest} className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-200 px-4 py-3 font-black">🧪 Enviar prueba</button><button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {['todos','pagado','pendiente','vencido','acuerdo','bonificado'].map(x=><button key={x} onClick={()=>setFilter(x)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===x?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{x.toUpperCase()}</button>)}
+          {['todos','pagado','pendiente','vencido','acuerdo','bonificado','pausado'].map(x=><button key={x} onClick={()=>setFilter(x)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===x?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{x.toUpperCase()}</button>)}
         </div>
       </section>
 
       <section className="space-y-3">
         {shown.map(({due,...p})=>{
-          const [lab,cls]=statusMeta(due)
+          const [lab,cls]=statusMeta(due,p)
           return <article key={p.id} className="rounded-[26px] border border-white/10 bg-[#111] p-4">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl overflow-hidden bg-white/5 grid place-items-center">{p.foto?<img src={p.foto} className="h-full w-full object-cover"/>:'👤'}</div>
@@ -197,7 +224,7 @@ export default function PRTesoreria(){
       </section>
     </div>
 
-    {selected&&<PaymentSheet item={selected} config={config} busy={busy} onClose={()=>setSelected(null)} onPay={registerPayment} onSpecial={special}/>}
+    {selected&&<PaymentSheet item={selected} config={config} busy={busy} onClose={()=>setSelected(null)} onPay={registerPayment} onSpecial={special} onUpdate={updateStudent} onPause={pauseStudent} onResume={resumeStudent}/>} 
     {expenseOpen&&<ExpenseSheet onClose={()=>setExpenseOpen(false)} onSave={addExpense}/>}
   </main>
 }
@@ -206,20 +233,33 @@ function Stat({label,value,tone}){const c={emerald:'text-emerald-300',amber:'tex
 function Money({label,value,strong}){return <div className={`rounded-[24px] border p-4 ${strong?'border-orange-400/20 bg-orange-500/10':'border-white/10 bg-white/[.035]'}`}><p className="text-xs text-white/35">{label}</p><p className="mt-1 text-2xl font-black">{money(value)}</p></div>}
 function Mini({label,value}){return <div className="rounded-2xl bg-white/[.04] p-3"><p className="text-[9px] text-white/30 uppercase">{label}</p><p className="mt-1 text-xs font-black">{value}</p></div>}
 
-function PaymentSheet({item,config,busy,onClose,onPay,onSpecial}){
+function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause,onResume}){
  const [monto,setMonto]=useState(item.due?.estado==='pagado' && item.due?.monto ? item.due.monto : '')
- const [fecha,setFecha]=useState(today())
  const [metodo,setMetodo]=useState('Transferencia Claudio')
  const [observacion,setObservacion]=useState('')
  const [gracia,setGracia]=useState('')
+ const [email,setEmail]=useState(item.profile.email||'')
+ const [telefono,setTelefono]=useState(item.profile.telefono||'')
+ const paused=String(item.profile.estado||'').toLowerCase()==='pausado'
  return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center">
   <div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5 max-h-[90vh] overflow-y-auto">
    <div className="flex justify-between gap-3"><div><p className="text-[10px] text-orange-300 font-black tracking-[.15em]">REGISTRAR / GESTIONAR</p><h3 className="text-2xl font-black mt-1">{item.profile.nombre} {item.profile.apellido||''}</h3></div><button onClick={onClose}>✕</button></div>
    <div className="rounded-2xl border border-orange-400/20 bg-orange-500/10 p-3 mt-4 text-xs text-orange-100">El importe no es fijo. Ingresá el monto real de este alumno según su cuota, descuento o modalidad.</div>
-   <div className="grid grid-cols-2 gap-3 mt-2"><Field label="Importe"><input type="number" inputMode="numeric" placeholder="Ej. 1500" value={monto} onChange={e=>setMonto(e.target.value)}/></Field><Field label="Fecha"><input type="date" value={fecha} onChange={e=>setFecha(e.target.value)}/></Field></div>
+   <Field label="Importe"><input type="number" inputMode="numeric" placeholder="Ej. 1500" value={monto} onChange={e=>setMonto(e.target.value)}/></Field>
+   <p className="mt-2 text-[11px] text-white/35">Al confirmar, el sistema registra automáticamente la fecha de hoy. La cuota corresponde al mes seleccionado.</p>
    <Field label="Método"><select value={metodo} onChange={e=>setMetodo(e.target.value)}><option>Transferencia Claudio</option><option>Transferencia Lucía</option><option>Mercado Pago</option><option>Efectivo</option><option>Otro</option></select></Field>
    <Field label="Observación"><input value={observacion} onChange={e=>setObservacion(e.target.value)} placeholder="Opcional"/></Field>
-   <button disabled={busy} onClick={()=>onPay(item.profile,{monto,fecha,metodo,observacion})} className="w-full mt-4 rounded-2xl bg-emerald-500 py-4 text-black font-black">✓ CONFIRMAR PAGO DEL MES</button>
+   <button disabled={busy} onClick={()=>onPay(item.profile,{monto,metodo,observacion})} className="w-full mt-4 rounded-2xl bg-emerald-500 py-4 text-black font-black">✓ CONFIRMAR PAGO DEL MES</button>
+   <div className="mt-5 border-t border-white/10 pt-5">
+    <p className="text-xs font-black text-white/50">Datos de contacto</p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Field label="WhatsApp"><input value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="Ej. 099123456"/></Field><Field label="Email"><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nombre@email.com"/></Field></div>
+    <button disabled={busy} onClick={()=>onUpdate(item.profile,{telefono:telefono.trim()||null,email:email.trim()||null})} className="w-full mt-3 rounded-2xl border border-white/10 bg-white/[.06] py-3 text-xs font-black">GUARDAR CONTACTO EN SU PERFIL</button>
+   </div>
+   <div className="mt-5 border-t border-white/10 pt-5">
+    <p className="text-xs font-black text-white/50">Asistencia</p>
+    <p className="mt-1 text-xs text-white/35">Si este mes no está asistiendo, podés pausarlo. No se elimina y después podés reactivarlo.</p>
+    <button disabled={busy} onClick={()=>paused?onResume(item.profile):onPause(item.profile)} className={`w-full mt-3 rounded-2xl py-3 text-xs font-black ${paused?'bg-emerald-500 text-black':'bg-white/10 text-white'}`}>{paused?'REACTIVAR ALUMNO':'MARCAR COMO NO ESTÁ ASISTIENDO'}</button>
+   </div>
    <div className="mt-5 border-t border-white/10 pt-5">
     <p className="text-xs font-black text-white/50">Excepciones</p>
     <div className="grid grid-cols-2 gap-2 mt-3"><button onClick={()=>onSpecial(item.profile,'bonificado')} className="rounded-2xl bg-sky-500/15 border border-sky-400/20 py-3 text-xs font-black text-sky-300">BONIFICAR MES</button><button onClick={()=>onSpecial(item.profile,'acuerdo',gracia||null)} className="rounded-2xl bg-violet-500/15 border border-violet-400/20 py-3 text-xs font-black text-violet-300">ACUERDO</button></div>
