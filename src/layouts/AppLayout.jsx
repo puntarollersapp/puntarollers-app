@@ -151,6 +151,7 @@ export default function AppLayout({
 
   const [checkingAccess, setCheckingAccess] =
     useState(Boolean(user?.id))
+  const [enforcementEnabled, setEnforcementEnabled] = useState(false)
 
   const [dmUnread, setDmUnread] = useState(0)
   const [dmToast, setDmToast] = useState(null)
@@ -171,13 +172,19 @@ export default function AppLayout({
 
       setCheckingAccess(true)
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(
-          'id, role, nombre, apellido, mensualidad_hasta, acceso_habilitado'
-        )
-        .eq('id', user.id)
-        .maybeSingle()
+      const [{ data, error }, { data: treasuryConfig }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, role, nombre, apellido, mensualidad_hasta, acceso_habilitado')
+          .eq('id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('pr_tesoreria_config')
+          .select('enforcement_enabled')
+          .eq('id', 1)
+          .maybeSingle(),
+      ])
+      setEnforcementEnabled(Boolean(treasuryConfig?.enforcement_enabled))
 
       if (!active) {
         return
@@ -268,7 +275,7 @@ export default function AppLayout({
   }, [user?.id, location.pathname])
 
   const accessBlocked = useMemo(() => {
-    if (!accessProfile) {
+    if (!accessProfile || !enforcementEnabled) {
       return false
     }
 
@@ -309,7 +316,7 @@ export default function AppLayout({
       false
 
     return expired || manuallyDisabled
-  }, [accessProfile])
+  }, [accessProfile, enforcementEnabled])
 
   async function handleLogout() {
     await logout?.()
