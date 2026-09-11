@@ -40,7 +40,7 @@ export default function PRTesoreria(){
       await supabase.rpc('pr_asegurar_mensualidades',{p_periodo:periodo})
       await supabase.rpc('pr_actualizar_estado_mensualidades')
       const [{data:p,error:pe},{data:d,error:de},{data:m,error:me},{data:c,error:ce}] = await Promise.all([
-        supabase.from('profiles').select('id,nombre,apellido,telefono,email,foto,role,participa_como_alumno,estado').or('role.eq.alumno,participa_como_alumno.eq.true').neq('estado','Inactivo').order('nombre'),
+        supabase.from('profiles').select('id,nombre,apellido,telefono,email,foto,role,estado,es_solo_personalizadas').eq('role','alumno').neq('estado','Inactivo').eq('es_solo_personalizadas',false).order('nombre'),
         supabase.from('pr_mensualidades').select('*').eq('periodo',periodo).order('created_at'),
         supabase.from('pr_tesoreria_movimientos').select('*').gte('fecha',periodo).lt('fecha',new Date(new Date(periodo+'T12:00:00').setMonth(new Date(periodo+'T12:00:00').getMonth()+1)).toISOString().slice(0,10)).order('fecha',{ascending:false}),
         supabase.from('pr_tesoreria_config').select('*').eq('id',1).single()
@@ -107,6 +107,14 @@ export default function PRTesoreria(){
     if(error)setMsg(error.message);else{setExpenseOpen(false);setMsg('✓ Gasto registrado');await load()}
   }
 
+  async function sendReminders(){
+    setBusy(true); setMsg('Enviando recordatorios…')
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo}})
+    if(error) setMsg('No se pudieron enviar: '+error.message)
+    else setMsg(`✓ Recordatorios enviados: ${data?.sent||0} · omitidos: ${data?.skipped||0}`)
+    setBusy(false)
+  }
+
   async function toggleEnforcement(){
     if(!isAdmin)return
     const {error}=await supabase.from('pr_tesoreria_config').update({enforcement_enabled:!config.enforcement_enabled,updated_at:new Date().toISOString()}).eq('id',1)
@@ -149,7 +157,7 @@ export default function PRTesoreria(){
       <section className="rounded-[26px] border border-white/10 bg-white/[.035] p-4">
         <div className="flex flex-col md:flex-row gap-3">
           <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-          <button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
+          <button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {['todos','pagado','pendiente','vencido','acuerdo','bonificado'].map(x=><button key={x} onClick={()=>setFilter(x)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===x?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{x.toUpperCase()}</button>)}
