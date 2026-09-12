@@ -73,7 +73,7 @@ function AccessBlocked({
         </div>
 
         <p className="section-label mt-6">
-          Acceso temporalmente pausado
+          Acceso temporalmente inhabilitado
         </p>
 
         <h1 className="font-display text-3xl text-white mt-2 leading-tight">
@@ -82,10 +82,11 @@ function AccessBlocked({
 
         <p className="text-white/55 text-sm mt-4 leading-relaxed">
           Hola, {profile?.nombre || 'alumno'}.
-          Para volver a ingresar a tu perfil,
-          actividad, PRCard y demás servicios
-          privados, necesitás regularizar la
-          mensualidad de este mes.
+          Tu mensualidad del mes figura pendiente.
+          Para volver a usar tu perfil PR, Strava,
+          PRCard, PR Chip, tomas de tiempo,
+          devoluciones, insignias y demás servicios
+          privados, necesitás regularizarla.
         </p>
 
         <div className="rounded-2xl bg-black/25 border border-white/[0.06] p-4 mt-5">
