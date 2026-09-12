@@ -131,6 +131,16 @@ export default function PRTesoreria(){
     await updateStudent(profile,{estado:'Activo'})
   }
 
+  async function deleteExpense(move){
+    const ok=window.confirm(`¿Eliminar el gasto "${move.concepto||'Sin concepto'}" por ${money(move.monto)}?`)
+    if(!ok)return
+    setBusy(true)
+    const {error}=await supabase.from('pr_tesoreria_movimientos').delete().eq('id',move.id).eq('tipo','gasto')
+    if(error)setMsg('No se pudo eliminar el gasto: '+error.message)
+    else{setMsg('✓ Gasto eliminado');await load()}
+    setBusy(false)
+  }
+
   async function addExpense(form){
     const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
     const {error}=await supabase.from('pr_tesoreria_movimientos').insert({
@@ -249,6 +259,18 @@ export default function PRTesoreria(){
         <Money label="Ingresos del mes" value={stats.ingresos}/>
         <Money label="Gastos del mes" value={stats.gastos}/>
         <Money label="Saldo operativo" value={stats.saldo} strong/>
+      </section>
+
+      <section className="rounded-[26px] border border-white/10 bg-white/[.03] p-4">
+        <div><p className="text-[10px] font-black tracking-[.14em] text-white/35">GASTOS DEL MES</p><h3 className="mt-1 text-lg font-black">Detalle de gastos</h3></div>
+        <div className="mt-3 space-y-2">
+          {moves.filter(x=>x.tipo==='gasto').length===0&&<p className="text-sm text-white/35">Todavía no hay gastos cargados este mes.</p>}
+          {moves.filter(x=>x.tipo==='gasto').map(move=><div key={move.id} className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-black/20 p-3">
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{move.concepto||'Gasto sin concepto'}</p><p className="mt-1 text-[10px] text-white/35">{move.fecha} · {move.categoria||'otro'}</p></div>
+            <p className="text-sm font-black">{money(move.monto)}</p>
+            <button disabled={busy} onClick={()=>deleteExpense(move)} className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 disabled:opacity-50">Eliminar</button>
+          </div>)}
+        </div>
       </section>
 
       <section className="rounded-[26px] border border-white/10 bg-white/[.035] p-4">
