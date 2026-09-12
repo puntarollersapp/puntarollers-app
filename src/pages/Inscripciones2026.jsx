@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import './Inscripciones2026.css'
 
+const CAMPAIGN_CODE = 'RUEDAS15'
+const CAMPAIGN_DISCOUNT = 0.15
+
 const groupSchedules = [
   { day: 'Miércoles', time: '19:30–20:30', level: 'Todos los niveles', place: 'Parada 2 · Punta del Este', type: 'Aire libre' },
   { day: 'Sábado', time: '09:00–10:00', level: 'Intermedios + Avanzados', place: 'Parada 2 · Punta del Este', type: 'Aire libre' },
@@ -17,7 +20,7 @@ const saturdayOptions = [
 
 const initialForm = {
   nombre_completo: '', edad: '', localidad: '', email: '', telefono: '', nivel: '',
-  turno_sabado: '', objetivo_personalizadas: '',
+  turno_sabado: '', objetivo_personalizadas: '', codigo_descuento: '',
 }
 
 export default function Inscripciones2026() {
@@ -29,7 +32,10 @@ export default function Inscripciones2026() {
   const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
 
-  const amount = mode === 'personalizadas' ? 2900 : 1500
+  const baseAmount = mode === 'personalizadas' ? 2900 : 1500
+  const normalizedDiscountCode = form.codigo_descuento.trim().toUpperCase()
+  const discountActive = normalizedDiscountCode === CAMPAIGN_CODE
+  const amount = discountActive ? Math.round(baseAmount * (1 - CAMPAIGN_DISCOUNT)) : baseAmount
   const progress = useMemo(() => `${Math.min(step + 1, 5)} / 5`, [step])
 
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
@@ -64,6 +70,10 @@ export default function Inscripciones2026() {
     }
     if (mode === 'personalizadas' && !form.objetivo_personalizadas.trim()) {
       setError('Contanos brevemente qué te gustaría trabajar.')
+      return false
+    }
+    if (normalizedDiscountCode && !discountActive) {
+      setError('Ese código de descuento no es válido. Revisalo o dejá el campo vacío para continuar.')
       return false
     }
     setError('')
@@ -216,6 +226,22 @@ export default function Inscripciones2026() {
             <button className="pr-reg-back" onClick={() => setStep(2)}>← Volver a mis datos</button>
             <p className="pr-reg-kicker">TU MODALIDAD</p>
             {mode === 'grupales' ? <><h1>Elegí tu turno de los sábados.</h1><p className="pr-reg-lead">El miércoles 19:30 está incluido para todos.</p><div className="pr-reg-radio-list">{saturdayOptions.map(option => <label key={option} className={form.turno_sabado === option ? 'selected' : ''}><input type="radio" name="turno" checked={form.turno_sabado === option} onChange={() => update('turno_sabado', option)} /><span>{option}</span></label>)}</div></> : <><h1>¿Qué te gustaría conseguir?</h1><p className="pr-reg-lead">Así podemos preparar mejor tu experiencia desde el primer encuentro.</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e => update('objetivo_personalizadas', e.target.value)} placeholder="Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…" /></>}
+
+            <div className="pr-reg-info">
+              <b>🎁 ¿Tenés un código de descuento?</b>
+              <p>Ingresalo acá antes de continuar.</p>
+              <input
+                value={form.codigo_descuento}
+                onChange={e => update('codigo_descuento', e.target.value.toUpperCase())}
+                placeholder="CÓDIGO"
+                autoCapitalize="characters"
+                style={{ width: '100%', marginTop: 10, padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(0,0,0,.22)', color: 'inherit', fontWeight: 800, letterSpacing: '.08em' }}
+              />
+              {discountActive && (
+                <p style={{ marginTop: 10 }}><strong>✓ RUEDAS15 aplicado:</strong> tenés 15% OFF. Tu importe queda en <strong>${amount.toLocaleString('es-UY')}</strong>.</p>
+              )}
+            </div>
+
             {error && <p className="pr-reg-error">{error}</p>}
             <button className="pr-reg-primary" disabled={sending} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : 'Ver pago y confirmar →'}</button>
           </div>
@@ -226,6 +252,7 @@ export default function Inscripciones2026() {
             <button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button>
             <p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Pre-reservá tu lugar para septiembre.</h1>
             <div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Desde este momento tus datos ya aparecen en nuestro panel de inscripciones. Ahora podés realizar la transferencia y enviarnos el comprobante con tranquilidad.</p></div>
+            {discountActive && <div className="pr-reg-info"><b>🎁 Descuento RUEDAS15 aplicado</b><p>Ahorraste 15% en esta inscripción. Precio original: <s>${baseAmount.toLocaleString('es-UY')}</s>.</p></div>}
             <div className="pr-reg-payment"><span>Importe a abonar</span><strong>${amount.toLocaleString('es-UY')}</strong><div><b>Tarjeta Prex</b><p>Claudio Facelli</p><p>Cuenta Prex: <strong>70658</strong></p></div></div>
             <div className="pr-reg-info"><b>📲 Después de transferir</b><p>Identificá la transferencia con el <strong>nombre del alumno</strong> y enviá el comprobante al WhatsApp de Punta Rollers:</p><a href="https://wa.me/59898971505" target="_blank" rel="noreferrer">098 971 505</a></div>
             <p className="pr-reg-lead">Tu lugar queda confirmado cuando Punta Rollers verifica el pago. Quedarás en el listado de nuevos ingresos hasta la convocatoria de septiembre.</p>
