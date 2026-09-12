@@ -29,12 +29,13 @@ export default function Login() {
         return
       }
 
+      const isTreasury = result?.user?.esTesoreria === true
       const isAdmin =
         result?.user?.role === 'admin' ||
         result?.user?.role === 'profesor'
 
       navigate(
-        isAdmin ? '/admin' : '/app/perfil',
+        isTreasury && !isAdmin ? '/tesoreria' : (isAdmin ? '/admin' : '/app/perfil'),
         {
           replace: true,
         }
