@@ -66,7 +66,12 @@ export default function PRTesoreria(){
     const okq=!q||`${x.nombre||''} ${x.apellido||''} ${x.telefono||''}`.toLowerCase().includes(q)
     const paused=String(x.estado||'').toLowerCase()==='pausado'
     const st=x.due?.estado||'pendiente'
-    const okf=filter==='pausado' ? paused : (!paused && (filter==='todos'||st===filter))
+    const method=String(x.due?.metodo||'')
+    const okf=
+      filter==='pausado' ? paused :
+      filter==='pago_claudio' ? (!paused && st==='pagado' && method==='Transferencia Claudio') :
+      filter==='pago_lucia' ? (!paused && st==='pagado' && method==='Transferencia Lucía') :
+      (!paused && (filter==='todos'||st===filter))
     return okq&&okf
   }),[merged,query,filter])
 
@@ -245,7 +250,17 @@ export default function PRTesoreria(){
           </div>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {['todos','pagado','pendiente','vencido','acuerdo','bonificado','pausado'].map(x=><button key={x} onClick={()=>setFilter(x)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===x?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{x.toUpperCase()}</button>)}
+          {[
+            ['todos','TODOS'],
+            ['pagado','PAGADOS'],
+            ['pago_claudio','PAGOS A CLAUDIO'],
+            ['pago_lucia','PAGOS A LUCÍA'],
+            ['pendiente','PENDIENTES'],
+            ['vencido','VENCIDOS'],
+            ['acuerdo','ACUERDOS'],
+            ['bonificado','BONIFICADOS'],
+            ['pausado','PAUSADOS']
+          ].map(([value,label])=><button key={value} onClick={()=>setFilter(value)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===value?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{label}</button>)}
         </div>
       </section>
 
@@ -272,10 +287,11 @@ export default function PRTesoreria(){
               <div className="min-w-0 flex-1"><p className="font-black truncate">{p.nombre} {p.apellido||''}</p><p className="text-xs text-white/35">{p.telefono||'Sin teléfono'}</p><p className={`mt-1 text-[10px] font-black ${p.email?'text-emerald-300':'text-amber-300'}`}>{p.email?'Email OK':'Sin email'}</p></div>
               <span className={`rounded-full border px-3 py-1 text-[9px] font-black ${cls}`}>{lab}</span>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
               <Mini label="Cuota" value={Number(due?.monto||0)>0 ? money(due?.monto) : 'Definir monto'}/>
               <Mini label="Vence" value={due?.vencimiento?new Date(due.vencimiento+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'10'}/>
               <Mini label="Pago" value={due?.fecha_pago?new Date(due.fecha_pago+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'—'}/>
+              <Mini label="Recibió" value={due?.estado==='pagado' ? (due?.metodo==='Transferencia Lucía'?'Lucía':due?.metodo==='Transferencia Claudio'?'Claudio':due?.metodo||'Otro') : '—'}/>
             </div>
             <button onClick={()=>setSelected({profile:p,due})} className="mt-3 w-full rounded-2xl bg-orange-500 py-3 font-black text-black">{due?.estado==='pagado'?'Ver / corregir':'Gestionar pago'}</button>
           </article>
