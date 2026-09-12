@@ -18,15 +18,21 @@ const saturdayOptions = [
   'Sábado 20:00–21:00 · Todos los niveles · Pista cerrada Maldonado',
 ]
 
-const initialForm = {
+const baseInitialForm = {
   nombre_completo: '', edad: '', localidad: '', email: '', telefono: '', nivel: '',
   turno_sabado: '', objetivo_personalizadas: '', codigo_descuento: '',
+}
+
+const getInitialForm = () => {
+  if (typeof window === 'undefined') return baseInitialForm
+  const promo = new URLSearchParams(window.location.search).get('promo')?.trim().toUpperCase() || ''
+  return { ...baseInitialForm, codigo_descuento: promo }
 }
 
 export default function Inscripciones2026() {
   const [step, setStep] = useState(0)
   const [mode, setMode] = useState(null)
-  const [form, setForm] = useState(initialForm)
+  const [form, setForm] = useState(getInitialForm)
   const [accepted, setAccepted] = useState(false)
   const [sending, setSending] = useState(false)
   const [registrationId, setRegistrationId] = useState('')
@@ -42,7 +48,7 @@ export default function Inscripciones2026() {
 
   const chooseMode = (value) => {
     setMode(value)
-    setForm(initialForm)
+    setForm(getInitialForm())
     setAccepted(false)
     setRegistrationId('')
     setError('')
@@ -151,6 +157,7 @@ export default function Inscripciones2026() {
             <p className="pr-reg-kicker">INSCRIPCIONES 2026</p>
             <h1>Elegí cómo querés patinar.</h1>
             <p className="pr-reg-lead">Estas inscripciones son para comenzar en septiembre. Primero conocé cada modalidad y después decidí si querés hacer tu pre-reserva.</p>
+            {discountActive && <div className="pr-reg-info"><b>🎁 Beneficio especial activado</b><p>Entraste con el código <strong>RUEDAS15</strong>. Tenés 15% OFF en tu inscripción.</p></div>}
             <p className="pr-reg-choice-hint">Elegí la opción que más te interese para ver cómo funciona, precios y disponibilidad.</p>
             <div className="pr-reg-choice-grid">
               <button className="pr-reg-choice pr-reg-choice-group" onClick={() => chooseMode('grupales')}>
