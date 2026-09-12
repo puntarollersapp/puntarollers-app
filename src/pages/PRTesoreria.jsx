@@ -38,6 +38,24 @@ export default function PRTesoreria(){
 
   const isAdmin = user?.role==='admin'
 
+  async function repairTreasuryStaff(){
+    if(!isAdmin)return
+    const {data:staff,error}=await supabase
+      .from('profiles')
+      .select('id,role,es_tesoreria,estado,acceso_habilitado')
+      .eq('es_tesoreria',true)
+    if(error)return
+    for(const member of staff||[]){
+      if(member.role==='admin')continue
+      if(member.role!=='alumno'||member.estado!=='Activo'||member.acceso_habilitado!==true){
+        await supabase
+          .from('profiles')
+          .update({role:'alumno',estado:'Activo',acceso_habilitado:true})
+          .eq('id',member.id)
+      }
+    }
+  }
+
   async function load(){
     setBusy(true)
     setMsg('')
@@ -58,7 +76,7 @@ export default function PRTesoreria(){
     finally{setBusy(false)}
   }
 
-  useEffect(()=>{load()},[periodo])
+  useEffect(()=>{repairTreasuryStaff().finally(load)},[periodo,user?.id])
 
   const merged=useMemo(()=>profiles.map(p=>({...p,due:dues.find(d=>d.alumno_id===p.id)})),[profiles,dues])
   const shown=useMemo(()=>merged.filter(x=>{
