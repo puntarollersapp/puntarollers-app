@@ -164,6 +164,21 @@ export default function PRTesoreria(){
     setBusy(false)
   }
 
+  async function deleteTreasuryStudent(profile){
+    if(!String(profile?.id||'').startsWith('tesoreria_')) return
+    const ok=window.confirm(`¿Eliminar a ${profile.nombre} de Tesorería? Esta acción solo está disponible para alumnos creados exclusivamente para Tesorería.`)
+    if(!ok)return
+    setBusy(true)
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{
+      body:{action:'delete',id:profile.id}
+    })
+    if(error)setMsg('No se pudo eliminar: '+error.message)
+    else if(data?.error==='has_payment_history')setMsg('No se puede eliminar porque ya tiene historial de pagos. Podés pausarlo en su lugar.')
+    else if(!data?.ok)setMsg('No se pudo eliminar el alumno.')
+    else{setMsg('✓ Alumno eliminado de Tesorería');setSelected(null);await load()}
+    setBusy(false)
+  }
+
   async function createTreasuryStudent(form){
     setBusy(true)
     const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{
@@ -310,7 +325,7 @@ export default function PRTesoreria(){
       </section>
     </div>
 
-    {selected&&<PaymentSheet item={selected} config={config} busy={busy} onClose={()=>setSelected(null)} onPay={registerPayment} onSpecial={special} onUpdate={updateStudent} onPause={pauseStudent} onResume={resumeStudent}/>} 
+    {selected&&<PaymentSheet item={selected} config={config} busy={busy} onClose={()=>setSelected(null)} onPay={registerPayment} onSpecial={special} onUpdate={updateStudent} onPause={pauseStudent} onResume={resumeStudent} onDelete={deleteTreasuryStudent}/>} 
     {expenseOpen&&<ExpenseSheet onClose={()=>setExpenseOpen(false)} onSave={addExpense}/>}
     {createTreasuryOpen&&<TreasuryStudentSheet busy={busy} onClose={()=>setCreateTreasuryOpen(false)} onSave={createTreasuryStudent}/>}
   </main>
@@ -320,7 +335,7 @@ function Stat({label,value,tone}){const c={emerald:'text-emerald-300',amber:'tex
 function Money({label,value,strong}){return <div className={`rounded-[24px] border p-4 ${strong?'border-orange-400/20 bg-orange-500/10':'border-white/10 bg-white/[.035]'}`}><p className="text-xs text-white/35">{label}</p><p className="mt-1 text-2xl font-black">{money(value)}</p></div>}
 function Mini({label,value}){return <div className="rounded-2xl bg-white/[.04] p-3"><p className="text-[9px] text-white/30 uppercase">{label}</p><p className="mt-1 text-xs font-black">{value}</p></div>}
 
-function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause,onResume}){
+function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause,onResume,onDelete}){
  const [monto,setMonto]=useState(Number(item.due?.monto||0)>0 ? item.due.monto : '')
  const [metodo,setMetodo]=useState('Transferencia Claudio')
  const [observacion,setObservacion]=useState('')
@@ -350,6 +365,11 @@ function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause
     <p className="mt-1 text-xs text-white/35">Si este mes no está asistiendo, podés pausarlo. No se elimina y después podés reactivarlo.</p>
     <button disabled={busy} onClick={()=>paused?onResume(item.profile):onPause(item.profile)} className={`w-full mt-3 rounded-2xl py-3 text-xs font-black ${paused?'bg-emerald-500 text-black':'bg-white/10 text-white'}`}>{paused?'REACTIVAR ALUMNO':'MARCAR COMO NO ESTÁ ASISTIENDO'}</button>
    </div>
+   {treasuryOnly&&<div className="mt-5 border-t border-red-400/15 pt-5">
+    <p className="text-xs font-black text-red-300">Eliminar de Tesorería</p>
+    <p className="mt-1 text-xs text-white/35">Solo elimina alumnos creados exclusivamente para Tesorería. Si ya tiene pagos registrados, no se podrá borrar para no perder historial contable.</p>
+    <button disabled={busy} onClick={()=>onDelete(item.profile)} className="w-full mt-3 rounded-2xl border border-red-400/20 bg-red-500/10 py-3 text-xs font-black text-red-300 disabled:opacity-50">ELIMINAR ALUMNO DE TESORERÍA</button>
+   </div>}
    <div className="mt-5 border-t border-white/10 pt-5">
     <p className="text-xs font-black text-white/50">Excepciones</p>
     <div className="grid grid-cols-2 gap-2 mt-3"><button onClick={()=>onSpecial(item.profile,'bonificado')} className="rounded-2xl bg-sky-500/15 border border-sky-400/20 py-3 text-xs font-black text-sky-300">BONIFICAR MES</button><button onClick={()=>onSpecial(item.profile,'acuerdo',gracia||null)} className="rounded-2xl bg-violet-500/15 border border-violet-400/20 py-3 text-xs font-black text-violet-300">ACUERDO</button></div>
