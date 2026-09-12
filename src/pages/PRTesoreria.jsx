@@ -309,6 +309,8 @@ function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause
  const [gracia,setGracia]=useState('')
  const [email,setEmail]=useState(item.profile.email||'')
  const [telefono,setTelefono]=useState(item.profile.telefono||'')
+ const [nombre,setNombre]=useState([item.profile.nombre,item.profile.apellido].filter(Boolean).join(' '))
+ const treasuryOnly=String(item.profile.id||'').startsWith('tesoreria_')
  const paused=String(item.profile.estado||'').toLowerCase()==='pausado'
  return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center">
   <div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5 max-h-[90vh] overflow-y-auto">
@@ -320,9 +322,10 @@ function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause
    <Field label="Observación"><input value={observacion} onChange={e=>setObservacion(e.target.value)} placeholder="Opcional"/></Field>
    <button disabled={busy} onClick={()=>onPay(item.profile,{monto,metodo,observacion})} className="w-full mt-4 rounded-2xl bg-emerald-500 py-4 text-black font-black">✓ CONFIRMAR PAGO DEL MES</button>
    <div className="mt-5 border-t border-white/10 pt-5">
-    <p className="text-xs font-black text-white/50">Datos de contacto</p>
+    <p className="text-xs font-black text-white/50">{treasuryOnly?'Datos del alumno de Tesorería':'Datos de contacto'}</p>
+    {treasuryOnly&&<Field label="Nombre del alumno"><input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Nombre y apellido"/></Field>}
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Field label="WhatsApp"><input value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="Ej. 099123456"/></Field><Field label="Email"><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nombre@email.com"/></Field></div>
-    <button disabled={busy} onClick={()=>onUpdate(item.profile,{telefono:telefono.trim()||null,email:email.trim()||null})} className="w-full mt-3 rounded-2xl border border-white/10 bg-white/[.06] py-3 text-xs font-black">GUARDAR CONTACTO EN SU PERFIL</button>
+    <button disabled={busy||treasuryOnly&&!nombre.trim()} onClick={()=>onUpdate(item.profile,{...(treasuryOnly?{nombre:nombre.trim(),apellido:null}:{}),telefono:telefono.trim()||null,email:email.trim()||null})} className="w-full mt-3 rounded-2xl border border-white/10 bg-white/[.06] py-3 text-xs font-black disabled:opacity-50">{treasuryOnly?'GUARDAR DATOS DEL ALUMNO':'GUARDAR CONTACTO EN SU PERFIL'}</button>
    </div>
    <div className="mt-5 border-t border-white/10 pt-5">
     <p className="text-xs font-black text-white/50">Asistencia</p>
