@@ -32,6 +32,9 @@ export default function PRTesoreria(){
   const [expenseOpen,setExpenseOpen]=useState(false)
   const [msg,setMsg]=useState('')
   const [testEmail,setTestEmail]=useState(user?.email||'')
+  const [amountsOpen,setAmountsOpen]=useState(false)
+  const [amountDrafts,setAmountDrafts]=useState({})
+  const [createTreasuryOpen,setCreateTreasuryOpen]=useState(false)
 
   const isAdmin = user?.role==='admin'
 
@@ -40,6 +43,7 @@ export default function PRTesoreria(){
     setMsg('')
     try{
       await supabase.rpc('pr_asegurar_mensualidades',{p_periodo:periodo})
+      await supabase.functions.invoke('pr-tesoreria-montos',{body:{action:'sync',periodo}})
       await supabase.rpc('pr_actualizar_estado_mensualidades')
       const [{data:p,error:pe},{data:d,error:de},{data:m,error:me},{data:c,error:ce}] = await Promise.all([
         supabase.from('profiles').select('id,nombre,apellido,telefono,email,foto,role,estado,es_solo_personalizadas').eq('role','alumno').neq('estado','Inactivo').eq('es_solo_personalizadas',false).order('nombre'),
@@ -130,6 +134,40 @@ export default function PRTesoreria(){
     if(error)setMsg(error.message);else{setExpenseOpen(false);setMsg('✓ Gasto registrado');await load()}
   }
 
+  function openAmounts(){
+    const drafts={}
+    merged.forEach(item=>{drafts[item.id]=item.due?.monto||''})
+    setAmountDrafts(drafts)
+    setAmountsOpen(true)
+  }
+
+  async function saveBaseAmount(profile){
+    const monto=Number(amountDrafts[profile.id]||0)
+    if(!Number.isFinite(monto)||monto<=0){
+      setMsg('Ingresá un monto válido para '+profile.nombre+'.')
+      return
+    }
+    setBusy(true)
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-montos',{
+      body:{action:'set',periodo,alumno_id:profile.id,monto}
+    })
+    if(error)setMsg('No se pudo guardar el monto: '+error.message)
+    else if(!data?.ok)setMsg('No se pudo guardar el monto.')
+    else{setMsg('✓ Monto actualizado para '+profile.nombre);await load()}
+    setBusy(false)
+  }
+
+  async function createTreasuryStudent(form){
+    setBusy(true)
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{
+      body:{...form,periodo}
+    })
+    if(error)setMsg('No se pudo crear el alumno: '+error.message)
+    else if(!data?.ok)setMsg('No se pudo crear el alumno de Tesorería.')
+    else{setMsg('✓ Alumno agregado solo a Tesorería');setCreateTreasuryOpen(false);await load()}
+    setBusy(false)
+  }
+
   async function sendReminders(){
     setBusy(true); setMsg('Enviando recordatorios…')
     const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo}})
@@ -195,7 +233,7 @@ export default function PRTesoreria(){
         <div className="flex flex-col gap-3">
           <div className="flex flex-col md:flex-row gap-3">
             <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-            <button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
+            {isAdmin&&<button disabled={busy} onClick={openAmounts} className="rounded-2xl border border-orange-400/20 bg-orange-500/10 text-orange-200 px-4 py-3 font-black">⚙ Montos</button>}{isAdmin&&<button disabled={busy} onClick={()=>setCreateTreasuryOpen(true)} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-200 px-4 py-3 font-black">+ Alumno Tesorería</button>}<button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
           </div>
           <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[.06] p-3">
             <p className="text-[10px] font-black tracking-[.14em] text-emerald-300">PRUEBA DE EMAIL</p>
@@ -211,6 +249,20 @@ export default function PRTesoreria(){
         </div>
       </section>
 
+      {isAdmin&&amountsOpen&&<section className="rounded-[26px] border border-orange-400/20 bg-orange-500/[.05] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div><p className="text-[10px] font-black tracking-[.16em] text-orange-300">MONTOS DEL MES</p><h3 className="mt-1 text-xl font-black capitalize">{monthLabel(periodo)}</h3><p className="mt-1 text-xs text-white/40">Solo visible para administrador. El monto queda como referencia para este alumno y puede modificarse si hay una excepción.</p></div>
+          <button onClick={()=>setAmountsOpen(false)} className="rounded-xl border border-white/10 px-3 py-2 text-white/50">✕</button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {merged.filter(item=>String(item.estado||'').toLowerCase()!=='pausado').map(item=><div key={item.id} className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-black/25 p-3">
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item.nombre} {item.apellido||''}</p><p className="text-[10px] text-white/35">{item.due?.estado||'pendiente'}</p></div>
+            <input type="number" inputMode="numeric" value={amountDrafts[item.id]??''} onChange={e=>setAmountDrafts(x=>({...x,[item.id]:e.target.value}))} placeholder="Monto" className="w-28 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-right text-sm"/>
+            <button disabled={busy} onClick={()=>saveBaseAmount(item)} className="rounded-xl bg-orange-500 px-3 py-2 text-xs font-black text-black disabled:opacity-50">Guardar</button>
+          </div>)}
+        </div>
+      </section>}
+
       <section className="space-y-3">
         {shown.map(({due,...p})=>{
           const [lab,cls]=statusMeta(due,p)
@@ -221,7 +273,7 @@ export default function PRTesoreria(){
               <span className={`rounded-full border px-3 py-1 text-[9px] font-black ${cls}`}>{lab}</span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <Mini label="Cuota" value={due?.estado==='pagado' ? money(due?.monto) : 'Definir monto'}/>
+              <Mini label="Cuota" value={Number(due?.monto||0)>0 ? money(due?.monto) : 'Definir monto'}/>
               <Mini label="Vence" value={due?.vencimiento?new Date(due.vencimiento+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'10'}/>
               <Mini label="Pago" value={due?.fecha_pago?new Date(due.fecha_pago+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'—'}/>
             </div>
@@ -242,6 +294,7 @@ export default function PRTesoreria(){
 
     {selected&&<PaymentSheet item={selected} config={config} busy={busy} onClose={()=>setSelected(null)} onPay={registerPayment} onSpecial={special} onUpdate={updateStudent} onPause={pauseStudent} onResume={resumeStudent}/>} 
     {expenseOpen&&<ExpenseSheet onClose={()=>setExpenseOpen(false)} onSave={addExpense}/>}
+    {createTreasuryOpen&&<TreasuryStudentSheet busy={busy} onClose={()=>setCreateTreasuryOpen(false)} onSave={createTreasuryStudent}/>}
   </main>
 }
 
@@ -250,7 +303,7 @@ function Money({label,value,strong}){return <div className={`rounded-[24px] bord
 function Mini({label,value}){return <div className="rounded-2xl bg-white/[.04] p-3"><p className="text-[9px] text-white/30 uppercase">{label}</p><p className="mt-1 text-xs font-black">{value}</p></div>}
 
 function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause,onResume}){
- const [monto,setMonto]=useState(item.due?.estado==='pagado' && item.due?.monto ? item.due.monto : '')
+ const [monto,setMonto]=useState(Number(item.due?.monto||0)>0 ? item.due.monto : '')
  const [metodo,setMetodo]=useState('Transferencia Claudio')
  const [observacion,setObservacion]=useState('')
  const [gracia,setGracia]=useState('')
@@ -284,6 +337,19 @@ function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause
   </div>
  </div>
 }
+function TreasuryStudentSheet({busy,onClose,onSave}){
+ const [f,setF]=useState({nombre:'',monto:'',telefono:'',email:''})
+ const set=(k,v)=>setF(x=>({...x,[k]:v}))
+ return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center"><div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5">
+  <div className="flex justify-between gap-3"><div><p className="text-[10px] text-violet-300 font-black tracking-[.15em]">SOLO TESORERÍA</p><h3 className="text-2xl font-black mt-1">Agregar alumno</h3><p className="mt-1 text-xs text-white/40">No crea usuario ni acceso a la plataforma. Sirve únicamente para controlar mensualidades y pagos.</p></div><button onClick={onClose}>✕</button></div>
+  <Field label="Nombre del alumno"><input value={f.nombre} onChange={e=>set('nombre',e.target.value)} placeholder="Nombre y apellido"/></Field>
+  <Field label="Monto mensual"><input type="number" inputMode="numeric" value={f.monto} onChange={e=>set('monto',e.target.value)} placeholder="Ej. 2000"/></Field>
+  <Field label="Teléfono"><input value={f.telefono} onChange={e=>set('telefono',e.target.value)} placeholder="Opcional"/></Field>
+  <Field label="Email"><input type="email" value={f.email} onChange={e=>set('email',e.target.value)} placeholder="Opcional"/></Field>
+  <button disabled={busy||!f.nombre.trim()||!Number(f.monto)} onClick={()=>onSave(f)} className="w-full mt-4 rounded-2xl bg-violet-500 py-4 text-black font-black disabled:opacity-40">{busy?'Guardando...':'CREAR EN TESORERÍA'}</button>
+ </div></div>
+}
+
 function ExpenseSheet({onClose,onSave}){
  const [f,setF]=useState({fecha:today(),categoria:'pista',concepto:'',monto:'',metodo:'Transferencia',observacion:''})
  const set=(k,v)=>setF(x=>({...x,[k]:v}))
