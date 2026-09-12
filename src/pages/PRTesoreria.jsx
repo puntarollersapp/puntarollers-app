@@ -71,7 +71,9 @@ export default function PRTesoreria(){
       filter==='pausado' ? paused :
       filter==='pago_claudio' ? (!paused && st==='pagado' && method==='Transferencia Claudio') :
       filter==='pago_lucia' ? (!paused && st==='pagado' && method==='Transferencia Lucía') :
-      (!paused && (filter==='todos'||st===filter))
+      filter==='pagado' ? (!paused && st==='pagado') :
+      filter==='todos' ? (!paused && !['pagado','bonificado','acuerdo'].includes(st)) :
+      (!paused && st===filter)
     return okq&&okf
   }),[merged,query,filter])
 
