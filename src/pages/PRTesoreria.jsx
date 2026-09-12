@@ -255,16 +255,16 @@ export default function PRTesoreria(){
         <div className="flex flex-col gap-3">
           <div className="flex flex-col md:flex-row gap-3">
             <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-            {isAdmin&&<button disabled={busy} onClick={openAmounts} className="rounded-2xl border border-orange-400/20 bg-orange-500/10 text-orange-200 px-4 py-3 font-black">⚙ Montos</button>}{isAdmin&&<button disabled={busy} onClick={()=>setCreateTreasuryOpen(true)} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-200 px-4 py-3 font-black">+ Alumno Tesorería</button>}<button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button><button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
+            {isAdmin&&<button disabled={busy} onClick={openAmounts} className="rounded-2xl border border-orange-400/20 bg-orange-500/10 text-orange-200 px-4 py-3 font-black">⚙ Montos</button>}{isAdmin&&<button disabled={busy} onClick={()=>setCreateTreasuryOpen(true)} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-200 px-4 py-3 font-black">+ Alumno Tesorería</button>}{isAdmin&&<button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button>}<button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
           </div>
-          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[.06] p-3">
+          {isAdmin&&<div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[.06] p-3">
             <p className="text-[10px] font-black tracking-[.14em] text-emerald-300">PRUEBA DE EMAIL</p>
             <div className="mt-2 flex flex-col sm:flex-row gap-2">
               <input type="email" value={testEmail} onChange={e=>setTestEmail(e.target.value)} placeholder="Email para recibir la prueba" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
               <button disabled={busy} onClick={sendTest} className="rounded-2xl bg-emerald-500 px-4 py-3 font-black text-black disabled:opacity-50">{busy?'Enviando…':'🧪 Enviar prueba'}</button>
             </div>
             <p className="mt-2 text-xs text-white/35">No selecciona alumnos ni registra recordatorios. Solo envía al email que escribas acá.</p>
-          </div>
+          </div>}
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {[
