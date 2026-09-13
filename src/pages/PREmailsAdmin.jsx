@@ -7,6 +7,8 @@ export default function PREmailsAdmin() {
   const [summary, setSummary] = useState(null)
   const [testEmail, setTestEmail] = useState('')
   const [confirmation, setConfirmation] = useState('')
+  const [query, setQuery] = useState('')
+  const [selectedEmails, setSelectedEmails] = useState([])
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
 
@@ -27,6 +29,7 @@ export default function PREmailsAdmin() {
     if (data) {
       setSummary(data)
       setTestEmail(data.test_email || '')
+      setSelectedEmails((data.recipients || []).filter(row => !row.sent).map(row => row.email))
     }
   }
 
@@ -39,13 +42,18 @@ export default function PREmailsAdmin() {
 
   async function sendCampaign() {
     if (!summary || !window.confirm(`Vas a enviar el correo a ${summary.pending} destinatarios. ¿Continuar?`)) return
-    const data = await call('send', { confirmation })
+    const data = await call('send', { confirmation, recipients: selectedEmails })
     if (data) {
       setMessage(`✓ Envío aceptado por Resend: ${data.sent} correos`)
       setConfirmation('')
       await load()
     }
   }
+
+  const recipients = summary?.recipients || []
+  const visibleRecipients = recipients.filter(row => `${row.name || ''} ${row.email}`.toLowerCase().includes(query.trim().toLowerCase()))
+  const selectedSet = new Set(selectedEmails)
+  const toggleRecipient = email => setSelectedEmails(current => current.includes(email) ? current.filter(item => item !== email) : [...current, email])
 
   return <main className="min-h-screen bg-[#080909] text-white pb-16">
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#090a09]/95 backdrop-blur-xl">
@@ -64,10 +72,27 @@ export default function PREmailsAdmin() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">Vista previa, prueba y envío general usan el mismo correo. Remitente oficial: <b className="text-white">hola@puntarollers.com</b>.</p>
       </section>
 
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Correos únicos" value={summary?.total ?? '—'} />
         <Stat label="Pendientes" value={summary?.pending ?? '—'} accent />
         <Stat label="Ya enviados" value={summary?.already_sent ?? '—'} />
+        <Stat label="Seleccionados" value={selectedEmails.length} accent />
+      </section>
+
+      <section className="rounded-[28px] border border-white/10 bg-white/[.04] p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div><p className="text-[10px] font-black tracking-[.18em] text-lime-300">BASE DE CORREOS</p><h3 className="mt-1 text-2xl font-black">Elegí quiénes reciben la campaña</h3><p className="mt-1 text-xs text-white/40">Los contactos ya enviados quedan bloqueados para evitar duplicados.</p></div>
+          <div className="flex gap-2"><button onClick={() => setSelectedEmails(recipients.filter(row => !row.sent).map(row => row.email))} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-black">Tildar todos</button><button onClick={() => setSelectedEmails([])} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black">Destildar todos</button></div>
+        </div>
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar por nombre o correo…" className="mt-4 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
+        <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
+          {visibleRecipients.map(row => <label key={row.email} className={`flex items-center gap-3 rounded-2xl border p-3 ${row.sent ? 'border-white/5 bg-white/[.02] opacity-45' : 'border-white/10 bg-black/20' }`}>
+            <input type="checkbox" disabled={row.sent} checked={!row.sent && selectedSet.has(row.email)} onChange={() => toggleRecipient(row.email)} className="h-5 w-5 accent-lime-400" />
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name || 'Sin nombre'}</p><p className="truncate text-xs text-white/40">{row.email}</p></div>
+            <span className={`text-[9px] font-black ${row.sent ? 'text-emerald-300' : 'text-white/25'}`}>{row.sent ? 'ENVIADO' : 'PENDIENTE'}</span>
+          </label>)}
+          {!visibleRecipients.length && <p className="py-8 text-center text-sm text-white/35">No encontramos contactos.</p>}
+        </div>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
@@ -89,9 +114,9 @@ export default function PREmailsAdmin() {
             <p className="text-[10px] font-black tracking-[.18em] text-red-300">2 · ENVÍO GENERAL</p>
             <h3 className="mt-2 text-xl font-black">Alumnos con correo</h3>
             <p className="mt-2 text-xs leading-5 text-white/45">Los correos se deduplican y cada destinatario queda registrado para impedir envíos repetidos.</p>
-            <label className="mt-4 block text-[10px] font-black text-white/35">ESCRIBÍ: ENVIAR {summary?.pending ?? 0}</label>
-            <input value={confirmation} onChange={e => setConfirmation(e.target.value.toUpperCase())} placeholder={`ENVIAR ${summary?.pending ?? 0}`} className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 font-black outline-none" />
-            <button disabled={busy || !summary?.pending || confirmation !== `ENVIAR ${summary.pending}`} onClick={sendCampaign} className="mt-3 w-full rounded-2xl bg-red-500 py-4 font-black text-white disabled:bg-white/10 disabled:text-white/25">{busy === 'send' ? 'ENVIANDO…' : `ENVIAR A ${summary?.pending ?? 0} CORREOS`}</button>
+            <label className="mt-4 block text-[10px] font-black text-white/35">ESCRIBÍ: ENVIAR {selectedEmails.length}</label>
+            <input value={confirmation} onChange={e => setConfirmation(e.target.value.toUpperCase())} placeholder={`ENVIAR ${selectedEmails.length}`} className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 font-black outline-none" />
+            <button disabled={busy || !selectedEmails.length || confirmation !== `ENVIAR ${selectedEmails.length}`} onClick={sendCampaign} className="mt-3 w-full rounded-2xl bg-red-500 py-4 font-black text-white disabled:bg-white/10 disabled:text-white/25">{busy === 'send' ? 'ENVIANDO…' : `ENVIAR A ${selectedEmails.length} CORREOS`}</button>
           </section>
         </div>
       </section>
