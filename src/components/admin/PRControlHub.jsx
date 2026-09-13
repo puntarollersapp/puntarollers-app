@@ -192,11 +192,11 @@ export default function PRControlHub() {
     <section>
       <div className="mb-3"><p className="text-[10px] font-black uppercase tracking-[.22em] text-white/35">ÁREAS DE GESTIÓN</p><p className="mt-1 text-xs text-white/25">Cada color identifica siempre el mismo universo.</p></div>
       <div className="grid gap-3 sm:grid-cols-2">
+        <SectionCard tone="admin" icon="✉️" title="PR EMAILS" description="Base completa, selección de contactos, prueba y envío de campañas." meta="221 correos habilitados" alert="NUEVO" onClick={() => go('/admin/emails')} />
         <SectionCard tone="alumnos" icon="👥" title="ALUMNOS" description="Perfiles, grupos, progreso, objetivos y actividad." meta={`${students.length} alumnos`} onClick={() => setView('alumnos')} />
         <SectionCard tone="personal" icon="🎟️" title="PR PERSONAL" description="Reservas, horarios, PR Pass, cuponeras e historial." meta={`${personalReservations.length} reservas esta semana`} alert={pendingPersonalRegs ? `${pendingPersonalRegs} preinscripciones` : null} onClick={() => setView('personal')} />
         <SectionCard tone="inscripciones" icon="🛼" title="INSCRIPCIONES" description="Adultos, Personalizadas, PR Kids y clínicas." meta={`${registrations.length} registros`} alert={pendingRegistrations ? `${pendingRegistrations} pendientes` : 'Todo revisado'} onClick={() => setView('gestion')} />
         <SectionCard tone="accesos" icon="🔐" title="ACCESOS" description="Bienvenida, creación de perfil, activación y PR Card." meta={`${accessRequests.length} solicitudes`} alert={pendingAccess ? `${pendingAccess} por resolver` : 'Todo al día'} onClick={() => setView('gestion')} />
-        <SectionCard tone="admin" icon="✉️" title="PR EMAILS" description="Base completa, selección de contactos, prueba y envío de campañas." meta="221 correos habilitados" alert="NUEVO" onClick={() => go('/admin/emails')} />
         <SectionCard tone="admin" icon="💳" title="ADMINISTRACIÓN" description="Pagos, mensualidades, cupos, contactos, tienda y config." alert={expiredPayments ? `${expiredPayments} vencidas` : 'Sin alertas'} onClick={() => setView('mas')} />
         <SectionCard tone="comunidad" icon="🏆" title="COMUNIDAD & ACTIVIDAD" description="Insignias, eventos, observaciones y herramientas de seguimiento." onClick={() => setView('comunidad')} />
       </div>
