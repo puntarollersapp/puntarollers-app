@@ -29,7 +29,7 @@ export default function PREmailsAdmin() {
     if (data) {
       setSummary(data)
       setTestEmail(data.test_email || '')
-      setSelectedEmails((data.recipients || []).filter(row => !row.sent).map(row => row.email))
+      setSelectedEmails((data.recipients || []).filter(row => !row.sent && !row.review).map(row => row.email))
     }
   }
 
@@ -41,7 +41,7 @@ export default function PREmailsAdmin() {
   }
 
   async function sendCampaign() {
-    if (!summary || !window.confirm(`Vas a enviar el correo a ${summary.pending} destinatarios. ¿Continuar?`)) return
+    if (!summary || !window.confirm(`Vas a enviar el correo a ${selectedEmails.length} destinatarios seleccionados. ¿Continuar?`)) return
     const data = await call('send', { confirmation, recipients: selectedEmails })
     if (data) {
       setMessage(`✓ Envío aceptado por Resend: ${data.sent} correos`)
@@ -51,7 +51,7 @@ export default function PREmailsAdmin() {
   }
 
   const recipients = summary?.recipients || []
-  const visibleRecipients = recipients.filter(row => `${row.name || ''} ${row.email}`.toLowerCase().includes(query.trim().toLowerCase()))
+  const visibleRecipients = recipients.filter(row => `${row.name || ''} ${row.email} ${row.source || ''}`.toLowerCase().includes(query.trim().toLowerCase()))
   const selectedSet = new Set(selectedEmails)
   const toggleRecipient = email => setSelectedEmails(current => current.includes(email) ? current.filter(item => item !== email) : [...current, email])
 
@@ -72,24 +72,29 @@ export default function PREmailsAdmin() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">Vista previa, prueba y envío general usan el mismo correo. Remitente oficial: <b className="text-white">hola@puntarollers.com</b>.</p>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Correos únicos" value={summary?.total ?? '—'} />
-        <Stat label="Pendientes" value={summary?.pending ?? '—'} accent />
-        <Stat label="Ya enviados" value={summary?.already_sent ?? '—'} />
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <Stat label="Correos habilitados" value={summary?.total ?? '—'} />
+        <Stat label="En plataforma" value={summary?.platform_total ?? '—'} />
+        <Stat label="Solo base histórica" value={summary?.historical_only ?? '—'} accent />
+        <Stat label="Para revisar" value={summary?.review_count ?? '—'} />
         <Stat label="Seleccionados" value={selectedEmails.length} accent />
       </section>
 
       <section className="rounded-[28px] border border-white/10 bg-white/[.04] p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div><p className="text-[10px] font-black tracking-[.18em] text-lime-300">BASE DE CORREOS</p><h3 className="mt-1 text-2xl font-black">Elegí quiénes reciben la campaña</h3><p className="mt-1 text-xs text-white/40">Los contactos ya enviados quedan bloqueados para evitar duplicados.</p></div>
-          <div className="flex gap-2"><button onClick={() => setSelectedEmails(recipients.filter(row => !row.sent).map(row => row.email))} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-black">Tildar todos</button><button onClick={() => setSelectedEmails([])} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black">Destildar todos</button></div>
+          <div><p className="text-[10px] font-black tracking-[.18em] text-lime-300">BASE DE CORREOS</p><h3 className="mt-1 text-2xl font-black">Elegí quiénes reciben la campaña</h3><p className="mt-1 text-xs text-white/40">Los históricos que no figuran en la plataforma están identificados. Los ya enviados y los correos dudosos quedan bloqueados.</p></div>
+          <div className="flex gap-2"><button onClick={() => setSelectedEmails(recipients.filter(row => !row.sent && !row.review).map(row => row.email))} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-black">Tildar todos</button><button onClick={() => setSelectedEmails([])} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black">Destildar todos</button></div>
         </div>
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar por nombre o correo…" className="mt-4 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
         <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
-          {visibleRecipients.map(row => <label key={row.email} className={`flex items-center gap-3 rounded-2xl border p-3 ${row.sent ? 'border-white/5 bg-white/[.02] opacity-45' : 'border-white/10 bg-black/20' }`}>
-            <input type="checkbox" disabled={row.sent} checked={!row.sent && selectedSet.has(row.email)} onChange={() => toggleRecipient(row.email)} className="h-5 w-5 accent-lime-400" />
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name || 'Sin nombre'}</p><p className="truncate text-xs text-white/40">{row.email}</p></div>
-            <span className={`text-[9px] font-black ${row.sent ? 'text-emerald-300' : 'text-white/25'}`}>{row.sent ? 'ENVIADO' : 'PENDIENTE'}</span>
+          {visibleRecipients.map(row => <label key={row.email} className={`flex items-center gap-3 rounded-2xl border p-3 ${row.sent || row.review ? 'border-white/5 bg-white/[.02] opacity-50' : 'border-white/10 bg-black/20' }`}>
+            <input type="checkbox" disabled={row.sent || row.review} checked={!row.sent && !row.review && selectedSet.has(row.email)} onChange={() => toggleRecipient(row.email)} className="h-5 w-5 accent-lime-400" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2"><p className="truncate text-sm font-black">{row.name || 'Sin nombre'}</p><SourceBadge source={row.source} /></div>
+              <p className="truncate text-xs text-white/40">{row.email}</p>
+              {row.review && <p className="mt-1 text-[10px] font-bold text-amber-300">{row.observation || 'Revisar dirección antes de habilitar'}</p>}
+            </div>
+            <span className={`text-[9px] font-black ${row.sent ? 'text-emerald-300' : row.review ? 'text-amber-300' : 'text-white/25'}`}>{row.sent ? 'ENVIADO' : row.review ? 'BLOQUEADO' : 'PENDIENTE'}</span>
           </label>)}
           {!visibleRecipients.length && <p className="py-8 text-center text-sm text-white/35">No encontramos contactos.</p>}
         </div>
@@ -126,4 +131,11 @@ export default function PREmailsAdmin() {
 
 function Stat({ label, value, accent = false }) {
   return <div className={`rounded-[22px] border p-4 ${accent ? 'border-lime-300/25 bg-lime-300/10' : 'border-white/10 bg-white/[.04]'}`}><p className="text-3xl font-black">{value}</p><p className="mt-1 text-[9px] font-black uppercase tracking-[.14em] text-white/35">{label}</p></div>
+}
+
+
+function SourceBadge({ source }) {
+  const label = source === 'platform' ? 'PLATAFORMA' : source === 'historical' ? 'HISTÓRICA' : 'REVISAR'
+  const style = source === 'platform' ? 'bg-sky-400/15 text-sky-300' : source === 'historical' ? 'bg-lime-300/15 text-lime-300' : 'bg-amber-300/15 text-amber-300'
+  return <span className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-black tracking-wide ${style}`}>{label}</span>
 }
