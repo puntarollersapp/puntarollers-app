@@ -230,6 +230,7 @@ export default function PRControlHub() {
   </AreaPage>
 
   const masView = <AreaPage title="Más herramientas" subtitle="Todo sigue disponible, sin ocupar espacio en tu día a día." tone="admin" onBack={() => setView('inicio')}>
+    <Tool title="PR Emails" desc="Vista previa, prueba y campañas a alumnos." badge="NUEVO" onClick={() => go('/admin/emails')} />
     <Tool title="Pagos" desc="Mensualidades y estado de cobros." onClick={() => clickLegacy('Pagos')} />
     <Tool title="Contactos" desc="Directorio y contactos administrativos." onClick={() => clickLegacy('Contactos')} />
     <Tool title="Tienda" desc="Productos y gestión de tienda." onClick={() => clickLegacy('Tienda')} />
