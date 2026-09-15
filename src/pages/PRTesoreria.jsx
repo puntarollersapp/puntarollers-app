@@ -102,7 +102,10 @@ export default function PRTesoreria(){
     const overdue=dues.filter(x=>x.estado==='vencido')
     const ingresos=moves.filter(x=>x.tipo==='ingreso').reduce((a,b)=>a+Number(b.monto||0),0)
     const gastos=moves.filter(x=>x.tipo==='gasto').reduce((a,b)=>a+Number(b.monto||0),0)
-    return {paid,special,pending,overdue,ingresos,gastos,saldo:ingresos-gastos}
+    const claudio=paid.filter(x=>x.metodo==='Transferencia Claudio').reduce((a,b)=>a+Number(b.monto||0),0)
+    const lucia=paid.filter(x=>x.metodo==='Transferencia Lucía').reduce((a,b)=>a+Number(b.monto||0),0)
+    const totalPagado=paid.reduce((a,b)=>a+Number(b.monto||0),0)
+    return {paid,special,pending,overdue,ingresos,gastos,saldo:ingresos-gastos,claudio,lucia,totalPagado}
   },[dues,moves])
 
   async function registerPayment(profile, form){
@@ -141,13 +144,8 @@ export default function PRTesoreria(){
     setBusy(false)
   }
 
-  async function pauseStudent(profile){
-    await updateStudent(profile,{estado:'Pausado'})
-  }
-
-  async function resumeStudent(profile){
-    await updateStudent(profile,{estado:'Activo'})
-  }
+  async function pauseStudent(profile){await updateStudent(profile,{estado:'Pausado'})}
+  async function resumeStudent(profile){await updateStudent(profile,{estado:'Activo'})}
 
   async function deleteExpense(move){
     const ok=window.confirm(`¿Eliminar el gasto "${move.concepto||'Sin concepto'}" por ${money(move.monto)}?`)
@@ -161,31 +159,17 @@ export default function PRTesoreria(){
 
   async function addExpense(form){
     const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
-    const {error}=await supabase.from('pr_tesoreria_movimientos').insert({
-      fecha:form.fecha,tipo:'gasto',categoria:form.categoria,concepto:form.concepto,
-      monto:Number(form.monto||0),metodo:form.metodo,observacion:form.observacion||null,
-      registrado_por_id:user?.id||null,registrado_por_nombre:by
-    })
+    const {error}=await supabase.from('pr_tesoreria_movimientos').insert({fecha:form.fecha,tipo:'gasto',categoria:form.categoria,concepto:form.concepto,monto:Number(form.monto||0),metodo:form.metodo,observacion:form.observacion||null,registrado_por_id:user?.id||null,registrado_por_nombre:by})
     if(error)setMsg(error.message);else{setExpenseOpen(false);setMsg('✓ Gasto registrado');await load()}
   }
 
-  function openAmounts(){
-    const drafts={}
-    merged.forEach(item=>{drafts[item.id]=item.due?.monto||''})
-    setAmountDrafts(drafts)
-    setAmountsOpen(true)
-  }
+  function openAmounts(){const drafts={};merged.forEach(item=>{drafts[item.id]=item.due?.monto||''});setAmountDrafts(drafts);setAmountsOpen(true)}
 
   async function saveBaseAmount(profile){
     const monto=Number(amountDrafts[profile.id]||0)
-    if(!Number.isFinite(monto)||monto<=0){
-      setMsg('Ingresá un monto válido para '+profile.nombre+'.')
-      return
-    }
+    if(!Number.isFinite(monto)||monto<=0){setMsg('Ingresá un monto válido para '+profile.nombre+'.');return}
     setBusy(true)
-    const {data,error}=await supabase.functions.invoke('pr-tesoreria-montos',{
-      body:{action:'set',periodo,alumno_id:profile.id,monto}
-    })
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-montos',{body:{action:'set',periodo,alumno_id:profile.id,monto}})
     if(error)setMsg('No se pudo guardar el monto: '+error.message)
     else if(!data?.ok)setMsg('No se pudo guardar el monto.')
     else{setMsg('✓ Monto actualizado para '+profile.nombre);await load()}
@@ -197,9 +181,7 @@ export default function PRTesoreria(){
     const ok=window.confirm(`¿Eliminar a ${profile.nombre} de Tesorería? Esta acción solo está disponible para alumnos creados exclusivamente para Tesorería.`)
     if(!ok)return
     setBusy(true)
-    const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{
-      body:{action:'delete',id:profile.id}
-    })
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{body:{action:'delete',id:profile.id}})
     if(error)setMsg('No se pudo eliminar: '+error.message)
     else if(data?.error==='has_payment_history')setMsg('No se puede eliminar porque ya tiene historial de pagos. Podés pausarlo en su lugar.')
     else if(!data?.ok)setMsg('No se pudo eliminar el alumno.')
@@ -209,9 +191,7 @@ export default function PRTesoreria(){
 
   async function createTreasuryStudent(form){
     setBusy(true)
-    const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{
-      body:{...form,periodo}
-    })
+    const {data,error}=await supabase.functions.invoke('pr-tesoreria-alumnos',{body:{...form,periodo}})
     if(error)setMsg('No se pudo crear el alumno: '+error.message)
     else if(!data?.ok)setMsg('No se pudo crear el alumno de Tesorería.')
     else{setMsg('✓ Alumno agregado solo a Tesorería');setCreateTreasuryOpen(false);await load()}
@@ -219,19 +199,16 @@ export default function PRTesoreria(){
   }
 
   async function sendReminders(){
-    setBusy(true); setMsg('Enviando recordatorios…')
+    setBusy(true);setMsg('Enviando recordatorios…')
     const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo}})
-    if(error) setMsg('No se pudieron enviar: '+error.message)
+    if(error)setMsg('No se pudieron enviar: '+error.message)
     else setMsg(`✓ Recordatorios enviados: ${data?.sent||0} · omitidos: ${data?.skipped||0}`)
     setBusy(false)
   }
 
   async function sendTest(){
     const target=testEmail.trim()
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)){
-      setMsg('Ingresá un email válido para la prueba.')
-      return
-    }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)){setMsg('Ingresá un email válido para la prueba.');return}
     setBusy(true);setMsg('Enviando prueba…')
     const {data,error}=await supabase.functions.invoke('pr-tesoreria-recordatorios',{body:{periodo,modo_prueba:true,test_email:target}})
     if(error)setMsg('No se pudo enviar la prueba: '+error.message)
@@ -247,200 +224,52 @@ export default function PRTesoreria(){
   }
 
   return <main className="min-h-screen bg-[#070707] text-white pb-16">
-    <div className="sticky top-0 z-40 border-b border-white/10 bg-[#090909]/95 backdrop-blur-xl">
-      <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3">
-        <button onClick={()=>navigate(-1)} className="rounded-2xl border border-white/10 px-3 py-2 text-sm">← Volver</button>
-        <div className="text-center"><p className="text-[10px] font-black tracking-[.2em] text-orange-400">PUNTA ROLLERS</p><h1 className="text-xl font-black">PR Tesorería</h1></div>
-        <div className="rounded-2xl bg-emerald-500/10 border border-emerald-400/20 px-3 py-2 text-[10px] font-black text-emerald-300">SEGURO</div>
-      </div>
-    </div>
-
+    <div className="sticky top-0 z-40 border-b border-white/10 bg-[#090909]/95 backdrop-blur-xl"><div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between gap-3"><button onClick={()=>navigate(-1)} className="rounded-2xl border border-white/10 px-3 py-2 text-sm">← Volver</button><div className="text-center"><p className="text-[10px] font-black tracking-[.2em] text-orange-400">PUNTA ROLLERS</p><h1 className="text-xl font-black">PR Tesorería</h1></div><div className="rounded-2xl bg-emerald-500/10 border border-emerald-400/20 px-3 py-2 text-[10px] font-black text-emerald-300">SEGURO</div></div></div>
     <div className="mx-auto max-w-6xl px-4 pt-5 space-y-5">
       {msg&&<div className="rounded-2xl border border-white/10 bg-white/[.05] px-4 py-3 text-sm">{msg}</div>}
+      <section className="overflow-hidden rounded-[30px] border border-orange-400/20 bg-gradient-to-br from-[#28130a] via-[#111] to-[#080808] p-5 sm:p-7"><p className="text-[10px] font-black tracking-[.22em] text-orange-300">CONTROL MENSUAL</p><div className="mt-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"><div><h2 className="text-4xl sm:text-5xl font-black tracking-tight capitalize">{monthLabel(periodo)}</h2><p className="mt-2 text-sm text-white/50">Último día de pago: <b className="text-white">10 de cada mes</b>. Pagás el mes, no 31 días.</p></div><input type="month" value={periodo.slice(0,7)} onChange={e=>setPeriodo(e.target.value+'-01')} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 font-bold"/></div></section>
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3"><Stat label="Pagados" value={stats.paid.length} tone="emerald"/><Stat label="Pendientes" value={stats.pending.length} tone="amber"/><Stat label="Vencidos" value={stats.overdue.length} tone="red"/><Stat label="Acuerdos/bonif." value={stats.special.length} tone="violet"/></section>
+      <section className="grid md:grid-cols-3 gap-3"><Money label="Ingresos del mes" value={stats.ingresos}/><Money label="Gastos del mes" value={stats.gastos}/><Money label="Saldo operativo" value={stats.saldo} strong/></section>
 
-      <section className="overflow-hidden rounded-[30px] border border-orange-400/20 bg-gradient-to-br from-[#28130a] via-[#111] to-[#080808] p-5 sm:p-7">
-        <p className="text-[10px] font-black tracking-[.22em] text-orange-300">CONTROL MENSUAL</p>
-        <div className="mt-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div><h2 className="text-4xl sm:text-5xl font-black tracking-tight capitalize">{monthLabel(periodo)}</h2><p className="mt-2 text-sm text-white/50">Último día de pago: <b className="text-white">10 de cada mes</b>. Pagás el mes, no 31 días.</p></div>
-          <input type="month" value={periodo.slice(0,7)} onChange={e=>setPeriodo(e.target.value+'-01')} className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 font-bold"/>
-        </div>
-      </section>
+      <section className="rounded-[26px] border border-orange-400/20 bg-orange-500/[.035] p-4"><div><p className="text-[10px] font-black tracking-[.14em] text-orange-300">CIERRE DE COBRANZAS</p><h3 className="mt-1 text-lg font-black">¿Cuánto ingresó cada uno?</h3></div><div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3"><div className="rounded-2xl border border-white/10 bg-black/25 p-4"><p className="text-[10px] font-black tracking-[.12em] text-white/35">CLAUDIO</p><p className="mt-1 text-2xl font-black">{money(stats.claudio)}</p><p className="mt-1 text-xs text-white/35">Pagos registrados a Claudio</p></div><div className="rounded-2xl border border-white/10 bg-black/25 p-4"><p className="text-[10px] font-black tracking-[.12em] text-white/35">LUCÍA</p><p className="mt-1 text-2xl font-black">{money(stats.lucia)}</p><p className="mt-1 text-xs text-white/35">Pagos registrados a Lucía</p></div><div className="rounded-2xl border border-orange-400/20 bg-orange-500/10 p-4"><p className="text-[10px] font-black tracking-[.12em] text-orange-200">TOTAL</p><p className="mt-1 text-2xl font-black">{money(stats.totalPagado)}</p><p className="mt-1 text-xs text-white/45">Claudio + Lucía + otros medios</p></div></div></section>
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Pagados" value={stats.paid.length} tone="emerald"/>
-        <Stat label="Pendientes" value={stats.pending.length} tone="amber"/>
-        <Stat label="Vencidos" value={stats.overdue.length} tone="red"/>
-        <Stat label="Acuerdos/bonif." value={stats.special.length} tone="violet"/>
-      </section>
+      <section className="rounded-[26px] border border-white/10 bg-white/[.03] p-4"><div><p className="text-[10px] font-black tracking-[.14em] text-white/35">GASTOS DEL MES</p><h3 className="mt-1 text-lg font-black">Detalle de gastos</h3></div><div className="mt-3 space-y-2">{moves.filter(x=>x.tipo==='gasto').length===0&&<p className="text-sm text-white/35">Todavía no hay gastos cargados este mes.</p>}{moves.filter(x=>x.tipo==='gasto').map(move=><div key={move.id} className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-black/20 p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{move.concepto||'Gasto sin concepto'}</p><p className="mt-1 text-[10px] text-white/35">{move.fecha} · {move.categoria||'otro'}</p></div><p className="text-sm font-black">{money(move.monto)}</p><button disabled={busy} onClick={()=>deleteExpense(move)} className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 disabled:opacity-50">Eliminar</button></div>)}</div></section>
 
-      <section className="grid md:grid-cols-3 gap-3">
-        <Money label="Ingresos del mes" value={stats.ingresos}/>
-        <Money label="Gastos del mes" value={stats.gastos}/>
-        <Money label="Saldo operativo" value={stats.saldo} strong/>
-      </section>
-
-      <section className="rounded-[26px] border border-white/10 bg-white/[.03] p-4">
-        <div><p className="text-[10px] font-black tracking-[.14em] text-white/35">GASTOS DEL MES</p><h3 className="mt-1 text-lg font-black">Detalle de gastos</h3></div>
-        <div className="mt-3 space-y-2">
-          {moves.filter(x=>x.tipo==='gasto').length===0&&<p className="text-sm text-white/35">Todavía no hay gastos cargados este mes.</p>}
-          {moves.filter(x=>x.tipo==='gasto').map(move=><div key={move.id} className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-black/20 p-3">
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{move.concepto||'Gasto sin concepto'}</p><p className="mt-1 text-[10px] text-white/35">{move.fecha} · {move.categoria||'otro'}</p></div>
-            <p className="text-sm font-black">{money(move.monto)}</p>
-            <button disabled={busy} onClick={()=>deleteExpense(move)} className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs font-black text-red-300 disabled:opacity-50">Eliminar</button>
-          </div>)}
-        </div>
-      </section>
-
-      <section className="rounded-[26px] border border-white/10 bg-white/[.035] p-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col md:flex-row gap-3">
-            <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-            {isAdmin&&<button disabled={busy} onClick={openAmounts} className="rounded-2xl border border-orange-400/20 bg-orange-500/10 text-orange-200 px-4 py-3 font-black">⚙ Montos</button>}{isAdmin&&<button disabled={busy} onClick={()=>setCreateTreasuryOpen(true)} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-200 px-4 py-3 font-black">+ Alumno Tesorería</button>}{isAdmin&&<button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button>}<button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button>
-          </div>
-          {isAdmin&&<div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[.06] p-3">
-            <p className="text-[10px] font-black tracking-[.14em] text-emerald-300">PRUEBA DE EMAIL</p>
-            <div className="mt-2 flex flex-col sm:flex-row gap-2">
-              <input type="email" value={testEmail} onChange={e=>setTestEmail(e.target.value)} placeholder="Email para recibir la prueba" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>
-              <button disabled={busy} onClick={sendTest} className="rounded-2xl bg-emerald-500 px-4 py-3 font-black text-black disabled:opacity-50">{busy?'Enviando…':'🧪 Enviar prueba'}</button>
-            </div>
-            <p className="mt-2 text-xs text-white/35">No selecciona alumnos ni registra recordatorios. Solo envía al email que escribas acá.</p>
-          </div>}
-        </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {[
-            ['todos','TODOS'],
-            ['pagado','PAGADOS'],
-            ['pago_claudio','PAGOS A CLAUDIO'],
-            ['pago_lucia','PAGOS A LUCÍA'],
-            ['pendiente','PENDIENTES'],
-            ['vencido','VENCIDOS'],
-            ['acuerdo','ACUERDOS'],
-            ['bonificado','BONIFICADOS'],
-            ['pausado','PAUSADOS']
-          ].map(([value,label])=><button key={value} onClick={()=>setFilter(value)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===value?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{label}</button>)}
-        </div>
-      </section>
-
-      {isAdmin&&amountsOpen&&<section className="rounded-[26px] border border-orange-400/20 bg-orange-500/[.05] p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div><p className="text-[10px] font-black tracking-[.16em] text-orange-300">MONTOS DEL MES</p><h3 className="mt-1 text-xl font-black capitalize">{monthLabel(periodo)}</h3><p className="mt-1 text-xs text-white/40">Solo visible para administrador. El monto queda como referencia para este alumno y puede modificarse si hay una excepción.</p></div>
-          <button onClick={()=>setAmountsOpen(false)} className="rounded-xl border border-white/10 px-3 py-2 text-white/50">✕</button>
-        </div>
-        <div className="mt-4 space-y-2">
-          {merged.filter(item=>String(item.estado||'').toLowerCase()!=='pausado').map(item=><div key={item.id} className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-black/25 p-3">
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item.nombre} {item.apellido||''}</p><p className="text-[10px] text-white/35">{item.due?.estado||'pendiente'}</p></div>
-            <input type="number" inputMode="numeric" value={amountDrafts[item.id]??''} onChange={e=>setAmountDrafts(x=>({...x,[item.id]:e.target.value}))} placeholder="Monto" className="w-28 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-right text-sm"/>
-            <button disabled={busy} onClick={()=>saveBaseAmount(item)} className="rounded-xl bg-orange-500 px-3 py-2 text-xs font-black text-black disabled:opacity-50">Guardar</button>
-          </div>)}
-        </div>
-      </section>}
-
-      <section className="space-y-3">
-        {shown.map(({due,...p})=>{
-          const [lab,cls]=statusMeta(due,p)
-          return <article key={p.id} className="rounded-[26px] border border-white/10 bg-[#111] p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl overflow-hidden bg-white/5 grid place-items-center">{p.foto?<img src={p.foto} className="h-full w-full object-cover"/>:'👤'}</div>
-              <div className="min-w-0 flex-1"><p className="font-black truncate">{p.nombre} {p.apellido||''}</p><p className="text-xs text-white/35">{p.telefono||'Sin teléfono'}</p><p className={`mt-1 text-[10px] font-black ${p.email?'text-emerald-300':'text-amber-300'}`}>{p.email?'Email OK':'Sin email'}</p></div>
-              <span className={`rounded-full border px-3 py-1 text-[9px] font-black ${cls}`}>{lab}</span>
-            </div>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-              <Mini label="Cuota" value={Number(due?.monto||0)>0 ? money(due?.monto) : 'Definir monto'}/>
-              <Mini label="Vence" value={due?.vencimiento?new Date(due.vencimiento+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'10'}/>
-              <Mini label="Pago" value={due?.fecha_pago?new Date(due.fecha_pago+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'—'}/>
-              <Mini label="Recibió" value={due?.estado==='pagado' ? (due?.metodo==='Transferencia Lucía'?'Lucía':due?.metodo==='Transferencia Claudio'?'Claudio':due?.metodo||'Otro') : '—'}/>
-            </div>
-            <button onClick={()=>setSelected({profile:p,due})} className="mt-3 w-full rounded-2xl bg-orange-500 py-3 font-black text-black">{due?.estado==='pagado'?'Ver / corregir':'Gestionar pago'}</button>
-          </article>
-        })}
-      </section>
-
-      <section className="rounded-[26px] border border-white/10 bg-white/[.03] p-5">
-        <h3 className="font-black text-xl">Regla de acceso</h3>
-        <p className="mt-2 text-sm text-white/45">El sistema está preparado para limitar el área privada desde el día 11 si la mensualidad sigue pendiente. Para evitar bloquear alumnos antes de conciliar este mes, la activación se controla desde acá.</p>
-        <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-black/25 p-4">
-          <div><p className="font-black">{config?.enforcement_enabled?'Modo limitado ACTIVO':'Modo limitado PAUSADO'}</p><p className="text-xs text-white/35">{config?.enforcement_enabled?'Se aplica la regla del día 11.':'Primero conciliá los pagos del mes.'}</p></div>
-          {isAdmin&&<button onClick={toggleEnforcement} className={`rounded-2xl px-4 py-3 text-xs font-black ${config?.enforcement_enabled?'bg-red-500':'bg-emerald-500 text-black'}`}>{config?.enforcement_enabled?'Pausar':'Activar'}</button>}
-        </div>
-      </section>
+      <section className="rounded-[26px] border border-white/10 bg-white/[.035] p-4"><div className="flex flex-col gap-3"><div className="flex flex-col md:flex-row gap-3"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar alumno o teléfono…" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/>{isAdmin&&<button disabled={busy} onClick={openAmounts} className="rounded-2xl border border-orange-400/20 bg-orange-500/10 text-orange-200 px-4 py-3 font-black">⚙ Montos</button>}{isAdmin&&<button disabled={busy} onClick={()=>setCreateTreasuryOpen(true)} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-200 px-4 py-3 font-black">+ Alumno Tesorería</button>}{isAdmin&&<button disabled={busy} onClick={sendReminders} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 text-sky-200 px-4 py-3 font-black">✉ Recordatorios</button>}<button onClick={()=>setExpenseOpen(true)} className="rounded-2xl bg-white text-black px-4 py-3 font-black">+ Registrar gasto</button></div>{isAdmin&&<div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[.06] p-3"><p className="text-[10px] font-black tracking-[.14em] text-emerald-300">PRUEBA DE EMAIL</p><div className="mt-2 flex flex-col sm:flex-row gap-2"><input type="email" value={testEmail} onChange={e=>setTestEmail(e.target.value)} placeholder="Email para recibir la prueba" className="flex-1 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"/><button disabled={busy} onClick={sendTest} className="rounded-2xl bg-emerald-500 px-4 py-3 font-black text-black disabled:opacity-50">{busy?'Enviando…':'🧪 Enviar prueba'}</button></div><p className="mt-2 text-xs text-white/35">No selecciona alumnos ni registra recordatorios. Solo envía al email que escribas acá.</p></div>}</div><div className="mt-3 flex gap-2 overflow-x-auto pb-1">{[['todos','TODOS'],['pagado','PAGADOS'],['pago_claudio','PAGOS A CLAUDIO'],['pago_lucia','PAGOS A LUCÍA'],['pendiente','PENDIENTES'],['vencido','VENCIDOS'],['acuerdo','ACUERDOS'],['bonificado','BONIFICADOS'],['pausado','PAUSADOS']].map(([value,label])=><button key={value} onClick={()=>setFilter(value)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-black border ${filter===value?'bg-orange-500 text-black border-orange-400':'border-white/10 text-white/45'}`}>{label}</button>)}</div></section>
+      {isAdmin&&amountsOpen&&<section className="rounded-[26px] border border-orange-400/20 bg-orange-500/[.05] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[.16em] text-orange-300">MONTOS DEL MES</p><h3 className="mt-1 text-xl font-black capitalize">{monthLabel(periodo)}</h3><p className="mt-1 text-xs text-white/40">Solo visible para administrador. El monto queda como referencia para este alumno y puede modificarse si hay una excepción.</p></div><button onClick={()=>setAmountsOpen(false)} className="rounded-xl border border-white/10 px-3 py-2 text-white/50">✕</button></div><div className="mt-4 space-y-2">{merged.filter(item=>String(item.estado||'').toLowerCase()!=='pausado').map(item=><div key={item.id} className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-black/25 p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item.nombre} {item.apellido||''}</p><p className="text-[10px] text-white/35">{item.due?.estado||'pendiente'}</p></div><input type="number" inputMode="numeric" value={amountDrafts[item.id]??''} onChange={e=>setAmountDrafts(x=>({...x,[item.id]:e.target.value}))} placeholder="Monto" className="w-28 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-right text-sm"/><button disabled={busy} onClick={()=>saveBaseAmount(item)} className="rounded-xl bg-orange-500 px-3 py-2 text-xs font-black text-black disabled:opacity-50">Guardar</button></div>)}</div></section>}
+      <section className="space-y-3">{shown.map(({due,...p})=>{const [lab,cls]=statusMeta(due,p);return <article key={p.id} className="rounded-[26px] border border-white/10 bg-[#111] p-4"><div className="flex items-center gap-3"><div className="h-12 w-12 rounded-2xl overflow-hidden bg-white/5 grid place-items-center">{p.foto?<img src={p.foto} className="h-full w-full object-cover"/>:'👤'}</div><div className="min-w-0 flex-1"><p className="font-black truncate">{p.nombre} {p.apellido||''}</p><p className="text-xs text-white/35">{p.telefono||'Sin teléfono'}</p><p className={`mt-1 text-[10px] font-black ${p.email?'text-emerald-300':'text-amber-300'}`}>{p.email?'Email OK':'Sin email'}</p></div><span className={`rounded-full border px-3 py-1 text-[9px] font-black ${cls}`}>{lab}</span></div><div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center"><Mini label="Cuota" value={Number(due?.monto||0)>0 ? money(due?.monto) : 'Definir monto'}/><Mini label="Vence" value={due?.vencimiento?new Date(due.vencimiento+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'10'}/><Mini label="Pago" value={due?.fecha_pago?new Date(due.fecha_pago+'T12:00:00').toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit'}):'—'}/><Mini label="Recibió" value={due?.estado==='pagado' ? (due?.metodo==='Transferencia Lucía'?'Lucía':due?.metodo==='Transferencia Claudio'?'Claudio':due?.metodo||'Otro') : '—'}/></div><button onClick={()=>setSelected({profile:p,due})} className="mt-3 w-full rounded-2xl bg-orange-500 py-3 font-black text-black">{due?.estado==='pagado'?'Ver / corregir':'Gestionar pago'}</button></article>})}</section>
+      <section className="rounded-[26px] border border-white/10 bg-white/[.03] p-5"><h3 className="font-black text-xl">Regla de acceso</h3><p className="mt-2 text-sm text-white/45">El sistema está preparado para limitar el área privada desde el día 11 si la mensualidad sigue pendiente. Para evitar bloquear alumnos antes de conciliar este mes, la activación se controla desde acá.</p><div className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-black/25 p-4"><div><p className="font-black">{config?.enforcement_enabled?'Modo limitado ACTIVO':'Modo limitado PAUSADO'}</p><p className="text-xs text-white/35">{config?.enforcement_enabled?'Se aplica la regla del día 11.':'Primero conciliá los pagos del mes.'}</p></div>{isAdmin&&<button onClick={toggleEnforcement} className={`rounded-2xl px-4 py-3 text-xs font-black ${config?.enforcement_enabled?'bg-red-500':'bg-emerald-500 text-black'}`}>{config?.enforcement_enabled?'Pausar':'Activar'}</button>}</div></section>
     </div>
-
     {selected&&<PaymentSheet item={selected} config={config} busy={busy} onClose={()=>setSelected(null)} onPay={registerPayment} onSpecial={special} onUpdate={updateStudent} onPause={pauseStudent} onResume={resumeStudent} onDelete={deleteTreasuryStudent}/>} 
-    {expenseOpen&&<ExpenseSheet onClose={()=>setExpenseOpen(false)} onSave={addExpense}/>}
-    {createTreasuryOpen&&<TreasuryStudentSheet busy={busy} onClose={()=>setCreateTreasuryOpen(false)} onSave={createTreasuryStudent}/>}
+    {expenseOpen&&<ExpenseSheet onClose={()=>setExpenseOpen(false)} onSave={addExpense}/>} 
+    {createTreasuryOpen&&<TreasuryStudentSheet busy={busy} onClose={()=>setCreateTreasuryOpen(false)} onSave={createTreasuryStudent}/>} 
   </main>
 }
 
 function Stat({label,value,tone}){const c={emerald:'text-emerald-300',amber:'text-amber-200',red:'text-red-300',violet:'text-violet-300'}[tone];return <div className="rounded-[24px] border border-white/10 bg-white/[.035] p-4"><p className={`text-3xl font-black ${c}`}>{value}</p><p className="mt-1 text-[10px] font-black tracking-[.14em] text-white/35">{label.toUpperCase()}</p></div>}
-function Money({label,value,strong}){return <div className={`rounded-[24px] border p-4 ${strong?'border-orange-400/20 bg-orange-500/10':'border-white/10 bg-white/[.035]'}`}><p className="text-xs text-white/35">{label}</p><p className="mt-1 text-2xl font-black">{money(value)}</p></div>}
-function Mini({label,value}){return <div className="rounded-2xl bg-white/[.04] p-3"><p className="text-[9px] text-white/30 uppercase">{label}</p><p className="mt-1 text-xs font-black">{value}</p></div>}
+function Money({label,value,strong}){return <div className={`rounded-[24px] border p-4 ${strong?'border-orange-400/20 bg-orange-500/10':'border-white/10 bg-white/[.035]'}`}><p className="text-xs text-white/35">{label}</p><p className="mt-2 text-2xl font-black">{money(value)}</p></div>}
+function Mini({label,value}){return <div className="rounded-2xl border border-white/[.07] bg-white/[.025] p-3"><p className="text-[9px] font-black tracking-[.12em] text-white/30">{label}</p><p className="mt-1 text-sm font-black">{value}</p></div>}
 
-function PaymentSheet({item,config,busy,onClose,onPay,onSpecial,onUpdate,onPause,onResume,onDelete}){
- const [monto,setMonto]=useState(Number(item.due?.monto||0)>0 ? item.due.monto : '')
- const [metodo,setMetodo]=useState('Transferencia Claudio')
- const [observacion,setObservacion]=useState('')
- const [gracia,setGracia]=useState('')
- const [email,setEmail]=useState(item.profile.email||'')
- const [telefono,setTelefono]=useState(item.profile.telefono||'')
- const [nombre,setNombre]=useState([item.profile.nombre,item.profile.apellido].filter(Boolean).join(' '))
- const treasuryOnly=String(item.profile.id||'').startsWith('tesoreria_')
- const paused=String(item.profile.estado||'').toLowerCase()==='pausado'
- return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center">
-  <div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5 max-h-[90vh] overflow-y-auto">
-   <div className="flex justify-between gap-3"><div><p className="text-[10px] text-orange-300 font-black tracking-[.15em]">REGISTRAR / GESTIONAR</p><h3 className="text-2xl font-black mt-1">{item.profile.nombre} {item.profile.apellido||''}</h3></div><button onClick={onClose}>✕</button></div>
-   <div className="rounded-2xl border border-orange-400/20 bg-orange-500/10 p-3 mt-4 text-xs text-orange-100">El importe no es fijo. Ingresá el monto real de este alumno según su cuota, descuento o modalidad.</div>
-   <Field label="Importe"><input type="number" inputMode="numeric" placeholder="Ej. 1500" value={monto} onChange={e=>setMonto(e.target.value)}/></Field>
-   <p className="mt-2 text-[11px] text-white/35">Al confirmar, el sistema registra automáticamente la fecha de hoy. La cuota corresponde al mes seleccionado.</p>
-   <Field label="Método"><select value={metodo} onChange={e=>setMetodo(e.target.value)}><option>Transferencia Claudio</option><option>Transferencia Lucía</option><option>Mercado Pago</option><option>Efectivo</option><option>Otro</option></select></Field>
-   <Field label="Observación"><input value={observacion} onChange={e=>setObservacion(e.target.value)} placeholder="Opcional"/></Field>
-   <button disabled={busy} onClick={()=>onPay(item.profile,{monto,metodo,observacion})} className="w-full mt-4 rounded-2xl bg-emerald-500 py-4 text-black font-black">✓ CONFIRMAR PAGO DEL MES</button>
-   <div className="mt-5 border-t border-white/10 pt-5">
-    <p className="text-xs font-black text-white/50">{treasuryOnly?'Datos del alumno de Tesorería':'Datos de contacto'}</p>
-    {treasuryOnly&&<Field label="Nombre del alumno"><input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Nombre y apellido"/></Field>}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Field label="WhatsApp"><input value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="Ej. 099123456"/></Field><Field label="Email"><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nombre@email.com"/></Field></div>
-    <button disabled={busy||treasuryOnly&&!nombre.trim()} onClick={()=>onUpdate(item.profile,{...(treasuryOnly?{nombre:nombre.trim(),apellido:null}:{}),telefono:telefono.trim()||null,email:email.trim()||null})} className="w-full mt-3 rounded-2xl border border-white/10 bg-white/[.06] py-3 text-xs font-black disabled:opacity-50">{treasuryOnly?'GUARDAR DATOS DEL ALUMNO':'GUARDAR CONTACTO EN SU PERFIL'}</button>
-   </div>
-   <div className="mt-5 border-t border-white/10 pt-5">
-    <p className="text-xs font-black text-white/50">Asistencia</p>
-    <p className="mt-1 text-xs text-white/35">Si este mes no está asistiendo, podés pausarlo. No se elimina y después podés reactivarlo.</p>
-    <button disabled={busy} onClick={()=>paused?onResume(item.profile):onPause(item.profile)} className={`w-full mt-3 rounded-2xl py-3 text-xs font-black ${paused?'bg-emerald-500 text-black':'bg-white/10 text-white'}`}>{paused?'REACTIVAR ALUMNO':'MARCAR COMO NO ESTÁ ASISTIENDO'}</button>
-   </div>
-   {treasuryOnly&&<div className="mt-5 border-t border-red-400/15 pt-5">
-    <p className="text-xs font-black text-red-300">Eliminar de Tesorería</p>
-    <p className="mt-1 text-xs text-white/35">Solo elimina alumnos creados exclusivamente para Tesorería. Si ya tiene pagos registrados, no se podrá borrar para no perder historial contable.</p>
-    <button disabled={busy} onClick={()=>onDelete(item.profile)} className="w-full mt-3 rounded-2xl border border-red-400/20 bg-red-500/10 py-3 text-xs font-black text-red-300 disabled:opacity-50">ELIMINAR ALUMNO DE TESORERÍA</button>
-   </div>}
-   <div className="mt-5 border-t border-white/10 pt-5">
-    <p className="text-xs font-black text-white/50">Excepciones</p>
-    <div className="grid grid-cols-2 gap-2 mt-3"><button onClick={()=>onSpecial(item.profile,'bonificado')} className="rounded-2xl bg-sky-500/15 border border-sky-400/20 py-3 text-xs font-black text-sky-300">BONIFICAR MES</button><button onClick={()=>onSpecial(item.profile,'acuerdo',gracia||null)} className="rounded-2xl bg-violet-500/15 border border-violet-400/20 py-3 text-xs font-black text-violet-300">ACUERDO</button></div>
-    <Field label="Gracia hasta"><input type="date" value={gracia} onChange={e=>setGracia(e.target.value)}/></Field>
-   </div>
-  </div>
- </div>
-}
-function TreasuryStudentSheet({busy,onClose,onSave}){
- const [f,setF]=useState({nombre:'',monto:'',telefono:'',email:''})
- const set=(k,v)=>setF(x=>({...x,[k]:v}))
- return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center"><div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5">
-  <div className="flex justify-between gap-3"><div><p className="text-[10px] text-violet-300 font-black tracking-[.15em]">SOLO TESORERÍA</p><h3 className="text-2xl font-black mt-1">Agregar alumno</h3><p className="mt-1 text-xs text-white/40">No crea usuario ni acceso a la plataforma. Sirve únicamente para controlar mensualidades y pagos.</p></div><button onClick={onClose}>✕</button></div>
-  <Field label="Nombre del alumno"><input value={f.nombre} onChange={e=>set('nombre',e.target.value)} placeholder="Nombre y apellido"/></Field>
-  <Field label="Monto mensual"><input type="number" inputMode="numeric" value={f.monto} onChange={e=>set('monto',e.target.value)} placeholder="Ej. 2000"/></Field>
-  <Field label="Teléfono"><input value={f.telefono} onChange={e=>set('telefono',e.target.value)} placeholder="Opcional"/></Field>
-  <Field label="Email"><input type="email" value={f.email} onChange={e=>set('email',e.target.value)} placeholder="Opcional"/></Field>
-  <button disabled={busy||!f.nombre.trim()||!Number(f.monto)} onClick={()=>onSave(f)} className="w-full mt-4 rounded-2xl bg-violet-500 py-4 text-black font-black disabled:opacity-40">{busy?'Guardando...':'CREAR EN TESORERÍA'}</button>
- </div></div>
+function Field({label,children}){return <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-[.14em] text-white/35">{label}</span>{children}</label>}
+function Sheet({children}){return <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"><div className="mx-auto max-w-xl min-h-full grid place-items-center"><div className="w-full rounded-[28px] border border-white/10 bg-[#111] p-5">{children}</div></div></div>}
+
+function PaymentSheet({item,busy,onClose,onPay,onSpecial,onUpdate,onPause,onResume,onDelete}){
+ const {profile,due}=item
+ const isTreasuryOnly=String(profile?.id||'').startsWith('tesoreria_')
+ const [nombre,setNombre]=useState([profile.nombre,profile.apellido].filter(Boolean).join(' '))
+ const [telefono,setTelefono]=useState(profile.telefono||'')
+ const [email,setEmail]=useState(profile.email||'')
+ const [monto,setMonto]=useState(due?.monto||'')
+ const [metodo,setMetodo]=useState(due?.metodo||'Transferencia Claudio')
+ const [observacion,setObservacion]=useState(due?.observacion||'')
+ const [gracia,setGracia]=useState(due?.gracia_hasta||'')
+ const saveContact=()=>{
+   if(isTreasuryOnly){const parts=nombre.trim().split(/\s+/);onUpdate(profile,{nombre:parts.shift()||'',apellido:parts.join(' ')||null,telefono,email});return}
+   onUpdate(profile,{telefono,email})
+ }
+ return <Sheet><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[.16em] text-orange-300">GESTIONAR PAGO</p><h2 className="mt-1 text-2xl font-black">{profile.nombre} {profile.apellido||''}</h2></div><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2 text-white/50">✕</button></div>{isTreasuryOnly&&<div className="mt-4"><Field label="Nombre del alumno"><input value={nombre} onChange={e=>setNombre(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field></div>}<div className="mt-4 grid gap-3"><Field label="Teléfono"><input value={telefono} onChange={e=>setTelefono(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Email"><input value={email} onChange={e=>setEmail(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><button disabled={busy} onClick={saveContact} className="rounded-2xl border border-white/10 py-3 text-sm font-black">{isTreasuryOnly?'GUARDAR DATOS DEL ALUMNO':'GUARDAR CONTACTO'}</button></div><div className="mt-5 border-t border-white/10 pt-5"><Field label="Importe pagado"><input type="number" value={monto} onChange={e=>setMonto(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-xl font-black" placeholder="Ej. 1500"/></Field><div className="mt-3"><Field label="Método"><select value={metodo} onChange={e=>setMetodo(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"><option>Transferencia Claudio</option><option>Transferencia Lucía</option><option>Mercado Pago</option><option>Efectivo</option><option>Otro</option></select></Field></div><div className="mt-3"><Field label="Observación"><input value={observacion} onChange={e=>setObservacion(e.target.value)} placeholder="Opcional" className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field></div><div className="mt-4 grid grid-cols-2 gap-2"><button disabled={busy} onClick={()=>onPay(profile,{monto,metodo,observacion})} className="rounded-2xl bg-emerald-500 py-3 font-black text-black">MARCAR PAGADO</button><button disabled={busy} onClick={()=>onSpecial(profile,'bonificado')} className="rounded-2xl border border-sky-400/20 bg-sky-500/10 py-3 font-black text-sky-200">BONIFICADO</button><button disabled={busy} onClick={()=>onSpecial(profile,'acuerdo',gracia||null)} className="rounded-2xl border border-violet-400/20 bg-violet-500/10 py-3 font-black text-violet-200">ACUERDO</button><button disabled={busy} onClick={()=>profile.estado==='Pausado'?onResume(profile):onPause(profile)} className="rounded-2xl border border-white/10 py-3 font-black">{profile.estado==='Pausado'?'REANUDAR':'PAUSAR'}</button></div><div className="mt-3"><Field label="Gracia / acuerdo hasta"><input type="date" value={gracia} onChange={e=>setGracia(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field></div>{isTreasuryOnly&&<button disabled={busy} onClick={()=>onDelete(profile)} className="mt-4 w-full rounded-2xl border border-red-400/20 bg-red-500/10 py-3 font-black text-red-300">ELIMINAR ALUMNO DE TESORERÍA</button>}</div></Sheet>
 }
 
-function ExpenseSheet({onClose,onSave}){
- const [f,setF]=useState({fecha:today(),categoria:'pista',concepto:'',monto:'',metodo:'Transferencia',observacion:''})
- const set=(k,v)=>setF(x=>({...x,[k]:v}))
- return <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm p-4 flex items-end justify-center"><div className="w-full max-w-xl rounded-[30px] border border-white/10 bg-[#111] p-5">
-  <div className="flex justify-between"><h3 className="text-2xl font-black">Registrar gasto PR</h3><button onClick={onClose}>✕</button></div>
-  <div className="grid grid-cols-2 gap-3 mt-4"><Field label="Fecha"><input type="date" value={f.fecha} onChange={e=>set('fecha',e.target.value)}/></Field><Field label="Monto"><input type="number" value={f.monto} onChange={e=>set('monto',e.target.value)}/></Field></div>
-  <Field label="Categoría"><select value={f.categoria} onChange={e=>set('categoria',e.target.value)}><option value="pista">Pista</option><option value="materiales">Materiales</option><option value="uniformes">Uniformes</option><option value="eventos">Eventos</option><option value="otro">Otro</option></select></Field>
-  <Field label="Concepto"><input value={f.concepto} onChange={e=>set('concepto',e.target.value)} placeholder="Ej. Alquiler pista cerrada"/></Field>
-  <Field label="Método"><input value={f.metodo} onChange={e=>set('metodo',e.target.value)}/></Field>
-  <button onClick={()=>onSave(f)} className="w-full mt-4 rounded-2xl bg-white py-4 text-black font-black">GUARDAR GASTO</button>
- </div></div>
-}
-function Field({label,children}){return <label className="block mt-3"><span className="text-[10px] font-black tracking-[.12em] text-white/35">{label.toUpperCase()}</span><div className="[&>input]:mt-1 [&>input]:w-full [&>input]:rounded-2xl [&>input]:border [&>input]:border-white/10 [&>input]:bg-black/30 [&>input]:px-4 [&>input]:py-3 [&>select]:mt-1 [&>select]:w-full [&>select]:rounded-2xl [&>select]:border [&>select]:border-white/10 [&>select]:bg-black [&>select]:px-4 [&>select]:py-3">{children}</div></label>}
+function ExpenseSheet({onClose,onSave}){const [f,setF]=useState({fecha:today(),categoria:'pista',concepto:'',monto:'',metodo:'Transferencia',observacion:''});const set=(k,v)=>setF(x=>({...x,[k]:v}));return <Sheet><div className="flex items-center justify-between"><h2 className="text-2xl font-black">Registrar gasto</h2><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2">✕</button></div><div className="mt-4 grid gap-3"><Field label="Fecha"><input type="date" value={f.fecha} onChange={e=>set('fecha',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Categoría"><select value={f.categoria} onChange={e=>set('categoria',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"><option>pista</option><option>equipamiento</option><option>publicidad</option><option>transporte</option><option>honorarios</option><option>otro</option></select></Field><Field label="Concepto"><input value={f.concepto} onChange={e=>set('concepto',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Monto"><input type="number" value={f.monto} onChange={e=>set('monto',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Método"><input value={f.metodo} onChange={e=>set('metodo',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Observación"><input value={f.observacion} onChange={e=>set('observacion',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><div className="grid grid-cols-2 gap-2"><button onClick={onClose} className="rounded-2xl border border-white/10 py-3 font-black">Cancelar</button><button onClick={()=>onSave(f)} className="rounded-2xl bg-white py-3 font-black text-black">Guardar gasto</button></div></div></Sheet>}
+
+function TreasuryStudentSheet({busy,onClose,onSave}){const [f,setF]=useState({nombre:'',monto:'',telefono:'',email:''});const set=(k,v)=>setF(x=>({...x,[k]:v}));return <Sheet><div className="flex items-center justify-between"><h2 className="text-2xl font-black">Alumno solo Tesorería</h2><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2">✕</button></div><p className="mt-2 text-sm text-white/40">Se crea únicamente para llevar su mensualidad. No tendrá acceso a la plataforma.</p><div className="mt-4 grid gap-3"><Field label="Nombre"><input value={f.nombre} onChange={e=>set('nombre',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Monto mensual"><input type="number" value={f.monto} onChange={e=>set('monto',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Teléfono"><input value={f.telefono} onChange={e=>set('telefono',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><Field label="Email"><input type="email" value={f.email} onChange={e=>set('email',e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3"/></Field><div className="grid grid-cols-2 gap-2"><button onClick={onClose} className="rounded-2xl border border-white/10 py-3 font-black">Cancelar</button><button disabled={busy} onClick={()=>onSave(f)} className="rounded-2xl bg-violet-500 py-3 font-black text-black">Crear alumno</button></div></div></Sheet>}
