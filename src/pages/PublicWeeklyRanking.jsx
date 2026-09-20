@@ -47,9 +47,14 @@ function dateRanges() {
   const mondayOffset = weekday === 0 ? -6 : 1 - weekday
   const currentWeekStart = shiftDate(now.date, mondayOffset)
   const monthStart = `${now.year}-${String(now.month).padStart(2, '0')}-01`
+  const previousMonthEndDate = new Date(Date.UTC(now.year, now.month - 1, 0, 12))
+  const previousMonthStartDate = new Date(Date.UTC(previousMonthEndDate.getUTCFullYear(), previousMonthEndDate.getUTCMonth(), 1, 12))
+  const previousMonthStart = previousMonthStartDate.toISOString().slice(0, 10)
+  const previousMonthEnd = previousMonthEndDate.toISOString().slice(0, 10)
   return {
     week: { start: currentWeekStart, end: now.date },
     month: { start: monthStart, end: now.date },
+    previousMonth: { start: previousMonthStart, end: previousMonthEnd },
   }
 }
 
@@ -119,7 +124,7 @@ function KmPodium({ ranking, period }) {
     <div>
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">TOP 3 · {period === 'week' ? 'SEMANA ANTERIOR' : 'ESTE MES'}</p>
+          <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">TOP 3 · {period === 'week' ? 'ESTA SEMANA' : 'ESTE MES'}</p>
           <h2 className="mt-1 text-2xl font-black">El podio PR</h2>
         </div>
         <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.07] px-3 py-1 text-[9px] font-black text-emerald-300">STRAVA</span>
@@ -171,6 +176,11 @@ export default function PublicWeeklyRanking() {
   const ranking = useMemo(() => {
     return makeRanking(activities, profiles, period === 'week' ? ranges.week : ranges.month)
   }, [activities, profiles, period, ranges])
+
+  const previousMonthRanking = useMemo(
+    () => makeRanking(activities, profiles, ranges.previousMonth),
+    [activities, profiles, ranges]
+  )
 
   const activeRange = period === 'week' ? ranges.week : ranges.month
   const rangeLabel = `${shortDate(activeRange.start)} → ${shortDate(activeRange.end)}`
@@ -226,6 +236,30 @@ export default function PublicWeeklyRanking() {
             </div>
             <p className="mt-5 text-[10px] leading-5 text-white/30">Se recalcula con las actividades públicas de Strava sincronizadas en Punta Rollers. La semana corre de lunes hasta hoy y el mes desde el día 1 hasta hoy.</p>
           </section>
+          {previousMonthRanking.length > 0 && (
+            <section className="relative overflow-hidden rounded-[24px] border border-violet-300/15 bg-[radial-gradient(circle_at_100%_0%,rgba(139,92,246,.16),transparent_42%),rgba(255,255,255,.025)] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">CIERRE MENSUAL · ARCHIVO PR</p>
+                  <h3 className="mt-1 text-xl font-black">El mes pasado quedó así.</h3>
+                  <p className="mt-2 text-[10px] leading-5 text-white/32">{shortDate(ranges.previousMonth.start)} → {shortDate(ranges.previousMonth.end)}</p>
+                </div>
+                <span className="text-2xl">🏁</span>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {previousMonthRanking.slice(0, 3).map((row, index) => (
+                  <div key={row.alumnoId} className="flex items-center gap-3 rounded-[18px] border border-white/[.06] bg-black/20 p-3">
+                    <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${index === 0 ? 'bg-amber-300 text-black' : index === 1 ? 'bg-slate-200 text-black' : 'bg-orange-700 text-white'}`}>{index + 1}</div>
+                    {row.photo ? <img src={row.photo} alt={row.name} className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-white/[.05] text-xs font-black">{initials(row.name)}</div>}
+                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="mt-0.5 text-[9px] uppercase tracking-[.1em] text-white/28">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p></div>
+                    <p className="shrink-0 text-sm font-black text-violet-200">{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-[9px] leading-4 text-white/24">El cierre se calcula sobre las actividades públicas de Strava del mes calendario ya finalizado.</p>
+            </section>
+          )}
         </div>
       </main>
     </PublicLayout>
