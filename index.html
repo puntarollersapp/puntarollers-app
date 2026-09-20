@@ -36,68 +36,10 @@
     <script>
       (() => {
         let handledConfirmation = false
-        let rankingLoading = false
-        const rankingEndpoint = 'https://ycgxnzeaihuwlwfwalom.supabase.co/functions/v1/public-ranking'
-        const initials = (name) => String(name || 'PR').split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join('') || 'PR'
-        const avatarHtml = (row) => row?.photo
-          ? `<img class="pr-feed-rank-avatar" src="${row.photo}" alt="${row.name || ''}">`
-          : `<span class="pr-feed-rank-avatar pr-feed-rank-initials">${initials(row?.name)}</span>`
-
         async function ensureInlineRanking() {
-          if (location.pathname !== '/app/actividad') {
-            document.querySelector('.pr-feed-ranking')?.remove()
-            return
-          }
-          const latestLabel = [...document.querySelectorAll('p')].find((el) => el.textContent.trim() === 'Tu última actividad')
-          const latestSection = latestLabel?.closest('section')
-          if (!latestSection || document.querySelector('.pr-feed-ranking') || rankingLoading) return
-          rankingLoading = true
-          try {
-            const response = await fetch(rankingEndpoint, { cache: 'no-store' })
-            if (!response.ok) throw new Error('ranking')
-            const data = await response.json()
-            const weekly = Array.isArray(data?.week?.ranking) ? data.week.ranking.slice(0, 3) : []
-            const monthly = Array.isArray(data?.month?.ranking) ? data.month.ranking.slice(0, 3) : []
-            if (!weekly.length && !monthly.length) return
-            const rows = weekly.length ? weekly : monthly
-            const monthlyLeader = monthly[0]
-            const section = document.createElement('section')
-            section.className = 'pr-feed-ranking'
-            section.innerHTML = `
-              <div class="pr-feed-ranking-glow"></div>
-              <a href="/ranking-semanal" class="pr-feed-ranking-link" aria-label="Abrir ranking PR completo">
-                <div class="pr-feed-ranking-head">
-                  <div>
-                    <small>🏆 PUNTA ROLLERS · TOP RANKING</small>
-                    <strong>El podio de la semana</strong>
-                  </div>
-                  <span class="pr-feed-live">EN VIVO</span>
-                </div>
-                <div class="pr-feed-ranking-podium">
-                  ${rows.map((row, index) => `
-                    <div class="pr-feed-rank-person pr-place-${index + 1}">
-                      <div class="pr-feed-rank-photo">${avatarHtml(row)}<b>${index + 1}</b></div>
-                      <strong>${String(row.name || 'Integrante PR').split(' ')[0]}</strong>
-                      <span>${Number(row.km || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</span>
-                    </div>`).join('')}
-                </div>
-                <div class="pr-feed-ranking-actions">
-                  <span class="pr-feed-ranking-cta">VER RANKING COMPLETO <b>→</b></span>
-                  <span class="pr-feed-ranking-sub">Semana + mes · kilómetros Strava</span>
-                </div>
-              </a>
-              <a href="/ranking-semanal?period=month" class="pr-feed-monthly" aria-label="Ver podio mensual">
-                <div>
-                  <small>📆 PODIO MENSUAL</small>
-                  <strong>${monthlyLeader ? `#1 ${String(monthlyLeader.name || 'Integrante PR').split(' ')[0]} · ${Number(monthlyLeader.km || 0).toLocaleString('es-UY', { maximumFractionDigits: 1 })} km` : 'Ver clasificación del mes'}</strong>
-                </div>
-                <span>VER MES →</span>
-              </a>`
-            latestSection.insertAdjacentElement('afterend', section)
-          } catch (_) {
-          } finally {
-            rankingLoading = false
-          }
+          // El ranking de /app/actividad ahora lo gestiona RollerFeedPinnedPodium.
+          // Limpiamos cualquier bloque legacy para evitar rankings duplicados o datos viejos.
+          document.querySelector('.pr-feed-ranking')?.remove()
         }
 
         function compactBirthdays() {
