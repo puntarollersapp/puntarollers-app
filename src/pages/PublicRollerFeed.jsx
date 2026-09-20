@@ -149,12 +149,112 @@ function feedItemDate(item) {
   return new Date(item.date || 0).getTime() || 0
 }
 
+
+function montevideoToday() {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Montevideo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+    })
+      .formatToParts(new Date())
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value])
+  )
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    weekday: parts.weekday,
+    year: Number(parts.year),
+    month: Number(parts.month),
+  }
+}
+
+function shiftDate(value, amount) {
+  const date = new Date(`${value}T12:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + amount)
+  return date.toISOString().slice(0, 10)
+}
+
+function rankingRanges() {
+  const now = montevideoToday()
+  const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(now.weekday)
+  const mondayOffset = weekday === 0 ? -6 : 1 - weekday
+  return {
+    week: { start: shiftDate(now.date, mondayOffset), end: now.date },
+    month: {
+      start: `${now.year}-${String(now.month).padStart(2, '0')}-01`,
+      end: now.date,
+    },
+  }
+}
+
+function insideRankingRange(value, range) {
+  const stamp = new Date(value).getTime()
+  if (!Number.isFinite(stamp)) return false
+  const start = new Date(`${range.start}T00:00:00-03:00`).getTime()
+  const end = new Date(`${range.end}T23:59:59-03:00`).getTime()
+  return stamp >= start && stamp <= end
+}
+
+function buildKmRanking(rows, profiles, range) {
+  const grouped = new Map()
+  ;(rows || [])
+    .filter(isPublicTraining)
+    .filter((row) => lower(row.fuente || 'strava') === 'strava')
+    .filter((row) => insideRankingRange(row.fecha_inicio, range))
+    .forEach((row) => {
+      const id = String(row.alumno_id || '')
+      const km = Math.max(0, Number(row.distancia_metros) || 0) / 1000
+      if (!id || !km) return
+      const current = grouped.get(id) || { id, km: 0, sessions: 0 }
+      current.km += km
+      current.sessions += 1
+      grouped.set(id, current)
+    })
+
+  return [...grouped.values()]
+    .map((entry) => {
+      const profile = profiles.get(entry.id) || {}
+      return {
+        ...entry,
+        name: profileName(profile) || 'Integrante PR',
+        photo: profilePhoto(profile),
+      }
+    })
+    .sort((a, b) => b.km - a.km || b.sessions - a.sessions || a.name.localeCompare(b.name))
+}
+
+function rankInitials(name) {
+  return String(name || 'PR')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'PR'
+}
+
+function RankingAvatar({ row, large = false }) {
+  const size = large ? 'h-16 w-16 sm:h-20 sm:w-20' : 'h-12 w-12 sm:h-14 sm:w-14'
+  if (row?.photo) {
+    return <img src={row.photo} alt={row.name} className={`${size} rounded-full border-2 border-white/15 object-cover`} />
+  }
+  return (
+    <div className={`${size} grid place-items-center rounded-full border-2 border-white/10 bg-gradient-to-br from-orange-400/25 via-amber-300/10 to-violet-500/20 text-sm font-black`}>
+      {rankInitials(row?.name)}
+    </div>
+  )
+}
+
 export default function PublicRollerFeed() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [items, setItems] = useState([])
   const [ambientPulse, setAmbientPulse] = useState({ count: 0, active: false })
+  const [rankingPeriod, setRankingPeriod] = useState('month')
+  const [rankings, setRankings] = useState({ week: [], month: [] })
 
   useEffect(() => {
     function updatePulse() {
@@ -193,6 +293,7 @@ export default function PublicRollerFeed() {
           activitiesResponse,
           legacyResponse,
           eventsResponse,
+          rankingActivitiesResponse,
         ] = await Promise.all([
           supabase.from('profiles_feed').select('*').limit(500),
 
@@ -215,11 +316,24 @@ export default function PublicRollerFeed() {
             .from('rollerfeed_events')
             .select('*')
             .limit(50),
+
+          supabase
+            .from('pr_activities')
+            .select('*')
+            .eq('eliminada', false)
+            .order('fecha_inicio', { ascending: false })
+            .limit(1000),
         ])
 
         if (!active) return
 
         const profiles = buildProfileMap(profilesResponse.data || [])
+        const ranges = rankingRanges()
+        const rankingRows = rankingActivitiesResponse.data || []
+        setRankings({
+          week: buildKmRanking(rankingRows, profiles, ranges.week),
+          month: buildKmRanking(rankingRows, profiles, ranges.month),
+        })
 
         const trainingItems = (activitiesResponse.data || [])
           .filter(isPublicTraining)
@@ -321,7 +435,8 @@ export default function PublicRollerFeed() {
         if (
           activitiesResponse.error ||
           legacyResponse.error ||
-          eventsResponse.error
+          eventsResponse.error ||
+          rankingActivitiesResponse.error
         ) {
           setMessage(
             'Algunas novedades pueden no estar disponibles en este momento.'
@@ -461,6 +576,123 @@ export default function PublicRollerFeed() {
               {message}
             </div>
           )}
+
+
+          {/* LIVE KM RANKING */}
+          <section className="pt-6">
+            <div className="relative overflow-hidden rounded-[30px] border border-amber-300/20 bg-[radial-gradient(circle_at_82%_0%,rgba(124,58,237,.24),transparent_42%),linear-gradient(135deg,#281801_0%,#0b0c11_48%,#0e0715_100%)] shadow-[0_24px_80px_rgba(0,0,0,.4)]">
+              <div className="absolute -left-16 top-16 h-44 w-44 rounded-full border border-orange-500/10" />
+              <div className="absolute -left-10 top-20 h-36 w-36 rounded-full border border-amber-300/10" />
+              <div className="relative p-5 sm:p-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[9px] font-black uppercase tracking-[.2em] text-amber-300">
+                        🏆 PR KM CHALLENGE
+                      </p>
+                      <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.08] px-2.5 py-1 text-[8px] font-black uppercase tracking-[.12em] text-emerald-300">
+                        EN VIVO
+                      </span>
+                    </div>
+                    <h2 className="mt-2 text-[28px] font-black leading-none tracking-[-.04em] sm:text-4xl">
+                      Top Ranking <span className="text-orange-400">PR.</span>
+                    </h2>
+                    <p className="mt-3 max-w-xl text-xs leading-5 text-white/42 sm:text-sm">
+                      Cada salida pública sincronizada desde Strava suma kilómetros. La tabla se mueve con la comunidad y el cierre mensual queda marcado al terminar el último día del mes.
+                    </p>
+                  </div>
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-300/15 bg-amber-300/[.08] text-xl">
+                    ⚡
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-2 rounded-[18px] border border-white/[.08] bg-black/25 p-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setRankingPeriod('week')}
+                    className={`rounded-[14px] px-3 py-3 text-[10px] font-black transition ${rankingPeriod === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black shadow-lg' : 'text-white/40'}`}
+                  >
+                    ESTA SEMANA
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRankingPeriod('month')}
+                    className={`rounded-[14px] px-3 py-3 text-[10px] font-black transition ${rankingPeriod === 'month' ? 'bg-gradient-to-r from-violet-400 to-fuchsia-400 text-black shadow-lg' : 'text-white/40'}`}
+                  >
+                    ESTE MES
+                  </button>
+                </div>
+
+                {(() => {
+                  const ranking = rankings[rankingPeriod] || []
+                  const first = ranking[0]
+                  const second = ranking[1]
+                  const third = ranking[2]
+                  const fourth = ranking[3]
+                  const totalKm = ranking.reduce((sum, row) => sum + row.km, 0)
+                  const gapToPodium = fourth && third ? Math.max(0, third.km - fourth.km) : null
+                  const card = (row, place) => {
+                    if (!row) return <div className="min-w-0" />
+                    const isFirst = place === 1
+                    return (
+                      <div className={`flex min-w-0 flex-col items-center rounded-[22px] border px-2 pb-3 pt-4 text-center ${isFirst ? 'border-amber-300/25 bg-gradient-to-b from-amber-300/[.14] to-white/[.02] -translate-y-2' : 'border-white/[.07] bg-white/[.025]'}`}>
+                        <div className="relative">
+                          {isFirst && <div className="absolute -inset-5 rounded-full bg-amber-300/15 blur-2xl" />}
+                          <div className="relative"><RankingAvatar row={row} large={isFirst} /></div>
+                          <span className={`absolute -bottom-2 left-1/2 grid -translate-x-1/2 place-items-center rounded-full border-2 border-[#0b0c10] font-black ${place === 1 ? 'h-7 w-7 bg-amber-300 text-black' : place === 2 ? 'h-6 w-6 bg-slate-200 text-black' : 'h-6 w-6 bg-orange-700 text-white'}`}>
+                            {place}
+                          </span>
+                        </div>
+                        <p className="mt-4 w-full truncate text-[11px] font-black sm:text-xs">{row.name.split(' ')[0]}</p>
+                        <p className={`mt-1 text-base font-black sm:text-lg ${isFirst ? 'text-amber-300' : 'text-white'}`}>
+                          {row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km
+                        </p>
+                        <p className="mt-1 text-[8px] uppercase tracking-[.1em] text-white/25">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p>
+                      </div>
+                    )
+                  }
+
+                  return ranking.length ? (
+                    <>
+                      <div className="mt-6 grid grid-cols-3 items-end gap-2">
+                        {card(second, 2)}
+                        {card(first, 1)}
+                        {card(third, 3)}
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-3">
+                          <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/25">KM EN JUEGO</p>
+                          <p className="mt-1 text-lg font-black text-orange-300">{totalKm.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
+                          <p className="mt-1 text-[9px] text-white/28">{ranking.length} rollers sumando</p>
+                        </div>
+                        <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-3">
+                          <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/25">{fourth ? '#4 ACECHANDO EL PODIO' : 'LA TABLA ESTÁ ABIERTA'}</p>
+                          <p className="mt-1 truncate text-sm font-black">{fourth ? fourth.name.split(' ')[0] : 'Tu próxima salida suma'}</p>
+                          <p className="mt-1 text-[9px] text-white/28">{fourth && gapToPodium !== null ? `a ${gapToPodium.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km del #3` : 'Cada kilómetro cuenta'}</p>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/ranking-semanal?period=${rankingPeriod}`}
+                        className="mt-4 flex min-h-12 items-center justify-between rounded-[16px] bg-gradient-to-r from-amber-300 via-orange-400 to-orange-500 px-4 text-xs font-black text-black shadow-[0_12px_34px_rgba(249,115,22,.16)] transition active:scale-[.99]"
+                      >
+                        <span>VER CLASIFICACIÓN COMPLETA</span>
+                        <span className="text-lg">→</span>
+                      </Link>
+                      <p className="mt-3 text-center text-[9px] leading-4 text-white/24">
+                        Se actualiza con los entrenamientos públicos de Strava sincronizados en Punta Rollers.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="mt-5 rounded-[22px] border border-white/[.07] bg-white/[.025] p-6 text-center text-sm text-white/40">
+                      Todavía no hay kilómetros públicos cargados para este período.
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+          </section>
 
           {/* APP EXPERIENCE TEASER */}
           <section className="pt-6">
