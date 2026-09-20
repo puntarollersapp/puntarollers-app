@@ -102,7 +102,7 @@ function PodiumAvatar({ row, size = 'lg' }) {
   return <div className={`${dimension} grid place-items-center rounded-full border-4 border-black/70 bg-gradient-to-br from-amber-400/35 via-violet-500/15 to-white/10 text-xl font-black`}>{initials(row?.name)}</div>
 }
 
-function KmPodium({ ranking, period }) {
+function KmPodium({ ranking, period, statuses }) {
   if (!ranking.length) return null
   const first = ranking[0]
   const second = ranking[1]
@@ -117,6 +117,7 @@ function KmPodium({ ranking, period }) {
       <p className="mt-5 max-w-[115px] truncate text-center text-sm font-black">{row.name}</p>
       <p className={`mt-1 text-xl font-black ${order === 1 ? 'text-amber-300' : 'text-white'}`}>{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
       <p className="mt-1 text-[9px] uppercase tracking-[.13em] text-white/30">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p>
+      {statuses?.[String(row.alumnoId)] ? <p className="mt-2 max-w-[125px] break-words rounded-xl border border-white/[.07] bg-black/25 px-2 py-2 text-center text-[9px] font-bold leading-3 text-white/60">“{statuses[String(row.alumnoId)]}”</p> : null}
       <div className={`mt-3 flex w-full items-start justify-center rounded-t-[18px] border border-white/10 bg-gradient-to-b pt-3 text-2xl ${order === 1 ? 'h-28 from-amber-400/20 to-white/[.03]' : order === 2 ? 'h-20 from-slate-300/10 to-white/[.02]' : 'h-16 from-orange-700/15 to-white/[.02]'}`}>{order === 1 ? '👑' : order === 2 ? '🥈' : '🥉'}</div>
     </div>
   ) : <div key={`empty-${order}`} className="min-w-0 flex-1" />
@@ -144,6 +145,7 @@ export default function PublicWeeklyRanking() {
   const [activities, setActivities] = useState([])
   const [profiles, setProfiles] = useState(new Map())
   const [message, setMessage] = useState('')
+  const [statuses, setStatuses] = useState({})
   function changePeriod(next) {
     setPeriod(next)
     setParams({ period: next })
@@ -155,13 +157,15 @@ export default function PublicWeeklyRanking() {
       setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, activitiesResponse] = await Promise.all([
+        const [profilesResponse, activitiesResponse, statusesResponse] = await Promise.all([
           supabase.from('profiles_feed').select('*').limit(500),
           supabase.from('pr_activities').select('*').eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
+          supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
         ])
         if (!active) return
         if (activitiesResponse.error) throw activitiesResponse.error
         setActivities(activitiesResponse.data || [])
+        setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(buildProfileMap(profilesResponse.data || []))
       } catch (_) {
         if (active) setMessage('No pudimos cargar el ranking en este momento.')
@@ -213,7 +217,7 @@ export default function PublicWeeklyRanking() {
             ) : message ? (
               <div className="rounded-[22px] border border-amber-400/15 bg-amber-400/[.06] p-5 text-sm text-amber-100/70">{message}</div>
             ) : ranking.length ? (
-              <KmPodium ranking={ranking} period={period} />
+              <KmPodium ranking={ranking} period={period} statuses={statuses} />
             ) : (
               <div className="rounded-[24px] border border-white/[.08] bg-white/[.025] p-7 text-center text-sm text-white/40">Todavía no hay kilómetros públicos suficientes para armar este podio.</div>
             )}
@@ -229,7 +233,7 @@ export default function PublicWeeklyRanking() {
                 <div key={row.alumnoId} className="flex items-center gap-3 rounded-[18px] border border-white/[.06] bg-black/20 p-3">
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.05] text-sm font-black text-white/55">{index + 1}</div>
                   {row.photo ? <img src={row.photo} alt={row.name} className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-orange-400/25 to-violet-500/20 text-xs font-black">{initials(row.name)}</div>}
-                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="mt-0.5 text-[9px] uppercase tracking-[.11em] text-white/30">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p></div>
+                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="mt-0.5 text-[9px] uppercase tracking-[.11em] text-white/30">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p>{statuses[String(row.alumnoId)] ? <p className="mt-1 break-words text-[10px] font-semibold leading-4 text-violet-200/70">“{statuses[String(row.alumnoId)]}”</p> : null}</div>
                   <p className="shrink-0 text-base font-black text-amber-300">{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
                 </div>
               ))}
