@@ -3,10 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { supabase } from '../lib/supabase'
 
-const TOMA_SLUG = 'toma-3-2026-09-02'
-const TOMA_DATE = '2026-09-02'
-const LIVE_REFRESH_MS = 20000
-
 function lower(value) {
   return String(value || '').trim().toLowerCase()
 }
@@ -50,13 +46,10 @@ function dateRanges() {
   const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(now.weekday)
   const mondayOffset = weekday === 0 ? -6 : 1 - weekday
   const currentWeekStart = shiftDate(now.date, mondayOffset)
-  const previousWeekStart = shiftDate(currentWeekStart, -7)
   const monthStart = `${now.year}-${String(now.month).padStart(2, '0')}-01`
-  const nextMonth = new Date(Date.UTC(now.year, now.month, 1, 12))
-  const monthEnd = new Date(nextMonth.getTime() - 86400000).toISOString().slice(0, 10)
   return {
-    week: { start: previousWeekStart, end: shiftDate(previousWeekStart, 6) },
-    month: { start: monthStart, end: monthEnd },
+    week: { start: currentWeekStart, end: now.date },
+    month: { start: monthStart, end: now.date },
   }
 }
 
@@ -91,7 +84,7 @@ function makeRanking(rows, profiles, range) {
   return [...grouped.values()].map((entry) => {
     const profile = profiles.get(entry.alumnoId) || {}
     return { ...entry, name: profileName(profile), photo: profilePhoto(profile) }
-  }).sort((a, b) => b.km - a.km || b.sessions - a.sessions || a.name.localeCompare(b.name)).slice(0, 3)
+  }).sort((a, b) => b.km - a.km || b.sessions - a.sessions || a.name.localeCompare(b.name))
 }
 
 function initials(name) {
@@ -126,7 +119,7 @@ function KmPodium({ ranking, period }) {
     <div>
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">TOP 3 · {period === 'week' ? 'SEMANA ANTERIOR' : 'MES COMPLETO'}</p>
+          <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">TOP 3 · {period === 'week' ? 'SEMANA ANTERIOR' : 'ESTE MES'}</p>
           <h2 className="mt-1 text-2xl font-black">El podio PR</h2>
         </div>
         <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.07] px-3 py-1 text-[9px] font-black text-emerald-300">STRAVA</span>
@@ -136,77 +129,19 @@ function KmPodium({ ranking, period }) {
   )
 }
 
-function formatTime(totalSeconds) {
-  const seconds = Math.max(0, Math.round(Number(totalSeconds) || 0))
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const rest = seconds % 60
-  return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}` : `${minutes}:${String(rest).padStart(2, '0')}`
-}
-
-function TrialPodium({ rows, loading }) {
-  const ranked = (rows || []).filter((row) => Number(row.rank) >= 1 && Number(row.rank) <= 3)
-  const byRank = (rank) => ranked.find((row) => Number(row.rank) === rank) || null
-  const card = (row, rank) => {
-    const winner = rank === 1
-    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'
-    if (!row) return (
-      <div className={`rounded-[24px] border border-dashed border-white/10 bg-white/[.018] p-3 text-center ${winner ? 'min-h-[205px]' : 'min-h-[185px]'}`}>
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white/[.04] text-2xl opacity-40">{medal}</div>
-        <p className="mt-4 text-[10px] font-black uppercase tracking-[.13em] text-white/25">Esperando toma…</p>
-      </div>
-    )
-    const name = row.display_name || 'Roller PR'
-    return (
-      <div className={`relative flex min-w-0 flex-col items-center rounded-[24px] border p-3 text-center ${winner ? 'border-amber-300/30 bg-gradient-to-b from-amber-300/[.13] to-white/[.025]' : 'border-white/[.08] bg-white/[.025]'}`}>
-        {winner && <div className="absolute -inset-5 rounded-full bg-amber-300/10 blur-2xl" />}
-        <div className="relative">
-          {row.photo ? <img src={row.photo} alt={name} className={`${winner ? 'h-24 w-24' : 'h-20 w-20'} rounded-full border-4 border-black/70 object-cover`} /> : <div className={`${winner ? 'h-24 w-24' : 'h-20 w-20'} grid place-items-center rounded-full border-4 border-black/70 bg-gradient-to-br from-amber-400/25 to-violet-500/15 text-xl font-black`}>{initials(name)}</div>}
-          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-2xl">{medal}</span>
-        </div>
-        <p className="relative mt-5 max-w-[115px] truncate text-sm font-black">{name}</p>
-        <p className={`relative mt-2 text-xl font-black ${winner ? 'text-amber-300' : 'text-orange-300'}`}>{Number(row.speed_kmh || 0).toFixed(1)} km/h</p>
-        <p className="relative mt-1 text-[9px] text-white/35">{Number(row.distance_km || 0).toLocaleString('es-UY', { maximumFractionDigits: 2 })} km · {formatTime(row.time_seconds)}</p>
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">RANKING TOMA DE TIEMPO 3</p>
-          <h2 className="mt-1 text-2xl font-black">Toma de Tiempo 3</h2>
-          <p className="mt-2 text-[11px] font-bold capitalize text-white/45">{longDate(TOMA_DATE)}</p>
-        </div>
-        <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.07] px-3 py-1 text-[9px] font-black text-emerald-300">EN VIVO</span>
-      </div>
-      {loading && !ranked.length ? (
-        <div className="grid grid-cols-3 gap-3">{[0, 1, 2].map((i) => <div key={i} className="h-56 animate-pulse rounded-[24px] bg-white/[.04]" />)}</div>
-      ) : (
-        <div className="grid grid-cols-3 items-end gap-2">{card(byRank(2), 2)}<div className="-translate-y-3">{card(byRank(1), 1)}</div>{card(byRank(3), 3)}</div>
-      )}
-      <p className="mt-4 text-center text-[10px] leading-5 text-white/30">Podio provisional. Se actualiza cada 20 segundos a medida que entran nuevas tomas registradas desde Strava.</p>
-    </div>
-  )
-}
-
 export default function PublicWeeklyRanking() {
   const ranges = useMemo(() => dateRanges(), [])
   const [params, setParams] = useSearchParams()
   const requested = params.get('period')
-  const initialPeriod = requested === 'week' || requested === 'month' ? requested : 'toma'
+  const initialPeriod = requested === 'week' ? 'week' : 'month'
   const [period, setPeriod] = useState(initialPeriod)
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState([])
   const [profiles, setProfiles] = useState(new Map())
   const [message, setMessage] = useState('')
-  const [trialRows, setTrialRows] = useState([])
-  const [trialLoading, setTrialLoading] = useState(true)
-
   function changePeriod(next) {
     setPeriod(next)
-    setParams(next === 'toma' ? {} : { period: next })
+    setParams({ period: next })
   }
 
   useEffect(() => {
@@ -233,26 +168,12 @@ export default function PublicWeeklyRanking() {
     return () => { active = false }
   }, [])
 
-  useEffect(() => {
-    let active = true
-    async function loadTrial() {
-      const { data, error } = await supabase.rpc('get_rollerfeed_live_podium', { p_slug: TOMA_SLUG })
-      if (!active) return
-      if (!error) setTrialRows(Array.isArray(data) ? data : [])
-      setTrialLoading(false)
-    }
-    loadTrial()
-    const timer = window.setInterval(loadTrial, LIVE_REFRESH_MS)
-    return () => { active = false; window.clearInterval(timer) }
-  }, [])
-
   const ranking = useMemo(() => {
-    if (period === 'toma') return []
     return makeRanking(activities, profiles, period === 'week' ? ranges.week : ranges.month)
   }, [activities, profiles, period, ranges])
 
   const activeRange = period === 'week' ? ranges.week : ranges.month
-  const rangeLabel = period === 'toma' ? longDate(TOMA_DATE) : `${shortDate(activeRange.start)} → ${shortDate(activeRange.end)}`
+  const rangeLabel = `${shortDate(activeRange.start)} → ${shortDate(activeRange.end)}`
 
   return (
     <PublicLayout>
@@ -265,22 +186,19 @@ export default function PublicWeeklyRanking() {
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[.22em] text-amber-300">🏆 PUNTA ROLLERS · STRAVA</p>
                 <h1 className="mt-3 text-[40px] font-black leading-[.94] tracking-[-.04em]">Top Ranking<br/><span className="text-orange-400">PR.</span></h1>
-                <p className="mt-4 max-w-md text-sm leading-6 text-white/45">Toma de Tiempo, semana anterior y mes completo. Cada ranking mantiene su período claramente separado.</p>
+                <p className="mt-4 max-w-md text-sm leading-6 text-white/45">Kilómetros de la comunidad PR, actualizados con los entrenamientos de Strava. Mirá quién viene sumando más esta semana y este mes.</p>
               </div>
               <Link to="/rollerfeed" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[.04]">←</Link>
             </div>
-            <div className="relative mt-6 grid grid-cols-3 gap-2 rounded-[20px] border border-white/10 bg-black/25 p-1.5">
-              <button onClick={() => changePeriod('toma')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'toma' ? 'bg-gradient-to-r from-orange-400 to-amber-300 text-black' : 'text-white/45'}`}>TOMA 3</button>
-              <button onClick={() => changePeriod('week')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black' : 'text-white/45'}`}>SEM. ANTERIOR</button>
+            <div className="relative mt-6 grid grid-cols-2 gap-2 rounded-[20px] border border-white/10 bg-black/25 p-1.5">
+              <button onClick={() => changePeriod('week')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black' : 'text-white/45'}`}>ESTA SEMANA</button>
               <button onClick={() => changePeriod('month')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'month' ? 'bg-gradient-to-r from-violet-400 to-fuchsia-400 text-black' : 'text-white/45'}`}>MES COMPLETO</button>
             </div>
             <div className="relative mt-4 inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[10px] font-black uppercase tracking-[.10em] text-white/45">{rangeLabel}</div>
           </section>
 
           <section className="rounded-[30px] border border-white/[.08] bg-[#0b0c10] p-5 shadow-[0_24px_70px_rgba(0,0,0,.28)]">
-            {period === 'toma' ? (
-              <TrialPodium rows={trialRows} loading={trialLoading} />
-            ) : loading ? (
+            {loading ? (
               <div className="grid grid-cols-3 gap-3">{[0, 1, 2].map((i) => <div key={i} className="h-72 animate-pulse rounded-[24px] bg-white/[.04]" />)}</div>
             ) : message ? (
               <div className="rounded-[22px] border border-amber-400/15 bg-amber-400/[.06] p-5 text-sm text-amber-100/70">{message}</div>
@@ -291,8 +209,22 @@ export default function PublicWeeklyRanking() {
             )}
           </section>
 
-          <section className="rounded-[24px] border border-white/[.07] bg-white/[.025] p-5 text-xs leading-6 text-white/40">
-            <strong className="text-white/60">Toma de Tiempo 3:</strong> miércoles 2 de septiembre de 2026, clasificación provisional en vivo. <strong className="text-white/60">Semana anterior:</strong> último lunes a domingo ya finalizado. <strong className="text-white/60">Mes completo:</strong> del día 1 al último día del mes. Los rankings de kilómetros contabilizan entrenamientos públicos de Strava visibles en RollerFeed.
+          <section className="rounded-[24px] border border-white/[.07] bg-white/[.025] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">CLASIFICACIÓN COMPLETA</p><h3 className="mt-1 text-xl font-black">Todos los kilómetros</h3></div>
+              <span className="rounded-full border border-orange-400/15 bg-orange-400/[.07] px-3 py-1 text-[9px] font-black text-orange-300">{ranking.length} rollers</span>
+            </div>
+            <div className="mt-4 space-y-2">
+              {ranking.map((row, index) => (
+                <div key={row.alumnoId} className="flex items-center gap-3 rounded-[18px] border border-white/[.06] bg-black/20 p-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.05] text-sm font-black text-white/55">{index + 1}</div>
+                  {row.photo ? <img src={row.photo} alt={row.name} className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-orange-400/25 to-violet-500/20 text-xs font-black">{initials(row.name)}</div>}
+                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="mt-0.5 text-[9px] uppercase tracking-[.11em] text-white/30">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p></div>
+                  <p className="shrink-0 text-base font-black text-amber-300">{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-[10px] leading-5 text-white/30">Se recalcula con las actividades públicas de Strava sincronizadas en Punta Rollers. La semana corre de lunes hasta hoy y el mes desde el día 1 hasta hoy.</p>
           </section>
         </div>
       </main>
