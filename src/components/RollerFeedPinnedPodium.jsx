@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/auth'
 
 const REFRESH_MS = 60000
 
@@ -151,7 +152,7 @@ function Avatar({ row, first = false }) {
   )
 }
 
-function Place({ row, rank }) {
+function Place({ row, rank, status }) {
   if (!row) return <div className="min-w-0" />
   const first = rank === 1
   return (
@@ -170,15 +171,20 @@ function Place({ row, rank }) {
       <p className="mt-1 text-[8px] uppercase tracking-[.1em] text-white/25">
         {row.sessions} entreno{row.sessions === 1 ? '' : 's'}
       </p>
+      {status ? <p className="mt-2 w-full break-words rounded-xl border border-white/[.07] bg-black/25 px-2 py-2 text-[9px] font-bold leading-3 text-white/60">“{status}”</p> : null}
     </div>
   )
 }
 
 export default function RollerFeedPinnedPodium() {
+  const { user } = useAuth()
   const [host, setHost] = useState(null)
   const [period, setPeriod] = useState('month')
   const [rankings, setRankings] = useState({ week: [], month: [] })
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [statuses, setStatuses] = useState({})
+  const [statusDraft, setStatusDraft] = useState('')
+  const [savingStatus, setSavingStatus] = useState(false)
 
   useEffect(() => {
     const node = document.createElement('div')
@@ -207,7 +213,7 @@ export default function RollerFeedPinnedPodium() {
     let active = true
 
     async function load() {
-      const [profilesResponse, activitiesResponse] = await Promise.all([
+      const [profilesResponse, activitiesResponse, statusesResponse] = await Promise.all([
         supabase.from('profiles_feed').select('*').limit(500),
         supabase
           .from('pr_activities')
@@ -215,6 +221,7 @@ export default function RollerFeedPinnedPodium() {
           .eq('eliminada', false)
           .order('fecha_inicio', { ascending: false })
           .limit(1000),
+        supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
       ])
 
       if (!active || activitiesResponse.error) return
@@ -223,6 +230,7 @@ export default function RollerFeedPinnedPodium() {
       const currentRanges = ranges()
       const activities = activitiesResponse.data || []
 
+      setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
       setRankings({
         week: makeRanking(activities, profiles, currentRanges.week),
         month: makeRanking(activities, profiles, currentRanges.month),
@@ -242,7 +250,27 @@ export default function RollerFeedPinnedPodium() {
     }
   }, [])
 
+  async function saveStatus() {
+    const profileId = String(user?.id || '')
+    if (!profileId || savingStatus) return
+    const clean = statusDraft.trim().slice(0, 80)
+    setSavingStatus(true)
+    const { error } = await supabase
+      .from('pr_ranking_statuses')
+      .upsert({ alumno_id: profileId, status_text: clean, updated_at: new Date().toISOString() }, { onConflict: 'alumno_id' })
+    if (!error) setStatuses((current) => ({ ...current, [profileId]: clean }))
+    setSavingStatus(false)
+  }
+
   const ranking = rankings[period] || []
+  const myProfileId = String(user?.id || '')
+  const myRank = ranking.findIndex((row) => String(row.id) === myProfileId) + 1
+  const canPostStatus = myRank > 0
+
+  useEffect(() => {
+    if (myProfileId) setStatusDraft(statuses[myProfileId] || '')
+  }, [myProfileId, statuses])
+
   const stats = useMemo(() => {
     const totalKm = ranking.reduce((sum, row) => sum + row.km, 0)
     const fourth = ranking[3] || null
@@ -302,9 +330,9 @@ export default function RollerFeedPinnedPodium() {
           {ranking.length ? (
             <>
               <div className="mt-6 grid grid-cols-3 items-end gap-2">
-                <Place row={ranking[1]} rank={2} />
-                <Place row={ranking[0]} rank={1} />
-                <Place row={ranking[2]} rank={3} />
+                <Place row={ranking[1]} rank={2} status={statuses[String(ranking[1]?.id)]} />
+                <Place row={ranking[0]} rank={1} status={statuses[String(ranking[0]?.id)]} />
+                <Place row={ranking[2]} rank={3} status={statuses[String(ranking[2]?.id)]} />
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
@@ -330,6 +358,38 @@ export default function RollerFeedPinnedPodium() {
                   </p>
                 </div>
               </div>
+
+
+              {canPostStatus && (
+                <div className="mt-4 rounded-[18px] border border-violet-300/15 bg-violet-400/[.06] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[8px] font-black uppercase tracking-[.14em] text-violet-200">TU ESTADO EN EL RANKING</p>
+                      <p className="mt-1 text-[9px] text-white/30">Estás #{myRank}. Dejá tu mensaje para la tabla.</p>
+                    </div>
+                    <span className="text-lg">💬</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={statusDraft}
+                      onChange={(event) => setStatusDraft(event.target.value.slice(0, 80))}
+                      onKeyDown={(event) => { if (event.key === 'Enter') saveStatus() }}
+                      placeholder="Ej: En sus caras, bitches 😎"
+                      maxLength={80}
+                      className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none placeholder:text-white/20 focus:border-violet-300/35"
+                    />
+                    <button
+                      type="button"
+                      onClick={saveStatus}
+                      disabled={savingStatus}
+                      className="rounded-xl bg-violet-300 px-3 text-[9px] font-black text-black disabled:opacity-50"
+                    >
+                      {savingStatus ? '...' : 'PUBLICAR'}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-right text-[8px] text-white/20">{statusDraft.length}/80</p>
+                </div>
+              )}
 
               <Link
                 to={`/ranking-semanal?period=${period}`}
