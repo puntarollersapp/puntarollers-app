@@ -95,11 +95,11 @@ export default function Personalizadas() {
   const [reservedCredits, setReservedCredits] = useState(0)
   const [bookableCredits, setBookableCredits] = useState(0)
   const [slots, setSlots] = useState([])
-  const [selected, setSelected] = useState(null)
+  const [selected, setSelected] = useState([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
-  const [confirmed, setConfirmed] = useState(null)
+  const [confirmed, setConfirmed] = useState([])
   const [termsOpen, setTermsOpen] = useState(false)
   const [accepted, setAccepted] = useState(() => localStorage.getItem('pr_personal_terms') === PR_PERSONAL_TERMS_VERSION)
   const [nowTick, setNowTick] = useState(() => Date.now())
@@ -135,7 +135,7 @@ export default function Personalizadas() {
     event.preventDefault()
     if (!accepted) return setMessage('Primero aceptá los Términos y Condiciones de PR Personal.')
     localStorage.setItem('pr_personal_terms', PR_PERSONAL_TERMS_VERSION)
-    setBusy(true); setMessage(''); setConfirmed(null)
+    setBusy(true); setMessage(''); setConfirmed([])
     const started = Date.now()
     try {
       const data = await callPersonal({ action: 'identify', phone, demo: demoMode })
@@ -147,16 +147,45 @@ export default function Personalizadas() {
     } catch (error) { setMessage(error.message) } finally { setBusy(false) }
   }
 
+  const toggleSlot = (slot) => {
+    if (slot.ocupado || busy) return
+    setMessage('')
+    setSelected((current) => {
+      const alreadySelected = current.some((item) => item.id === slot.id)
+      if (alreadySelected) return current.filter((item) => item.id !== slot.id)
+      if (current.length >= bookableCredits) {
+        setMessage(`Podés seleccionar hasta ${bookableCredits} clase${bookableCredits === 1 ? '' : 's'} con tu saldo actual.`)
+        return current
+      }
+      return [...current, slot]
+    })
+  }
+
   const reserve = async () => {
-    if (!selected || selected.ocupado) return
+    if (selected.length === 0) return
     setBusy(true); setMessage('')
     const started = Date.now()
+    const ordered = [...selected].sort((a, b) => `${a.fecha} ${a.hora_inicio}`.localeCompare(`${b.fecha} ${b.hora_inicio}`))
+    const completed = []
     try {
-      const data = await callPersonal({ action: 'reserve', phone, slotId: selected.id, demo: demoMode })
+      for (const slot of ordered) {
+        const data = await callPersonal({ action: 'reserve', phone, slotId: slot.id, demo: demoMode })
+        completed.push(data)
+      }
       const wait = Math.max(0, 950 - (Date.now() - started))
       if (wait) await sleep(wait)
-      setConfirmed(data); setSelected(null); await Promise.all([loadBase(), refreshIdentity()])
-    } catch (error) { setMessage(error.message) } finally { setBusy(false) }
+      setConfirmed(completed)
+      setSelected([])
+    } catch (error) {
+      setConfirmed(completed)
+      setSelected([])
+      setMessage(completed.length > 0
+        ? `Se confirmaron ${completed.length} de ${ordered.length} clases. ${error.message}`
+        : error.message)
+    } finally {
+      await Promise.all([loadBase(), refreshIdentity()])
+      setBusy(false)
+    }
   }
 
   if (loading) return <PublicLayout><div className="px-4 py-20"><SkateLoader /></div></PublicLayout>
@@ -179,16 +208,18 @@ export default function Personalizadas() {
 
         {student && upcoming.length > 0 && <section className="pr-section-card"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div><strong>{formatDay(item.slot.fecha)}</strong><small>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</small></div><b>RESERVADA</b></div>)}</div></section>}
 
-        {student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tu próxima clase</h2><p className="pr-muted">Podés reservar {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} más. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
+        {student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tus próximas clases</h2><p className="pr-muted">Podés seleccionar y confirmar hasta {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
           {days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Sin turnos disponibles por ahora</h3><p>Los horarios que ya pasaron o están a menos de 2 horas de comenzar dejan de mostrarse automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.filter((slot) => !slot.ocupado).length} disponible{daySlots.filter((slot) => !slot.ocupado).length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => {
             const occupied = Boolean(slot.ocupado)
-            return <button key={slot.id} disabled={occupied} onClick={() => !occupied && setSelected(slot)} className={`${selected?.id === slot.id ? 'is-selected' : ''} ${occupied ? 'opacity-45 cursor-not-allowed border-white/5 bg-white/[.02]' : ''}`}><span>{formatTime(slot.hora_inicio)}</span><small>{formatTime(slot.hora_inicio)} → {formatTime(slot.hora_fin)}</small><em className={occupied ? '!text-white/35' : ''}>{occupied ? 'Reservado' : 'Disponible'}</em></button>
+            const chosen = selected.some((item) => item.id === slot.id)
+            return <button key={slot.id} type="button" disabled={occupied || busy} aria-pressed={chosen} onClick={() => toggleSlot(slot)} className={`${chosen ? 'is-selected' : ''} ${occupied ? 'opacity-45 cursor-not-allowed border-white/5 bg-white/[.02]' : ''}`}><span>{formatTime(slot.hora_inicio)}</span><small>{formatTime(slot.hora_inicio)} → {formatTime(slot.hora_fin)}</small><em className={occupied ? '!text-white/35' : ''}>{occupied ? 'Reservado' : chosen ? 'Seleccionado' : 'Disponible'}</em></button>
           })}</div></div>)}
-          {selected && <button disabled={busy} onClick={reserve} className="pr-primary pr-confirm">{busy ? 'Confirmando…' : `Reservar ${formatDay(selected.fecha)} · ${formatTime(selected.hora_inicio)}`}</button>}{busy && <SkateLoader label="Confirmando tu turno…" />}</section>}
+          {selected.length > 0 && <div className="pr-info blue">Seleccionaste {selected.length} de {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} disponibles. Podés tocar un horario nuevamente para quitarlo.</div>}
+          {selected.length > 0 && <button disabled={busy} onClick={reserve} className="pr-primary pr-confirm">{busy ? `Confirmando ${selected.length} clase${selected.length === 1 ? '' : 's'}…` : `Confirmar ${selected.length} clase${selected.length === 1 ? '' : 's'}`}</button>}{busy && <SkateLoader label="Confirmando tus turnos…" />}</section>}
 
         {student && pass && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
         {student && pass && Number(pass.clases_disponibles) <= 0 && <div className="pr-info amber">Tu PR Pass está completa. Contactanos para cargar una nueva.</div>}
-        {confirmed && <div className="pr-success pr-pass-enter"><span>✓</span><p className="pr-kicker">RESERVA CONFIRMADA</p><h2>¡Nos vemos sobre ruedas!</h2><p>{formatDay(confirmed.slot.fecha)} · {formatTime(confirmed.slot.hora_inicio)} a {formatTime(confirmed.slot.hora_fin)}.</p><small>El sello de tu PR Pass se aplica cuando la clase se marca como realizada.</small></div>}
+        {confirmed.length > 0 && <div className="pr-success pr-pass-enter"><span>✓</span><p className="pr-kicker">{confirmed.length === 1 ? 'RESERVA CONFIRMADA' : 'RESERVAS CONFIRMADAS'}</p><h2>¡Nos vemos sobre ruedas!</h2><div className="mt-3 space-y-1">{confirmed.map((item) => <p key={item.reservation.id}>{formatDay(item.slot.fecha)} · {formatTime(item.slot.hora_inicio)} a {formatTime(item.slot.hora_fin)}.</p>)}</div><small>El sello de tu PR Pass se aplica cuando cada clase se marca como realizada.</small></div>}
         {message && <div className="pr-message">{message}</div>}
         <button className="pr-terms-footer" onClick={() => setTermsOpen(true)}>Términos y Condiciones · PR Personal</button>
       </div>
