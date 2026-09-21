@@ -30,7 +30,7 @@ export default function Login() {
       }
 
       const isTreasury = result?.user?.esTesoreria === true
-      if (result?.user?.id && !isTreasury && !['admin','profesor'].includes(result?.user?.role)) {
+      if (result?.user?.id && !isTreasury && (!['admin','profesor'].includes(result?.user?.role) || result?.user?.documento === '48036677')) {
         const { data: training } = await (await import('../lib/supabase')).supabase.from('pr_training_enrollments').select('category').eq('profile_id', result.user.id).eq('event_slug','shifter-marathon-2026').maybeSingle()
         if (!training) { navigate('/app/deberes', { replace: true }); return }
         if (training.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
