@@ -40,6 +40,8 @@ function NavIcon({ type, active = false }) {
     <circle cx="7" cy="18.5" r="1.55"/><circle cx="13.5" cy="18.5" r="1.55"/>
   </svg>
 
+  if (type === 'training') return <svg {...common}><path d="M5 19V9"/><path d="M19 19V5"/><path d="M5 15h4l2-5 3 7 2-4h3"/></svg>
+
   if (type === 'music') return <svg {...common}><path d="M9 18V6l10-2v12"/><path d="M9 10l10-2"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg>
 
   // Insignias: medalla sólida y visible incluso inactiva.
@@ -87,12 +89,15 @@ export default function BottomNav() {
     { path: '/app/perfil', label: 'Perfil', icon: 'profile' },
     { path: '/app/comunidad', label: 'Comunidad', icon: 'community', tone: 'cyan', badge: requestCount },
     { path: '/app/entrenamiento', label: 'Actividad', icon: 'activity', tone: 'red' },
+    { path: '/app/deberes', label: 'Deberes', icon: 'training', tone: 'gold', trainingOnly: true },
     { path: '/app/actividad', label: 'RollerFeed', icon: 'rollerfeed', featured: true },
     { path: '/app/musica', label: 'PR Music', icon: 'music', tone: 'violet' },
     { path: '/app/insignias', label: 'Insignias', icon: 'badges', tone: 'gold' },
   ]
 
-  if (isStaff) nav.push({ path: '/admin', label: 'Admin', icon: 'admin' })
+  const visibleNav = nav.filter((item) => !item.trainingOnly || isStaff || window.localStorage.getItem('pr_training_visible') === '1')
+
+  if (isStaff) visibleNav.push({ path: '/admin', label: 'Admin', icon: 'admin' })
 
   function toneClass(item, active) {
     if (item.tone === 'cyan') return active ? 'text-cyan-300' : 'text-cyan-200/45'
@@ -107,8 +112,8 @@ export default function BottomNav() {
       className="fixed bottom-0 left-1/2 z-50 w-full max-w-[520px] -translate-x-1/2 border-t border-white/[0.07] bg-[#08080c]/96 shadow-[0_-14px_40px_rgba(0,0,0,.38)] backdrop-blur-2xl"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
     >
-      <div className={`grid items-end px-1 pb-1 pt-2 ${isStaff ? 'grid-cols-8' : 'grid-cols-7'}`}>
-        {nav.map((item) => {
+      <div className={`grid items-end px-1 pb-1 pt-2 ${isStaff ? 'grid-cols-9' : (visibleNav.length === 8 ? 'grid-cols-8' : 'grid-cols-7')}`}>
+        {visibleNav.map((item) => {
           const active = pathname === item.path || (item.path === '/admin' && pathname.startsWith('/admin'))
 
           if (item.featured) {
