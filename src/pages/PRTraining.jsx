@@ -37,7 +37,7 @@ export default function PRTraining(){
  async function choose(category){
    setSaving(true)
    const {data}=await supabase.from('pr_training_enrollments').upsert({profile_id:user.id,event_slug:EVENT,category,active:category!=='NO',updated_at:new Date().toISOString()},{onConflict:'profile_id,event_slug'}).select().single()
-   setEnrollment(data||{category});setSaving(false);if(category!=='NO')load()
+   setEnrollment(data||{category}); if(category!=='NO') window.localStorage.setItem('pr_training_visible','1'); else window.localStorage.removeItem('pr_training_visible'); setSaving(false);if(category!=='NO')load()
  }
  async function copy(code){try{await navigator.clipboard.writeText(code);setCopied(code);setTimeout(()=>setCopied(''),1600)}catch{}}
  const resultMap=useMemo(()=>new Map(results.map(r=>[r.task_id,r])),[results])
