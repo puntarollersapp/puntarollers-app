@@ -11,8 +11,7 @@ const speed=ms=>(Number(ms)||0)*3.6
 const name=p=>[p?.nombre,p?.apellido].filter(Boolean).join(' ')||'Alumno PR'
 const groups=p=>(Array.isArray(p?.grupos_info)?p.grupos_info:[]).map(x=>String(x?.titulo||x?.nombre||'').trim()).filter(Boolean)
 function startFor(p){const n=Date.now();if(p==='7d')return new Date(n-7*DAY);if(p==='30d')return new Date(n-30*DAY);if(p==='90d')return new Date(n-90*DAY);if(p==='180d')return new Date(n-180*DAY);if(p==='365d')return new Date(n-365*DAY);return new Date('2020-01-01T00:00:00Z')}
-function csvEscape(v){const s=String(v??'');return (s.includes(',')||s.includes('\
-')||s.includes('\\r')||s.includes('\\"'))?'\\"'+s.replaceAll('\\"','\\"\\"')+'\\"':s}
+function csvEscape(v){const s=String(v??'');const quote=s.includes(',')||s.includes('"')||s.includes(String.fromCharCode(10))||s.includes(String.fromCharCode(13));return quote?'"'+s.replaceAll('"','""')+'"':s}
 function Metric({label,value,sub}){return <div className="rounded-[22px] border border-white/10 bg-white/[.035] p-4"><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/30">{label}</p><p className="mt-2 text-2xl font-black tracking-[-.03em]">{value}</p>{sub?<p className="mt-1 text-[10px] text-white/35">{sub}</p>:null}</div>}
 
 export default function PRPerformance(){
