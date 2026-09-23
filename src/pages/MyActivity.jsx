@@ -83,7 +83,7 @@ export default function MyActivity() {
     let alive = true
     async function load() {
       const [activity, sum] = await Promise.all([
-        supabase.from('pr_activities').select('*').eq('alumno_id', profileId).eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(250),
+        supabase.from('pr_inline_skate_activities').select('*').eq('alumno_id', profileId).eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(250),
         supabase.from('pr_activity_summary').select('*').eq('alumno_id', profileId).maybeSingle(),
       ])
       if (!alive) return
