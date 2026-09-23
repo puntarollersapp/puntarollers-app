@@ -194,6 +194,7 @@ export default function PRControlHub() {
       <div className="grid gap-3 sm:grid-cols-2">
         <SectionCard tone="admin" icon="✉️" title="PR EMAILS" description="Base completa, selección de contactos, prueba y envío de campañas." meta="221 correos habilitados" alert="NUEVO" onClick={() => go('/admin/emails')} />
         <SectionCard tone="alumnos" icon="👥" title="ALUMNOS" description="Perfiles, grupos, progreso, objetivos y actividad." meta={`${students.length} alumnos`} onClick={() => setView('alumnos')} />
+        <SectionCard tone="comunidad" icon="📈" title="PR PERFORMANCE" description="Expedientes deportivos, Strava, deberes, notas técnicas e informes." meta="Centro de rendimiento" alert="NUEVO" onClick={() => go('/admin/performance')} />
         <SectionCard tone="personal" icon="🎟️" title="PR PERSONAL" description="Reservas, horarios, PR Pass, cuponeras e historial." meta={`${personalReservations.length} reservas esta semana`} alert={pendingPersonalRegs ? `${pendingPersonalRegs} preinscripciones` : null} onClick={() => setView('personal')} />
         <SectionCard tone="inscripciones" icon="🛼" title="INSCRIPCIONES" description="Adultos, Personalizadas, PR Kids y clínicas." meta={`${registrations.length} registros`} alert={pendingRegistrations ? `${pendingRegistrations} pendientes` : 'Todo revisado'} onClick={() => setView('gestion')} />
         <SectionCard tone="accesos" icon="🔐" title="ACCESOS" description="Bienvenida, creación de perfil, activación y PR Card." meta={`${accessRequests.length} solicitudes`} alert={pendingAccess ? `${pendingAccess} por resolver` : 'Todo al día'} onClick={() => setView('gestion')} />
@@ -206,7 +207,7 @@ export default function PRControlHub() {
   const alumnosView = <AreaPage title="Alumnos" subtitle="Todo lo relacionado con perfiles y evolución." tone="alumnos" onBack={() => setView('inicio')}>
     <Tool title="Perfiles y alumnos" desc="Buscar, editar y administrar fichas." onClick={() => clickLegacy('Usuarios')} />
     <Tool title="Grupos" desc="Organizar alumnos y grupos de clase." onClick={() => clickLegacy('Grupos')} />
-    <Tool title="Performance" desc="Tomas, tiempos y evolución técnica." onClick={() => clickLegacy('Performance')} />
+    <Tool title="PR Performance" desc="Expedientes, métricas, deberes, notas e informes descargables." onClick={() => go('/admin/performance')} />
     <Tool title="Objetivos" desc="Crear y seguir objetivos por alumno." onClick={() => clickLegacy('Objetivos')} />
   </AreaPage>
 
