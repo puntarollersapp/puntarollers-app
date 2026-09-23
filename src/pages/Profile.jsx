@@ -544,7 +544,7 @@ export default function Profile() {
           .maybeSingle(),
 
         supabase
-          .from('pr_activities')
+          .from('pr_inline_skate_activities')
           .select('*')
           .eq('alumno_id', profileId)
           .eq('fuente', 'strava')
@@ -553,7 +553,7 @@ export default function Profile() {
           .limit(6),
 
         supabase
-          .from('pr_activities')
+          .from('pr_inline_skate_activities')
           .select('distancia_metros, tiempo_movimiento_segundos')
           .eq('alumno_id', profileId)
           .eq('fuente', 'strava')
