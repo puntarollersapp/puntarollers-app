@@ -50,7 +50,8 @@ import WelcomeAccess from './pages/WelcomeAccess'
 import AdminAccessRequests from './pages/AdminAccessRequests'
 import PRTesoreria from './pages/PRTesoreria'
 import PREmailsAdmin from './pages/PREmailsAdmin'
-import PRTraining from './pages/PRTraining'\nimport PRPerformance from './pages/PRPerformance'
+import PRTraining from './pages/PRTraining'
+import PRPerformance from './pages/PRPerformance'
 
 function ScrollToTop(){const{pathname}=useLocation();useEffect(()=>{window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0},[pathname]);return null}
 function PrivateRoute({children}){const{user,loading}=useAuth();const location=useLocation();if(loading)return null;if(!user)return <Navigate to="/login" state={{from:location}} replace/>;return <RequiredEmailGate><StudentLaunchGate user={user}>{children}</StudentLaunchGate></RequiredEmailGate>}
