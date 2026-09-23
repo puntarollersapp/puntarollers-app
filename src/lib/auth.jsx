@@ -154,7 +154,8 @@ export function AuthProvider({ children }) {
     if (!cleanDoc || !cleanPin) return { error: 'Ingresá documento y PIN.' }
 
     let authData
-    const authResult = await supabase.auth.signInWithPassword({ email: buildAuthEmail(cleanDoc), password: cleanPin })
+    const authPassword = `PR-${cleanPin}-${cleanDoc}`
+    const authResult = await supabase.auth.signInWithPassword({ email: buildAuthEmail(cleanDoc), password: authPassword })
     authData = authResult.data
     if (authResult.error || !authData?.user) return { error: 'Documento o PIN incorrecto.' }
 
