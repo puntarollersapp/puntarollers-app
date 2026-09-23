@@ -16,68 +16,34 @@ const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value
   if (typeof value !== 'string' || !value.trim()) return []
-
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
+  try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : [] } catch { return [] }
 }
 
 function parseStatistics(value) {
   const fallback = { eventos: 0, insignias: 0, notas: 0 }
-
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return { ...fallback, ...value }
-  }
-
+  if (value && typeof value === 'object' && !Array.isArray(value)) return { ...fallback, ...value }
   if (typeof value === 'string' && value.trim()) {
-    try {
-      const parsed = JSON.parse(value)
-
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return { ...fallback, ...parsed }
-      }
-    } catch {
-      return fallback
-    }
+    try { const parsed = JSON.parse(value); if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return { ...fallback, ...parsed } } catch { return fallback }
   }
-
   return fallback
 }
 
 function normalizeRole(role) {
   const normalized = String(role || '').trim().toLowerCase()
-
-  if (
-    normalized === 'admin' ||
-    normalized === 'profesor' ||
-    normalized === 'alumno'
-  ) {
-    return normalized
-  }
-
-  return 'alumno'
+  return ['admin','profesor','alumno'].includes(normalized) ? normalized : 'alumno'
 }
 
 function normalizeStatus(status) {
   const normalized = String(status || 'Activo').trim().toLowerCase()
-
   if (normalized === 'inactivo') return 'Inactivo'
   if (normalized === 'vencido') return 'Vencido'
   if (normalized === 'bloqueado') return 'Bloqueado'
-
   return 'Activo'
 }
 
 function calculateAccess(profile) {
   const status = normalizeStatus(profile.estado)
-
-  if (typeof profile.acceso_habilitado === 'boolean') {
-    return profile.acceso_habilitado
-  }
-
+  if (typeof profile.acceso_habilitado === 'boolean') return profile.acceso_habilitado
   return status === 'Activo'
 }
 
@@ -85,6 +51,9 @@ function normalizeProfile(profile) {
   const role = normalizeRole(profile.role)
   const estado = normalizeStatus(profile.estado)
   const accesoHabilitado = calculateAccess(profile)
+  const esProfesor = Boolean(profile.es_profesor) || role === 'profesor' || role === 'admin'
+  const participaComoAlumno = Boolean(profile.participa_como_alumno) || role === 'alumno'
+  const exentoMensualidad = Boolean(profile.exento_mensualidad) || role === 'admin' || role === 'profesor'
 
   return {
     id: profile.id,
@@ -94,14 +63,11 @@ function normalizeProfile(profile) {
     apellido: profile.apellido || '',
     documento: profile.documento || '',
     role,
+    esProfesor,
+    participaComoAlumno,
+    exentoMensualidad,
     esTesoreria: Boolean(profile.es_tesoreria),
-    profesorId:
-      profile.profesor_id ||
-      (role === 'profesor'
-        ? profile.id
-        : role === 'admin'
-          ? profile.id
-          : ''),
+    profesorId: profile.profesor_id || (esProfesor ? profile.id : ''),
     ciudad: profile.ciudad || '',
     instagram: profile.instagram || '',
     email: profile.email || '',
@@ -121,286 +87,100 @@ function normalizeProfile(profile) {
     prcardMemberId: profile.prcard_member_id || '',
     ultimoIngreso: profile.ultimo_ingreso || '',
     createdAt: profile.created_at || '',
-    prcard: {
-      activa: Boolean(profile.prcard_activa),
-      link: 'https://puntarollerscard.com/',
-    },
-    tracking: {
-      activo: Boolean(profile.tracking_activo),
-    },
+    prcard: { activa: Boolean(profile.prcard_activa), link: 'https://puntarollerscard.com/' },
+    tracking: { activo: Boolean(profile.tracking_activo) },
     estadisticas: parseStatistics(profile.estadisticas),
-    pr_avatar:
-      profile.pr_avatar &&
-      typeof profile.pr_avatar === 'object' &&
-      !Array.isArray(profile.pr_avatar)
-        ? profile.pr_avatar
-        : {},
+    pr_avatar: profile.pr_avatar && typeof profile.pr_avatar === 'object' && !Array.isArray(profile.pr_avatar) ? profile.pr_avatar : {},
   }
 }
 
-function saveLocalUser(userData) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(userData))
-}
-
-function clearLocalUser() {
-  localStorage.removeItem(STORAGE_KEY)
-}
-
-function buildAuthEmail(documento) {
-  return `${documento}@usuarios.puntarollers.app`
-}
-
-function buildAuthPassword(documento, pin) {
-  return `PR-${pin}-${documento}`
-}
+function saveLocalUser(userData) { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)) }
+function clearLocalUser() { localStorage.removeItem(STORAGE_KEY) }
+function buildAuthEmail(documento) { return `${documento}@usuarios.puntarollers.app` }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const refreshInProgressRef = useRef(false)
-
-  async function loadProfileByAuthUserId(authUserId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('auth_user_id', authUserId)
-      .maybeSingle()
-
-    if (error || !data) {
-      return { error: 'No pudimos cargar el perfil vinculado.' }
-    }
-
-    return { user: normalizeProfile(data) }
-  }
+  const refreshInFlightRef = useRef(null)
 
   async function refreshUserSilently() {
-    if (refreshInProgressRef.current) {
-      return { skipped: true }
-    }
-
-    refreshInProgressRef.current = true
-
-    try {
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      const authUserId = sessionData?.session?.user?.id || ''
-
-      if (sessionError || !authUserId) {
-        clearLocalUser()
-        setUser(null)
-
-        return { error: 'No hay una sesión segura activa.' }
-      }
-
-      const result = await loadProfileByAuthUserId(authUserId)
-
-      if (result.error || !result.user) {
-        return {
-          error: result.error || 'No pudimos actualizar el perfil.',
-        }
-      }
-
-      saveLocalUser(result.user)
-      setUser(result.user)
-
-      return { success: true, user: result.user }
-    } finally {
-      refreshInProgressRef.current = false
-    }
+    if (refreshInFlightRef.current) return refreshInFlightRef.current
+    const task = (async () => {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const authUser = sessionData?.session?.user
+      if (!authUser) return { skipped: true }
+      const { data: profileData, error } = await supabase.from('profiles').select('*').eq('auth_user_id', authUser.id).maybeSingle()
+      if (error || !profileData) return { error: error?.message || 'Perfil no encontrado.' }
+      const userData = normalizeProfile(profileData)
+      saveLocalUser(userData)
+      setUser(userData)
+      return { success: true, user: userData }
+    })()
+    refreshInFlightRef.current = task
+    try { return await task } finally { refreshInFlightRef.current = null }
   }
 
   useEffect(() => {
     let active = true
-
-    async function restoreSession() {
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      if (!active) return
-
-      if (sessionError || !sessionData?.session?.user?.id) {
-        clearLocalUser()
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      const result = await loadProfileByAuthUserId(
-        sessionData.session.user.id
-      )
-
-      if (!active) return
-
-      if (result.error || !result.user) {
-        await supabase.auth.signOut()
-        clearLocalUser()
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      saveLocalUser(result.user)
-      setUser(result.user)
-      setLoading(false)
-    }
-
-    restoreSession()
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!active) return
-
-        if (event === 'SIGNED_OUT' || !session?.user?.id) {
-          clearLocalUser()
-          setUser(null)
-          setLoading(false)
-          return
+    async function bootstrap() {
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (data?.session?.user) {
+          const result = await refreshUserSilently()
+          if (!active) return
+          if (!result?.success) {
+            const saved = localStorage.getItem(STORAGE_KEY)
+            if (saved) setUser(JSON.parse(saved))
+          }
+        } else {
+          const saved = localStorage.getItem(STORAGE_KEY)
+          if (saved) setUser(JSON.parse(saved))
         }
-
-        const result = await loadProfileByAuthUserId(session.user.id)
-
-        if (active && result.user) {
-          saveLocalUser(result.user)
-          setUser(result.user)
-          setLoading(false)
-        }
-      }
-    )
-
-    return () => {
-      active = false
-      authListener?.subscription?.unsubscribe()
+      } catch { clearLocalUser(); if (active) setUser(null) }
+      finally { if (active) setLoading(false) }
     }
+    bootstrap()
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') { clearLocalUser(); setUser(null) }
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') refreshUserSilently()
+    })
+    const interval = window.setInterval(() => refreshUserSilently(), AUTO_REFRESH_INTERVAL_MS)
+    return () => { active = false; listener?.subscription?.unsubscribe(); window.clearInterval(interval) }
   }, [])
-
-  useEffect(() => {
-    if (!user) return undefined
-
-    function refreshWhenVisible() {
-      if (document.visibilityState === 'visible') {
-        refreshUserSilently()
-      }
-    }
-
-    function refreshWhenFocused() {
-      refreshUserSilently()
-    }
-
-    document.addEventListener('visibilitychange', refreshWhenVisible)
-    window.addEventListener('focus', refreshWhenFocused)
-
-    const intervalId = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        refreshUserSilently()
-      }
-    }, AUTO_REFRESH_INTERVAL_MS)
-
-    return () => {
-      document.removeEventListener('visibilitychange', refreshWhenVisible)
-      window.removeEventListener('focus', refreshWhenFocused)
-      window.clearInterval(intervalId)
-    }
-  }, [user?.id])
 
   async function login(documento, pin) {
     const cleanDoc = String(documento || '').replace(/\D/g, '')
     const cleanPin = String(pin || '').trim()
+    if (!cleanDoc || !cleanPin) return { error: 'Ingresá documento y PIN.' }
 
-    if (!cleanDoc || !cleanPin) {
-      return { error: 'Ingresá tu documento y tu PIN.' }
-    }
+    let authData
+    const authResult = await supabase.auth.signInWithPassword({ email: buildAuthEmail(cleanDoc), password: cleanPin })
+    authData = authResult.data
+    if (authResult.error || !authData?.user) return { error: 'Documento o PIN incorrecto.' }
 
-    const email = buildAuthEmail(cleanDoc)
-    const password = buildAuthPassword(cleanDoc, cleanPin)
-
-    const {
-      data: authData,
-      error: authError,
-    } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (authError || !authData?.user?.id) {
-      return { error: 'Documento o PIN incorrecto.' }
-    }
-
-    const {
-      data: profileData,
-      error: profileError,
-    } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('auth_user_id', authData.user.id)
-      .maybeSingle()
-
-    if (profileError || !profileData) {
-      await supabase.auth.signOut()
-
-      return {
-        error: 'La cuenta existe, pero no encontramos su perfil vinculado.',
-      }
-    }
-
-    if (String(profileData.documento || '') !== cleanDoc) {
-      await supabase.auth.signOut()
-
-      return {
-        error: 'La cuenta segura no coincide con este documento.',
-      }
-    }
+    const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('auth_user_id', authData.user.id).maybeSingle()
+    if (profileError || !profileData) { await supabase.auth.signOut(); return { error: 'La cuenta existe, pero no encontramos su perfil vinculado.' } }
+    if (String(profileData.documento || '') !== cleanDoc) { await supabase.auth.signOut(); return { error: 'La cuenta segura no coincide con este documento.' } }
 
     const loginDate = new Date().toISOString()
+    const { error: updateError } = await supabase.from('profiles').update({ ultimo_ingreso: loginDate }).eq('id', profileData.id)
+    if (updateError) console.warn('No se pudo registrar el último ingreso:', updateError)
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ ultimo_ingreso: loginDate })
-      .eq('id', profileData.id)
-
-    if (updateError) {
-      console.warn(
-        'No se pudo registrar el último ingreso:',
-        updateError
-      )
-    }
-
-    const userData = normalizeProfile({
-      ...profileData,
-      ultimo_ingreso: loginDate,
-    })
-
-    saveLocalUser(userData)
-    setUser(userData)
-
-    return {
-      success: true,
-      user: userData,
-      accessBlocked: !userData.accesoHabilitado,
-    }
+    const userData = normalizeProfile({ ...profileData, ultimo_ingreso: loginDate })
+    saveLocalUser(userData); setUser(userData)
+    return { success: true, user: userData, accessBlocked: !userData.accesoHabilitado }
   }
 
   async function logout() {
     const { data: sessionData } = await supabase.auth.getSession()
-
-    if (sessionData?.session) {
-      await supabase.auth.signOut()
-    }
-
-    clearLocalUser()
-    setUser(null)
+    if (sessionData?.session) await supabase.auth.signOut()
+    clearLocalUser(); setUser(null)
   }
 
   function updateUser(updates) {
     setUser((currentUser) => {
       if (!currentUser) return currentUser
-
-      const nextUser = {
-        ...currentUser,
-        ...updates,
-      }
-
+      const nextUser = { ...currentUser, ...updates }
       saveLocalUser(nextUser)
       return nextUser
     })
@@ -408,31 +188,25 @@ export function AuthProvider({ children }) {
 
   async function refreshUser() {
     const result = await refreshUserSilently()
-
-    if (result?.skipped) {
-      return { success: true, user }
-    }
-
+    if (result?.skipped) return { success: true, user }
     return result
   }
 
+  const isProfessor = Boolean(user?.esProfesor) || user?.role === 'profesor' || user?.role === 'admin'
+  const isStudent = Boolean(user?.participaComoAlumno) || user?.role === 'alumno'
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        logout,
-        updateUser,
-        refreshUser,
-        isAuthenticated: Boolean(user),
-        isAdmin: user?.role === 'admin',
-        isProfessor: user?.role === 'profesor',
-        isTreasury: Boolean(user?.esTesoreria) || user?.role === 'admin',
-        hasPrivateAccess: Boolean(user?.accesoHabilitado),
-        professores,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user, loading, login, logout, updateUser, refreshUser,
+      isAuthenticated: Boolean(user),
+      isAdmin: user?.role === 'admin',
+      isProfessor,
+      isStudent,
+      isTreasury: Boolean(user?.esTesoreria) || user?.role === 'admin',
+      isPaymentExempt: Boolean(user?.exentoMensualidad) || user?.role === 'admin' || user?.role === 'profesor',
+      hasPrivateAccess: Boolean(user?.accesoHabilitado),
+      professores,
+    }}>
       {children}
     </AuthContext.Provider>
   )
@@ -440,10 +214,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error('useAuth debe utilizarse dentro de AuthProvider')
-  }
-
+  if (!context) throw new Error('useAuth debe utilizarse dentro de AuthProvider')
   return context
 }
