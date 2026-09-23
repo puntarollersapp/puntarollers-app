@@ -112,7 +112,7 @@ export default function Home() {
         const weekStart = new Date(Date.now() - 7 * 86400000).toISOString()
         const [activitiesResponse, profilesResponse, historyResponse] = await Promise.all([
           supabase
-            .from('pr_activities')
+            .from('pr_inline_skate_public_activities')
             .select('*')
             .eq('eliminada', false)
             .gte('fecha_inicio', start.toISOString())
@@ -125,7 +125,7 @@ export default function Home() {
             .limit(500),
 
           supabase
-            .from('pr_activities')
+            .from('pr_inline_skate_public_activities')
             .select('*')
             .eq('eliminada', false)
             .order('fecha_inicio', { ascending: false })
