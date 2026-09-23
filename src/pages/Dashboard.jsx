@@ -450,7 +450,7 @@ export default function Dashboard() {
           .or('eliminado.is.null,eliminado.eq.false'),
 
         supabase
-          .from('pr_activities')
+          .from('pr_inline_skate_public_activities')
           .select('*')
           .eq('eliminada', false)
           .gte('fecha_inicio', new Date(Date.now() - 14 * DAY_MS).toISOString())
