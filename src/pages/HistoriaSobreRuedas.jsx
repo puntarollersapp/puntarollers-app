@@ -441,7 +441,7 @@ export default function HistoriaSobreRuedas() {
           }),
 
         supabase
-          .from('pr_activities')
+          .from('pr_inline_skate_activities')
           .select(
             'id,nombre_actividad,distancia_metros,tiempo_movimiento_segundos,velocidad_promedio,fecha_inicio'
           )
