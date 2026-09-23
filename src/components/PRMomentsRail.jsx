@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { loadActiveMoments } from '../lib/moments'
+import ProfileAvatar from './ProfileAvatar'
 
 export default function PRMomentsRail({ currentProfileId }) {
   const navigate = useNavigate()
@@ -17,7 +18,7 @@ export default function PRMomentsRail({ currentProfileId }) {
       setMoments(rows)
       const ids = [...new Set(rows.map((row) => row.profile_id).filter(Boolean))]
       if (!ids.length) return setProfiles({})
-      const { data: people, error: peopleError } = await supabase.from('profiles_feed').select('id,nombre,apellido,foto').in('id', ids)
+      const { data: people, error: peopleError } = await supabase.from('profiles_feed').select('id,nombre,apellido,foto,role,es_profesor,participa_como_alumno,verificado').in('id', ids)
       if (peopleError) throw peopleError
       setProfiles(Object.fromEntries((people || []).map((person) => [String(person.id), person])))
     } catch (_) {
@@ -46,7 +47,7 @@ export default function PRMomentsRail({ currentProfileId }) {
   return (
     <section className="rounded-[28px] border border-violet-300/10 bg-gradient-to-br from-violet-500/[.08] via-[#0b0b10] to-[#09090d] px-4 py-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">PR MOMENTS</p><p className="mt-1 text-xs text-white/35">24 horas. Tu momento. Tu roll.</p></div>
+        <div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">PR MOMENTS</p><p className="mt-1 text-xs text-white/35">72 horas. Tu momento. Tu roll.</p></div>
         <button type="button" onClick={() => navigate('/app/moments?create=1')} className="rounded-2xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-[10px] font-black text-violet-200">+ Nuevo</button>
       </div>
       {error && <p className="mb-3 rounded-2xl bg-amber-400/10 px-3 py-2 text-[10px] text-amber-100/70">{error}</p>}
@@ -56,7 +57,7 @@ export default function PRMomentsRail({ currentProfileId }) {
           const profile = profiles[profileId] || {}
           const name = [profile.nombre, profile.apellido].filter(Boolean).join(' ') || 'Roller PR'
           const own = String(profileId) === String(currentProfileId)
-          return <button key={profileId} type="button" onClick={() => navigate(`/app/moments?moment=${items[0].id}`)} className="flex w-[72px] shrink-0 flex-col items-center gap-2"><div className={`grid h-16 w-16 place-items-center overflow-hidden rounded-full border-2 ${own ? 'border-amber-300' : 'border-violet-400'} bg-white/[.04] p-[2px]`}>{profile.foto ? <img src={profile.foto} alt={name} className="h-full w-full rounded-full object-cover" /> : <span>🛼</span>}</div><span className="max-w-[70px] truncate text-[9px] font-bold text-white/55">{own ? 'Vos' : name.split(' ')[0]}</span></button>
+          return <button key={profileId} type="button" onClick={() => navigate(`/app/moments?moment=${items[0].id}`)} className="flex w-[72px] shrink-0 flex-col items-center gap-2"><div className={`grid h-16 w-16 place-items-center rounded-full border-2 ${own ? 'border-amber-300' : 'border-violet-400'} bg-white/[.04] p-[2px]`}><ProfileAvatar profile={profile} className="h-full w-full" rounded="rounded-full" /></div><span className="max-w-[70px] truncate text-[9px] font-bold text-white/55">{own ? 'Vos' : name.split(' ')[0]}</span></button>
         })}
         {!loading && !error && !groups.length && <div className="flex min-w-[190px] items-center px-2 text-[10px] leading-4 text-white/30">Todavía no hay Moments activos. La pista está lista para vos.</div>}
       </div>
