@@ -70,7 +70,7 @@ export default function RollerAvatar(){
     async function load(){
       const [p,a]=await Promise.all([
         supabase.from('profiles').select('pr_avatar').eq('id',profileId).maybeSingle(),
-        supabase.from('pr_activities').select('distancia_metros').eq('alumno_id',profileId).eq('fuente','strava').eq('eliminada',false).limit(1000),
+        supabase.from('pr_inline_skate_activities').select('distancia_metros').eq('alumno_id',profileId).eq('fuente','strava').eq('eliminada',false).limit(1000),
       ])
       if(!alive)return
       if(!p.error)setAvatar(merged(p.data?.pr_avatar))
