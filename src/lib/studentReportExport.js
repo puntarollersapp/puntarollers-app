@@ -2,20 +2,56 @@ import { reportSheets } from './studentReport'
 
 const clean=(v)=>v==null?'':String(v)
 const fileBase=(r)=>`PR_${[r.profile?.nombre,r.profile?.apellido].filter(Boolean).join('_')||'Alumno'}_${r.period}`.replace(/[^a-zA-Z0-9_-]/g,'_')
+const escXml=(s)=>clean(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+const colName=(n)=>{let s='';for(let x=n+1;x;x=Math.floor((x-1)/26))s=String.fromCharCode(65+(x-1)%26)+s;return s}
+const download=(blob,name)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+
+function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0}
+function u16(n){return [n&255,(n>>>8)&255]} function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function zipStore(files){
+  const enc=new TextEncoder(),chunks=[],central=[];let offset=0
+  for(const f of files){
+    const name=enc.encode(f.name),data=typeof f.data==='string'?enc.encode(f.data):f.data,crc=crc32(data)
+    const local=new Uint8Array([80,75,3,4,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),0,0])
+    chunks.push(local,name,data)
+    const cent=new Uint8Array([80,75,1,2,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),0,0,0,0,0,0,0,0,0,0,...u32(offset)])
+    central.push(cent,name);offset+=local.length+name.length+data.length
+  }
+  const centralSize=central.reduce((s,x)=>s+x.length,0),end=new Uint8Array([80,75,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(centralSize),...u32(offset),0,0])
+  return new Blob([...chunks,...central,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+}
+function sheetXml(rows){
+  const xmlRows=rows.map((r,ri)=>`<row r="${ri+1}">${r.map((v,ci)=>{const ref=`${colName(ci)}${ri+1}`;if(typeof v==='number'&&Number.isFinite(v))return `<c r="${ref}"><v>${v}</v></c>`;return `<c r="${ref}" t="inlineStr"><is><t>${escXml(v)}</t></is></c>`}).join('')}</row>`).join('')
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${xmlRows}</sheetData></worksheet>`
+}
 export async function exportStudentExcel(report){
- const XLSX=await import('xlsx'),wb=XLSX.utils.book_new(),sheets=reportSheets(report)
- Object.entries(sheets).forEach(([name,rows])=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=(rows[0]||[]).map((_,i)=>({wch:Math.min(42,Math.max(12,...rows.slice(0,100).map(r=>clean(r[i]).length+2)))}));XLSX.utils.book_append_sheet(wb,ws,name.slice(0,31))})
- XLSX.writeFile(wb,`${fileBase(report)}.xlsx`)
+  const entries=Object.entries(reportSheets(report))
+  const files=[
+    {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${entries.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`},
+    {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+    {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${entries.map(([name],i)=>`<sheet name="${escXml(name.slice(0,31))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets></workbook>`},
+    {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${entries.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}</Relationships>`},
+    ...entries.map(([,rows],i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXml(rows)}))
+  ]
+  download(zipStore(files),`${fileBase(report)}.xlsx`)
+}
+const ascii=(s)=>clean(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,' ')
+const pdfEsc=(s)=>ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')
+function wrap(text,max=88){const words=ascii(text).split(/\s+/),out=[];let line='';for(const w of words){if((line+' '+w).trim().length>max){if(line)out.push(line);line=w}else line=(line+' '+w).trim()}if(line)out.push(line);return out}
+function buildPdf(lines){
+  const perPage=48,pages=[];for(let i=0;i<lines.length;i+=perPage)pages.push(lines.slice(i,i+perPage))
+  const objs=[];objs[1]='<< /Type /Catalog /Pages 2 0 R >>';objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+  const pageIds=[],contentIds=[];let id=4;for(const p of pages){pageIds.push(id++);contentIds.push(id++)}
+  objs[2]=`<< /Type /Pages /Count ${pages.length} /Kids [${pageIds.map(x=>x+' 0 R').join(' ')}] >>`
+  pages.forEach((page,idx)=>{const pageId=pageIds[idx],contentId=contentIds[idx];const stream=['BT','/F1 10 Tf','48 795 Td',...page.flatMap((line,i)=>i===0?[`(${pdfEsc(line)}) Tj`]:['0 -15 Td',`(${pdfEsc(line)}) Tj`]),'ET'].join('\n');objs[pageId]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentId} 0 R >>`;objs[contentId]=`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`})
+  let pdf='%PDF-1.4\n',offsets=[0];for(let i=1;i<objs.length;i++){offsets[i]=pdf.length;pdf+=`${i} 0 obj\n${objs[i]}\nendobj\n`}const xref=pdf.length;pdf+=`xref\n0 ${objs.length}\n0000000000 65535 f \n`;for(let i=1;i<objs.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';pdf+=`trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;return new Blob([pdf],{type:'application/pdf'})
 }
 export async function exportStudentPdf(report){
- const [{jsPDF},autoTableModule]=await Promise.all([import('jspdf'),import('jspdf-autotable')]);const autoTable=autoTableModule.default;const doc=new jsPDF({unit:'mm',format:'a4'}),p=report.profile||{},s=report.summary||{},name=[p.nombre,p.apellido].filter(Boolean).join(' ')||'Alumno PR';let y=18
- const title=(t)=>{if(y>270){doc.addPage();y=18}doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text(t,14,y);y+=6}
- doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('PUNTA ROLLERS',14,y);y+=8;doc.setFontSize(15);doc.text('Ficha Deportiva PR',14,y);y+=7;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(`${name} · Período: ${report.period} · Generado: ${new Date(report.generatedAt).toLocaleDateString('es-UY')}`,14,y);y+=10
- title('Resumen');autoTable(doc,{startY:y,theme:'grid',head:[['Métrica','Valor']],body:[['Actividades inline',s.activities],['Kilómetros',Number(s.km||0).toFixed(1)],['Tiempo en movimiento',`${Math.floor((s.movingSeconds||0)/3600)} h ${Math.floor(((s.movingSeconds||0)%3600)/60)} min`],['Desnivel',`${Math.round(s.elevationMeters||0)} m`],['Velocidad media',s.avgSpeedKmh==null?'No disponible':`${s.avgSpeedKmh.toFixed(1)} km/h`],['Velocidad máxima',s.maxSpeedKmh==null?'No disponible':`${s.maxSpeedKmh.toFixed(1)} km/h`],['Calorías',s.calories??'No disponible'],['Deberes completados',s.tasksCompleted],['Clases realizadas',s.classesDone]],styles:{fontSize:8}});y=doc.lastAutoTable.finalY+9
- title('Actividades Strava · patinaje en línea');autoTable(doc,{startY:y,theme:'striped',head:[['Fecha','Actividad','Km','Tiempo','Vel. media','Desnivel']],body:report.activities.map(a=>[a.fecha_inicio?new Date(a.fecha_inicio).toLocaleDateString('es-UY'):'',a.nombre||'Patinaje',((a.distancia_metros||0)/1000).toFixed(1),`${Math.round((a.tiempo_movimiento_segundos||0)/60)} min`,a.velocidad_media_ms==null?'—':`${(a.velocidad_media_ms*3.6).toFixed(1)} km/h`,a.desnivel_metros==null?'—':`${Math.round(a.desnivel_metros)} m`]),styles:{fontSize:7},headStyles:{fontStyle:'bold'}});y=doc.lastAutoTable.finalY+9
- title('Deberes');autoTable(doc,{startY:y,theme:'grid',head:[['Deber','Categoría','Estado','Completado']],body:report.trainingResults.map(r=>[r.pr_training_tasks?.title||'Deber PR',r.pr_training_tasks?.category||'',r.status||'',r.completed_at?new Date(r.completed_at).toLocaleDateString('es-UY'):'']),styles:{fontSize:7}});y=doc.lastAutoTable.finalY+9
- title('Tomas de tiempo');autoTable(doc,{startY:y,theme:'grid',head:[['Fecha','Distancia','Tiempo','Origen']],body:report.takes.map(t=>[t.fecha||'',t.distancia_km==null?'—':`${t.distancia_km} km`,t.tiempo_segundos==null?'—':`${t.tiempo_segundos} s`,t.origen||'']),styles:{fontSize:7}});y=doc.lastAutoTable.finalY+9
- title('Objetivos');autoTable(doc,{startY:y,theme:'grid',head:[['Objetivo','Estado','Fecha límite','Indicación']],body:report.goals.map(g=>[g.titulo||'',g.estado||'',g.fecha_limite||'',g.indicacion||'']),styles:{fontSize:7}});y=doc.lastAutoTable.finalY+9
- title('Observaciones');autoTable(doc,{startY:y,theme:'grid',head:[['Fecha','Observación']],body:report.notes.map(n=>[n.created_at?new Date(n.created_at).toLocaleDateString('es-UY'):'',n.body||'']),styles:{fontSize:7}})
- const pages=doc.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(7);doc.setTextColor(120);doc.text(`Punta Rollers · Informe deportivo · ${i}/${pages}`,14,290)}doc.save(`${fileBase(report)}.pdf`)
+  const p=report.profile||{},s=report.summary||{},name=[p.nombre,p.apellido].filter(Boolean).join(' ')||'Alumno PR',lines=['PUNTA ROLLERS - FICHA DEPORTIVA PR',name,`Periodo: ${report.period} | Generado: ${new Date(report.generatedAt).toLocaleDateString('es-UY')}`,'','RESUMEN',`Actividades inline: ${s.activities} | Kilometros: ${Number(s.km||0).toFixed(1)} | Tiempo movimiento: ${Math.floor((s.movingSeconds||0)/3600)}h ${Math.floor(((s.movingSeconds||0)%3600)/60)}m`,`Desnivel: ${Math.round(s.elevationMeters||0)} m | Velocidad media: ${s.avgSpeedKmh==null?'No disponible':s.avgSpeedKmh.toFixed(1)+' km/h'} | Velocidad maxima: ${s.maxSpeedKmh==null?'No disponible':s.maxSpeedKmh.toFixed(1)+' km/h'}`,`Deberes completados: ${s.tasksCompleted} | Clases realizadas: ${s.classesDone}`,'','ACTIVIDADES STRAVA - PATINAJE EN LINEA']
+  report.activities.forEach(a=>lines.push(...wrap(`${a.fecha_inicio?new Date(a.fecha_inicio).toLocaleDateString('es-UY'):''} | ${a.nombre||'Patinaje'} | ${((a.distancia_metros||0)/1000).toFixed(1)} km | ${Math.round((a.tiempo_movimiento_segundos||0)/60)} min | ${a.velocidad_media_ms==null?'vel. --':(a.velocidad_media_ms*3.6).toFixed(1)+' km/h'}`)))
+  lines.push('','DEBERES');report.trainingResults.forEach(r=>lines.push(...wrap(`${r.pr_training_tasks?.title||'Deber PR'} | ${r.pr_training_tasks?.category||''} | ${r.status||''}`)))
+  lines.push('','TOMAS DE TIEMPO');report.takes.forEach(t=>lines.push(...wrap(`${t.fecha||''} | ${t.distancia_km??'--'} km | ${t.tiempo_segundos??'--'} s | ${t.origen||''}`)))
+  lines.push('','OBJETIVOS');report.goals.forEach(g=>lines.push(...wrap(`${g.titulo||''} | ${g.estado||''} | ${g.fecha_limite||''} | ${g.indicacion||''}`)))
+  lines.push('','OBSERVACIONES');report.notes.forEach(n=>lines.push(...wrap(`${n.created_at?new Date(n.created_at).toLocaleDateString('es-UY'):''} | ${n.body||''}`)))
+  download(buildPdf(lines),`${fileBase(report)}.pdf`)
 }
