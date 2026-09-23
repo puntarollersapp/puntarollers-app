@@ -121,7 +121,7 @@ export default function AvatarPremiumPreview() {
           .eq('id', user.id)
           .maybeSingle(),
         supabase
-          .from('pr_activities')
+          .from('pr_inline_skate_activities')
           .select('distancia_metros')
           .eq('alumno_id', user.id)
           .eq('fuente', 'strava')
