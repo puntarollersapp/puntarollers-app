@@ -805,7 +805,7 @@ export default function Activity() {
       supabase.from('profiles_feed').select('*').limit(500),
 
       supabase
-        .from('pr_activities')
+        .from('pr_inline_skate_public_activities')
         .select('*')
         .eq('eliminada', false)
         .order('fecha_inicio', { ascending: false })
