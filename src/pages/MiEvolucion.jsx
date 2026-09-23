@@ -148,7 +148,7 @@ export function MiEvolucionContent({ embedded = false }) {
         supabase.from('pr_performance_objetivos').select('*').eq('alumno_id', profileId)
           .eq('eliminado', false).order('creado_en', { ascending: false }),
         supabase.from('pr_activity_summary').select('*').eq('alumno_id', profileId).maybeSingle(),
-        supabase.from('pr_activities').select('*').eq('alumno_id', profileId)
+        supabase.from('pr_inline_skate_activities').select('*').eq('alumno_id', profileId)
           .eq('fuente', 'strava')
           .eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
         supabase.from('actividad_pr').select('*').eq('alumno_id', profileId)
