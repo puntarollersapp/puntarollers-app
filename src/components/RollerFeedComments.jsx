@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import ProfileAvatar from './ProfileAvatar'
 
 export default function RollerFeedComments({ feedKey, currentProfileId, canModerate = false }) {
   const [open, setOpen] = useState(false)
@@ -11,43 +12,26 @@ export default function RollerFeedComments({ feedKey, currentProfileId, canModer
 
   async function loadComments() {
     if (!feedKey) return
-    const { data, error: loadError } = await supabase
-      .from('rollerfeed_comments')
-      .select('id,feed_key,profile_id,body,created_at')
-      .eq('feed_key', String(feedKey))
-      .order('created_at', { ascending: true })
+    const { data, error: loadError } = await supabase.from('rollerfeed_comments').select('id,feed_key,profile_id,body,created_at').eq('feed_key', String(feedKey)).order('created_at', { ascending: true })
     if (loadError) { setError('No pudimos cargar los comentarios.'); return }
     setError('')
     const rows = data || []
     setComments(rows)
     const ids = [...new Set(rows.map((row) => row.profile_id).filter(Boolean))]
-    if (!ids.length) {
-      setProfiles({})
-      return
-    }
-    const { data: people } = await supabase
-      .from('profiles_feed')
-      .select('id,nombre,apellido,foto')
-      .in('id', ids)
+    if (!ids.length) { setProfiles({}); return }
+    const { data: people } = await supabase.from('profiles_feed').select('id,nombre,apellido,foto,role,es_profesor,participa_como_alumno,verificado').in('id', ids)
     setProfiles(Object.fromEntries((people || []).map((person) => [String(person.id), person])))
   }
 
-  useEffect(() => {
-    if (open) loadComments()
-  }, [open, feedKey])
+  useEffect(() => { if (open) loadComments() }, [open, feedKey])
 
   async function publish(event) {
     event.preventDefault()
     const body = text.trim()
     if (!body || !currentProfileId || busy) return
     setBusy(true)
-    const { error } = await supabase
-      .from('rollerfeed_comments')
-      .insert({ feed_key: String(feedKey), profile_id: String(currentProfileId), body })
-    if (!error) {
-      setText('')
-      await loadComments()
-    } else setError('No pudimos publicar tu comentario.')
+    const { error } = await supabase.from('rollerfeed_comments').insert({ feed_key: String(feedKey), profile_id: String(currentProfileId), body })
+    if (!error) { setText(''); await loadComments() } else setError('No pudimos publicar tu comentario.')
     setBusy(false)
   }
 
@@ -60,36 +44,23 @@ export default function RollerFeedComments({ feedKey, currentProfileId, canModer
     setBusy(false)
   }
 
-  return (
-    <div className="mt-3 border-t border-white/[.06] pt-3">
-      <button type="button" onClick={() => setOpen((value) => !value)} className="text-[10px] font-bold text-white/45">
-        💬 {open ? 'Ocultar comentarios' : comments.length ? `${comments.length} comentarios` : 'Comentar'}
-      </button>
-      {open && (
-        <div className="mt-3 space-y-3">
-          {error && <p role="alert" className="rounded-xl bg-amber-400/10 px-3 py-2 text-[10px] text-amber-100">{error}</p>}
-          {!comments.length && !error && <p className="text-[10px] text-white/25">Todavía no hay comentarios. Podés escribir el primero.</p>}
-          {comments.map((comment) => {
-            const profile = profiles[String(comment.profile_id)] || {}
-            const name = [profile.nombre, profile.apellido].filter(Boolean).join(' ') || 'Roller PR'
-            return (
-              <div key={comment.id} className="flex gap-2.5">
-                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[.06]">
-                  {profile.foto ? <img src={profile.foto} alt={name} className="h-full w-full object-cover" /> : <span className="grid h-full place-items-center text-xs">🛼</span>}
-                </div>
-                <div className="min-w-0 flex-1 rounded-2xl bg-white/[.035] px-3 py-2.5">
-                  <div className="flex gap-2"><p className="min-w-0 flex-1 text-[10px] font-black text-white/70">{name}</p>{(String(comment.profile_id) === String(currentProfileId) || canModerate) && <button type="button" onClick={() => remove(comment)} className="text-[9px] text-red-300/65">Eliminar</button>}</div>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/65">{comment.body}</p>
-                </div>
-              </div>
-            )
-          })}
-          <form onSubmit={publish} className="flex items-end gap-2">
-            <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={1} placeholder="Escribí un comentario…" className="min-h-11 flex-1 resize-none rounded-2xl border border-white/[.08] bg-black/25 px-3 py-3 text-[11px] text-white outline-none placeholder:text-white/22" />
-            <button type="submit" disabled={!text.trim() || busy} className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-500 text-white disabled:opacity-25">↑</button>
-          </form>
+  return <div className="mt-3 border-t border-white/[.06] pt-3">
+    <button type="button" onClick={() => setOpen((value) => !value)} className="text-[10px] font-bold text-white/45">💬 {open ? 'Ocultar comentarios' : comments.length ? `${comments.length} comentarios` : 'Comentar'}</button>
+    {open && <div className="mt-3 space-y-3">
+      {error && <p role="alert" className="rounded-xl bg-amber-400/10 px-3 py-2 text-[10px] text-amber-100">{error}</p>}
+      {!comments.length && !error && <p className="text-[10px] text-white/25">Todavía no hay comentarios. Podés escribir el primero.</p>}
+      {comments.map((comment) => {
+        const profile = profiles[String(comment.profile_id)] || {}
+        const name = [profile.nombre, profile.apellido].filter(Boolean).join(' ') || 'Roller PR'
+        return <div key={comment.id} className="flex gap-2.5 pt-1">
+          <ProfileAvatar profile={profile} className="h-8 w-8" />
+          <div className="min-w-0 flex-1 rounded-2xl bg-white/[.035] px-3 py-2.5">
+            <div className="flex gap-2"><p className="min-w-0 flex-1 text-[10px] font-black text-white/70">{name}</p>{(String(comment.profile_id) === String(currentProfileId) || canModerate) && <button type="button" onClick={() => remove(comment)} className="text-[9px] text-red-300/65">Eliminar</button>}</div>
+            <p className="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/65">{comment.body}</p>
+          </div>
         </div>
-      )}
-    </div>
-  )
+      })}
+      <form onSubmit={publish} className="flex items-end gap-2"><textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} rows={1} placeholder="Escribí un comentario…" className="min-h-11 flex-1 resize-none rounded-2xl border border-white/[.08] bg-black/25 px-3 py-3 text-[11px] text-white outline-none placeholder:text-white/22"/><button type="submit" disabled={!text.trim() || busy} className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-500 text-white disabled:opacity-25">↑</button></form>
+    </div>}
+  </div>
 }
