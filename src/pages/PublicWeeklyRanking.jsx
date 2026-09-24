@@ -200,7 +200,7 @@ export default function PublicWeeklyRanking() {
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[.22em] text-amber-300">🏆 PUNTA ROLLERS · STRAVA</p>
                 <h1 className="mt-3 text-[40px] font-black leading-[.94] tracking-[-.04em]">Top Ranking<br/><span className="text-orange-400">PR.</span></h1>
-                <p className="mt-4 max-w-md text-sm leading-6 text-white/45">Kilómetros de la comunidad PR, actualizados con los entrenamientos de Strava. Mirá quién viene sumando más esta semana y este mes.</p>
+                <p className="mt-4 max-w-md text-sm leading-6 text-white/45">Kilómetros de patinaje inline de la comunidad PR, actualizados desde Strava. Mirá quién viene sumando más esta semana y este mes.</p>
               </div>
               <Link to="/rollerfeed" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[.04]">←</Link>
             </div>
@@ -219,13 +219,13 @@ export default function PublicWeeklyRanking() {
             ) : ranking.length ? (
               <KmPodium ranking={ranking} period={period} statuses={statuses} />
             ) : (
-              <div className="rounded-[24px] border border-white/[.08] bg-white/[.025] p-7 text-center text-sm text-white/40">Todavía no hay kilómetros públicos suficientes para armar este podio.</div>
+              <div className="rounded-[24px] border border-white/[.08] bg-white/[.025] p-7 text-center text-sm text-white/40">Todavía no hay kilómetros de patinaje inline suficientes para armar este podio.</div>
             )}
           </section>
 
           <section className="rounded-[24px] border border-white/[.07] bg-white/[.025] p-5">
             <div className="flex items-center justify-between gap-3">
-              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">CLASIFICACIÓN COMPLETA</p><h3 className="mt-1 text-xl font-black">Todos los kilómetros</h3></div>
+              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">CLASIFICACIÓN COMPLETA</p><h3 className="mt-1 text-xl font-black">Todos los km inline</h3></div>
               <span className="rounded-full border border-orange-400/15 bg-orange-400/[.07] px-3 py-1 text-[9px] font-black text-orange-300">{ranking.length} rollers</span>
             </div>
             <div className="mt-4 space-y-2">
