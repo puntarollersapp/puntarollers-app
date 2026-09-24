@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 const STEPS = [
   { eyebrow: 'RollerFeed creció', title: 'Todo PR, ahora más vivo.', text: 'A los entrenamientos, cumpleaños y eventos se suman PR Moments: fotos, videos o palabras espontáneas de la comunidad.', icon: '⚡', colors: 'from-orange-500/30 via-amber-300/10 to-transparent' },
-  { eyebrow: 'Nuevo · PR Moments', title: 'Compartí tu momento.', text: 'Publicá texto, foto o video. Se verá en los círculos y también dentro del RollerFeed durante 24 horas.', icon: '📸', colors: 'from-violet-500/35 via-fuchsia-400/10 to-transparent' },
+  { eyebrow: 'Nuevo · PR Moments', title: 'Compartí tu momento.', text: 'Publicá texto, foto o video. Se verá en los círculos y también dentro del RollerFeed durante 72 horas.', icon: '📸', colors: 'from-violet-500/35 via-fuchsia-400/10 to-transparent' },
   { eyebrow: 'Comunidad PR', title: 'Mirá, reaccioná, comentá.', text: 'Abrí cualquier Moment para verlo nuevamente, dejar una reacción o escribir libremente. Lo que pasa sobre ruedas, se comparte acá.', icon: '🔥', colors: 'from-sky-500/30 via-violet-400/10 to-transparent' },
 ]
 
