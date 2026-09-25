@@ -63,8 +63,8 @@
             const anchor = document.createElement('a')
             anchor.href = '/ranking-semanal'
             anchor.className = 'pr-weekly-ranking-shortcut'
-            anchor.innerHTML = '<span class="pr-ranking-trophy">🏆</span><span><strong>Ranking PR</strong><small>Semana · Mes</small></span>'
-            anchor.setAttribute('aria-label', 'Ver ranking PR de kilómetros')
+            anchor.innerHTML = '<span class="pr-ranking-trophy">🏆</span><span><strong>Ranking + premios</strong><small>PR Unlock · Km</small></span>'
+            anchor.setAttribute('aria-label', 'Ver ranking PR, premios y PR Unlock')
             document.body.appendChild(anchor)
           }
           if (!rankingVisible || location.pathname === '/ranking-semanal') document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
