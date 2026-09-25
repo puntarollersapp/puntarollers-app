@@ -131,7 +131,21 @@ function PrizeVisual({ campaign, level, totalKm }) {
   )
 }
 
-function PRUnlock({ campaign, activities, profiles }) {
+function ProgressWheel({ pct, totalKm, maxTarget }) {
+  const radius=74, circumference=2*Math.PI*radius, offset=circumference-(Math.max(0,Math.min(100,pct))/100)*circumference
+  return <div className="relative mx-auto h-[210px] w-[210px]">
+    <svg viewBox="0 0 180 180" className="-rotate-90 h-full w-full">
+      <defs><linearGradient id="prUnlockRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fb923c"/><stop offset="48%" stopColor="#f472b6"/><stop offset="100%" stopColor="#8b5cf6"/></linearGradient></defs>
+      <circle cx="90" cy="90" r={radius} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="13"/>
+      <circle cx="90" cy="90" r={radius} fill="none" stroke="url(#prUnlockRing)" strokeWidth="13" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} className="transition-all duration-700"/>
+    </svg>
+    <div className="absolute inset-0 grid place-items-center text-center">
+      <div><p className="text-[9px] font-black uppercase tracking-[.19em] text-white/32">KM COMUNIDAD</p><p className="mt-1 text-[38px] font-black leading-none">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})}</p><p className="mt-1 text-xs font-black text-fuchsia-300">de {maxTarget.toLocaleString('es-UY')} km</p><p className="mt-2 text-[10px] font-black text-white/45">{pct}% COMPLETADO</p></div>
+    </div>
+  </div>
+}
+
+function PRUnlock({ campaign, activities, profiles, result }) {
   if (!campaign) return null
   const range = { start: campaign.starts_on, end: campaign.ends_on }
   const campaignRanking = makeRanking(activities, profiles, range)
@@ -149,6 +163,8 @@ function PRUnlock({ campaign, activities, profiles }) {
   const leader = campaignRanking[0]
   const today = montevideoToday().date
   const finished = today > campaign.ends_on
+  const contributors = campaignRanking.slice(0,12)
+  const official = result && String(result.campaign_id)===String(campaign.id) ? result : null
   return (
     <section className="relative overflow-hidden rounded-[34px] border border-fuchsia-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(236,72,153,.24),transparent_35%),radial-gradient(circle_at_5%_95%,rgba(124,58,237,.25),transparent_40%),linear-gradient(145deg,#171018,#09090d_65%)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.38)]">
       <div className="absolute -right-14 -top-16 h-48 w-48 rounded-full border border-orange-300/15" />
@@ -161,6 +177,10 @@ function PRUnlock({ campaign, activities, profiles }) {
           <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-wider ${finished ? 'border-white/10 bg-white/5 text-white/40' : 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-300'}`}>{finished ? 'CERRADA' : '● EN VIVO'}</span>
         </div>
         <p className="mt-4 text-xs leading-5 text-white/48">Cada kilómetro de patinaje inline suma dos veces: a tu posición personal y al objetivo colectivo. El grupo desbloquea el premio; al cierre de la misión, el <b className="text-white">#1 del ranking de este desafío</b> se lleva el premio de mayor nivel alcanzado.</p>
+        <div className="mt-4 rounded-[20px] border border-sky-300/20 bg-sky-400/[.07] p-4">
+          <p className="text-[9px] font-black uppercase tracking-[.18em] text-sky-300">📍 EL DESAFÍO ARRANCA DESDE CERO</p>
+          <p className="mt-2 text-[10px] leading-5 text-white/48">El Ranking PR sigue mostrando los kilómetros del mes calendario. <b className="text-white">PR UNLOCK cuenta únicamente lo registrado desde el 25/09 hasta el 25/10.</b> Los kilómetros anteriores no se pierden: simplemente pertenecen al ranking normal y no a esta misión.</p>
+        </div>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-[.12em]">
           <span className="rounded-full border border-orange-300/15 bg-orange-400/[.07] px-3 py-2 text-orange-200">{shortDate(campaign.starts_on)} → {shortDate(campaign.ends_on)}</span>
           <span className="rounded-full border border-white/8 bg-white/[.035] px-3 py-2 text-white/45">PREMIO EVOLUTIVO · NO ACUMULATIVO</span>
@@ -184,7 +204,26 @@ function PRUnlock({ campaign, activities, profiles }) {
           </div>}
         </div>
 
-        <div className="mt-6 rounded-[26px] border border-white/10 bg-black/30 p-4">
+        {official && <div className="mt-5 overflow-hidden rounded-[30px] border border-amber-300/30 bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,.22),transparent_38%),linear-gradient(145deg,rgba(124,58,237,.14),rgba(249,115,22,.08))] p-5">
+          <p className="text-center text-[9px] font-black uppercase tracking-[.2em] text-amber-300">🏆 RESULTADO OFICIAL · PR UNLOCK</p>
+          <div className="mt-4 flex flex-col items-center text-center">
+            <div className="relative">{official.winner_photo?<img src={official.winner_photo} alt={official.winner_name||'Ganador'} className="h-24 w-24 rounded-full border-4 border-amber-300/40 object-cover shadow-[0_0_45px_rgba(251,191,36,.2)]"/>:<div className="grid h-24 w-24 place-items-center rounded-full border-4 border-amber-300/40 bg-amber-300/10 text-2xl font-black">{initials(official.winner_name)}</div>}<span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-3 py-1 text-[9px] font-black text-black">#1</span></div>
+            <h3 className="mt-5 text-2xl font-black">{official.winner_name||'Ganador PR'}</h3>
+            <p className="mt-1 text-sm font-black text-amber-300">{Number(official.winner_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
+            <p className="mt-3 text-[10px] leading-5 text-white/45">La comunidad cerró con <b className="text-white">{Number(official.group_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> y alcanzó el <b className="text-white">Nivel {String(official.unlocked_level||0).padStart(2,'0')}</b>.</p>
+            <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.08] px-4 py-3 text-sm font-black text-amber-200">{official.prize_title||'Misión completada'}</div>
+          </div>
+        </div>}
+
+        <div className="mt-6 rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_50%_30%,rgba(236,72,153,.10),transparent_45%),rgba(0,0,0,.30)] p-5">
+          <ProgressWheel pct={pct} totalKm={totalKm} maxTarget={maxTarget} />
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">PRÓXIMO UNLOCK</p><p className="mt-1 text-lg font-black text-orange-300">{unlockedLevel >= 3 ? 'TODO DESBLOQUEADO' : `${nextLeft.toLocaleString('es-UY',{maximumFractionDigits:1})} km`}</p><p className="text-[9px] text-white/28">{unlockedLevel >= 3 ? 'Misión máxima alcanzada' : 'faltan para el próximo premio'}</p></div>
+            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">LÍDER DEL DESAFÍO</p>{leader ? <><p className="mt-1 truncate text-sm font-black">{leader.name}</p><p className="text-[9px] text-fuchsia-200/70">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {leader.sessions} entrenos</p></> : <p className="mt-1 text-sm font-black text-white/35">Tabla abierta</p>}</div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-[26px] border border-white/10 bg-black/30 p-4">
           <div className="flex items-end justify-between gap-4">
             <div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">KM GRUPALES</p><p className="mt-1 text-4xl font-black">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-lg text-white/30"> / {maxTarget.toLocaleString('es-UY')} km</span></p></div>
             <div className="text-right"><p className="text-2xl font-black text-fuchsia-300">{pct}%</p><p className="text-[8px] uppercase tracking-wider text-white/25">hacia nivel 03</p></div>
@@ -201,6 +240,11 @@ function PRUnlock({ campaign, activities, profiles }) {
             <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">LÍDER DEL DESAFÍO</p>{leader ? <><p className="mt-1 truncate text-sm font-black">{leader.name}</p><p className="text-[9px] text-fuchsia-200/70">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {leader.sessions} entrenos</p></> : <p className="mt-1 text-sm font-black text-white/35">Tabla abierta</p>}</div>
           </div>
         </div>
+        <div className="mt-4 overflow-hidden rounded-[28px] border border-fuchsia-300/15 bg-fuchsia-400/[.045] p-4">
+          <div className="flex items-end justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-fuchsia-300">QUIÉNES ESTÁN MOVIENDO LA RUEDA</p><h3 className="mt-1 text-lg font-black">Aporte al PR Unlock</h3></div><span className="rounded-full bg-white/[.06] px-3 py-1 text-[9px] font-black text-white/40">{campaignRanking.length} rollers</span></div>
+          {contributors.length ? <div className="mt-4 flex gap-3 overflow-x-auto pb-2">{contributors.map((row,index)=><div key={row.alumnoId} className="min-w-[108px] rounded-[20px] border border-white/[.08] bg-black/25 p-3 text-center"><div className="relative mx-auto w-fit">{row.photo?<img src={row.photo} alt={row.name} className="h-14 w-14 rounded-full border-2 border-fuchsia-300/30 object-cover"/>:<div className="grid h-14 w-14 place-items-center rounded-full border-2 border-fuchsia-300/30 bg-violet-400/10 text-xs font-black">{initials(row.name)}</div>}{index<3&&<span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-orange-400 text-[8px] font-black text-black">{index+1}</span>}</div><p className="mt-2 truncate text-[10px] font-black">{row.name}</p><p className="mt-1 text-sm font-black text-orange-300">+{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="text-[8px] text-white/28">{row.sessions} actividad{row.sessions===1?'':'es'}</p></div>)}</div>:<p className="mt-4 rounded-2xl bg-black/20 p-4 text-center text-[10px] text-white/35">La rueda arranca con la primera actividad registrada dentro del desafío.</p>}
+        </div>
+
         <div className="mt-4 space-y-3">
           <PrizeVisual campaign={campaign} level={1} totalKm={totalKm} />
           <PrizeVisual campaign={campaign} level={2} totalKm={totalKm} />
@@ -265,6 +309,7 @@ export default function PublicWeeklyRanking() {
   const [message, setMessage] = useState('')
   const [statuses, setStatuses] = useState({})
   const [unlockCampaign, setUnlockCampaign] = useState(null)
+  const [unlockResult, setUnlockResult] = useState(null)
   function changePeriod(next) {
     setPeriod(next)
     setParams({ period: next })
@@ -288,6 +333,10 @@ export default function PublicWeeklyRanking() {
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(buildProfileMap(profilesResponse.data || []))
         setUnlockCampaign(unlockResponse.data || null)
+        if (unlockResponse.data?.id) {
+          const { data: resultData } = await supabase.from('pr_unlock_results').select('*').eq('campaign_id', unlockResponse.data.id).maybeSingle()
+          if (active) setUnlockResult(resultData || null)
+        } else if (active) setUnlockResult(null)
       } catch (_) {
         if (active) setMessage('No pudimos cargar el ranking en este momento.')
       } finally {
@@ -332,7 +381,7 @@ export default function PublicWeeklyRanking() {
             <div className="relative mt-4 inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[10px] font-black uppercase tracking-[.10em] text-white/45">{rangeLabel}</div>
           </section>
 
-          <PRUnlock campaign={unlockCampaign} activities={activities} profiles={profiles} />
+          <PRUnlock campaign={unlockCampaign} activities={activities} profiles={profiles} result={unlockResult} />
 
           <section className="rounded-[30px] border border-white/[.08] bg-[#0b0c10] p-5 shadow-[0_24px_70px_rgba(0,0,0,.28)]">
             {loading ? (
