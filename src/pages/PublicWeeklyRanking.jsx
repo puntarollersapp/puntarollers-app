@@ -101,6 +101,101 @@ function PodiumAvatar({ row, size = 'lg' }) {
   return <div className={`${dimension} grid place-items-center rounded-full border-4 border-black/70 bg-gradient-to-br from-amber-400/35 via-violet-500/15 to-white/10 text-xl font-black`}>{initials(row?.name)}</div>
 }
 
+function PrizeVisual({ campaign, level, totalKm }) {
+  const target = Number(campaign?.[`prize_${level}_target_km`] || 0)
+  const title = campaign?.[`prize_${level}_title`] || ''
+  const detail = campaign?.[`prize_${level}_detail`] || ''
+  const image = campaign?.[`prize_${level}_image_url`] || ''
+  const unlocked = totalKm >= target
+  const previousTarget = level === 1 ? 0 : Number(campaign?.[`prize_${level - 1}_target_km`] || 0)
+  const revealed = level === 1 || totalKm >= previousTarget
+  const icon = level === 1 ? '🍫' : level === 2 ? '🍷' : '🎟️'
+  const left = Math.max(0, target - totalKm)
+  return (
+    <div className={`relative overflow-hidden rounded-[24px] border p-4 transition ${unlocked ? 'border-emerald-300/30 bg-emerald-400/[.08]' : revealed ? 'border-orange-300/20 bg-white/[.035]' : 'border-white/[.07] bg-black/25'}`}>
+      {!revealed && <div className="absolute inset-0 z-10 bg-black/58 backdrop-blur-[2px]" />}
+      <div className="relative z-20 flex items-start gap-3">
+        <div className={`grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-[18px] border text-2xl ${unlocked ? 'border-emerald-300/30 bg-emerald-300/15' : 'border-white/10 bg-black/30'}`}>
+          {image ? <img src={image} alt={title} className="h-full w-full object-cover" /> : icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[9px] font-black uppercase tracking-[.16em] text-white/35">NIVEL 0{level} · {target.toLocaleString('es-UY')} KM</p>
+            <span className={`rounded-full px-2 py-1 text-[8px] font-black ${unlocked ? 'bg-emerald-300 text-black' : revealed ? 'bg-orange-400/15 text-orange-200' : 'bg-white/8 text-white/35'}`}>{unlocked ? 'UNLOCKED ✓' : revealed ? `${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM LEFT` : 'BLOQUEADO'}</span>
+          </div>
+          <h3 className="mt-1 text-base font-black">{revealed ? title : level === 3 ? 'PREMIO MÁXIMO' : 'PRÓXIMO PREMIO'}</h3>
+          <p className="mt-1 text-[10px] leading-4 text-white/38">{revealed ? detail : 'Desbloqueá el nivel anterior para revelarlo.'}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PRUnlock({ campaign, activities, profiles }) {
+  if (!campaign) return null
+  const range = { start: campaign.starts_on, end: campaign.ends_on }
+  const campaignRanking = makeRanking(activities, profiles, range)
+  const totalKm = campaignRanking.reduce((sum, row) => sum + row.km, 0)
+  const maxTarget = Number(campaign.prize_3_target_km || 1)
+  const pct = Math.min(100, Math.round((totalKm / maxTarget) * 100))
+  const targets = [1,2,3].map((level) => Number(campaign[`prize_${level}_target_km`] || 0))
+  const unlockedLevel = totalKm >= targets[2] ? 3 : totalKm >= targets[1] ? 2 : totalKm >= targets[0] ? 1 : 0
+  const nextTarget = targets[Math.min(unlockedLevel, 2)]
+  const nextLeft = unlockedLevel >= 3 ? 0 : Math.max(0, nextTarget - totalKm)
+  const leader = campaignRanking[0]
+  const today = montevideoToday().date
+  const finished = today > campaign.ends_on
+  return (
+    <section className="relative overflow-hidden rounded-[34px] border border-fuchsia-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(236,72,153,.24),transparent_35%),radial-gradient(circle_at_5%_95%,rgba(124,58,237,.25),transparent_40%),linear-gradient(145deg,#171018,#09090d_65%)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.38)]">
+      <div className="absolute -right-14 -top-16 h-48 w-48 rounded-full border border-orange-300/15" />
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[.22em] text-fuchsia-300">PR UNLOCK · MISIÓN DEL MES</p>
+            <h2 className="mt-1 text-[31px] font-black leading-none">Todos desbloqueamos.<br/><span className="text-orange-400">Uno se lo lleva.</span></h2>
+          </div>
+          <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-wider ${finished ? 'border-white/10 bg-white/5 text-white/40' : 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-300'}`}>{finished ? 'CERRADA' : '● EN VIVO'}</span>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-white/48">Cada kilómetro de patinaje inline suma dos veces: a tu posición personal y al objetivo colectivo. El grupo desbloquea el premio; al cierre de la misión, el <b className="text-white">#1 del ranking de este desafío</b> se lleva el premio de mayor nivel alcanzado.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-[.12em]">
+          <span className="rounded-full border border-orange-300/15 bg-orange-400/[.07] px-3 py-2 text-orange-200">{shortDate(campaign.starts_on)} → {shortDate(campaign.ends_on)}</span>
+          <span className="rounded-full border border-white/8 bg-white/[.035] px-3 py-2 text-white/45">PREMIO EVOLUTIVO · NO ACUMULATIVO</span>
+        </div>
+        <div className="mt-6 rounded-[26px] border border-white/10 bg-black/30 p-4">
+          <div className="flex items-end justify-between gap-4">
+            <div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">KM GRUPALES</p><p className="mt-1 text-4xl font-black">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-lg text-white/30"> / {maxTarget.toLocaleString('es-UY')} km</span></p></div>
+            <div className="text-right"><p className="text-2xl font-black text-fuchsia-300">{pct}%</p><p className="text-[8px] uppercase tracking-wider text-white/25">hacia nivel 03</p></div>
+          </div>
+          <div className="relative mt-4 h-5 overflow-hidden rounded-full border border-white/10 bg-white/[.06] p-1">
+            <div className="h-full rounded-full bg-gradient-to-r from-orange-400 via-fuchsia-400 to-violet-400 shadow-[0_0_24px_rgba(236,72,153,.45)] transition-all" style={{width:`${pct}%`}} />
+          </div>
+          <div className="relative mt-2 flex justify-between text-[8px] font-black text-white/35">
+            <span>0</span><span>{targets[0].toLocaleString('es-UY')}</span><span>{targets[1].toLocaleString('es-UY')}</span><span>{targets[2].toLocaleString('es-UY')}</span>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">PRÓXIMO UNLOCK</p><p className="mt-1 text-lg font-black text-orange-300">{unlockedLevel >= 3 ? 'TODO DESBLOQUEADO' : `${nextLeft.toLocaleString('es-UY',{maximumFractionDigits:1})} km`}</p><p className="text-[9px] text-white/28">{unlockedLevel >= 3 ? 'Misión máxima alcanzada' : 'faltan para el próximo premio'}</p></div>
+            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">LÍDER DEL DESAFÍO</p>{leader ? <><p className="mt-1 truncate text-sm font-black">{leader.name}</p><p className="text-[9px] text-fuchsia-200/70">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {leader.sessions} entrenos</p></> : <p className="mt-1 text-sm font-black text-white/35">Tabla abierta</p>}</div>
+          </div>
+        </div>
+        <div className="mt-4 space-y-3">
+          <PrizeVisual campaign={campaign} level={1} totalKm={totalKm} />
+          <PrizeVisual campaign={campaign} level={2} totalKm={totalKm} />
+          <PrizeVisual campaign={campaign} level={3} totalKm={totalKm} />
+        </div>
+        <div className="mt-4 rounded-[22px] border border-violet-300/15 bg-violet-400/[.06] p-4">
+          <p className="text-[9px] font-black uppercase tracking-[.16em] text-violet-200">CÓMO FUNCIONA</p>
+          <div className="mt-2 space-y-2 text-[10px] leading-5 text-white/48">
+            <p><b className="text-white">1.</b> Patinás y sincronizás Strava como siempre. No tenés que cargar nada extra.</p>
+            <p><b className="text-white">2.</b> Tus km suman a tu ranking personal y, al mismo tiempo, al contador grupal PR UNLOCK.</p>
+            <p><b className="text-white">3.</b> Cuando el grupo alcanza un checkpoint, el premio evoluciona al siguiente nivel.</p>
+            <p><b className="text-white">4.</b> El {shortDate(campaign.ends_on)}, el #1 del ranking de esta misión obtiene el premio de mayor nivel desbloqueado.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function KmPodium({ ranking, period, statuses }) {
   if (!ranking.length) return null
   const first = ranking[0]
@@ -145,6 +240,7 @@ export default function PublicWeeklyRanking() {
   const [profiles, setProfiles] = useState(new Map())
   const [message, setMessage] = useState('')
   const [statuses, setStatuses] = useState({})
+  const [unlockCampaign, setUnlockCampaign] = useState(null)
   function changePeriod(next) {
     setPeriod(next)
     setParams({ period: next })
@@ -156,16 +252,18 @@ export default function PublicWeeklyRanking() {
       setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, activitiesResponse, statusesResponse] = await Promise.all([
+        const [profilesResponse, activitiesResponse, statusesResponse, unlockResponse] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
           supabase.from('pr_inline_skate_activities').select('*').eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
           supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
+          supabase.from('pr_unlock_campaigns').select('*').eq('active', true).order('starts_on', { ascending: false }).limit(1).maybeSingle(),
         ])
         if (!active) return
         if (activitiesResponse.error) throw activitiesResponse.error
         setActivities(activitiesResponse.data || [])
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(buildProfileMap(profilesResponse.data || []))
+        setUnlockCampaign(unlockResponse.data || null)
       } catch (_) {
         if (active) setMessage('No pudimos cargar el ranking en este momento.')
       } finally {
@@ -209,6 +307,8 @@ export default function PublicWeeklyRanking() {
             </div>
             <div className="relative mt-4 inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[10px] font-black uppercase tracking-[.10em] text-white/45">{rangeLabel}</div>
           </section>
+
+          <PRUnlock campaign={unlockCampaign} activities={activities} profiles={profiles} />
 
           <section className="rounded-[30px] border border-white/[.08] bg-[#0b0c10] p-5 shadow-[0_24px_70px_rgba(0,0,0,.28)]">
             {loading ? (
