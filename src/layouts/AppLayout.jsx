@@ -8,6 +8,26 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
 const LUCIA_WHATSAPP = '59899220929'
+const PR_TIME_ZONE = 'America/Montevideo'
+
+function montevideoDateParts(date = new Date()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: PR_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date).filter((part) => part.type !== 'literal').map((part) => [part.type, part.value])
+  )
+  return { year: parts.year, month: parts.month, day: parts.day }
+}
+function currentTreasuryPeriod() {
+  const { year, month } = montevideoDateParts()
+  return `${year}-${month}-01`
+}
+function montevideoDayOfMonth() {
+  return Number(montevideoDateParts().day || 0)
+}
 
 function parseExpirationDate(value) {
   if (!value) return null
@@ -45,7 +65,7 @@ export default function AppLayout({ children, title, showBack = false }) {
     async function checkAccess() {
       if (!user?.id) { if (active) { setAccessProfile(user || null); setCheckingAccess(false) }; return }
       setCheckingAccess(true)
-      const currentPeriod = new Date().toISOString().slice(0, 7) + '-01'
+      const currentPeriod = currentTreasuryPeriod()
       const [{ data, error }, { data: treasuryConfig }, { data: dueRow }] = await Promise.all([
         supabase.from('profiles').select('id, role, nombre, apellido, mensualidad_hasta, acceso_habilitado, exento_mensualidad, es_profesor, participa_como_alumno').eq('id', user.id).maybeSingle(),
         supabase.from('pr_tesoreria_config').select('enforcement_enabled').eq('id', 1).maybeSingle(),
@@ -84,8 +104,9 @@ export default function AppLayout({ children, title, showBack = false }) {
     if (!accessProfile) return false
     if (accessProfile.exentoMensualidad || accessProfile.role === 'admin' || accessProfile.role === 'profesor') return false
     if (accessProfile.accesoHabilitado === false) return true
-    const automaticEnforcement = new Date().getDate() >= 11
-    if ((!enforcementEnabled && !automaticEnforcement) || !monthlyDue) return false
+    if (!enforcementEnabled || !monthlyDue) return false
+    const automaticEnforcement = montevideoDayOfMonth() >= 11
+    if (!automaticEnforcement) return false
     if (['pagado', 'bonificado', 'acuerdo'].includes(monthlyDue.estado)) return false
     const limitDate = parseExpirationDate(monthlyDue.gracia_hasta || monthlyDue.vencimiento)
     return Boolean(limitDate && limitDate.getTime() < Date.now())
