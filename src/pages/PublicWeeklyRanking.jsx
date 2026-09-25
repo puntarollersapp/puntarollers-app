@@ -23,7 +23,6 @@ function buildProfileMap(profiles) {
   const map = new Map()
   ;(profiles || []).forEach((profile) => {
     if (profile?.id) map.set(String(profile.id), profile)
-    if (profile?.auth_user_id) map.set(String(profile.auth_user_id), profile)
   })
   return map
 }
@@ -158,7 +157,7 @@ export default function PublicWeeklyRanking() {
       setMessage('')
       try {
         const [profilesResponse, activitiesResponse, statusesResponse] = await Promise.all([
-          supabase.from('profiles_feed').select('*').limit(500),
+          supabase.from('profiles_public').select('*').limit(500),
           supabase.from('pr_inline_skate_activities').select('*').eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
           supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
         ])
