@@ -91,7 +91,6 @@ function buildProfileMap(profiles) {
   const map = new Map()
   ;(profiles || []).forEach((profile) => {
     if (profile?.id) map.set(String(profile.id), profile)
-    if (profile?.auth_user_id) map.set(String(profile.auth_user_id), profile)
   })
   return map
 }
@@ -295,7 +294,7 @@ export default function PublicRollerFeed() {
           eventsResponse,
           rankingActivitiesResponse,
         ] = await Promise.all([
-          supabase.from('profiles_feed').select('*').limit(500),
+          supabase.from('profiles_public').select('*').limit(500),
 
           supabase
             .from('pr_inline_skate_public_activities')
