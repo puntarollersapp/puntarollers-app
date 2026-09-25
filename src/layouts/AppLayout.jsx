@@ -40,6 +40,16 @@ function formatExpirationDate(value) {
   if (!date) return 'Sin fecha registrada'
   return date.toLocaleDateString('es-UY', { day: '2-digit', month: 'long', year: 'numeric' })
 }
+function shouldBlockAccess(profile, enforcementEnabled, monthlyDue) {
+  if (!profile) return false
+  if (profile.exentoMensualidad || profile.role === 'admin' || profile.role === 'profesor') return false
+  if (profile.accesoHabilitado === false) return true
+  if (!enforcementEnabled || !monthlyDue) return false
+  if (montevideoDayOfMonth() < 11) return false
+  if (['pagado', 'bonificado', 'acuerdo'].includes(String(monthlyDue.estado || '').toLowerCase())) return false
+  const limitDate = parseExpirationDate(monthlyDue.gracia_hasta || monthlyDue.vencimiento)
+  return Boolean(limitDate && limitDate.getTime() < Date.now())
+}
 function buildWhatsAppLink(profile) {
   const fullName = `${profile?.nombre || ''} ${profile?.apellido || ''}`.trim() || 'alumno/a'
   return `https://wa.me/${LUCIA_WHATSAPP}?text=${encodeURIComponent(`Hola Lucía, soy ${fullName}. Quisiera regularizar mi mensualidad de Punta Rollers.`)}`
@@ -79,11 +89,18 @@ export default function AppLayout({ children, title, showBack = false }) {
       try { localStorage.setItem('pr_user', JSON.stringify(updatedProfile)) } catch {}
       updateUser?.(updatedProfile); setCheckingAccess(false)
     }
-    checkAccess(); return () => { active = false }
+    checkAccess()
+    const timer = window.setInterval(checkAccess, 60 * 1000)
+    window.addEventListener('focus', checkAccess)
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', checkAccess) }
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id) return undefined
+    if (!user?.id || shouldBlockAccess(accessProfile, enforcementEnabled, monthlyDue)) {
+      setDmUnread(0)
+      setDmToast(null)
+      return undefined
+    }
     let active = true
     async function checkDirectMessages() {
       const { data, error } = await supabase.rpc('pr_dm_inbox')
@@ -98,22 +115,15 @@ export default function AppLayout({ children, title, showBack = false }) {
     }
     checkDirectMessages(); const timer = window.setInterval(checkDirectMessages, 5000)
     return () => { active = false; window.clearInterval(timer) }
-  }, [user?.id, location.pathname])
+  }, [user?.id, location.pathname, accessProfile?.id, accessProfile?.accesoHabilitado, accessProfile?.exentoMensualidad, accessProfile?.role, enforcementEnabled, monthlyDue?.estado, monthlyDue?.vencimiento, monthlyDue?.gracia_hasta])
 
-  const accessBlocked = useMemo(() => {
-    if (!accessProfile) return false
-    if (accessProfile.exentoMensualidad || accessProfile.role === 'admin' || accessProfile.role === 'profesor') return false
-    if (accessProfile.accesoHabilitado === false) return true
-    if (!enforcementEnabled || !monthlyDue) return false
-    const automaticEnforcement = montevideoDayOfMonth() >= 11
-    if (!automaticEnforcement) return false
-    if (['pagado', 'bonificado', 'acuerdo'].includes(monthlyDue.estado)) return false
-    const limitDate = parseExpirationDate(monthlyDue.gracia_hasta || monthlyDue.vencimiento)
-    return Boolean(limitDate && limitDate.getTime() < Date.now())
-  }, [accessProfile, enforcementEnabled, monthlyDue])
+  const accessBlocked = useMemo(
+    () => shouldBlockAccess(accessProfile, enforcementEnabled, monthlyDue),
+    [accessProfile, enforcementEnabled, monthlyDue]
+  )
 
   async function handleLogout() { await logout?.(); navigate('/') }
   function handlePublicHome() { navigate('/') }
 
-  return <div className="app-shell pb-24"><Header title={title} showBack={accessBlocked ? false : showBack} onBack={() => navigate(-1)} /><main>{checkingAccess ? <div className="min-h-[60vh] grid place-items-center px-4"><div className="text-center"><div className="w-12 h-12 mx-auto rounded-2xl bg-pr-gold/10 border border-pr-gold/20 grid place-items-center">🛼</div><p className="mt-3 text-white/40 text-xs">Verificando tu acceso…</p></div></div> : accessBlocked ? <AccessBlocked profile={accessProfile} onLogout={handleLogout} onPublicHome={handlePublicHome} /> : children}</main>{!accessBlocked && <BottomNav />}{!accessBlocked && <InstallPrompt />}{dmToast && <MessagePopup title={dmToast.name} message={dmToast.text} onClick={() => navigate(`/app/mensajes?chat=${dmToast.id}`)} onClose={() => setDmToast(null)} />}{dmUnread > 0 && !accessBlocked && !location.pathname.startsWith('/app/mensajes') && <button type="button" onClick={() => navigate('/app/mensajes')} className="fixed bottom-24 right-4 z-40 rounded-full border border-orange-300/20 bg-orange-500 px-3 py-2 text-[10px] font-black text-black shadow-xl">💬 {dmUnread}</button>}</div>
+  return <div className="app-shell pb-24"><Header title={title} showBack={accessBlocked ? false : showBack} onBack={() => navigate(-1)} /><main>{checkingAccess ? <div className="min-h-[60vh] grid place-items-center px-4"><div className="text-center"><div className="w-12 h-12 mx-auto rounded-2xl bg-pr-gold/10 border border-pr-gold/20 grid place-items-center">🛼</div><p className="mt-3 text-white/40 text-xs">Verificando tu acceso…</p></div></div> : accessBlocked ? <AccessBlocked profile={accessProfile} onLogout={handleLogout} onPublicHome={handlePublicHome} /> : children}</main>{!accessBlocked && <BottomNav />}{!accessBlocked && <InstallPrompt />}{!accessBlocked && dmToast && <MessagePopup title={dmToast.name} message={dmToast.text} onClick={() => navigate(`/app/mensajes?chat=${dmToast.id}`)} onClose={() => setDmToast(null)} />}{dmUnread > 0 && !accessBlocked && !location.pathname.startsWith('/app/mensajes') && <button type="button" onClick={() => navigate('/app/mensajes')} className="fixed bottom-24 right-4 z-40 rounded-full border border-orange-300/20 bg-orange-500 px-3 py-2 text-[10px] font-black text-black shadow-xl">💬 {dmUnread}</button>}</div>
 }
