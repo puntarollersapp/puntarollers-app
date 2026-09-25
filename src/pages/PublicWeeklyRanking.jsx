@@ -142,6 +142,10 @@ function PRUnlock({ campaign, activities, profiles }) {
   const unlockedLevel = totalKm >= targets[2] ? 3 : totalKm >= targets[1] ? 2 : totalKm >= targets[0] ? 1 : 0
   const nextTarget = targets[Math.min(unlockedLevel, 2)]
   const nextLeft = unlockedLevel >= 3 ? 0 : Math.max(0, nextTarget - totalKm)
+  const activePrizeLevel = unlockedLevel
+  const activePrizeTitle = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_title`] : null
+  const activePrizeDetail = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_detail`] : null
+  const activePrizeIcon = activePrizeLevel === 1 ? '🍫' : activePrizeLevel === 2 ? '🍷🍷' : activePrizeLevel === 3 ? '🎟️🎟️' : '🔒'
   const leader = campaignRanking[0]
   const today = montevideoToday().date
   const finished = today > campaign.ends_on
@@ -161,16 +165,36 @@ function PRUnlock({ campaign, activities, profiles }) {
           <span className="rounded-full border border-orange-300/15 bg-orange-400/[.07] px-3 py-2 text-orange-200">{shortDate(campaign.starts_on)} → {shortDate(campaign.ends_on)}</span>
           <span className="rounded-full border border-white/8 bg-white/[.035] px-3 py-2 text-white/45">PREMIO EVOLUTIVO · NO ACUMULATIVO</span>
         </div>
+        <div className={`mt-5 overflow-hidden rounded-[28px] border p-4 ${activePrizeLevel ? 'border-amber-300/25 bg-[radial-gradient(circle_at_90%_10%,rgba(251,191,36,.18),transparent_34%),linear-gradient(135deg,rgba(249,115,22,.12),rgba(124,58,237,.10))]' : 'border-white/10 bg-white/[.035]'}`}>
+          <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">{activePrizeLevel >= 3 ? '🏆 PREMIO MÁXIMO DESBLOQUEADO' : activePrizeLevel ? '🏆 PREMIO ACTUAL EN JUEGO' : '🔒 TODAVÍA NO HAY PREMIO DESBLOQUEADO'}</p>
+          <div className="mt-3 flex items-center gap-4">
+            <div className={`grid h-20 w-20 shrink-0 place-items-center rounded-[24px] border text-4xl ${activePrizeLevel ? 'border-amber-300/25 bg-amber-300/10 shadow-[0_0_35px_rgba(251,191,36,.10)]' : 'border-white/10 bg-black/25'}`}>{activePrizeIcon}</div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-black">{activePrizeLevel ? activePrizeTitle : `Faltan ${Math.max(0,targets[0]-totalKm).toLocaleString('es-UY',{maximumFractionDigits:1})} km para activar el Nivel 1`}</h3>
+              <p className="mt-1 text-[10px] leading-4 text-white/40">{activePrizeLevel ? activePrizeDetail : 'Cuando el grupo llegue al primer checkpoint, el premio empieza a estar oficialmente en juego.'}</p>
+            </div>
+          </div>
+          {leader && <div className="mt-4 flex items-center gap-3 rounded-[20px] border border-white/[.08] bg-black/25 p-3">
+            <PodiumAvatar row={leader} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-black uppercase tracking-[.16em] text-white/28">{activePrizeLevel ? 'SI LA MISIÓN CERRARA HOY' : 'LÍDER ACTUAL DE LA MISIÓN'}</p>
+              <p className="mt-1 truncate text-sm font-black">{leader.name}</p>
+              <p className="mt-1 text-[10px] text-white/38">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km {activePrizeLevel ? `· se llevaría ${activePrizeTitle}` : '· sigue liderando mientras el grupo busca el primer unlock'}</p>
+            </div>
+          </div>}
+        </div>
+
         <div className="mt-6 rounded-[26px] border border-white/10 bg-black/30 p-4">
           <div className="flex items-end justify-between gap-4">
             <div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">KM GRUPALES</p><p className="mt-1 text-4xl font-black">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-lg text-white/30"> / {maxTarget.toLocaleString('es-UY')} km</span></p></div>
             <div className="text-right"><p className="text-2xl font-black text-fuchsia-300">{pct}%</p><p className="text-[8px] uppercase tracking-wider text-white/25">hacia nivel 03</p></div>
           </div>
-          <div className="relative mt-4 h-5 overflow-hidden rounded-full border border-white/10 bg-white/[.06] p-1">
-            <div className="h-full rounded-full bg-gradient-to-r from-orange-400 via-fuchsia-400 to-violet-400 shadow-[0_0_24px_rgba(236,72,153,.45)] transition-all" style={{width:`${pct}%`}} />
-          </div>
-          <div className="relative mt-2 flex justify-between text-[8px] font-black text-white/35">
-            <span>0</span><span>{targets[0].toLocaleString('es-UY')}</span><span>{targets[1].toLocaleString('es-UY')}</span><span>{targets[2].toLocaleString('es-UY')}</span>
+          <div className="relative mt-5 pb-7">
+            <div className="relative h-5 overflow-hidden rounded-full border border-white/10 bg-white/[.06] p-1">
+              <div className="h-full rounded-full bg-gradient-to-r from-orange-400 via-fuchsia-400 to-violet-400 shadow-[0_0_24px_rgba(236,72,153,.45)] transition-all" style={{width:`${pct}%`}} />
+            </div>
+            {[1,2,3].map((level)=>{const target=targets[level-1],pos=Math.min(100,(target/maxTarget)*100),unlocked=totalKm>=target;return <div key={level} className="absolute top-[-4px] -translate-x-1/2 text-center" style={{left:`${pos}%`}}><div className={`mx-auto grid h-7 w-7 place-items-center rounded-full border-2 border-[#111016] text-[9px] font-black ${unlocked?'bg-emerald-300 text-black':'bg-white/15 text-white/60'}`}>{unlocked?'✓':level}</div><p className="mt-1 whitespace-nowrap text-[7px] font-black text-white/35">{target.toLocaleString('es-UY')} KM</p></div>})}
+            <span className="absolute left-0 top-7 text-[7px] font-black text-white/25">0 KM</span>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">PRÓXIMO UNLOCK</p><p className="mt-1 text-lg font-black text-orange-300">{unlockedLevel >= 3 ? 'TODO DESBLOQUEADO' : `${nextLeft.toLocaleString('es-UY',{maximumFractionDigits:1})} km`}</p><p className="text-[9px] text-white/28">{unlockedLevel >= 3 ? 'Misión máxima alcanzada' : 'faltan para el próximo premio'}</p></div>
