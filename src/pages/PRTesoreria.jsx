@@ -5,8 +5,10 @@ import { supabase } from '../lib/supabase'
 
 const money = (v) => new Intl.NumberFormat('es-UY',{style:'currency',currency:'UYU',maximumFractionDigits:0}).format(Number(v||0))
 const monthLabel = (d) => new Date(d+'T12:00:00').toLocaleDateString('es-UY',{month:'long',year:'numeric'})
-const today = () => new Date().toISOString().slice(0,10)
-const currentPeriod = () => new Date().toISOString().slice(0,7)+'-01'
+const PR_TIME_ZONE='America/Montevideo'
+function montevideoParts(date=new Date()){const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:PR_TIME_ZONE,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));return p}
+const today = () => {const p=montevideoParts();return `${p.year}-${p.month}-${p.day}`}
+const currentPeriod = () => {const p=montevideoParts();return `${p.year}-${p.month}-01`}
 
 function statusMeta(row,profile){
   if(String(profile?.estado||'').toLowerCase()==='pausado') return ['PAUSADO','bg-white/10 text-white/50 border-white/10']
