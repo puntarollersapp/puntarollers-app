@@ -58,7 +58,7 @@
               }
             })
           }
-          const rankingVisible = location.pathname === '/rollerfeed' || (location.pathname.startsWith('/app/') && location.pathname !== '/app/actividad')
+          const rankingVisible = location.pathname.startsWith('/app/')
           if (rankingVisible && location.pathname !== '/ranking-semanal' && !document.querySelector('.pr-weekly-ranking-shortcut')) {
             const anchor = document.createElement('a')
             anchor.href = '/ranking-semanal'
