@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import LaunchExperience from './LaunchExperience'
 import { PR_LAUNCH, hasLaunchBypass } from '../lib/launch'
+import { supabase } from '../lib/supabase'
 
 export const STUDENT_LAUNCH_GATE = {
   enabled: true,
@@ -33,6 +34,9 @@ function twoDigits(value) {
 }
 
 export default function StudentLaunchGate({ user, children }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [trainingChecked, setTrainingChecked] = useState(false)
   const target = useMemo(
     () => new Date(STUDENT_LAUNCH_GATE.opensAt).getTime(),
     []
@@ -49,6 +53,36 @@ export default function StudentLaunchGate({ user, children }) {
     now < target
 
   useEffect(() => {
+    let active = true
+    async function ensureTrainingChoice() {
+      if (!user?.id) { if (active) setTrainingChecked(true); return }
+      const isTreasury = user?.esTesoreria === true || user?.es_tesoreria === true
+      const isStaff = user?.role === 'admin' || user?.role === 'profesor'
+      const shouldAsk = !isTreasury && (!isStaff || user?.documento === '48036677')
+      if (!shouldAsk) { if (active) setTrainingChecked(true); return }
+
+      const { data, error } = await supabase
+        .from('pr_training_enrollments')
+        .select('category')
+        .eq('profile_id', user.id)
+        .eq('event_slug', 'shifter-marathon-2026')
+        .maybeSingle()
+
+      if (!active) return
+      if (!error && data?.category && data.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
+      if (!error && data?.category === 'NO') window.localStorage.removeItem('pr_training_visible')
+
+      if (!error && !data && location.pathname !== '/app/deberes') {
+        navigate('/app/deberes', { replace: true })
+        return
+      }
+      setTrainingChecked(true)
+    }
+    ensureTrainingChoice()
+    return () => { active = false }
+  }, [user?.id, user?.role, user?.documento, user?.esTesoreria, user?.es_tesoreria, location.pathname, navigate])
+
+  useEffect(() => {
     if (!locked) return undefined
 
     const timer = window.setInterval(() => {
@@ -59,6 +93,7 @@ export default function StudentLaunchGate({ user, children }) {
   }, [locked])
 
   if (!locked) {
+    if (!trainingChecked && location.pathname !== '/app/deberes') return null
     return (
       <>
         {children}
