@@ -61,6 +61,7 @@ export default function BottomNav() {
   const { pathname } = useLocation()
   const { user } = useAuth()
   const [requestCount, setRequestCount] = useState(0)
+  const [trainingVisible, setTrainingVisible] = useState(() => window.localStorage.getItem('pr_training_visible') === '1')
 
   useEffect(() => {
     let alive = true
@@ -82,6 +83,22 @@ export default function BottomNav() {
     }
   }, [user?.id])
 
+  useEffect(() => {
+    let active = true
+    async function refreshTrainingVisibility() {
+      if (!user?.id) { if (active) setTrainingVisible(false); return }
+      const { data } = await supabase.from('pr_training_enrollments').select('category').eq('profile_id', user.id).eq('event_slug','shifter-marathon-2026').maybeSingle()
+      if (!active) return
+      const visible = Boolean(data?.category && data.category !== 'NO')
+      setTrainingVisible(visible)
+      if (visible) window.localStorage.setItem('pr_training_visible','1')
+      else window.localStorage.removeItem('pr_training_visible')
+    }
+    refreshTrainingVisibility()
+    window.addEventListener('focus', refreshTrainingVisibility)
+    return () => { active = false; window.removeEventListener('focus', refreshTrainingVisibility) }
+  }, [user?.id])
+
   const isStaff = user?.role === 'admin' || user?.role === 'profesor'
 
   const nav = [
@@ -95,7 +112,7 @@ export default function BottomNav() {
     { path: '/app/insignias', label: 'Insignias', icon: 'badges', tone: 'gold' },
   ]
 
-  const visibleNav = nav.filter((item) => !item.trainingOnly || isStaff || window.localStorage.getItem('pr_training_visible') === '1')
+  const visibleNav = nav.filter((item) => !item.trainingOnly || isStaff || trainingVisible)
 
   if (isStaff) visibleNav.push({ path: '/admin', label: 'Admin', icon: 'admin' })
 
