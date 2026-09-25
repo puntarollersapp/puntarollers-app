@@ -491,6 +491,7 @@ export default function Profile() {
         activitySummaryResponse,
         stravaActivitiesResponse,
         lifetimeActivitiesResponse,
+        stravaConnectionResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -559,6 +560,12 @@ export default function Profile() {
           .eq('fuente', 'strava')
           .eq('eliminada', false)
           .limit(1000),
+
+        supabase
+          .from('pr_strava_connections')
+          .select('conectado,ultima_sincronizacion,ultimo_error')
+          .eq('alumno_id', profileId)
+          .maybeSingle(),
       ])
 
       if (profileResponse.error) {
@@ -673,10 +680,14 @@ export default function Profile() {
       if (!stravaActivitiesResponse.error) {
         const imported = stravaActivitiesResponse.data || []
         setStravaActivities(imported)
+        const persistedConnection = !stravaConnectionResponse?.error && stravaConnectionResponse?.data?.conectado === true
         setStravaConnected(
+          persistedConnection ||
           imported.length > 0 ||
-            new URLSearchParams(location.search).get('strava') === 'connected'
+          new URLSearchParams(location.search).get('strava') === 'connected'
         )
+      } else if (!stravaConnectionResponse?.error) {
+        setStravaConnected(stravaConnectionResponse?.data?.conectado === true)
       }
 
       if (!lifetimeActivitiesResponse.error) {
