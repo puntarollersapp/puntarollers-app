@@ -304,7 +304,7 @@ export default function PublicRollerFeed() {
             .limit(60),
 
           supabase
-            .from('actividad_pr')
+            .from('actividad_pr_public')
             .select('*')
             .or('eliminado.is.null,eliminado.eq.false')
             .order('fecha', { ascending: false })
