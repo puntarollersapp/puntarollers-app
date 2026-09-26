@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useAuth } from '../lib/auth'
 
 export default function PublicLayout({ children }) {
   const location = useLocation()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
     const legacyKidsLinks = document.querySelectorAll(
@@ -27,6 +29,9 @@ export default function PublicLayout({ children }) {
     const id = target.replace('#', '')
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const profileHref = !loading && user ? '/app/perfil' : '/login'
+  const profileActive = location.pathname === '/login' || location.pathname.startsWith('/app/')
 
   return (
     <div className="min-h-screen bg-[#090a0d] text-white pb-[82px]">
@@ -58,10 +63,10 @@ export default function PublicLayout({ children }) {
             onClick={goTo('#explorar')}
           />
           <NavItem
-            href="/login"
+            href={profileHref}
             label="Perfil"
             icon="profile"
-            active={location.pathname === '/login'}
+            active={profileActive}
           />
         </div>
       </nav>
