@@ -133,8 +133,8 @@ export default function Personalizadas() {
 
   const identify = async (event) => {
     event.preventDefault()
-    if (!accepted) return setMessage('Primero aceptá los Términos y Condiciones de PR Personal.')
-    localStorage.setItem('pr_personal_terms', PR_PERSONAL_TERMS_VERSION)
+    if (config?.reservas_habilitadas && !accepted) return setMessage('Primero aceptá los Términos y Condiciones de PR Personal.')
+    if (config?.reservas_habilitadas) localStorage.setItem('pr_personal_terms', PR_PERSONAL_TERMS_VERSION)
     setBusy(true); setMessage(''); setConfirmed([])
     const started = Date.now()
     try {
@@ -142,8 +142,10 @@ export default function Personalizadas() {
       const wait = Math.max(0, 1100 - (Date.now() - started))
       if (wait) await sleep(wait)
       if (!data.found) { setStudent(null); setPass(null); setUpcoming([]); setReservedCredits(0); setBookableCredits(0); setMessage('No encontramos una cuponera activa asociada a ese número. Escribinos por WhatsApp y te ayudamos.'); return }
-      setStudent(data.student); setPass(data.pass); setUpcoming(data.upcoming || []); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0))
+      const nextUpcoming = data.upcoming || []
+      setStudent(data.student); setPass(data.pass); setUpcoming(nextUpcoming); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0))
       if (!data.pass) setMessage('Te reconocimos, pero todavía no tenés una cuponera activa visible.')
+      else if (!config?.reservas_habilitadas && nextUpcoming.length === 0) setMessage('No tenés próximas clases reservadas.')
     } catch (error) { setMessage(error.message) } finally { setBusy(false) }
   }
 
@@ -189,7 +191,6 @@ export default function Personalizadas() {
   }
 
   if (loading) return <PublicLayout><div className="px-4 py-20"><SkateLoader /></div></PublicLayout>
-  if (config && !config.reservas_habilitadas) return <PublicLayout><div className="min-h-[72vh] px-5 py-16 flex items-center"><section className="w-full rounded-[32px] border border-white/10 bg-white/[.04] p-7 text-center"><p className="pr-kicker">PR PERSONAL</p><div className="mx-auto mt-7 flex h-20 w-20 items-center justify-center rounded-full border border-red-400/25 bg-red-500/10 text-3xl">🛼</div><h1 className="mt-6 text-3xl font-black text-white">Reservas cerradas</h1><p className="mx-auto mt-3 max-w-sm text-sm text-white/50">{config.mensaje_cerrado}</p></section></div></PublicLayout>
 
   return (
     <PublicLayout>
@@ -200,15 +201,21 @@ export default function Personalizadas() {
           <div className="pr-hero-skate">🛼<span /></div></div>
         </section>
 
-        {!student && <form onSubmit={identify} className="pr-login-card"><div className="pr-login-icon">PR</div><div><p className="pr-kicker">ACCESO PERSONAL</p><h2>Entrá a tu PR Pass</h2><p className="pr-muted">Usá el mismo WhatsApp que tenés registrado en Punta Rollers.</p></div><label>Tu WhatsApp</label><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Ej: 099 123 456" />
-          <label className="pr-terms-check"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} /><span>Leí y acepto los <button type="button" onClick={() => setTermsOpen(true)}>Términos y Condiciones</button>.</span></label>
-          <button disabled={busy} className="pr-primary">{busy ? 'Buscando tu PR Pass…' : 'Ver mi PR Pass'}</button>{busy && <SkateLoader label="Buscando tu ficha…" />}</form>}
+        {config && !config.reservas_habilitadas && <section className="rounded-[28px] border border-red-300/20 bg-red-400/[.07] p-5">
+          <p className="pr-kicker">PR PERSONAL · CONSULTA</p>
+          <div className="mt-2 flex items-start justify-between gap-4"><div><h2 className="text-2xl font-black text-white">Reservas cerradas</h2><p className="mt-2 text-sm leading-6 text-white/50">{config.mensaje_cerrado}</p></div><span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-200">CERRADAS</span></div>
+          <p className="mt-4 rounded-2xl border border-white/8 bg-black/20 p-3 text-xs leading-5 text-white/45">Si ya reservaste una clase, podés consultar tu horario abajo. Cerrar las reservas no borra ni modifica los turnos confirmados.</p>
+        </section>}
+
+        {!student && <form onSubmit={identify} className="pr-login-card"><div className="pr-login-icon">PR</div><div><p className="pr-kicker">{config?.reservas_habilitadas ? 'ACCESO PERSONAL' : 'CONSULTAR RESERVA'}</p><h2>{config?.reservas_habilitadas ? 'Entrá a tu PR Pass' : '¿Qué horario reservé?'}</h2><p className="pr-muted">{config?.reservas_habilitadas ? 'Usá tu documento o el mismo WhatsApp que tenés registrado en Punta Rollers.' : 'Ingresá tu documento o WhatsApp registrado para ver tus próximas clases confirmadas.'}</p></div><label>Documento o WhatsApp</label><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Ej: 48036677 o 099 123 456" />
+          {config?.reservas_habilitadas && <label className="pr-terms-check"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} /><span>Leí y acepto los <button type="button" onClick={() => setTermsOpen(true)}>Términos y Condiciones</button>.</span></label>}
+          <button disabled={busy} className="pr-primary">{busy ? 'Buscando tu reserva…' : (config?.reservas_habilitadas ? 'Ver mi PR Pass' : 'Ver mi horario')}</button>{busy && <SkateLoader label="Buscando tu ficha…" />}</form>}
 
         {student && pass && <PassCard student={student} pass={pass} reservedCredits={reservedCredits} />}
 
         {student && upcoming.length > 0 && <section className="pr-section-card"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div><strong>{formatDay(item.slot.fecha)}</strong><small>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</small></div><b>RESERVADA</b></div>)}</div></section>}
 
-        {student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tus próximas clases</h2><p className="pr-muted">Podés seleccionar y confirmar hasta {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
+        {config?.reservas_habilitadas && student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tus próximas clases</h2><p className="pr-muted">Podés seleccionar y confirmar hasta {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
           {days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Sin turnos disponibles por ahora</h3><p>Los horarios que ya pasaron o están a menos de 2 horas de comenzar dejan de mostrarse automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.filter((slot) => !slot.ocupado).length} disponible{daySlots.filter((slot) => !slot.ocupado).length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => {
             const occupied = Boolean(slot.ocupado)
             const chosen = selected.some((item) => item.id === slot.id)
@@ -217,8 +224,8 @@ export default function Personalizadas() {
           {selected.length > 0 && <div className="pr-info blue">Seleccionaste {selected.length} de {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} disponibles. Podés tocar un horario nuevamente para quitarlo.</div>}
           {selected.length > 0 && <button disabled={busy} onClick={reserve} className="pr-primary pr-confirm">{busy ? `Confirmando ${selected.length} clase${selected.length === 1 ? '' : 's'}…` : `Confirmar ${selected.length} clase${selected.length === 1 ? '' : 's'}`}</button>}{busy && <SkateLoader label="Confirmando tus turnos…" />}</section>}
 
-        {student && pass && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
-        {student && pass && Number(pass.clases_disponibles) <= 0 && <div className="pr-info amber">Tu PR Pass está completa. Contactanos para cargar una nueva.</div>}
+        {config?.reservas_habilitadas && student && pass && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
+        {config?.reservas_habilitadas && student && pass && Number(pass.clases_disponibles) <= 0 && <div className="pr-info amber">Tu PR Pass está completa. Contactanos para cargar una nueva.</div>}
         {confirmed.length > 0 && <div className="pr-success pr-pass-enter"><span>✓</span><p className="pr-kicker">{confirmed.length === 1 ? 'RESERVA CONFIRMADA' : 'RESERVAS CONFIRMADAS'}</p><h2>¡Nos vemos sobre ruedas!</h2><div className="mt-3 space-y-1">{confirmed.map((item) => <p key={item.reservation.id}>{formatDay(item.slot.fecha)} · {formatTime(item.slot.hora_inicio)} a {formatTime(item.slot.hora_fin)}.</p>)}</div><small>El sello de tu PR Pass se aplica cuando cada clase se marca como realizada.</small></div>}
         {message && <div className="pr-message">{message}</div>}
         <button className="pr-terms-footer" onClick={() => setTermsOpen(true)}>Términos y Condiciones · PR Personal</button>
