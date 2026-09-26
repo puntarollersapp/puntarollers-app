@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   useNavigate,
   Link,
@@ -12,8 +12,15 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const { login } = useAuth()
+  const { login, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (authLoading || !user) return
+    const isTreasury = user.esTesoreria === true
+    const isAdmin = user.role === 'admin' || user.role === 'profesor'
+    navigate(isTreasury && !isAdmin ? '/tesoreria' : (isAdmin ? '/admin' : '/app/perfil'), { replace: true })
+  }, [authLoading, user, navigate])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -54,6 +61,8 @@ export default function Login() {
       setLoading(false)
     }
   }
+
+  if (authLoading || user) return null
 
   return (
     <PublicLayout>
