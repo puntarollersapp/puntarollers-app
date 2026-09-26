@@ -7,8 +7,8 @@ function lower(value) {
   return String(value || '').trim().toLowerCase()
 }
 
-function isPublicTraining(activity) {
-  return activity && activity.eliminada !== true && activity.es_privada !== true && activity.visible_feed !== false
+function isRankingEligible(activity) {
+  return activity && activity.eliminada !== true
 }
 
 function profileName(profile) {
@@ -75,7 +75,7 @@ function insideRange(value, range) {
 
 function makeRanking(rows, profiles, range) {
   const grouped = new Map()
-  ;(rows || []).filter(isPublicTraining).filter((row) => lower(row.fuente || 'strava') === 'strava').filter((row) => insideRange(row.fecha_inicio, range)).forEach((row) => {
+  ;(rows || []).filter(isRankingEligible).filter((row) => lower(row.fuente || 'strava') === 'strava').filter((row) => insideRange(row.fecha_inicio, range)).forEach((row) => {
     const id = String(row.alumno_id || '')
     if (!id) return
     const km = Math.max(0, Number(row.distancia_metros) || 0) / 1000
@@ -317,8 +317,8 @@ export default function PublicWeeklyRanking() {
 
   useEffect(() => {
     let active = true
-    async function load() {
-      setLoading(true)
+    async function load({ silent = false } = {}) {
+      if (!silent) setLoading(true)
       setMessage('')
       try {
         const [profilesResponse, activitiesResponse, statusesResponse, unlockResponse] = await Promise.all([
@@ -338,13 +338,20 @@ export default function PublicWeeklyRanking() {
           if (active) setUnlockResult(resultData || null)
         } else if (active) setUnlockResult(null)
       } catch (_) {
-        if (active) setMessage('No pudimos cargar el ranking en este momento.')
+        if (active && !silent) setMessage('No pudimos cargar el ranking en este momento.')
       } finally {
-        if (active) setLoading(false)
+        if (active && !silent) setLoading(false)
       }
     }
     load()
-    return () => { active = false }
+    const refresh = window.setInterval(() => load({ silent: true }), 60000)
+    const onFocus = () => load({ silent: true })
+    window.addEventListener('focus', onFocus)
+    return () => {
+      active = false
+      window.clearInterval(refresh)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [])
 
   const ranking = useMemo(() => {
@@ -410,7 +417,7 @@ export default function PublicWeeklyRanking() {
                 </div>
               ))}
             </div>
-            <p className="mt-5 text-[10px] leading-5 text-white/30">Se recalcula con las actividades públicas de Strava sincronizadas en Punta Rollers. La semana corre de lunes hasta hoy y el mes desde el día 1 hasta hoy.</p>
+            <p className="mt-5 text-[10px] leading-5 text-white/30">Se recalcula con todas las actividades de patinaje inline sincronizadas desde Strava, incluidos los deberes. La semana corre de lunes hasta hoy y el mes desde el día 1 hasta hoy.</p>
           </section>
           {previousMonthRanking.length > 0 && (
             <section className="relative overflow-hidden rounded-[24px] border border-violet-300/15 bg-[radial-gradient(circle_at_100%_0%,rgba(139,92,246,.16),transparent_42%),rgba(255,255,255,.025)] p-5">
