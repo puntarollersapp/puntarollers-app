@@ -96,6 +96,35 @@ export default function AppLayout({ children, title, showBack = false }) {
   }, [user?.id])
 
   useEffect(() => {
+    if (!user?.id) return undefined
+    let active = true
+
+    async function syncCommunityStrava() {
+      try {
+        await supabase.functions.invoke('strava-auth', {
+          body: {
+            action: 'sync-all',
+            profile_id: user.id,
+          },
+        })
+      } catch {
+        // La sincronización global es silenciosa: la app sigue funcionando
+        // aunque Strava esté temporalmente indisponible.
+      }
+    }
+
+    syncCommunityStrava()
+    const timer = window.setInterval(syncCommunityStrava, 5 * 60 * 1000)
+    window.addEventListener('focus', syncCommunityStrava)
+
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus', syncCommunityStrava)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
     if (!user?.id || shouldBlockAccess(accessProfile, enforcementEnabled, monthlyDue)) {
       setDmUnread(0)
       setDmToast(null)
