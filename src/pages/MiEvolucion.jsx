@@ -93,7 +93,7 @@ function ProgressBar({ value, tone = 'orange' }) {
 function EmptyLine({ icon, title, text }) {
   return (
     <div className="rounded-[22px] border border-white/[.07] bg-white/[.025] p-4 flex gap-3">
-      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/[.04] text-xl">{icon}</div>
+      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/[.07] bg-white/[.04] text-[10px] font-black uppercase tracking-[.08em] text-white/55">{icon}</div>
       <div>
         <p className="text-sm font-bold text-white">{title}</p>
         <p className="mt-1 text-[11px] leading-5 text-white/35">{text}</p>
@@ -278,7 +278,7 @@ export function MiEvolucionContent({ embedded = false }) {
       <div className={`${embedded ? '' : 'pr-page'} space-y-4 animate-page-enter pb-8`}>
         {loading && (
           <div className="rounded-[24px] border border-orange-400/15 bg-orange-400/[.06] p-4 text-sm text-orange-100/70">
-            ⚡ Construyendo tu evolución…
+            Construyendo tu evolución…
           </div>
         )}
 
@@ -291,7 +291,7 @@ export function MiEvolucionContent({ embedded = false }) {
           <div className="relative p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[.2em] text-orange-300">⚡ PR Performance</p>
+                <p className="text-[9px] font-black uppercase tracking-[.2em] text-orange-300">PR Performance</p>
                 <h1 className="mt-3 font-display text-[38px] leading-[.94] text-white">
                   Tu historia<br/><span className="text-orange-300">sobre ruedas.</span>
                 </h1>
@@ -299,7 +299,7 @@ export function MiEvolucionContent({ embedded = false }) {
                   {name}, acá no competís contra los demás. Medimos tu propia evolución.
                 </p>
               </div>
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-orange-300/20 bg-orange-400/10 text-2xl">🛼</div>
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-orange-300/20 bg-orange-400/10 text-orange-200"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15h10.5a3.5 3.5 0 0 0 3.5-3.5V8"/><path d="M6 15V7h5l2.5 4H18"/><circle cx="8" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg></div>
             </div>
 
             <div className="mt-6 grid grid-cols-3 divide-x divide-white/[.07] rounded-[24px] border border-white/[.07] bg-black/25">
@@ -310,7 +310,7 @@ export function MiEvolucionContent({ embedded = false }) {
 
             <div className="mt-3 rounded-[18px] border border-orange-300/10 bg-orange-400/[.05] px-3 py-2.5">
               <p className="text-[10px] leading-4 text-orange-100/55">
-                🟠 Los entrenamientos y kilómetros muestran tu historial completo sincronizado desde Strava.
+                Los entrenamientos y kilómetros muestran tu historial completo sincronizado desde Strava.
               </p>
             </div>
 
@@ -334,7 +334,7 @@ export function MiEvolucionContent({ embedded = false }) {
           <div className="relative p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[.19em] text-orange-300">🏁 Shifter Marathon 2026</p>
+                <p className="text-[9px] font-black uppercase tracking-[.19em] text-orange-300">Shifter Marathon 2026</p>
                 <h2 className="mt-2 font-display text-[31px] leading-[.96] text-white">
                   Tu cuenta regresiva<br/><span className="text-orange-300">ya empezó.</span>
                 </h2>
@@ -382,7 +382,7 @@ export function MiEvolucionContent({ embedded = false }) {
               </div>
 
               <div className="mt-2 flex justify-between text-[8px] font-bold uppercase tracking-wider text-white/22">
-                <span>Junio</span><span>Julio</span><span>Agosto</span><span>Sept.</span><span>Oct.</span><span>🏁 Nov.</span>
+                <span>Junio</span><span>Julio</span><span>Agosto</span><span>Sept.</span><span>Oct.</span><span>Nov.</span>
               </div>
             </div>
 
