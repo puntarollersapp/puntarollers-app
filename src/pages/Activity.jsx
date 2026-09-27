@@ -1098,9 +1098,9 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 3)
+      const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4)
       const rest = available.filter((item) => item.type !== 'Cumpleaños')
-      return [...birthdays, ...rest]
+      return birthdays.length ? [{ id: 'birthday-grid', type: 'BirthdayGroup', date: birthdays[0]?.date, items: birthdays }, ...rest] : rest
     }
 
     const filteredItems = feedItems.filter(
@@ -1521,6 +1521,10 @@ function FeedCard({
     onOpenReactions,
   }
 
+  if (item.type === 'BirthdayGroup') {
+    return <BirthdayGridCard item={item} reactions={reactions} currentProfileId={currentProfileId} savingReactionKey={savingReactionKey} onReact={onReact} />
+  }
+
   if (item.type === 'Cumpleaños') {
     return <BirthdayCard item={item} {...reactionProps} />
   }
@@ -1740,6 +1744,32 @@ function BirthdayCard({
         onOpenReactions={onOpenReactions}
       />
     </article>
+  )
+}
+
+function BirthdayGridCard({ item, reactions, currentProfileId, savingReactionKey, onReact }) {
+  const rows = Array.isArray(item.items) ? item.items : []
+  return (
+    <section className="relative overflow-hidden rounded-[28px] border border-fuchsia-300/20 bg-gradient-to-br from-fuchsia-500/[.13] via-[#151019] to-[#0b090d] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-[8px] font-black uppercase tracking-[.18em] text-fuchsia-200/70">AGENDA PR</p><h3 className="mt-1 font-display text-[24px] text-white">Próximos cumpleaños</h3></div>
+        <div className="grid h-11 w-11 place-items-center rounded-[16px] border border-fuchsia-300/20 bg-fuchsia-400/10 text-xl">🎂</div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {rows.map((birthday) => {
+          const birthdayReactions = (reactions || []).filter((reaction) => String(reaction.feed_key) === String(birthday.id))
+          const myReaction = birthdayReactions.find((reaction) => String(reaction.profile_id) === String(currentProfileId))
+          const heartCount = birthdayReactions.filter((reaction) => reaction.reaction === 'corazon').length
+          const dateLabel = new Date(birthday.birthdayDate).toLocaleDateString('es-UY',{day:'numeric',month:'short'})
+          return <article key={birthday.id} className="relative min-h-[170px] overflow-hidden rounded-[22px] border border-white/[.07] bg-black/20 p-3">
+            <div className="flex items-start justify-between gap-2"><ProfileAvatar photo={birthday.userPhoto} name={birthday.userName} verified={birthday.verified}/><span className="text-base">🎂</span></div>
+            <p className="mt-3 truncate text-sm font-black text-white">{birthday.userName}</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-[.08em] text-fuchsia-200/70">{birthday.daysUntil===0?'HOY':dateLabel}</p>
+            <button type="button" disabled={Boolean(savingReactionKey)} onClick={()=>onReact(birthday,'corazon')} className={'absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black '+(myReaction?.reaction==='corazon'?'border-pink-300/30 bg-pink-400/15 text-pink-200':'border-white/[.08] bg-white/[.035] text-white/45')}><span>❤️</span>{heartCount>0&&<span>{heartCount}</span>}</button>
+          </article>
+        })}
+      </div>
+    </section>
   )
 }
 
