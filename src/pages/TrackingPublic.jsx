@@ -3,7 +3,7 @@ import PublicLayout from '../layouts/PublicLayout'
 const items = [
   { title: 'Identidad', text: 'Cada chip identifica un equipo registrado dentro del ecosistema Punta Rollers.', icon: 'id' },
   { title: 'Recuperación', text: 'Si el equipo se pierde, el Track ID permite acceder a los datos de contacto autorizados por su dueño.', icon: 'search' },
-  { title: 'Un chip, una URL', text: 'La información vive en Punta Rollers: el NFC no necesita regrabarse cada vez que el alumno actualiza sus datos.', icon: 'link' },
+  { title: 'Una URL por equipo', text: 'La información vive en Punta Rollers: un mismo equipo puede usar uno o varios NFC físicos sin cambiar su URL, incluso si se reemplaza un chip.', icon: 'link' },
 ]
 
 function Icon({ type }) {
