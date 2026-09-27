@@ -1,0 +1,97 @@
+import { useEffect, useMemo, useState } from 'react'
+import AppLayout from '../layouts/AppLayout'
+import { supabase } from '../lib/supabase'
+
+function buildUrl(publicId){
+  if(!publicId)return ''
+  const origin=typeof window!=='undefined'?window.location.origin:''
+  return `${origin}/t/${publicId}`
+}
+
+export default function AdminTracking(){
+  const[profiles,setProfiles]=useState([])
+  const[items,setItems]=useState([])
+  const[loading,setLoading]=useState(true)
+  const[message,setMessage]=useState('')
+  const[selected,setSelected]=useState('')
+  const[creating,setCreating]=useState(false)
+
+  async function load(){
+    setLoading(true);setMessage('')
+    const[p,i]=await Promise.all([
+      supabase.from('profiles').select('id,nombre,apellido,tracking_activo,acceso_habilitado').order('nombre'),
+      supabase.from('pr_track_items').select('*,pr_track_tags(*)').order('created_at',{ascending:false})
+    ])
+    setProfiles(p.data||[])
+    if(i.error){setItems([]);setMessage('La base Track ID todavía no está aplicada. La interfaz está lista, pero falta activar la migración PR_TRACKING_V1_SUPABASE.sql.')}
+    else setItems(i.data||[])
+    setLoading(false)
+  }
+
+  useEffect(()=>{load()},[])
+
+  const students=useMemo(()=>profiles.filter(p=>p.id),[profiles])
+  const selectedProfile=students.find(p=>p.id===selected)
+  const selectedItems=items.filter(i=>i.alumno_id===selected)
+
+  async function createTrack(){
+    if(!selected)return
+    setCreating(true);setMessage('')
+    const{data,error}=await supabase.from('pr_track_items').insert({
+      alumno_id:selected,
+      nombre:'Nuevo equipo',
+      tipo:'patines',
+      estado:'draft',
+      activado_por:'admin'
+    }).select('*').single()
+    if(error){setMessage('No se pudo crear el Track ID. Verificá que la migración de Tracking esté aplicada.');setCreating(false);return}
+    await supabase.from('pr_track_tags').insert({item_id:data.id,etiqueta:'NFC principal',estado:'assigned',asignado_por:'admin'})
+    setCreating(false);await load();setSelected(selected)
+  }
+
+  async function copy(text){
+    try{await navigator.clipboard.writeText(text);setMessage('URL copiada. Ya podés grabarla en el NFC.')}catch{setMessage(text)}
+  }
+
+  async function setState(item,state){
+    const{error}=await supabase.from('pr_track_items').update({estado:state,activado_en:state==='active'?new Date().toISOString():item.activado_en}).eq('id',item.id)
+    if(error){setMessage('No se pudo actualizar el Track ID.');return}
+    await load();setSelected(item.alumno_id)
+  }
+
+  return <AppLayout title="PR Tracking Admin"><div className="pr-page space-y-5 pb-14">
+    <section className="rounded-[34px] border border-emerald-300/15 bg-gradient-to-br from-emerald-300/[.10] via-white/[.025] to-transparent p-5">
+      <p className="text-[9px] font-black uppercase tracking-[.22em] text-emerald-200">ADMIN · TRACK ID</p>
+      <h1 className="mt-2 font-display text-[38px] leading-none text-white">NFC Control</h1>
+      <p className="mt-3 max-w-[340px] text-sm leading-6 text-white/42">Asigná equipos, generá URLs únicas y controlá el estado de cada Track ID sin volver a grabar los chips.</p>
+    </section>
+
+    {message&&<div className="rounded-[22px] border border-amber-300/15 bg-amber-300/[.06] p-4 text-xs leading-5 text-amber-100/80">{message}</div>}
+
+    <section className="rounded-[28px] border border-white/[.07] bg-white/[.03] p-4">
+      <p className="text-[8px] font-black uppercase tracking-[.17em] text-white/25">1 · ELEGIR ALUMNO</p>
+      <select value={selected} onChange={e=>setSelected(e.target.value)} className="mt-3 w-full rounded-2xl border border-white/[.08] bg-[#111118] px-4 py-4 text-sm font-bold text-white">
+        <option value="">Seleccionar alumno</option>
+        {students.map(p=><option key={p.id} value={p.id}>{[p.nombre,p.apellido].filter(Boolean).join(' ')}{p.acceso_habilitado===false?' · BLOQUEADO':''}</option>)}
+      </select>
+    </section>
+
+    {selectedProfile&&<section className="rounded-[28px] border border-emerald-300/12 bg-emerald-300/[.035] p-4">
+      <div className="flex items-center justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.17em] text-emerald-200/60">2 · CREAR TRACK ID</p><h2 className="mt-1 text-lg font-black text-white">{selectedProfile.nombre} · {selectedItems.length} Track ID</h2></div><button disabled={creating} onClick={createTrack} className="rounded-2xl bg-emerald-300 px-4 py-3 text-[10px] font-black text-black disabled:opacity-50">+ NUEVO</button></div>
+      <p className="mt-2 text-[10px] leading-5 text-white/35">Cada equipo nuevo recibe una URL distinta. Un alumno puede tener tantos Track ID como necesite.</p>
+    </section>}
+
+    {selected&&<section className="space-y-3">
+      {loading?<div className="h-28 animate-pulse rounded-[26px] bg-white/[.04]"/>:selectedItems.length?selectedItems.map(item=>{
+        const url=buildUrl(item.public_id),tags=Array.isArray(item.pr_track_tags)?item.pr_track_tags:[]
+        return <article key={item.id} className="rounded-[28px] border border-white/[.07] bg-white/[.025] p-4">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.16em] text-white/25">{item.tipo||'EQUIPO'}</p><h3 className="mt-1 text-lg font-black text-white">{item.nombre||'Track ID'}</h3><p className="mt-1 text-[9px] text-white/28">{tags.length} NFC físico{tags.length===1?'':'s'}</p></div><span className={`rounded-full border px-3 py-1 text-[8px] font-black ${item.estado==='active'?'border-emerald-300/20 bg-emerald-300/[.08] text-emerald-200':'border-white/10 bg-white/[.04] text-white/40'}`}>{String(item.estado||'draft').toUpperCase()}</span></div>
+          <div className="mt-4 rounded-[18px] border border-white/[.06] bg-black/20 p-3"><p className="text-[7px] font-black uppercase tracking-[.15em] text-white/20">URL PARA GRABAR EN NFC</p><p className="mt-2 break-all text-[10px] font-bold text-emerald-200/80">{url}</p></div>
+          <div className="mt-3 grid grid-cols-2 gap-2"><button onClick={()=>copy(url)} className="min-h-11 rounded-2xl border border-emerald-300/15 bg-emerald-300/[.06] px-3 text-[9px] font-black text-emerald-100">COPIAR URL</button>{item.estado==='active'?<button onClick={()=>setState(item,'paused')} className="min-h-11 rounded-2xl border border-amber-300/15 bg-amber-300/[.06] px-3 text-[9px] font-black text-amber-100">PAUSAR</button>:<button onClick={()=>setState(item,'active')} className="min-h-11 rounded-2xl bg-emerald-300 px-3 text-[9px] font-black text-black">ACTIVAR / ENTREGADO</button>}</div>
+        </article>
+      }):<div className="rounded-[26px] border border-dashed border-white/[.08] bg-white/[.02] p-6 text-center"><p className="text-sm font-black text-white">Todavía no tiene Track ID</p><p className="mt-2 text-[10px] leading-5 text-white/30">Creá el primero cuando vayas a preparar su NFC.</p></div>}
+    </section>}
+
+    <section className="rounded-[26px] border border-white/[.06] bg-black/20 p-4"><p className="text-[8px] font-black uppercase tracking-[.16em] text-white/22">REGLA DEL SISTEMA</p><p className="mt-2 text-[10px] leading-5 text-white/36">Alumno ≠ chip. Cada equipo tiene su propio Track ID y su propia URL. Un mismo alumno puede tener patines, casco y otro par de patines, cada uno con una URL diferente. Si necesitás dos NFC físicos para el mismo equipo, ambos pueden apuntar al mismo Track ID.</p></section>
+  </div></AppLayout>
+}
