@@ -276,3 +276,39 @@ drop policy if exists pr_tracking_media_owner_delete on storage.objects;
 create policy pr_tracking_media_owner_delete on storage.objects
 for delete to authenticated
 using(bucket_id='pr-tracking-media' and owner_id=auth.uid()::text);
+
+
+create or replace function public.pr_track_admin_create_item(
+  p_alumno_id text,
+  p_nombre text default 'Nuevo equipo',
+  p_tipo text default 'patines'
+) returns public.pr_track_items
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare r public.pr_track_items;
+begin
+  if not public.pr_track_is_staff() then raise exception 'No autorizado'; end if;
+  if not exists(select 1 from public.profiles p where p.id=p_alumno_id) then
+    raise exception 'Alumno no disponible';
+  end if;
+
+  insert into public.pr_track_items(alumno_id,nombre,tipo,estado,activado_por)
+  values(
+    p_alumno_id,
+    left(coalesce(nullif(trim(p_nombre),''),'Nuevo equipo'),120),
+    left(coalesce(nullif(trim(p_tipo),''),'patines'),40),
+    'draft',
+    public.pr_track_current_profile_id()
+  )
+  returning * into r;
+
+  insert into public.pr_track_tags(item_id,etiqueta,estado,asignado_por)
+  values(r.id,'NFC principal','assigned',public.pr_track_current_profile_id());
+
+  return r;
+end $$;
+
+revoke execute on function public.pr_track_admin_create_item(text,text,text) from public,anon;
+grant execute on function public.pr_track_admin_create_item(text,text,text) to authenticated;
