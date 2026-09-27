@@ -209,3 +209,37 @@ do $$ begin
     execute 'revoke execute on function public.pr_track_scan(text) from public,anon,authenticated';
   end if;
 end $$;
+
+
+-- Public equipment photos used by Track ID cards.
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
+values('pr-tracking-media','pr-tracking-media',true,5242880,array['image/jpeg','image/png','image/webp'])
+on conflict(id) do update set
+  public=excluded.public,
+  file_size_limit=excluded.file_size_limit,
+  allowed_mime_types=excluded.allowed_mime_types;
+
+drop policy if exists pr_tracking_media_authenticated_insert on storage.objects;
+drop policy if exists pr_tracking_media_owner_insert on storage.objects;
+create policy pr_tracking_media_owner_insert on storage.objects
+for insert to authenticated
+with check (
+  bucket_id='pr-tracking-media'
+  and (storage.foldername(name))[1]=public.pr_track_current_profile_id()
+  and exists (
+    select 1 from public.pr_track_items i
+    where i.id::text=(storage.foldername(name))[2]
+      and (i.alumno_id=public.pr_track_current_profile_id() or public.pr_track_is_staff())
+  )
+);
+
+drop policy if exists pr_tracking_media_owner_update on storage.objects;
+create policy pr_tracking_media_owner_update on storage.objects
+for update to authenticated
+using(bucket_id='pr-tracking-media' and owner_id=auth.uid()::text)
+with check(bucket_id='pr-tracking-media' and owner_id=auth.uid()::text);
+
+drop policy if exists pr_tracking_media_owner_delete on storage.objects;
+create policy pr_tracking_media_owner_delete on storage.objects
+for delete to authenticated
+using(bucket_id='pr-tracking-media' and owner_id=auth.uid()::text);
