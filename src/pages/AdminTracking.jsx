@@ -53,6 +53,20 @@ export default function AdminTracking(){
     try{await navigator.clipboard.writeText(text);setMessage('URL copiada. Ya podés grabarla en el NFC.')}catch{setMessage(text)}
   }
 
+  async function addPhysicalTag(item){
+    setMessage('')
+    const current=Array.isArray(item.pr_track_tags)?item.pr_track_tags.length:0
+    const{error}=await supabase.from('pr_track_tags').insert({item_id:item.id,etiqueta:`NFC ${current+1}`,estado:'assigned',asignado_por:'admin'})
+    if(error){setMessage('No se pudo agregar el NFC físico.');return}
+    await load();setSelected(item.alumno_id);setMessage('NFC físico agregado al mismo Track ID. La URL a grabar es la misma.')
+  }
+
+  async function retirePhysicalTag(item,tag){
+    const{error}=await supabase.from('pr_track_tags').update({estado:'retired'}).eq('id',tag.id)
+    if(error){setMessage('No se pudo retirar ese NFC.');return}
+    await load();setSelected(item.alumno_id);setMessage('NFC retirado. El Track ID del equipo sigue intacto.')
+  }
+
   async function setState(item,state){
     const{error}=await supabase.from('pr_track_items').update({estado:state,activado_en:state==='active'?new Date().toISOString():item.activado_en}).eq('id',item.id)
     if(error){setMessage('No se pudo actualizar el Track ID.');return}
@@ -87,6 +101,7 @@ export default function AdminTracking(){
         return <article key={item.id} className="rounded-[28px] border border-white/[.07] bg-white/[.025] p-4">
           <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.16em] text-white/25">{item.tipo||'EQUIPO'}</p><h3 className="mt-1 text-lg font-black text-white">{item.nombre||'Track ID'}</h3><p className="mt-1 text-[9px] text-white/28">{tags.length} NFC físico{tags.length===1?'':'s'}</p></div><span className={`rounded-full border px-3 py-1 text-[8px] font-black ${item.estado==='active'?'border-emerald-300/20 bg-emerald-300/[.08] text-emerald-200':'border-white/10 bg-white/[.04] text-white/40'}`}>{String(item.estado||'draft').toUpperCase()}</span></div>
           <div className="mt-4 rounded-[18px] border border-white/[.06] bg-black/20 p-3"><p className="text-[7px] font-black uppercase tracking-[.15em] text-white/20">URL PARA GRABAR EN NFC</p><p className="mt-2 break-all text-[10px] font-bold text-emerald-200/80">{url}</p></div>
+          <div className="mt-4 rounded-[20px] border border-white/[.06] bg-black/20 p-3"><div className="flex items-center justify-between gap-3"><div><p className="text-[7px] font-black uppercase tracking-[.15em] text-white/20">NFC FÍSICOS</p><p className="mt-1 text-[9px] text-white/30">Varios chips pueden apuntar a esta misma URL.</p></div><button onClick={()=>addPhysicalTag(item)} className="rounded-xl border border-emerald-300/15 bg-emerald-300/[.06] px-3 py-2 text-[8px] font-black text-emerald-100">+ NFC</button></div><div className="mt-3 space-y-2">{tags.length?tags.map(tag=><div key={tag.id} className="flex items-center justify-between rounded-2xl border border-white/[.06] bg-white/[.025] px-3 py-2"><div><p className="text-[9px] font-black text-white/60">{tag.etiqueta||'NFC'}</p><p className="mt-0.5 text-[7px] uppercase tracking-[.12em] text-white/20">{tag.estado||'assigned'}</p></div>{tag.estado!=='retired'&&<button onClick={()=>retirePhysicalTag(item,tag)} className="text-[8px] font-black text-white/30">RETIRAR</button>}</div>):<p className="text-[9px] text-white/25">Sin chips físicos registrados.</p>}</div></div>
           <div className="mt-3 grid grid-cols-2 gap-2"><button onClick={()=>copy(url)} className="min-h-11 rounded-2xl border border-emerald-300/15 bg-emerald-300/[.06] px-3 text-[9px] font-black text-emerald-100">COPIAR URL</button>{item.estado==='active'?<button onClick={()=>setState(item,'paused')} className="min-h-11 rounded-2xl border border-amber-300/15 bg-amber-300/[.06] px-3 text-[9px] font-black text-amber-100">PAUSAR</button>:<button onClick={()=>setState(item,'active')} className="min-h-11 rounded-2xl bg-emerald-300 px-3 text-[9px] font-black text-black">ACTIVAR / ENTREGADO</button>}</div>
         </article>
       }):<div className="rounded-[26px] border border-dashed border-white/[.08] bg-white/[.02] p-6 text-center"><p className="text-sm font-black text-white">Todavía no tiene Track ID</p><p className="mt-2 text-[10px] leading-5 text-white/30">Creá el primero cuando vayas a preparar su NFC.</p></div>}
