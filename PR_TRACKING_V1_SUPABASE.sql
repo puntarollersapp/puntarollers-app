@@ -72,7 +72,13 @@ $$;
 -- student-editable fields go through the guarded RPC below.
 drop policy if exists track_items_read on public.pr_track_items;
 create policy track_items_read on public.pr_track_items for select to authenticated
-using(alumno_id=public.pr_track_current_profile_id() or public.pr_track_is_staff());
+using(
+  public.pr_track_is_staff()
+  or (
+    alumno_id=public.pr_track_current_profile_id()
+    and estado in ('active','lost')
+  )
+);
 
 drop policy if exists track_items_update on public.pr_track_items;
 drop policy if exists track_items_staff_update on public.pr_track_items;
@@ -89,7 +95,16 @@ using(public.pr_track_is_staff());
 
 drop policy if exists track_tags_read on public.pr_track_tags;
 create policy track_tags_read on public.pr_track_tags for select to authenticated using(exists(
-  select 1 from public.pr_track_items i where i.id=item_id and (i.alumno_id=public.pr_track_current_profile_id() or public.pr_track_is_staff())
+  select 1
+  from public.pr_track_items i
+  where i.id=item_id
+    and (
+      public.pr_track_is_staff()
+      or (
+        i.alumno_id=public.pr_track_current_profile_id()
+        and i.estado in ('active','lost')
+      )
+    )
 ));
 
 drop policy if exists track_tags_staff_write on public.pr_track_tags;
@@ -107,7 +122,17 @@ create or replace function public.pr_track_update_item(
 ) returns public.pr_track_items language plpgsql security definer set search_path=public as $$
 declare r public.pr_track_items;
 begin
-  select * into r from public.pr_track_items where id=p_item_id and (alumno_id=public.pr_track_current_profile_id() or public.pr_track_is_staff()) limit 1;
+  select * into r
+  from public.pr_track_items
+  where id=p_item_id
+    and (
+      public.pr_track_is_staff()
+      or (
+        alumno_id=public.pr_track_current_profile_id()
+        and estado in ('active','lost')
+      )
+    )
+  limit 1;
   if r.id is null then raise exception 'Track ID no disponible'; end if;
   update public.pr_track_items set
     nombre=left(coalesce(p_nombre,''),120),tipo=left(coalesce(p_tipo,'otro'),40),marca=left(coalesce(p_marca,''),100),
@@ -124,9 +149,17 @@ returns public.pr_track_items language plpgsql security definer set search_path=
 declare r public.pr_track_items;
 begin
   if p_state not in ('active','paused','lost','retired') then raise exception 'Estado inválido'; end if;
-  select * into r from public.pr_track_items where id=p_item_id and (alumno_id=public.pr_track_current_profile_id() or public.pr_track_is_staff()) limit 1;
+  select * into r from public.pr_track_items where id=p_item_id limit 1;
   if r.id is null then raise exception 'Track ID no disponible'; end if;
-  if not public.pr_track_is_staff() and p_state not in ('active','lost') then raise exception 'Estado no permitido'; end if;
+  if public.pr_track_is_staff() then
+    null;
+  elsif r.alumno_id=public.pr_track_current_profile_id() then
+    if not ((r.estado='active' and p_state='lost') or (r.estado='lost' and p_state='active')) then
+      raise exception 'Transición de estado no permitida';
+    end if;
+  else
+    raise exception 'Track ID no disponible';
+  end if;
   update public.pr_track_items set estado=p_state,updated_at=now() where id=p_item_id returning * into r;
   return r;
 end $$;
