@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
+import AppLayout from '../layouts/AppLayout'
+import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 
 function lower(value) {
@@ -298,6 +300,7 @@ function KmPodium({ ranking, period, statuses }) {
 }
 
 export default function PublicWeeklyRanking() {
+  const { user } = useAuth()
   const ranges = useMemo(() => dateRanges(), [])
   const [params, setParams] = useSearchParams()
   const requested = params.get('period')
@@ -366,9 +369,8 @@ export default function PublicWeeklyRanking() {
   const activeRange = period === 'week' ? ranges.week : ranges.month
   const rangeLabel = `${shortDate(activeRange.start)} → ${shortDate(activeRange.end)}`
 
-  return (
-    <PublicLayout>
-      <main className="min-h-screen bg-[#050508] px-4 pb-16 pt-5 text-white">
+  const content = (
+      <main className="min-h-screen bg-[#050508] px-4 pb-28 pt-5 text-white">
         <div className="mx-auto w-full max-w-2xl space-y-5">
           <section className="relative overflow-hidden rounded-[32px] border border-amber-300/20 bg-[radial-gradient(circle_at_85%_0%,rgba(124,58,237,.22),transparent_42%),linear-gradient(135deg,#2b1803,#0d0b0f_48%,#0b0713)] p-6 shadow-[0_30px_90px_rgba(0,0,0,.42)]">
             <div className="absolute -left-24 top-8 h-64 w-64 rounded-full border border-red-500/20" />
@@ -379,7 +381,7 @@ export default function PublicWeeklyRanking() {
                 <h1 className="mt-3 text-[40px] font-black leading-[.94] tracking-[-.04em]">Top Ranking<br/><span className="text-orange-400">PR.</span></h1>
                 <p className="mt-4 max-w-md text-sm leading-6 text-white/45">Kilómetros de patinaje inline de la comunidad PR, actualizados desde Strava. Mirá quién viene sumando más esta semana y este mes.</p>
               </div>
-              <Link to="/rollerfeed" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[.04]">←</Link>
+              <Link to={user?'/app/actividad':'/rollerfeed'} className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[.04]">←</Link>
             </div>
             <div className="relative mt-6 grid grid-cols-2 gap-2 rounded-[20px] border border-white/10 bg-black/25 p-1.5">
               <button onClick={() => changePeriod('week')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black' : 'text-white/45'}`}>ESTA SEMANA</button>
@@ -445,6 +447,6 @@ export default function PublicWeeklyRanking() {
           )}
         </div>
       </main>
-    </PublicLayout>
   )
+  return user ? <AppLayout title="Ranking PR">{content}</AppLayout> : <PublicLayout>{content}</PublicLayout>
 }
