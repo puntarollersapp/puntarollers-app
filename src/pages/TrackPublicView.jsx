@@ -3,63 +3,38 @@ import { useParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { supabase } from '../lib/supabase'
 
-function NfcIcon(){
-  return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7c3 2.6 3 7.4 0 10M11 4c5 4.3 5 11.7 0 16M5 10c1.2 1.1 1.2 2.9 0 4"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
-}
-
-function whatsappLink(phone, item){
-  const clean=String(phone||'').replace(/\D/g,'')
-  if(!clean)return''
-  const msg=`Hola. Encontré tu ${item?.nombre||item?.tipo||'equipo'} identificado con PR Tracking.`
-  return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`
-}
+function NfcIcon(){return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7c3 2.6 3 7.4 0 10M11 4c5 4.3 5 11.7 0 16M5 10c1.2 1.1 1.2 2.9 0 4"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/></svg>}
+function whatsappLink(phone,item){const clean=String(phone||'').replace(/\D/g,'');if(!clean)return'';const msg=`Hola. Encontré tu ${item?.nombre||item?.tipo||'equipo'} identificado con PR Tracking.`;return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`}
+function callLink(phone){const clean=String(phone||'').replace(/[^\d+]/g,'');return clean?`tel:${clean}`:''}
 
 export default function TrackPublicView(){
-  const { publicId }=useParams()
-  const [state,setState]=useState({loading:true,data:null,error:''})
+ const{publicId}=useParams(),[state,setState]=useState({loading:true,data:null,error:''})
+ useEffect(()=>{let alive=true;(async()=>{const{data,error}=await supabase.rpc('pr_track_public',{p_public_id:publicId});if(!alive)return;if(error){setState({loading:false,data:null,error:'Este Track ID todavía no está disponible.'});return}setState({loading:false,data:data||null,error:''})})();return()=>{alive=false}},[publicId])
+ const data=state.data,item=data?.item||{},owner=data?.owner||{},paused=data?.status==='paused',missing=data?.status==='not_found',lost=data?.status==='lost'
+ return <PublicLayout><div className="mx-auto max-w-[520px] px-4 py-6 pb-14">
+  <section className="relative overflow-hidden rounded-[34px] border border-emerald-300/15 bg-gradient-to-br from-emerald-300/[.12] via-white/[.025] to-transparent p-5"><div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-emerald-300/10 blur-3xl"/><div className="relative flex items-start justify-between gap-4"><div><p className="text-[9px] font-black uppercase tracking-[.24em] text-emerald-200/70">PUNTA ROLLERS · TRACK ID</p><h1 className="mt-2 font-display text-[38px] leading-none text-white">PR Tracking</h1><p className="mt-3 text-xs leading-5 text-white/40">Identificación NFC verificada por Punta Rollers.</p></div><div className="grid h-16 w-16 shrink-0 place-items-center rounded-[22px] border border-emerald-200/20 bg-emerald-300/[.08] text-emerald-200"><NfcIcon/></div></div></section>
 
-  useEffect(()=>{
-    let alive=true
-    async function load(){
-      const {data,error}=await supabase.rpc('pr_track_public',{p_public_id:publicId})
-      if(!alive)return
-      if(error){setState({loading:false,data:null,error:'Este Track ID todavía no está disponible.'});return}
-      setState({loading:false,data:data||null,error:''})
-    }
-    if(publicId)load();else setState({loading:false,data:null,error:'Track ID inválido.'})
-    return()=>{alive=false}
-  },[publicId])
+  {state.loading&&<section className="mt-4 rounded-[28px] border border-white/[.07] bg-white/[.03] p-6 text-center"><div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-emerald-300/20"/><p className="mt-3 text-sm font-bold text-white/55">Leyendo Track ID…</p></section>}
+  {!state.loading&&(state.error||missing)&&<section className="mt-4 rounded-[30px] border border-white/[.07] bg-white/[.03] p-6 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-[20px] border border-white/[.08] bg-white/[.035] text-white/30"><NfcIcon/></div><p className="mt-4 text-xl font-black text-white">Track ID no disponible</p><p className="mt-2 text-xs leading-5 text-white/38">{state.error||'No encontramos una ficha asociada a este identificador.'}</p></section>}
+  {!state.loading&&paused&&<section className="mt-4 rounded-[30px] border border-amber-300/15 bg-amber-300/[.06] p-6 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-[20px] border border-amber-300/15 bg-amber-300/[.07] text-amber-200"><NfcIcon/></div><h2 className="mt-4 text-xl font-black text-white">Track ID temporalmente pausado</h2><p className="mt-2 text-xs leading-5 text-white/40">La identificación existe, pero la ficha pública está momentáneamente inactiva. El mismo NFC volverá a funcionar cuando el servicio sea rehabilitado.</p></section>}
 
-  const data=state.data,item=data?.item||{},owner=data?.owner||{}
-  const paused=data?.status==='paused',missing=data?.status==='not_found'
+  {!state.loading&&!paused&&!missing&&!state.error&&data&&<div className="mt-4 space-y-4">
+    {lost&&<section className="rounded-[28px] border border-amber-300/20 bg-gradient-to-r from-amber-300/[.10] to-orange-300/[.05] p-4"><p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-200">EQUIPO REPORTADO COMO PERDIDO</p><p className="mt-2 text-sm font-black text-white">Si lo encontraste, contactá a su dueño.</p><p className="mt-1 text-[10px] leading-5 text-white/38">Este estado fue activado por el propietario desde Punta Rollers.</p></section>}
 
-  return <PublicLayout><div className="mx-auto max-w-[520px] px-4 py-8 pb-14">
-    <section className="relative overflow-hidden rounded-[34px] border border-emerald-300/15 bg-gradient-to-br from-emerald-300/[.12] via-white/[.025] to-transparent p-5">
-      <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-emerald-300/10 blur-3xl"/>
-      <div className="relative flex items-start justify-between gap-4"><div><p className="text-[9px] font-black uppercase tracking-[.24em] text-emerald-200/70">PUNTA ROLLERS · TRACK ID</p><h1 className="mt-2 font-display text-[38px] leading-none text-white">PR Tracking</h1><p className="mt-3 text-xs leading-5 text-white/40">Ficha pública de identificación NFC.</p></div><div className="grid h-16 w-16 shrink-0 place-items-center rounded-[22px] border border-emerald-200/20 bg-emerald-300/[.08] text-emerald-200"><NfcIcon/></div></div>
+    <section className="overflow-hidden rounded-[32px] border border-white/[.08] bg-[#0b0b10] shadow-[0_24px_70px_rgba(0,0,0,.28)]">
+      <div className="relative aspect-[16/10] bg-gradient-to-br from-emerald-300/[.08] to-white/[.02]">{item.foto_url?<img src={item.foto_url} alt={item.nombre||'Equipo PR'} className="h-full w-full object-cover"/>:<div className="grid h-full place-items-center text-emerald-200/50"><NfcIcon/></div>}<div className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/45 px-3 py-1.5 text-[8px] font-black uppercase tracking-[.14em] text-white/60 backdrop-blur-xl">{lost?'PERDIDO':'TRACK ID ACTIVO'}</div></div>
+      <div className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-emerald-200/60">{item.tipo||'EQUIPO'}</p><h2 className="mt-1 text-2xl font-black text-white">{item.nombre||'Equipo PR'}</h2></div><span className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase ${lost?'border-amber-300/20 bg-amber-300/[.08] text-amber-200':'border-emerald-300/15 bg-emerald-300/[.07] text-emerald-200'}`}>{lost?'REPORTADO':'VERIFICADO'}</span></div>
+      {(item.marca||item.modelo||item.color)&&<div className="mt-4 grid grid-cols-3 gap-2">{[['Marca',item.marca],['Modelo',item.modelo],['Color',item.color]].map(([k,v])=>v?<div key={k} className="rounded-[18px] border border-white/[.06] bg-white/[.025] p-3"><p className="text-[7px] font-black uppercase tracking-[.12em] text-white/22">{k}</p><p className="mt-1 truncate text-[10px] font-bold text-white/60">{v}</p></div>:null)}</div>}
+      {item.descripcion&&<p className="mt-4 text-xs leading-5 text-white/40">{item.descripcion}</p>}</div>
     </section>
 
-    {state.loading&&<div className="mt-4 rounded-[28px] border border-white/[.07] bg-white/[.03] p-6 text-center text-sm text-white/45">Leyendo Track ID…</div>}
+    <section className="rounded-[30px] border border-white/[.07] bg-white/[.03] p-5">
+      <p className="text-[9px] font-black uppercase tracking-[.18em] text-white/25">PERTENECE A</p>
+      <div className="mt-4 flex items-center gap-4">{owner.foto?<img src={owner.foto} alt="" className="h-16 w-16 rounded-[20px] object-cover"/>:<div className="grid h-16 w-16 place-items-center rounded-[20px] border border-white/[.07] bg-white/[.04] text-sm font-black text-white/35">PR</div>}<div className="min-w-0"><p className="truncate text-lg font-black text-white">{owner.nombre||'Alumno Punta Rollers'}</p>{owner.ciudad&&<p className="mt-1 text-xs text-white/35">{owner.ciudad}</p>}<div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-300/12 bg-emerald-300/[.05] px-2.5 py-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300"/><span className="text-[8px] font-black uppercase tracking-[.12em] text-emerald-100/70">Propietario PR</span></div></div></div>
+      {(owner.telefono||owner.email)?<div className="mt-4 grid gap-2">{owner.telefono&&<a href={whatsappLink(owner.telefono,item)} target="_blank" rel="noreferrer" className="flex min-h-13 items-center justify-between rounded-[18px] bg-emerald-300 px-4 text-xs font-black text-black"><span>{lost?'AVISAR QUE LO ENCONTRÉ':'CONTACTAR POR WHATSAPP'}</span><span>→</span></a>}{owner.telefono&&<a href={callLink(owner.telefono)} className="flex min-h-12 items-center justify-between rounded-[18px] border border-white/[.07] bg-white/[.025] px-4 text-xs font-black text-white/60"><span>Llamar</span><span>→</span></a>}{owner.email&&<a href={`mailto:${owner.email}?subject=${encodeURIComponent('PR Tracking · '+(item.nombre||'Equipo encontrado'))}`} className="flex min-h-12 items-center justify-between rounded-[18px] border border-white/[.07] bg-white/[.025] px-4 text-xs font-black text-white/60"><span>{owner.email}</span><span>→</span></a>}</div>:<div className="mt-4 rounded-[18px] border border-white/[.06] bg-black/20 p-4 text-[10px] leading-5 text-white/30">El propietario no habilitó datos de contacto públicos para este Track ID.</div>}
+    </section>
 
-    {!state.loading&&(state.error||missing)&&<section className="mt-4 rounded-[28px] border border-white/[.07] bg-white/[.03] p-6 text-center"><p className="text-lg font-black text-white">Track ID no disponible</p><p className="mt-2 text-xs leading-5 text-white/38">{state.error||'No encontramos una ficha asociada a este identificador.'}</p></section>}
-
-    {!state.loading&&paused&&<section className="mt-4 rounded-[30px] border border-amber-300/15 bg-amber-300/[.06] p-6 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-[20px] border border-amber-300/15 bg-amber-300/[.07] text-amber-200"><NfcIcon/></div><h2 className="mt-4 text-xl font-black text-white">Track ID temporalmente pausado</h2><p className="mt-2 text-xs leading-5 text-white/40">La ficha existe, pero sus servicios privados están momentáneamente inactivos. El mismo NFC volverá a funcionar cuando el estado sea regularizado.</p></section>}
-
-    {!state.loading&&!paused&&!missing&&!state.error&&data&&<div className="mt-4 space-y-4">
-      <section className="overflow-hidden rounded-[32px] border border-white/[.08] bg-[#0b0b10]">
-        <div className="aspect-[16/10] bg-gradient-to-br from-emerald-300/[.08] to-white/[.02]">{item.foto_url?<img src={item.foto_url} alt={item.nombre||'Equipo PR'} className="h-full w-full object-cover"/>:<div className="grid h-full place-items-center text-emerald-200/50"><NfcIcon/></div>}</div>
-        <div className="p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-emerald-200/60">{item.tipo||'EQUIPO'}</p><h2 className="mt-1 text-2xl font-black text-white">{item.nombre||'Equipo PR'}</h2></div><span className="rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-black uppercase text-emerald-200">{data.status==='lost'?'REPORTADO':'ACTIVO'}</span></div>
-        {(item.marca||item.modelo||item.color)&&<div className="mt-4 grid grid-cols-3 gap-2">{[['Marca',item.marca],['Modelo',item.modelo],['Color',item.color]].map(([k,v])=>v?<div key={k} className="rounded-[18px] border border-white/[.06] bg-white/[.025] p-3"><p className="text-[7px] font-black uppercase tracking-[.12em] text-white/22">{k}</p><p className="mt-1 truncate text-[10px] font-bold text-white/60">{v}</p></div>:null)}</div>}
-        {item.descripcion&&<p className="mt-4 text-xs leading-5 text-white/40">{item.descripcion}</p>}</div>
-      </section>
-
-      <section className="rounded-[30px] border border-white/[.07] bg-white/[.03] p-5">
-        <p className="text-[9px] font-black uppercase tracking-[.18em] text-white/25">PERTENECE A</p>
-        <div className="mt-4 flex items-center gap-4">{owner.foto?<img src={owner.foto} alt="" className="h-16 w-16 rounded-[20px] object-cover"/>:<div className="grid h-16 w-16 place-items-center rounded-[20px] border border-white/[.07] bg-white/[.04] text-sm font-black text-white/35">PR</div>}<div className="min-w-0"><p className="text-lg font-black text-white">{owner.nombre||'Alumno Punta Rollers'}</p>{owner.ciudad&&<p className="mt-1 text-xs text-white/35">{owner.ciudad}</p>}</div></div>
-        <div className="mt-4 grid gap-2">{owner.telefono&&<a href={whatsappLink(owner.telefono,item)} target="_blank" rel="noreferrer" className="flex min-h-12 items-center justify-between rounded-[18px] border border-emerald-300/15 bg-emerald-300/[.06] px-4 text-xs font-black text-emerald-100"><span>Contactar por WhatsApp</span><span>→</span></a>}{owner.email&&<a href={`mailto:${owner.email}`} className="flex min-h-12 items-center justify-between rounded-[18px] border border-white/[.07] bg-white/[.025] px-4 text-xs font-black text-white/60"><span>{owner.email}</span><span>→</span></a>}</div>
-      </section>
-
-      <p className="px-3 text-center text-[9px] leading-4 text-white/20">Esta ficha muestra únicamente la información autorizada para identificación y contacto. Los datos privados de la cuenta PR no son públicos.</p>
-    </div>}
-  </div></PublicLayout>
+    <section className="rounded-[26px] border border-white/[.06] bg-black/20 p-4"><p className="text-[8px] font-black uppercase tracking-[.16em] text-white/22">PRIVACIDAD Y SEGURIDAD</p><p className="mt-2 text-[10px] leading-5 text-white/34">Esta ficha muestra únicamente información que el propietario eligió hacer pública para identificar el equipo y permitir contacto. No muestra el perfil privado, documento, PIN ni información interna de Punta Rollers.</p></section>
+  </div>}
+ </div></PublicLayout>
 }
