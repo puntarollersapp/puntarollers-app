@@ -1,32 +1,18 @@
-import PublicLayout from "../layouts/PublicLayout"
+import AppLayout from '../layouts/AppLayout'
+import { useAuth } from '../lib/auth'
 
-export default function Tracking() {
-  return (
-    <PublicLayout>
-      <div className="px-4 py-6 space-y-8">
-        <section className="text-center space-y-3">
-          <p className="section-label">Servicio para alumnos PR</p>
-          <h1 className="text-3xl font-bold text-white">🏷️ PR Tracking</h1>
-          <p className="text-gray-400 text-sm">Identificación NFC para equipamiento, legitimidad y recuperación.</p>
-        </section>
-
-        <section className="glass p-5 rounded-2xl space-y-3">
-          <p className="text-white font-semibold">¿Qué es?</p>
-          <p className="text-gray-300 text-sm">PR Tracking vincula un chip NFC configurado a un artículo: patines, casco, protecciones, termo u otro equipamiento.</p>
-          <p className="text-gray-400 text-sm">Al acercar un celular, se puede ver información del artículo, foto, modelo, detalles y contacto del dueño para comprobar legitimidad o reportar pérdida.</p>
-        </section>
-
-        <section className="space-y-3">
-          <p className="section-label">Para qué sirve</p>
-          <Info title="🛡️ Legitimidad" text="Ayuda a comprobar que un artículo pertenece realmente a un alumno PR." />
-          <Info title="🔎 Recuperación" text="Si algo se pierde o queda en clase, facilita contactar al dueño." />
-          <Info title="📦 Organización" text="Ideal para patines, cascos, protecciones, termos y accesorios." />
-        </section>
-      </div>
-    </PublicLayout>
-  )
+function NfcMark() {
+  return <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round"><path d="M8 7c3 2.6 3 7.4 0 10M11 4c5 4.3 5 11.7 0 16M5 10c1.2 1.1 1.2 2.9 0 4"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
+}
+function StateIcon({ type }) {
+  const p={width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.55,strokeLinecap:'round',strokeLinejoin:'round'}
+  if(type==='equipment') return <svg {...p}><path d="M5 15h10.5a3.5 3.5 0 0 0 3.5-3.5V8M6 15V7h5l2.5 4H18"/><circle cx="8" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
+  if(type==='edit') return <svg {...p}><path d="m4 20 4.2-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/><path d="m13.8 7.4 2.8 2.8"/></svg>
+  return <svg {...p}><path d="M12 3 5 6v5c0 4.5 2.8 8.1 7 10 4.2-1.9 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
 }
 
-function Info({ title, text }) {
-  return <div className="glass p-4 rounded-2xl"><p className="text-white font-semibold">{title}</p><p className="text-gray-400 text-sm mt-1">{text}</p></div>
+export default function Tracking() {
+  const { user } = useAuth()
+  const name = user?.nombre || 'Tu'
+  return <AppLayout title="PR Tracking" showBack><div className="pr-page space-y-4 pb-12 animate-page-enter"><section className="relative overflow-hidden rounded-[34px] border border-emerald-300/15 bg-gradient-to-br from-emerald-300/[.13] via-white/[.025] to-transparent p-5"><div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-emerald-300/10 blur-3xl"/><div className="relative flex items-start justify-between gap-4"><div><p className="text-[9px] font-black uppercase tracking-[.24em] text-emerald-200/70">MI PR · TRACK ID</p><h1 className="mt-2 font-display text-[38px] leading-none text-white">{name} Tracking</h1><p className="mt-3 max-w-[280px] text-sm leading-6 text-white/45">Tu espacio para administrar los equipos vinculados a chips NFC de Punta Rollers.</p></div><div className="relative grid h-16 w-16 shrink-0 place-items-center rounded-[22px] border border-emerald-200/20 bg-emerald-300/[.08] text-emerald-200"><span className="absolute inset-2 rounded-2xl border border-emerald-200/10 tracking-pulse"/><NfcMark/></div></div></section><section className="rounded-[30px] border border-white/[.07] bg-white/[.035] p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/30">ESTADO DE TRACKING</p><h2 className="mt-1 text-xl font-black text-white">Centro Track ID</h2></div><span className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1.5 text-[9px] font-black uppercase tracking-[.12em] text-white/35">Preparado</span></div><p className="mt-3 text-xs leading-5 text-white/38">Cuando Punta Rollers te asigne un NFC, va a aparecer acá. El chip conservará una URL estable y vos vas a poder actualizar la información del equipo sin volver a grabarlo.</p></section><section className="grid grid-cols-3 gap-2">{[['equipment','Mis equipos'],['edit','Editar datos'],['shield','Protección']].map(([type,label])=><div key={label} className="min-h-[112px] rounded-[24px] border border-white/[.06] bg-black/20 p-3"><div className="text-emerald-200/70"><StateIcon type={type}/></div><p className="mt-4 text-[10px] font-black leading-4 text-white/55">{label}</p></div>)}</section><section className="relative overflow-hidden rounded-[30px] border border-dashed border-emerald-300/20 bg-emerald-300/[.035] p-6 text-center"><div className="mx-auto grid h-14 w-14 place-items-center rounded-[20px] border border-emerald-300/15 bg-emerald-300/[.06] text-emerald-200"><NfcMark/></div><h2 className="mt-4 text-lg font-black text-white">Tus Track ID van a vivir acá</h2><p className="mx-auto mt-2 max-w-[300px] text-xs leading-5 text-white/38">No necesitás configurar nada todavía. La activación comienza cuando un administrador vincula físicamente un NFC a tu cuenta.</p></section><section className="rounded-[26px] border border-white/[.06] bg-white/[.025] p-4"><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/25">DISEÑADO PARA NO ROMPER EL CHIP</p><p className="mt-2 text-xs leading-5 text-white/38">El NFC apunta al Track ID, no a los datos escritos dentro del chip. Por eso podés cambiar patines, modelo, foto o información permitida desde Punta Rollers manteniendo el mismo enlace físico.</p></section><style>{`.tracking-pulse{animation:trackingPulse 2.4s ease-out infinite}@keyframes trackingPulse{0%{transform:scale(.72);opacity:.8}75%,100%{transform:scale(1.35);opacity:0}}@media(prefers-reduced-motion:reduce){.tracking-pulse{animation:none!important}}`}</style></div></AppLayout>
 }
