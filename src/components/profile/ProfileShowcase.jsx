@@ -48,7 +48,9 @@ export default function ProfileShowcase({profileId,items=[],momentPhotos=[],inst
       <p className="text-[9px] leading-4 text-white/25">Tres fotos alcanzan para darle color al perfil sin convertirlo en otro Instagram.</p>
       {instagram&&<a href={instagramUrl(instagram)} target="_blank" rel="noreferrer" className="shrink-0 rounded-full border border-fuchsia-300/15 bg-fuchsia-400/[.06] px-3 py-1.5 text-[8px] font-black text-fuchsia-200">IG {instagramHandle(instagram)} ↗</a>}
     </div>
-<style>{`.pr-moment-card{animation:prMomentFloat 4.2s ease-in-out infinite}.pr-moment-card:before{content:"";position:absolute;inset:-35%;pointer-events:none;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.09) 50%,transparent 58%);transform:translateX(-70%) rotate(8deg);animation:prMomentShine 5.5s ease-in-out infinite}@keyframes prMomentFloat{50%{transform:translateY(-3px)}}@keyframes prMomentShine{55%,100%{transform:translateX(70%) rotate(8deg)}}@media(prefers-reduced-motion:reduce){.pr-moment-card,.pr-moment-card:before{animation:none!important}}`}</style>\n  <section className="overflow-hidden rounded-[30px] border border-sky-300/15 bg-[radial-gradient(circle_at_95%_0%,rgba(56,189,248,.12),transparent_42%),linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012))] p-4">
+  </section>
+
+  <section className="overflow-hidden rounded-[30px] border border-sky-300/15 bg-[radial-gradient(circle_at_95%_0%,rgba(56,189,248,.12),transparent_42%),linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012))] p-4">
     <div className="flex items-end justify-between gap-3">
       <div><p className="text-[8px] font-black uppercase tracking-[.18em] text-sky-300">MI SETUP</p><h3 className="mt-1 font-display text-[27px] text-white">Mi mundo sobre ruedas.</h3><p className="mt-1 text-[9px] text-white/28">Personalizá tu perfil: tocá cada bloque y subí tu foto.</p></div>
       {tracking&&<span className="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1.5 text-[7px] font-black text-emerald-200">✓ PROTEGIDO · PR TRACKING</span>}
@@ -64,6 +66,6 @@ export default function ProfileShowcase({profileId,items=[],momentPhotos=[],inst
     {msg&&<p className="mt-2 text-[9px] text-amber-200">{msg}</p>}
   </section>
 
-  </section>
+  <style>{`.pr-moment-card{animation:prMomentFloat 4.2s ease-in-out infinite}.pr-moment-card:before{content:"";position:absolute;inset:-35%;pointer-events:none;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.09) 50%,transparent 58%);transform:translateX(-70%) rotate(8deg);animation:prMomentShine 5.5s ease-in-out infinite}@keyframes prMomentFloat{50%{transform:translateY(-3px)}}@keyframes prMomentShine{55%,100%{transform:translateX(70%) rotate(8deg)}}@media(prefers-reduced-motion:reduce){.pr-moment-card,.pr-moment-card:before{animation:none!important}}`}</style>
  </div>
 }
