@@ -414,6 +414,8 @@ export default function Profile() {
 
   const [form, setForm] = useState({
     nombre: base.nombre || '',
+    apellido: base.apellido || '',
+    telefono: base.telefono || '',
     ciudad: base.ciudad || '',
     instagram: base.instagram || '',
     email: base.email || '',
@@ -580,6 +582,8 @@ export default function Profile() {
 
         const loadedProfile = {
           nombre: data.nombre || base.nombre || '',
+          apellido: data.apellido || base.apellido || '',
+          telefono: data.telefono || base.telefono || '',
           ciudad: data.ciudad || '',
           instagram: data.instagram || '',
           email: data.email || '',
@@ -1128,6 +1132,8 @@ export default function Profile() {
 
       const payload = {
         nombre: form.nombre,
+        apellido: form.apellido,
+        telefono: form.telefono,
         ciudad: form.ciudad,
         instagram: form.instagram,
         email: form.email,
@@ -1654,6 +1660,28 @@ export default function Profile() {
                 setForm({
                   ...form,
                   nombre: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Apellido"
+              value={form.apellido}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  apellido: value,
+                })
+              }
+            />
+
+            <EditInput
+              label="Teléfono"
+              value={form.telefono}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  telefono: value,
                 })
               }
             />
