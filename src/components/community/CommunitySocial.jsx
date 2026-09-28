@@ -21,6 +21,10 @@ export default function CommunitySocial() {
   const [albumTarget, setAlbumTarget] = useState(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [selectedAlbum, setSelectedAlbum] = useState(null)
+  const [selectedPhoto, setSelectedPhoto] = useState(null)
+  const [albumComment, setAlbumComment] = useState('')
+  const [photoComment, setPhotoComment] = useState('')
 
   const postInput = useRef(null)
   const createAlbumInput = useRef(null)
@@ -188,6 +192,75 @@ export default function CommunitySocial() {
     load()
   }
 
+  async function answerAlbumInvite(note, accept) {
+    setBusy(true)
+    try {
+      const { error } = await supabase.rpc('community_answer_album_invite', { p_album_id: note.entity_id, p_accept: accept })
+      if (error) throw error
+      setMsg(accept ? '✓ Invitación aceptada. El álbum ya forma parte de tu círculo y podés sumar fotos.' : 'Invitación rechazada.')
+      await supabase.from('community_notifications').update({ read_at: new Date().toISOString() }).eq('id', note.id)
+      await load()
+    } catch (error) {
+      setMsg(`No pudimos responder la invitación: ${error.message}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function openAlbum(album) {
+    setSelectedAlbum(album)
+    setSelectedPhoto(null)
+  }
+
+  async function reactAlbum(album, reaction) {
+    await supabase.rpc('community_toggle_album_reaction', { p_album_id: album.id, p_reaction: reaction })
+    await load()
+    const fresh = albums.find((a) => a.id === album.id)
+    if (fresh) setSelectedAlbum(fresh)
+  }
+
+  async function commentAlbum(album) {
+    const value = albumComment.trim()
+    if (!value) return
+    const { error } = await supabase.rpc('community_add_album_comment', { p_album_id: album.id, p_body: value })
+    if (!error) {
+      setAlbumComment('')
+      await load()
+    }
+  }
+
+  async function reactPhoto(photo, reaction) {
+    await supabase.rpc('community_toggle_photo_reaction', { p_photo_id: photo.id, p_reaction: reaction })
+    await load()
+  }
+
+  async function commentPhoto(photo) {
+    const value = photoComment.trim()
+    if (!value) return
+    const { error } = await supabase.rpc('community_add_photo_comment', { p_photo_id: photo.id, p_body: value })
+    if (!error) {
+      setPhotoComment('')
+      await load()
+    }
+  }
+
+  async function downloadPhoto(photo) {
+    try {
+      const response = await fetch(photo.url)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `punta-rollers-${photo.id}.jpg`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      window.open(photo.url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   const unread = notes.filter((n) => !n.read_at).length
 
   return (
@@ -204,7 +277,7 @@ export default function CommunitySocial() {
           </div>
           {unread > 0 && <button onClick={readAll} className="text-[9px] font-black text-violet-200">MARCAR LEÍDAS</button>}
         </div>
-        {notes.length ? <div className="mt-3 space-y-2">{notes.slice(0,5).map((n) => <div key={n.id} className={`rounded-2xl border p-3 text-xs ${n.read_at ? 'border-white/[.05] text-white/35' : 'border-violet-300/20 bg-violet-500/[.08] text-white/75'}`}>{n.text}</div>)}</div> : <p className="mt-3 text-xs text-white/30">Etiquetas, comentarios, reacciones e invitaciones aparecen acá.</p>}
+        {notes.length ? <div className="mt-3 space-y-2">{notes.slice(0,6).map((n) => <div key={n.id} className={`rounded-2xl border p-3 text-xs ${n.read_at ? 'border-white/[.05] text-white/35' : 'border-violet-300/20 bg-violet-500/[.08] text-white/75'}`}><p>{n.text}</p>{['album_collab_invite','album_invite'].includes(n.kind)&&!n.read_at&&<div className="mt-3 grid grid-cols-2 gap-2"><button disabled={busy} onClick={()=>answerAlbumInvite(n,false)} className="rounded-xl border border-white/10 py-2 text-[9px] font-black text-white/45">AHORA NO</button><button disabled={busy} onClick={()=>answerAlbumInvite(n,true)} className="rounded-xl bg-violet-500 py-2 text-[9px] font-black text-white">ACEPTAR Y COLABORAR</button></div>}</div>)}</div> : <p className="mt-3 text-xs text-white/30">Etiquetas, comentarios, reacciones e invitaciones aparecen acá.</p>}
       </section>
 
       <section className="rounded-[30px] border border-orange-300/15 bg-gradient-to-br from-orange-500/[.09] to-transparent p-4">
@@ -251,8 +324,9 @@ export default function CommunitySocial() {
             {album.photos?.length > 0 && <div className="mt-3 grid grid-cols-3 gap-1">{album.photos.slice(0,6).map((photo) => <img key={photo.id} src={photo.url} alt="" className="aspect-square w-full rounded-lg object-cover" />)}</div>}
             <div className="mt-3 flex items-center justify-between gap-2">
               <span className="text-[9px] text-violet-200/60">{album.photos?.length || 0} fotos</span>
-              {(album.status === 'owner' || album.status === 'accepted') && <button disabled={busy} onClick={() => openAlbumUploader(album)} className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1.5 text-[8px] font-black text-violet-100">＋ AGREGAR FOTOS</button>}
+              <button onClick={()=>openAlbum(album)} className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1.5 text-[8px] font-black text-white/70">VER ÁLBUM</button>
             </div>
+            {(album.status === 'owner' || album.status === 'accepted') && <button disabled={busy} onClick={() => openAlbumUploader(album)} className="mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-500/10 py-2 text-[8px] font-black text-violet-100">＋ AGREGAR FOTOS</button>}
           </article>)}
         </div>
       </section>}
@@ -279,6 +353,39 @@ export default function CommunitySocial() {
         </article>)}
         {!posts.length && <div className="rounded-[26px] border border-dashed border-white/10 p-8 text-center text-xs text-white/30">Todavía no hay publicaciones. Podés inaugurar el nuevo feed.</div>}
       </section>
+
+      {selectedAlbum && <div className="fixed inset-0 z-[190] overflow-y-auto bg-[#050508]/96 p-4 backdrop-blur-xl">
+        <div className="mx-auto min-h-full max-w-md py-4">
+          <section className="overflow-hidden rounded-[34px] border border-violet-300/15 bg-[#0d0e13]">
+            <div className="flex items-start justify-between gap-4 p-5">
+              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">ÁLBUM COLABORATIVO</p><h2 className="mt-1 font-display text-3xl text-white">{selectedAlbum.title}</h2><p className="mt-1 text-[10px] text-white/35">de {selectedAlbum.owner_name} · {selectedAlbum.photos?.length||0} fotos</p></div>
+              <button onClick={()=>setSelectedAlbum(null)} className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[.04] text-white/60">×</button>
+            </div>
+            {selectedAlbum.members?.length>0&&<div className="px-5 pb-3"><p className="text-[8px] font-black uppercase tracking-wider text-white/25">COLABORADORES</p><div className="mt-2 flex -space-x-2">{selectedAlbum.members.filter(m=>m.status==='accepted').slice(0,8).map((m,i)=><div key={m.profile_id||i} title={m.name} className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border-2 border-[#0d0e13] bg-violet-500/20">{m.photo?<img src={m.photo} alt="" className="h-full w-full object-cover"/>:<span className="text-[9px] font-black text-white">{String(m.name||'?').slice(0,1)}</span>}</div>)}</div></div>}
+            <div className="grid grid-cols-3 gap-1 px-2">
+              {(selectedAlbum.photos||[]).map(photo=><button key={photo.id} onClick={()=>setSelectedPhoto(photo)} className="relative aspect-square overflow-hidden rounded-xl bg-white/[.03]"><img src={photo.url} alt="" className="h-full w-full object-cover"/>{photo.uploader_photo&&<img src={photo.uploader_photo} alt="" className="absolute bottom-1.5 left-1.5 h-6 w-6 rounded-full border-2 border-black object-cover"/>}</button>)}
+            </div>
+            <div className="p-5">
+              <div className="flex flex-wrap gap-2">{REACTIONS.map(([key,emoji])=><button key={key} onClick={()=>reactAlbum(selectedAlbum,key)} className="rounded-full border border-white/10 px-3 py-2 text-xs">{emoji} {selectedAlbum.reactions?.filter(r=>r.reaction===key).length||''}</button>)}</div>
+              {selectedAlbum.reactions?.length>0&&<div className="mt-3 flex items-center gap-2"><div className="flex -space-x-2">{selectedAlbum.reactions.slice(0,6).map((r,i)=><div key={r.profile_id||i} className="h-7 w-7 overflow-hidden rounded-full border-2 border-[#0d0e13] bg-white/10">{r.photo?<img src={r.photo} alt="" className="h-full w-full object-cover"/>:null}</div>)}</div><span className="text-[9px] text-white/30">reaccionaron al álbum</span></div>}
+              {selectedAlbum.comments?.length>0&&<div className="mt-4 space-y-2">{selectedAlbum.comments.map(item=><div key={item.id} className="flex gap-2 rounded-2xl bg-white/[.035] p-3">{item.photo?<img src={item.photo} alt="" className="h-8 w-8 rounded-full object-cover"/>:<div className="h-8 w-8 rounded-full bg-white/10"/>}<div><p className="text-[10px] font-black text-white/70">{item.name}</p><p className="mt-1 text-[11px] text-white/50">{item.body}</p></div></div>)}</div>}
+              <div className="mt-4 flex gap-2"><input value={albumComment} onChange={e=>setAlbumComment(e.target.value)} placeholder="Comentá el álbum…" className="min-h-11 flex-1 rounded-2xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"/><button onClick={()=>commentAlbum(selectedAlbum)} className="rounded-2xl bg-violet-500 px-4 text-xs font-black text-white">↑</button></div>
+              {(selectedAlbum.status==='owner'||selectedAlbum.status==='accepted')&&<button onClick={()=>openAlbumUploader(selectedAlbum)} className="mt-3 w-full rounded-2xl border border-violet-300/20 bg-violet-500/10 py-3 text-[9px] font-black text-violet-100">＋ SUMAR FOTOS A ESTE ÁLBUM</button>}
+            </div>
+          </section>
+        </div>
+      </div>}
+
+      {selectedPhoto && <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/95 p-4">
+        <div className="mx-auto max-w-md py-4">
+          <div className="flex items-center justify-between pb-3"><div><p className="text-[9px] font-black text-white/35">FOTO DEL ÁLBUM</p><p className="text-xs text-white/60">por {selectedPhoto.uploader_name||'un amigo PR'}</p></div><button onClick={()=>setSelectedPhoto(null)} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white">×</button></div>
+          <img src={selectedPhoto.url} alt="" className="max-h-[68vh] w-full rounded-[24px] object-contain"/>
+          <div className="mt-3 flex items-center justify-between gap-2"><div className="flex gap-2">{REACTIONS.map(([key,emoji])=><button key={key} onClick={()=>reactPhoto(selectedPhoto,key)} className="rounded-full border border-white/10 px-3 py-2 text-xs text-white">{emoji} {selectedPhoto.reactions?.filter(r=>r.reaction===key).length||''}</button>)}</div><button onClick={()=>downloadPhoto(selectedPhoto)} className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-2 text-[9px] font-black text-emerald-200">↓ GUARDAR</button></div>
+          {selectedPhoto.reactions?.length>0&&<div className="mt-3 flex -space-x-2">{selectedPhoto.reactions.slice(0,8).map((r,i)=><div key={r.profile_id||i} className="h-8 w-8 overflow-hidden rounded-full border-2 border-black bg-white/10">{r.photo?<img src={r.photo} alt="" className="h-full w-full object-cover"/>:null}</div>)}</div>}
+          {selectedPhoto.comments?.length>0&&<div className="mt-4 space-y-2">{selectedPhoto.comments.map(item=><div key={item.id} className="flex gap-2 rounded-2xl bg-white/[.06] p-3">{item.photo?<img src={item.photo} alt="" className="h-8 w-8 rounded-full object-cover"/>:<div className="h-8 w-8 rounded-full bg-white/10"/>}<div><p className="text-[10px] font-black text-white/70">{item.name}</p><p className="mt-1 text-[11px] text-white/50">{item.body}</p></div></div>)}</div>}
+          <div className="mt-4 flex gap-2"><input value={photoComment} onChange={e=>setPhotoComment(e.target.value)} placeholder="Comentá esta foto…" className="min-h-11 flex-1 rounded-2xl border border-white/10 bg-white/[.05] px-3 text-xs text-white outline-none"/><button onClick={()=>commentPhoto(selectedPhoto)} className="rounded-2xl bg-white/10 px-4 text-xs font-black text-white">↑</button></div>
+        </div>
+      </div>}
     </div>
   )
 }
