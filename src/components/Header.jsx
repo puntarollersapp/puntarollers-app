@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 function RollerFeedIcon() {
@@ -6,10 +6,17 @@ function RollerFeedIcon() {
 }
 
 export default function Header({ title, showBack = false, onBack }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const feedActive = pathname === '/app/actividad'
   const initials = user?.nombre?.split(' ').filter(Boolean).map((name) => name[0]).join('').slice(0, 2) || 'PR'
+
+  async function handleLogout() {
+    if (!window.confirm('¿Querés cerrar sesión?')) return
+    await logout?.()
+    navigate('/', { replace: true })
+  }
 
   return <header className="sticky top-0 z-50 border-b border-white/[0.055] bg-[#08080c]/92 backdrop-blur-2xl">
     <div className="relative flex h-[70px] items-center justify-between px-[18px]">
@@ -20,9 +27,14 @@ export default function Header({ title, showBack = false, onBack }) {
         <span className="text-[11px] font-black tracking-[-.02em]">RollerFeed</span>
       </Link>
 
-      <Link to="/app/perfil" aria-label="Abrir perfil" className="grid h-10 w-10 place-items-center overflow-hidden rounded-[14px] border border-pr-gold/20 bg-pr-gold/10 active:scale-95">
-        {user?.foto ? <img src={user.foto} alt={user.nombre || 'Perfil'} className="h-full w-full object-cover"/> : <span className="font-display text-[13px] font-bold text-pr-gold">{initials}</span>}
-      </Link>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={handleLogout} aria-label="Cerrar sesión" title="Cerrar sesión" className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.075] bg-white/[0.035] text-white/45 transition active:scale-95 active:bg-red-500/10 active:text-red-300">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 19V5a2 2 0 0 0-2-2h-6"/></svg>
+        </button>
+        <Link to="/app/perfil" aria-label="Abrir perfil" className="grid h-10 w-10 place-items-center overflow-hidden rounded-[14px] border border-pr-gold/20 bg-pr-gold/10 active:scale-95">
+          {user?.foto ? <img src={user.foto} alt={user.nombre || 'Perfil'} className="h-full w-full object-cover"/> : <span className="font-display text-[13px] font-bold text-pr-gold">{initials}</span>}
+        </Link>
+      </div>
     </div>
     {title && <div className="pointer-events-none border-t border-white/[0.035] px-4 py-1.5 text-center text-[9px] font-black uppercase tracking-[.18em] text-white/24">{title}</div>}
   </header>
