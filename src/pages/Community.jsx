@@ -24,7 +24,7 @@ function Pill({ children, tone = 'neutral' }) {
   return <span className={`rounded-full border px-2 py-1 text-[8px] font-black uppercase tracking-[.12em] ${styles[tone]}`}>{children}</span>
 }
 
-function ProfileCard({ profile, busy, onSendRequest, onCancelRequest, onAcceptRequest, onRejectRequest, onRemoveFriend, onMessageFriend }) {
+function ProfileCard({ profile, busy, onSendRequest, onCancelRequest, onAcceptRequest, onRejectRequest, onRemoveFriend, onMessageFriend, onViewProfile }) {
   const relationship = profile.relationship_status || 'none'
   return <article className="rounded-[24px] border border-white/[.07] bg-[#0d0e13] p-4">
     <div className="flex gap-3">
@@ -41,7 +41,7 @@ function ProfileCard({ profile, busy, onSendRequest, onCancelRequest, onAcceptRe
     <div className="mt-3">
       {relationship === 'incoming' && <div className="grid grid-cols-2 gap-2"><button disabled={busy} onClick={() => onRejectRequest(profile.request_id)} className="rounded-2xl border border-white/10 py-3 text-xs font-bold text-white/50">Rechazar</button><button disabled={busy} onClick={() => onAcceptRequest(profile.request_id)} className="rounded-2xl bg-orange-500 py-3 text-xs font-black text-black">Aceptar</button></div>}
       {relationship === 'outgoing' && <button disabled={busy} onClick={() => onCancelRequest(profile.request_id)} className="w-full rounded-2xl border border-white/10 py-3 text-xs font-bold text-white/55">Solicitud enviada · cancelar</button>}
-      {relationship === 'friend' && <div className="grid grid-cols-[1fr_auto] gap-2"><button disabled={busy} onClick={() => onMessageFriend(profile.id)} className="rounded-2xl bg-orange-500 py-3 text-xs font-black text-black">💬 Escribir</button><button disabled={busy} onClick={() => onRemoveFriend(profile.id)} className="rounded-2xl border border-white/10 px-4 text-white/45">···</button></div>}
+      {relationship === 'friend' && <div className="grid grid-cols-2 gap-2"><button disabled={busy} onClick={() => onViewProfile(profile.id)} className="rounded-2xl border border-orange-300/20 bg-orange-400/[.08] py-3 text-xs font-black text-orange-100">👤 Ver perfil</button><button disabled={busy} onClick={() => onMessageFriend(profile.id)} className="rounded-2xl bg-orange-500 py-3 text-xs font-black text-black">💬 Escribir</button><button disabled={busy} onClick={() => onRemoveFriend(profile.id)} className="col-span-2 rounded-2xl border border-white/10 py-2 text-[9px] font-black text-white/35">Administrar amistad</button></div>}
       {relationship === 'none' && <button disabled={busy} onClick={() => onSendRequest(profile.id)} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-300 py-3 text-xs font-black text-black">Agregar a mi círculo</button>}
     </div>
   </article>
@@ -111,10 +111,11 @@ export default function CommunityPage() {
   const acceptRequest = (id) => runAction('community_accept_friend_request', { request_id_value: id }, 'Ahora son amigos.', id)
   const rejectRequest = (id) => runAction('community_reject_friend_request', { request_id_value: id }, 'Solicitud rechazada.', id)
   const messageFriend = (id) => navigate(`/app/mensajes?with=${encodeURIComponent(id)}`)
+  const viewProfile = (id) => navigate(`/app/comunidad/perfil/${encodeURIComponent(id)}`)
   const removeFriend = (id) => { if (window.confirm('¿Eliminar esta amistad?')) runAction('community_remove_friend', { target_profile_id: id }, 'Amistad eliminada.', id) }
 
   const list = useMemo(() => activeTab === 'amigos' ? friends : activeTab === 'solicitudes' ? incomingRequests : directory, [activeTab, friends, incomingRequests, directory])
-  const props = { busy: Boolean(busyId), onSendRequest: sendRequest, onCancelRequest: cancelRequest, onAcceptRequest: acceptRequest, onRejectRequest: rejectRequest, onRemoveFriend: removeFriend, onMessageFriend: messageFriend }
+  const props = { busy: Boolean(busyId), onSendRequest: sendRequest, onCancelRequest: cancelRequest, onAcceptRequest: acceptRequest, onRejectRequest: rejectRequest, onRemoveFriend: removeFriend, onMessageFriend: messageFriend, onViewProfile: viewProfile }
 
   return <AppLayout title="Comunidad" showBack>
     <div className="pr-page space-y-5 pb-12 animate-page-enter">
