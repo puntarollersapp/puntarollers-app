@@ -1,1 +1,1 @@
-export { default } from './CommunitySocialV2'
+export { default } from './CommunitySocialV3'
