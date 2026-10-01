@@ -1,6 +1,6 @@
 import { isRollerweenActive } from '../lib/rollerween'
 
-const ROLLERWEEN_ART = '/rollerween-2026-final.png?v=20261001-upload'
+const ROLLERWEEN_ART = '/rollerween-2026-hq.webp?v=20261001-hq300'
 
 function profileName(profile) {
   return profile?.nombre_completo || profile?.display_name || [profile?.nombre, profile?.apellido].filter(Boolean).join(' ') || 'Integrante PR'
