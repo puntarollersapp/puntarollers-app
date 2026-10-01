@@ -4,6 +4,7 @@ import PublicLayout from '../layouts/PublicLayout'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { ROLLERWEEN, isRollerweenActive } from '../lib/rollerween'
 
 function lower(value) {
   return String(value || '').trim().toLowerCase()
@@ -298,6 +299,29 @@ function KmPodium({ ranking, period, statuses }) {
   )
 }
 
+function RollerweenChallenge({ ranking=[] }) {
+  if (!isRollerweenActive()) return null
+  const total = ranking.reduce((sum,row)=>sum+Number(row.km||0),0)
+  const target = ROLLERWEEN.weeklyChallengeKm
+  const pct = Math.min(100, Math.round((total/target)*100))
+  const over = total > target
+  const reached = total >= target
+  const left = Math.max(0,target-total)
+  return <section className="pr-rollerween-card rounded-[32px] p-5">
+    <div className="relative z-10">
+      <div className="flex items-start justify-between gap-4">
+        <div><div className="pr-rw-stamp">ROLLERWEEN // WEEKLY DROP</div><p className="mt-4 pr-rw-kicker">DESAFÍO GRUPAL · STRAVA</p><h2 className="pr-rw-title mt-1 text-[38px] text-white">500 KM<br/><span className={over?'pr-rw-acid':'pr-rw-purple'}>{over?'BOMBONES ON.':reached?'CARAMELOS ON.':'EN JUEGO.'}</span></h2></div>
+        <div className="pr-rw-pumpkin-wheel shrink-0 scale-[.78]" aria-hidden="true"/>
+      </div>
+      <p className="mt-4 text-[11px] leading-5 text-white/45">Cada kilómetro inline del grupo suma esta semana. A los <b className="text-white">500 km</b> llevamos caramelos a la clase del sábado; si superamos la meta, hacemos upgrade a <b className="text-[#BEFF37]">bombones</b>.</p>
+      <div className="mt-5 rounded-[22px] border border-white/[.07] bg-black/30 p-4">
+        <div className="flex items-end justify-between"><div><p className="font-mono text-[8px] font-black uppercase tracking-[.15em] text-white/25">KM GRUPALES · ESTA SEMANA</p><p className="mt-1 text-[35px] font-black text-white">{total.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-base text-white/28"> / {target} km</span></p></div><p className="text-2xl font-black text-[#BEFF37]">{pct}%</p></div>
+        <div className="mt-4 h-4 overflow-hidden rounded-full border border-white/[.08] bg-white/[.04] p-[3px]"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-[#BEFF37]" style={{width:`${Math.max(2,pct)}%`}}/></div>
+        <div className="mt-3 flex items-center justify-between text-[9px] font-black uppercase tracking-[.08em]"><span className="text-white/28">RESET AUTOMÁTICO · LUNES</span><span className={over?'text-[#BEFF37]':reached?'text-violet-200':'text-white/35'}>{over?'BOMBONES DESBLOQUEADOS':reached?'CARAMELOS DESBLOQUEADOS':`FALTAN ${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM`}</span></div>
+      </div>
+    </div>
+  </section>
+}
 export default function PublicWeeklyRanking() {
   const { user } = useAuth()
   const ranges = useMemo(() => dateRanges(), [])
@@ -416,6 +440,8 @@ export default function PublicWeeklyRanking() {
             </div>
             <div className="relative mt-4 inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[10px] font-black uppercase tracking-[.10em] text-white/45">{rangeLabel}</div>
           </section>
+
+          <RollerweenChallenge ranking={rankingRows.week} />
 
           <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} />
 
