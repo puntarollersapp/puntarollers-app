@@ -244,39 +244,24 @@ function PRUnlock({ campaign, ranking = [], result }) {
         </div>
         <div className="mt-4 overflow-hidden rounded-[28px] border border-fuchsia-300/15 bg-fuchsia-400/[.045] p-4">
           <div className="flex items-end justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.18em] text-fuchsia-300">QUIÉNES ESTÁN MOVIENDO LA RUEDA</p><h3 className="mt-1 text-lg font-black">Aporte al PR Unlock</h3></div><span className="rounded-full bg-white/[.06] px-3 py-1 text-[9px] font-black text-white/40">{campaignRanking.length} rollers</span></div>
-          {contributors.length ? <div className="mt-4 flex gap-3 overflow-x-auto pb-2">{contributors.map((row,index)=><div key={row.alumnoId} className="min-w-[108px] rounded-[20px] border border-white/[.08] bg-black/25 p-3 text-center"><div className="relative mx-auto w-fit">{row.photo?<img src={row.photo} alt={row.name} className="h-14 w-14 rounded-full border-2 border-fuchsia-300/30 object-cover"/>:<div className="grid h-14 w-14 place-items-center rounded-full border-2 border-fuchsia-300/30 bg-violet-400/10 text-xs font-black">{initials(row.name)}</div>}{index<3&&<span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-orange-400 text-[8px] font-black text-black">{index+1}</span>}</div><p className="mt-2 truncate text-[10px] font-black">{row.name}</p><p className="mt-1 text-sm font-black text-orange-300">+{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="text-[8px] text-white/28">{row.sessions} actividad{row.sessions===1?'':'es'}</p></div>)}</div>:<p className="mt-4 rounded-2xl bg-black/20 p-4 text-center text-[10px] text-white/35">La rueda arranca con la primera actividad registrada dentro del desafío.</p>}
+          {contributors.length ? <div className="mt-4 flex gap-3 overflow-x-auto pb-2">{contributors.map((row,index)=><div key={row.alumnoId} className="min-w-[108px] rounded-[20px] border border-white/[.08] bg-black/25 p-3 text-center"><div className="relative mx-auto w-fit">{row.photo?<img src={row.photo} alt={row.name} className="h-14 w-14 rounded-full border-2 border-fuchsia-300/20 object-cover"/>:<div className="grid h-14 w-14 place-items-center rounded-full border-2 border-fuchsia-300/20 bg-fuchsia-400/10 text-sm font-black">{initials(row.name)}</div>}<span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-[#100d13] bg-fuchsia-300 text-[8px] font-black text-black">{index+1}</span></div><p className="mt-3 truncate text-[10px] font-black">{row.name.split(' ')[0]}</p><p className="mt-1 text-[9px] font-black text-fuchsia-200">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div>)}</div>:<p className="mt-3 text-[10px] text-white/30">Todavía no hay kilómetros dentro de esta misión.</p>}
         </div>
-
-        <div className="mt-4 space-y-3">
-          <PrizeVisual campaign={campaign} level={1} totalKm={totalKm} />
-          <PrizeVisual campaign={campaign} level={2} totalKm={totalKm} />
-          <PrizeVisual campaign={campaign} level={3} totalKm={totalKm} />
-        </div>
-        <div className="mt-4 rounded-[22px] border border-violet-300/15 bg-violet-400/[.06] p-4">
-          <p className="text-[9px] font-black uppercase tracking-[.16em] text-violet-200">CÓMO FUNCIONA</p>
-          <div className="mt-2 space-y-2 text-[10px] leading-5 text-white/48">
-            <p><b className="text-white">1.</b> Patinás y sincronizás Strava como siempre. No tenés que cargar nada extra.</p>
-            <p><b className="text-white">2.</b> Tus km suman a tu ranking personal y, al mismo tiempo, al contador grupal PR UNLOCK.</p>
-            <p><b className="text-white">3.</b> Cuando el grupo alcanza un checkpoint, el premio evoluciona al siguiente nivel.</p>
-            <p><b className="text-white">4.</b> El {shortDate(campaign.ends_on)}, el #1 del ranking de esta misión obtiene el premio de mayor nivel desbloqueado.</p>
-          </div>
+        <div className="mt-5 space-y-3">
+          {[1,2,3].map((level)=><PrizeVisual key={level} campaign={campaign} level={level} totalKm={totalKm} />)}
         </div>
       </div>
     </section>
   )
 }
 
-function KmPodium({ ranking, period, statuses }) {
-  if (!ranking.length) return null
-  const first = ranking[0]
-  const second = ranking[1]
-  const third = ranking[2]
+function Podium({ ranking, period, statuses }) {
+  const first = ranking[0], second = ranking[1], third = ranking[2]
   const card = (row, order) => row ? (
-    <div key={row.alumnoId} className={`flex min-w-0 flex-col items-center ${order === 1 ? '-mt-4' : 'mt-5'}`}>
+    <div key={row.alumnoId} className={`flex min-w-0 flex-1 flex-col items-center ${order === 1 ? '-translate-y-3' : ''}`}>
       <div className="relative">
-        {order === 1 && <div className="absolute -inset-7 rounded-full bg-amber-300/20 blur-2xl" />}
+        {order === 1 && <div className="absolute -inset-6 rounded-full bg-amber-300/10 blur-2xl" />}
         <PodiumAvatar row={row} size={order === 1 ? 'xl' : 'lg'} />
-        <span className={`absolute -bottom-2 left-1/2 grid -translate-x-1/2 place-items-center rounded-full border-2 border-[#08090c] font-black ${order === 1 ? 'h-9 w-9 bg-amber-300 text-black' : order === 2 ? 'h-8 w-8 bg-slate-200 text-black' : 'h-8 w-8 bg-orange-700 text-white'}`}>{order}</span>
+        <span className={`absolute -bottom-2 left-1/2 grid -translate-x-1/2 place-items-center rounded-full border-[3px] border-[#0b0c10] font-black ${order === 1 ? 'h-8 w-8 bg-amber-300 text-black' : order === 2 ? 'h-7 w-7 bg-slate-200 text-black' : 'h-7 w-7 bg-orange-700 text-white'}`}>{order}</span>
       </div>
       <p className="mt-5 max-w-[115px] truncate text-center text-sm font-black">{row.name}</p>
       <p className={`mt-1 text-xl font-black ${order === 1 ? 'text-amber-300' : 'text-white'}`}>{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
@@ -302,22 +287,25 @@ function KmPodium({ ranking, period, statuses }) {
 function RollerweenChallenge({ ranking=[] }) {
   if (!isRollerweenActive()) return null
   const total = ranking.reduce((sum,row)=>sum+Number(row.km||0),0)
-  const target = ROLLERWEEN.weeklyChallengeKm
-  const pct = Math.min(100, Math.round((total/target)*100))
-  const over = total > target
-  const reached = total >= target
-  const left = Math.max(0,target-total)
+  const candy = ROLLERWEEN.weeklyChallengeKm
+  const bombons = ROLLERWEEN.weeklyBombonsKm
+  const pct = Math.min(100, Math.round((total/bombons)*100))
+  const candyReached = total >= candy
+  const bombonsReached = total >= bombons
+  const nextTarget = bombonsReached ? null : candyReached ? bombons : candy
+  const left = nextTarget ? Math.max(0,nextTarget-total) : 0
   return <section className="pr-rollerween-card rounded-[32px] p-5">
     <div className="relative z-10">
       <div className="flex items-start justify-between gap-4">
-        <div><div className="pr-rw-stamp">ROLLERWEEN // WEEKLY DROP</div><p className="mt-4 pr-rw-kicker">DESAFÍO GRUPAL · STRAVA</p><h2 className="pr-rw-title mt-1 text-[38px] text-white">500 KM<br/><span className={over?'pr-rw-acid':'pr-rw-purple'}>{over?'BOMBONES ON.':reached?'CARAMELOS ON.':'EN JUEGO.'}</span></h2></div>
+        <div><div className="pr-rw-stamp">ROLLERWEEN // WEEKLY DROP</div><p className="mt-4 pr-rw-kicker">DESAFÍO GRUPAL · STRAVA</p><h2 className="pr-rw-title mt-1 text-[38px] text-white">200 → 350 KM<br/><span className={bombonsReached?'pr-rw-acid':'pr-rw-purple'}>{bombonsReached?'BOMBONES ON.':candyReached?'CARAMELOS ON.':'EN JUEGO.'}</span></h2></div>
         <div className="pr-rw-pumpkin-wheel shrink-0 scale-[.78]" aria-hidden="true"/>
       </div>
-      <p className="mt-4 text-[11px] leading-5 text-white/45">Cada kilómetro inline del grupo suma esta semana. A los <b className="text-white">500 km</b> llevamos caramelos a la clase del sábado; si superamos la meta, hacemos upgrade a <b className="text-[#BEFF37]">bombones</b>.</p>
+      <p className="mt-4 text-[11px] leading-5 text-white/45">Cada kilómetro inline del grupo suma esta semana. A los <b className="text-white">200 km</b> desbloqueamos caramelos para la clase del sábado; a los <b className="text-[#BEFF37]">350 km</b>, hacemos upgrade a bombones.</p>
       <div className="mt-5 rounded-[22px] border border-white/[.07] bg-black/30 p-4">
-        <div className="flex items-end justify-between"><div><p className="font-mono text-[8px] font-black uppercase tracking-[.15em] text-white/25">KM GRUPALES · ESTA SEMANA</p><p className="mt-1 text-[35px] font-black text-white">{total.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-base text-white/28"> / {target} km</span></p></div><p className="text-2xl font-black text-[#BEFF37]">{pct}%</p></div>
+        <div className="flex items-end justify-between"><div><p className="font-mono text-[8px] font-black uppercase tracking-[.15em] text-white/25">KM GRUPALES · ESTA SEMANA</p><p className="mt-1 text-[35px] font-black text-white">{total.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-base text-white/28"> / {bombons} km</span></p></div><p className="text-2xl font-black text-[#BEFF37]">{pct}%</p></div>
+        <div className="mt-4 grid grid-cols-2 gap-2"><div className={`rounded-[15px] border p-3 ${candyReached?'border-violet-300/30 bg-violet-400/10':'border-white/10 bg-white/[.025]'}`}><p className="text-[8px] font-black text-white/28">NIVEL 01 · 200 KM</p><p className={`mt-1 text-[10px] font-black ${candyReached?'text-violet-200':'text-white/45'}`}>{candyReached?'✓ CARAMELOS':'🍬 CARAMELOS'}</p></div><div className={`rounded-[15px] border p-3 ${bombonsReached?'border-[#BEFF37]/30 bg-[#BEFF37]/10':'border-white/10 bg-white/[.025]'}`}><p className="text-[8px] font-black text-white/28">NIVEL 02 · 350 KM</p><p className={`mt-1 text-[10px] font-black ${bombonsReached?'text-[#BEFF37]':'text-white/45'}`}>{bombonsReached?'✓ BOMBONES':'🍫 BOMBONES'}</p></div></div>
         <div className="mt-4 h-4 overflow-hidden rounded-full border border-white/[.08] bg-white/[.04] p-[3px]"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-[#BEFF37]" style={{width:`${Math.max(2,pct)}%`}}/></div>
-        <div className="mt-3 flex items-center justify-between text-[9px] font-black uppercase tracking-[.08em]"><span className="text-white/28">RESET AUTOMÁTICO · LUNES</span><span className={over?'text-[#BEFF37]':reached?'text-violet-200':'text-white/35'}>{over?'BOMBONES DESBLOQUEADOS':reached?'CARAMELOS DESBLOQUEADOS':`FALTAN ${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM`}</span></div>
+        <div className="mt-3 flex items-center justify-between text-[9px] font-black uppercase tracking-[.08em]"><span className="text-white/28">RESET AUTOMÁTICO · LUNES</span><span className={bombonsReached?'text-[#BEFF37]':candyReached?'text-violet-200':'text-white/35'}>{bombonsReached?'BOMBONES DESBLOQUEADOS':candyReached?`FALTAN ${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM PARA BOMBONES`:`FALTAN ${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM PARA CARAMELOS`}</span></div>
       </div>
     </div>
   </section>
@@ -397,109 +385,111 @@ export default function PublicWeeklyRanking() {
           setUnlockRanking([])
           setUnlockResult(null)
         }
-      } catch (_) {
-        if (active && !silent) setMessage('No pudimos cargar el ranking en este momento.')
+      } catch (error) {
+        if (active) setMessage(error?.message || 'No pudimos cargar el ranking.')
       } finally {
         if (active && !silent) setLoading(false)
       }
     }
     load()
-    const refresh = window.setInterval(() => load({ silent: true }), 60000)
+    const interval = window.setInterval(() => load({ silent: true }), 60000)
     const onFocus = () => load({ silent: true })
+    const onVisibility = () => { if (document.visibilityState === 'visible') load({ silent: true }) }
     window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
       active = false
-      window.clearInterval(refresh)
+      window.clearInterval(interval)
       window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [])
+  }, [ranges])
 
   const ranking = rankingRows[period] || []
   const previousMonthRanking = rankingRows.previousMonth || []
+  const myId = String(user?.id || '')
+  const myPosition = ranking.findIndex((row) => String(row.alumnoId) === myId) + 1
+  const myRow = myPosition > 0 ? ranking[myPosition - 1] : null
+  const totalKm = ranking.reduce((sum, row) => sum + row.km, 0)
+  const topFive = ranking.slice(0, 5)
+  const currentRange = period === 'week' ? ranges.week : ranges.month
+  const periodLabel = period === 'week' ? 'ESTA SEMANA' : 'ESTE MES'
+  const previousWinner = previousMonthRanking[0]
+  const fourth = ranking[3]
+  const third = ranking[2]
+  const gapToPodium = fourth && third ? Math.max(0, third.km - fourth.km) : null
+  const fifth = ranking[4]
+  const fourthGap = fifth && fourth ? Math.max(0, fourth.km - fifth.km) : null
+  const Shell = user ? AppLayout : PublicLayout
 
-  const activeRange = period === 'week' ? ranges.week : ranges.month
-  const rangeLabel = `${shortDate(activeRange.start)} → ${shortDate(activeRange.end)}`
-
-  const content = (
-      <main className="min-h-screen bg-[#050508] px-4 pb-28 pt-5 text-white">
-        <div className="mx-auto w-full max-w-2xl space-y-5">
-          <section className="relative overflow-hidden rounded-[32px] border border-amber-300/20 bg-[radial-gradient(circle_at_85%_0%,rgba(124,58,237,.22),transparent_42%),linear-gradient(135deg,#2b1803,#0d0b0f_48%,#0b0713)] p-6 shadow-[0_30px_90px_rgba(0,0,0,.42)]">
-            <div className="absolute -left-24 top-8 h-64 w-64 rounded-full border border-red-500/20" />
-            <div className="absolute -left-20 top-12 h-56 w-56 rounded-full border border-red-500/15" />
-            <div className="relative flex items-start justify-between gap-4">
+  return (
+    <Shell>
+      <div className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5">
+        <section className="relative overflow-hidden rounded-[34px] border border-amber-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(251,191,36,.16),transparent_32%),radial-gradient(circle_at_5%_100%,rgba(124,58,237,.24),transparent_40%),linear-gradient(145deg,#1a1206,#0a0b10_55%,#100919)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.42)]">
+          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full border border-amber-300/10" />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[.22em] text-amber-300">🏆 PUNTA ROLLERS · STRAVA</p>
-                <h1 className="mt-3 text-[40px] font-black leading-[.94] tracking-[-.04em]">Top Ranking<br/><span className="text-orange-400">PR.</span></h1>
-                <p className="mt-4 max-w-md text-sm leading-6 text-white/45">Kilómetros de patinaje inline de la comunidad PR, actualizados desde Strava. Mirá quién viene sumando más esta semana y este mes.</p>
+                <p className="text-[9px] font-black uppercase tracking-[.22em] text-amber-300">PR KM CHALLENGE · STRAVA</p>
+                <h1 className="mt-1 text-[34px] font-black leading-none">RANKING<br/><span className="text-orange-400">SOBRE RUEDAS.</span></h1>
+                <p className="mt-3 max-w-[440px] text-[11px] leading-5 text-white/45">Cada kilómetro de patinaje inline cuenta. También tus deberes de entrenamiento: una sola actividad alimenta tu perfil, tu evolución y esta tabla.</p>
               </div>
-              <Link to={user?'/app/actividad':'/rollerfeed'} className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[.04]">←</Link>
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/[.08] px-3 py-2 text-[8px] font-black uppercase tracking-wider text-emerald-300">● LIVE</span>
             </div>
-            <div className="relative mt-6 grid grid-cols-2 gap-2 rounded-[20px] border border-white/10 bg-black/25 p-1.5">
-              <button onClick={() => changePeriod('week')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black' : 'text-white/45'}`}>ESTA SEMANA</button>
-              <button onClick={() => changePeriod('month')} className={`rounded-2xl px-2 py-3 text-[10px] font-black transition ${period === 'month' ? 'bg-gradient-to-r from-violet-400 to-fuchsia-400 text-black' : 'text-white/45'}`}>ESTE MES</button>
+            <div className="mt-5 grid grid-cols-2 gap-2 rounded-[20px] border border-white/[.08] bg-black/25 p-1.5">
+              <button onClick={() => changePeriod('week')} className={`rounded-[15px] px-4 py-3 text-[10px] font-black transition ${period === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black shadow-[0_10px_30px_rgba(251,146,60,.18)]' : 'text-white/40'}`}>ESTA SEMANA</button>
+              <button onClick={() => changePeriod('month')} className={`rounded-[15px] px-4 py-3 text-[10px] font-black transition ${period === 'month' ? 'bg-gradient-to-r from-violet-400 to-fuchsia-400 text-black shadow-[0_10px_30px_rgba(192,132,252,.18)]' : 'text-white/40'}`}>ESTE MES</button>
             </div>
-            <div className="relative mt-4 inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[10px] font-black uppercase tracking-[.10em] text-white/45">{rangeLabel}</div>
-          </section>
+          </div>
+        </section>
 
+        {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-4 space-y-4">
           <RollerweenChallenge ranking={rankingRows.week} />
 
           <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} />
 
-          <section className="rounded-[30px] border border-white/[.08] bg-[#0b0c10] p-5 shadow-[0_24px_70px_rgba(0,0,0,.28)]">
-            {loading ? (
-              <div className="grid grid-cols-3 gap-3">{[0, 1, 2].map((i) => <div key={i} className="h-72 animate-pulse rounded-[24px] bg-white/[.04]" />)}</div>
-            ) : message ? (
-              <div className="rounded-[22px] border border-amber-400/15 bg-amber-400/[.06] p-5 text-sm text-amber-100/70">{message}</div>
-            ) : ranking.length ? (
-              <KmPodium ranking={ranking} period={period} statuses={statuses} />
-            ) : (
-              <div className="rounded-[24px] border border-white/[.08] bg-white/[.025] p-7 text-center text-sm text-white/40">Todavía no hay kilómetros de patinaje inline suficientes para armar este podio.</div>
-            )}
+          <section className="rounded-[30px] border border-white/[.08] bg-white/[.03] p-5">
+            <div className="flex items-end justify-between gap-4">
+              <div><p className="text-[9px] font-black uppercase tracking-[.17em] text-white/30">{periodLabel}</p><h2 className="mt-1 text-2xl font-black">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km en juego</h2></div>
+              <div className="text-right"><p className="text-2xl font-black text-orange-300">{ranking.length}</p><p className="text-[8px] font-black uppercase text-white/25">rollers sumando</p></div>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[.06]"><div className="h-full rounded-full bg-gradient-to-r from-orange-400 via-amber-300 to-violet-400" style={{width:`${ranking.length ? 100 : 0}%`}} /></div>
+            <p className="mt-3 text-[9px] text-white/28">Período: {longDate(currentRange.start)} → {longDate(currentRange.end)}</p>
           </section>
 
-          <section className="rounded-[24px] border border-white/[.07] bg-white/[.025] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">CLASIFICACIÓN COMPLETA</p><h3 className="mt-1 text-xl font-black">Todos los km inline</h3></div>
-              <span className="rounded-full border border-orange-400/15 bg-orange-400/[.07] px-3 py-1 text-[9px] font-black text-orange-300">{ranking.length} rollers</span>
-            </div>
-            <div className="mt-4 space-y-2">
-              {ranking.map((row, index) => (
-                <div key={row.alumnoId} className="flex items-center gap-3 rounded-[18px] border border-white/[.06] bg-black/20 p-3">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.05] text-sm font-black text-white/55">{index + 1}</div>
-                  {row.photo ? <img src={row.photo} alt={row.name} className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-orange-400/25 to-violet-500/20 text-xs font-black">{initials(row.name)}</div>}
-                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="mt-0.5 text-[9px] uppercase tracking-[.11em] text-white/30">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p>{statuses[String(row.alumnoId)] ? <p className="mt-1 break-words text-[10px] font-semibold leading-4 text-violet-200/70">“{statuses[String(row.alumnoId)]}”</p> : null}</div>
-                  <p className="shrink-0 text-base font-black text-amber-300">{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-5 text-[10px] leading-5 text-white/30">Se recalcula con todas las actividades de patinaje inline sincronizadas desde Strava, incluidos los deberes. La semana corre de lunes hasta hoy y el mes desde el día 1 hasta hoy.</p>
-          </section>
-          {previousMonthRanking.length > 0 && (
-            <section className="relative overflow-hidden rounded-[24px] border border-violet-300/15 bg-[radial-gradient(circle_at_100%_0%,rgba(139,92,246,.16),transparent_42%),rgba(255,255,255,.025)] p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">CIERRE MENSUAL · ARCHIVO PR</p>
-                  <h3 className="mt-1 text-xl font-black">El mes pasado quedó así.</h3>
-                  <p className="mt-2 text-[10px] leading-5 text-white/32">{shortDate(ranges.previousMonth.start)} → {shortDate(ranges.previousMonth.end)}</p>
-                </div>
-                <span className="text-2xl">🏁</span>
-              </div>
+          {ranking.length > 0 && <section className="rounded-[32px] border border-white/[.08] bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,.09),transparent_35%),rgba(255,255,255,.025)] p-5"><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
 
-              <div className="mt-4 space-y-2">
-                {previousMonthRanking.slice(0, 3).map((row, index) => (
-                  <div key={row.alumnoId} className="flex items-center gap-3 rounded-[18px] border border-white/[.06] bg-black/20 p-3">
-                    <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${index === 0 ? 'bg-amber-300 text-black' : index === 1 ? 'bg-slate-200 text-black' : 'bg-orange-700 text-white'}`}>{index + 1}</div>
-                    {row.photo ? <img src={row.photo} alt={row.name} className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-white/[.05] text-xs font-black">{initials(row.name)}</div>}
-                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="mt-0.5 text-[9px] uppercase tracking-[.1em] text-white/28">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p></div>
-                    <p className="shrink-0 text-sm font-black text-violet-200">{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-4 text-[9px] leading-4 text-white/24">El cierre se calcula sobre las actividades públicas de Strava del mes calendario ya finalizado.</p>
-            </section>
-          )}
-        </div>
-      </main>
+          {myRow && <section className="overflow-hidden rounded-[30px] border border-violet-300/20 bg-[radial-gradient(circle_at_100%_0%,rgba(167,139,250,.20),transparent_35%),rgba(139,92,246,.06)] p-5">
+            <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">TU POSICIÓN · {periodLabel}</p>
+            <div className="mt-3 flex items-center gap-4">
+              <PodiumAvatar row={myRow} />
+              <div className="min-w-0 flex-1"><p className="text-3xl font-black">#{myPosition}</p><p className="truncate text-sm font-black">{myRow.name}</p><p className="mt-1 text-xs font-black text-violet-200">{myRow.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {myRow.sessions} entrenos</p></div>
+            </div>
+          </section>}
+
+          {fourth && <section className="rounded-[28px] border border-orange-300/15 bg-orange-400/[.05] p-4">
+            <p className="text-[9px] font-black uppercase tracking-[.16em] text-orange-300">🔥 LA PELEA POR EL PODIO</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-3"><p className="text-[8px] font-black text-white/25">#4 {fourth.name}</p><p className="mt-1 text-lg font-black">{fourth.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="text-[9px] text-white/30">{gapToPodium !== null ? `a ${gapToPodium.toLocaleString('es-UY',{maximumFractionDigits:1})} km del #3` : 'peleando el podio'}</p></div>
+              <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-3"><p className="text-[8px] font-black text-white/25">PRESIÓN DESDE ABAJO</p><p className="mt-1 text-lg font-black">{fifth ? fifth.name : 'Tabla abierta'}</p><p className="text-[9px] text-white/30">{fifth && fourthGap !== null ? `a ${fourthGap.toLocaleString('es-UY',{maximumFractionDigits:1})} km del #4` : 'cada km puede cambiar todo'}</p></div>
+            </div>
+          </section>}
+
+          <section className="overflow-hidden rounded-[32px] border border-white/[.08] bg-white/[.025]">
+            <div className="flex items-center justify-between border-b border-white/[.07] px-5 py-4"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">CLASIFICACIÓN COMPLETA</p><h2 className="mt-1 text-xl font-black">{periodLabel}</h2></div><span className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-[9px] font-black text-white/40">{ranking.length}</span></div>
+            {ranking.length ? <div className="divide-y divide-white/[.06]">{ranking.map((row,index)=>{
+              const rank=index+1, status=statuses[String(row.alumnoId)] || ''
+              return <div key={row.alumnoId} className={`flex items-center gap-3 px-4 py-3 ${String(row.alumnoId)===myId?'bg-violet-400/[.07]':''}`}><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-black ${rank===1?'bg-amber-300 text-black':rank===2?'bg-slate-200 text-black':rank===3?'bg-orange-700 text-white':'bg-white/[.06] text-white/45'}`}>{rank}</span><PodiumAvatar row={row}/><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="text-[9px] text-white/30">{row.sessions} entreno{row.sessions===1?'':'s'}{status?` · “${status}”`:''}</p></div><div className="text-right"><p className={`text-sm font-black ${rank<=3?'text-amber-300':'text-white'}`}>{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div></div>
+            })}</div> : <div className="p-8 text-center text-xs text-white/30">Todavía no hay kilómetros para este período.</div>}
+          </section>
+
+          {period === 'month' && previousWinner && <section className="rounded-[28px] border border-sky-300/15 bg-sky-400/[.045] p-4"><p className="text-[9px] font-black uppercase tracking-[.17em] text-sky-300">🏆 CIERRE DEL MES ANTERIOR</p><div className="mt-3 flex items-center gap-3"><PodiumAvatar row={previousWinner}/><div><p className="text-sm font-black">{previousWinner.name}</p><p className="mt-1 text-[10px] text-white/40">cerró #1 con {previousWinner.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km registrados</p></div></div></section>}
+
+          <section className="rounded-[28px] border border-white/[.07] bg-black/20 p-4 text-[10px] leading-5 text-white/35"><b className="text-white/65">Cómo suma:</b> entran únicamente actividades de patinaje inline registradas en PR. Las actividades rechazadas o eliminadas no cuentan. Los deberes de Shifter que llegan desde Strava también forman parte del mismo kilometraje: no se duplican.</section>
+        </div>}
+
+        <Link to={user ? '/app/actividad' : '/'} className="mt-5 flex min-h-12 items-center justify-center rounded-[18px] border border-white/10 bg-white/[.04] text-xs font-black text-white/55">{user ? 'VOLVER AL ROLLER FEED' : 'VOLVER A PUNTA ROLLERS'}</Link>
+      </div>
+    </Shell>
   )
-  return user ? <AppLayout title="Ranking PR">{content}</AppLayout> : <PublicLayout>{content}</PublicLayout>
 }
