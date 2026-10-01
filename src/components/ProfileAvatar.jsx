@@ -1,6 +1,6 @@
 import { isRollerweenActive } from '../lib/rollerween'
 
-const ROLLERWEEN_ART = '/rollerween-2026-approved.png?v=20261001-master2'
+const ROLLERWEEN_ART = '/rollerween-2026-final.png?v=20261001-upload'
 
 function profileName(profile) {
   return profile?.nombre_completo || profile?.display_name || [profile?.nombre, profile?.apellido].filter(Boolean).join(' ') || 'Integrante PR'
@@ -13,12 +13,13 @@ function initials(name) { return String(name || 'PR').split(/\s+/).filter(Boolea
 export default function ProfileAvatar({ profile, className='h-14 w-14', rounded='rounded-full', badge=true, imageClassName='' }) {
   const name=profileName(profile), photo=profilePhoto(profile), treasury=isTreasury(profile), professor=isProfessor(profile), rollerween=isRollerweenActive()
   const title=treasury ? `${name} · Tesorera` : professor ? `${name} · Profe` : name
+  const showRollerweenBadge=rollerween&&!professor
   return <div className={`relative shrink-0 ${className}`} title={title}>
     {rollerween&&<div className={`absolute -inset-[3px] ${rounded} bg-gradient-to-br from-fuchsia-500 via-violet-500 to-lime-300 opacity-95 blur-[.2px] shadow-[0_0_12px_rgba(168,85,247,.62),0_0_20px_rgba(190,255,55,.20)]`}/>} 
     <div className={`relative z-[1] grid h-full w-full place-items-center overflow-hidden border ${rollerween?'border-black/70':'border-white/10'} bg-gradient-to-br from-orange-400/20 to-violet-500/15 ${rounded}`}>
       {photo ? <img src={photo} alt={name} className={`h-full w-full object-cover ${imageClassName}`} /> : <span className="text-xs font-black text-white/75">{initials(name)}</span>}
     </div>
-    {rollerween&&<span aria-hidden="true" className="absolute -right-[9px] -top-[9px] z-20 grid h-[27px] w-[27px] place-items-center overflow-hidden rounded-full border border-lime-300/45 bg-[#09060d] p-[2px] shadow-[0_0_12px_rgba(217,70,239,.72),0_0_9px_rgba(190,255,55,.22)]"><img src={ROLLERWEEN_ART} alt="" width="220" height="231" className="block h-full w-full object-contain"/></span>}
+    {showRollerweenBadge&&<span aria-hidden="true" className="absolute -right-[13px] -top-[13px] z-20 h-[38px] w-[38px] pointer-events-none"><img src={ROLLERWEEN_ART} alt="" className="block h-full w-full object-contain drop-shadow-[0_0_7px_rgba(217,70,239,.8)]"/></span>}
     {badge && treasury && <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300 px-2 py-[3px] text-[7px] font-black uppercase tracking-[.13em] text-[#07120d] shadow-[0_5px_14px_rgba(0,0,0,.38)]">TESORERA</span>}
     {badge && !treasury && professor && <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-200/30 bg-[#f3c64f] px-2 py-[3px] text-[7px] font-black uppercase tracking-[.13em] text-black shadow-[0_5px_14px_rgba(0,0,0,.38)]">PROFE</span>}
   </div>
