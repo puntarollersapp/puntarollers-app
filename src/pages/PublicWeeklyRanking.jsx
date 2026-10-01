@@ -308,6 +308,7 @@ export default function PublicWeeklyRanking() {
   const [period, setPeriod] = useState(initialPeriod)
   const [loading, setLoading] = useState(true)
   const [activities, setActivities] = useState([])
+  const [rankingRows, setRankingRows] = useState({ week: [], month: [], previousMonth: [] })
   const [profiles, setProfiles] = useState(new Map())
   const [message, setMessage] = useState('')
   const [statuses, setStatuses] = useState({})
@@ -324,17 +325,40 @@ export default function PublicWeeklyRanking() {
       if (!silent) setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, activitiesResponse, statusesResponse, unlockResponse] = await Promise.all([
+        const [profilesResponse, activitiesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
           supabase.from('pr_inline_skate_activities').select('*').eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
+          supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.week.start, p_end_date: ranges.week.end }),
+          supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.month.start, p_end_date: ranges.month.end }),
+          supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.previousMonth.start, p_end_date: ranges.previousMonth.end }),
           supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
           supabase.from('pr_unlock_campaigns').select('*').eq('active', true).order('starts_on', { ascending: false }).limit(1).maybeSingle(),
         ])
         if (!active) return
         if (activitiesResponse.error) throw activitiesResponse.error
+        if (weekResponse.error) throw weekResponse.error
+        if (monthResponse.error) throw monthResponse.error
+        if (previousMonthResponse.error) throw previousMonthResponse.error
+        const profileMap = buildProfileMap(profilesResponse.data || [])
+        const hydrateRanking = (rows) => (rows || []).map((row) => {
+          const alumnoId = String(row.alumno_id || '')
+          const profile = profileMap.get(alumnoId) || {}
+          return {
+            alumnoId,
+            km: Number(row.km) || 0,
+            sessions: Number(row.sessions) || 0,
+            name: profileName(profile),
+            photo: profilePhoto(profile),
+          }
+        }).sort((a, b) => b.km - a.km || b.sessions - a.sessions || a.name.localeCompare(b.name))
         setActivities(activitiesResponse.data || [])
+        setRankingRows({
+          week: hydrateRanking(weekResponse.data),
+          month: hydrateRanking(monthResponse.data),
+          previousMonth: hydrateRanking(previousMonthResponse.data),
+        })
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
-        setProfiles(buildProfileMap(profilesResponse.data || []))
+        setProfiles(profileMap)
         setUnlockCampaign(unlockResponse.data || null)
         if (unlockResponse.data?.id) {
           const { data: resultData } = await supabase.from('pr_unlock_results').select('*').eq('campaign_id', unlockResponse.data.id).maybeSingle()
@@ -357,14 +381,8 @@ export default function PublicWeeklyRanking() {
     }
   }, [])
 
-  const ranking = useMemo(() => {
-    return makeRanking(activities, profiles, period === 'week' ? ranges.week : ranges.month)
-  }, [activities, profiles, period, ranges])
-
-  const previousMonthRanking = useMemo(
-    () => makeRanking(activities, profiles, ranges.previousMonth),
-    [activities, profiles, ranges]
-  )
+  const ranking = rankingRows[period] || []
+  const previousMonthRanking = rankingRows.previousMonth || []
 
   const activeRange = period === 'week' ? ranges.week : ranges.month
   const rangeLabel = `${shortDate(activeRange.start)} → ${shortDate(activeRange.end)}`
