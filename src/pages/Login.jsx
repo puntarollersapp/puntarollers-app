@@ -4,7 +4,7 @@ import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
 import { isRollerweenActive } from '../lib/rollerween'
 
-const ROLLERWEEN_ART='/rollerween-2026-final.png?v=20261001-upload'
+const ROLLERWEEN_ART='/rollerween-2026-hq.webp?v=20261001-hq300'
 
 export default function Login() {
   const [documento, setDocumento] = useState('')
@@ -48,7 +48,7 @@ export default function Login() {
     <PublicLayout>
       <div className="min-h-[calc(100vh-70px)] px-5 py-8 max-w-md mx-auto flex flex-col justify-center">
         <section className="text-center mb-8 animate-fade-up">
-          {rollerween ? <img src={ROLLERWEEN_ART} alt="RollerWeen Season 2026 · Punta Rollers" className="mx-auto mb-5 h-auto w-[245px] max-w-[72vw] object-contain drop-shadow-[0_0_20px_rgba(183,91,255,.32)]"/> : <div className="w-20 h-20 mx-auto rounded-[26px] grid place-items-center bg-pr-gold/10 border border-pr-gold/20 shadow-[0_20px_55px_rgba(0,0,0,.35)]"><img src="/logo.png" alt="Punta Rollers" className="w-14 h-14 object-contain" /></div>}
+          {rollerween ? <img src={ROLLERWEEN_ART} alt="RollerWeen Season 2026 · Punta Rollers" className="mx-auto mb-5 h-auto w-[195px] max-w-[60vw] object-contain drop-shadow-[0_0_20px_rgba(183,91,255,.32)]"/> : <div className="w-20 h-20 mx-auto rounded-[26px] grid place-items-center bg-pr-gold/10 border border-pr-gold/20 shadow-[0_20px_55px_rgba(0,0,0,.35)]"><img src="/logo.png" alt="Punta Rollers" className="w-14 h-14 object-contain" /></div>}
           <p className={rollerween?'pr-rw-kicker mt-2':'section-label mt-6'}>{rollerween?'OCT.01—31 · SEASON 2026':'PuntaRollers.app'}</p>
           <h1 className={rollerween?'pr-rw-title pr-rw-glitch mt-2 text-[45px] text-white':'font-display text-[38px] leading-none text-white mt-2'}>{rollerween?<>ENTER <span className="pr-rw-purple">ROLLERWEEN.</span></>:'Tu club, en tu bolsillo.'}</h1>
           <p className="text-white/40 text-sm mt-3 max-w-[290px] mx-auto">{rollerween?'Octubre se vive sobre ruedas. Entrá a tu PR para ver desafíos, preparación y todo lo que se viene.':'Ingresá para ver tu perfil, progreso, beneficios y vida dentro de PR.'}</p>
