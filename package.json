@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-rollerween-hq.mjs && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
