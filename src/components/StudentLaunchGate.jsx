@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import LaunchExperience from './LaunchExperience'
 import { PR_LAUNCH, hasLaunchBypass } from '../lib/launch'
 import { supabase } from '../lib/supabase'
+import RollerweenBriefing from './RollerweenBriefing'
 
 export const STUDENT_LAUNCH_GATE = {
   enabled: true,
@@ -98,6 +99,7 @@ export default function StudentLaunchGate({ user, children }) {
       <>
         {children}
         <LaunchExperience user={user} />
+        <RollerweenBriefing user={user} />
       </>
     )
   }
