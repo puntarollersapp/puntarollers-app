@@ -1,0 +1,174 @@
+html.pr-rollerween {
+  --pr-bg: #07060a;
+  --pr-surface: #0d0a12;
+  --pr-elevated: #15101d;
+  --pr-line: rgba(183, 91, 255, .16);
+  --pr-line-strong: rgba(190, 255, 55, .24);
+  --pr-text: #f4f1f7;
+  --pr-muted: #9c93a5;
+  --pr-gold: #b767ff;
+  --pr-gold-soft: #d5a9ff;
+  --pr-gold-bg: rgba(153, 62, 255, .12);
+}
+
+html.pr-rollerween body {
+  background:
+    radial-gradient(circle at 18% -5%, rgba(139, 44, 255, .24), transparent 31%),
+    radial-gradient(circle at 86% 22%, rgba(190, 255, 55, .07), transparent 24%),
+    linear-gradient(180deg, #06050a 0%, #09070d 44%, #050507 100%);
+}
+
+html.pr-rollerween body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .34;
+  background-image:
+    repeating-linear-gradient(8deg, transparent 0 19px, rgba(255,255,255,.018) 20px),
+    repeating-linear-gradient(91deg, transparent 0 43px, rgba(183,91,255,.025) 44px);
+  mix-blend-mode: screen;
+}
+
+html.pr-rollerween .app-shell {
+  background:
+    linear-gradient(180deg, rgba(9,7,13,.97), rgba(5,5,7,.98)),
+    rgba(7,6,10,.96);
+  box-shadow: 0 0 90px rgba(78, 21, 115, .22);
+}
+
+html.pr-rollerween .app-shell > header {
+  border-bottom-color: rgba(183,91,255,.19);
+  background: rgba(7,6,10,.94);
+}
+
+html.pr-rollerween .app-shell > nav {
+  border-top-color: rgba(183,91,255,.18);
+  background: rgba(7,6,10,.97);
+}
+
+html.pr-rollerween .font-display,
+html.pr-rollerween h1,
+html.pr-rollerween h2,
+html.pr-rollerween h3 {
+  letter-spacing: -.025em;
+}
+
+.pr-rollerween-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(183,91,255,.26);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(183,91,255,.22), transparent 36%),
+    linear-gradient(145deg, #110c18 0%, #09080d 54%, #070609 100%);
+  box-shadow: 0 24px 70px rgba(0,0,0,.42);
+}
+
+.pr-rollerween-card::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.16;
+  background:
+    linear-gradient(100deg, transparent 0 47%, rgba(190,255,55,.18) 48%, transparent 49%),
+    repeating-linear-gradient(-8deg, transparent 0 24px, rgba(255,255,255,.03) 25px);
+}
+
+.pr-rw-kicker {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #beff37;
+}
+
+.pr-rw-title {
+  font-family: 'Archivo Narrow', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: .88;
+}
+
+.pr-rw-purple { color:#b75bff; }
+.pr-rw-acid { color:#beff37; }
+
+.pr-rw-stamp {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid rgba(183,91,255,.34);
+  background:rgba(183,91,255,.09);
+  padding:6px 9px;
+  border-radius:6px;
+  color:#d8b4fe;
+  font:800 8px/1 'Inter',sans-serif;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  transform:rotate(-1.5deg);
+}
+
+.pr-rw-scratch {
+  position:absolute;
+  width:130px;
+  height:1px;
+  background:#beff37;
+  opacity:.45;
+  transform:rotate(-17deg);
+  box-shadow:0 7px 0 rgba(183,91,255,.7),0 -8px 0 rgba(255,255,255,.14);
+}
+
+.pr-rw-pumpkin-wheel {
+  position:relative;
+  width:82px;
+  height:82px;
+  border-radius:50%;
+  border:2px solid rgba(190,255,55,.9);
+  background:
+    radial-gradient(circle at 38% 42%, #0b0a0d 0 5px, transparent 6px),
+    radial-gradient(circle at 62% 42%, #0b0a0d 0 5px, transparent 6px),
+    linear-gradient(90deg, rgba(183,91,255,.95), rgba(93,30,151,.9));
+  box-shadow:0 0 0 7px rgba(183,91,255,.08),0 0 38px rgba(183,91,255,.22);
+}
+
+.pr-rw-pumpkin-wheel::before,
+.pr-rw-pumpkin-wheel::after {
+  content:'';
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+}
+.pr-rw-pumpkin-wheel::before {
+  top:-12px;
+  width:11px;
+  height:18px;
+  border-radius:3px 3px 0 0;
+  background:#beff37;
+  transform:translateX(-50%) rotate(10deg);
+}
+.pr-rw-pumpkin-wheel::after {
+  bottom:18px;
+  width:34px;
+  height:12px;
+  border-bottom:3px solid #08070a;
+  border-radius:0 0 50% 50%;
+}
+
+.pr-rw-paper {
+  background:
+    linear-gradient(rgba(255,255,255,.025),rgba(255,255,255,.025)),
+    repeating-linear-gradient(0deg, transparent 0 21px, rgba(255,255,255,.018) 22px),
+    #0c0a10;
+}
+
+@keyframes prRwGlitch {
+  0%,91%,100% { transform:translate(0); filter:none; }
+  92% { transform:translate(-1px,1px); filter:drop-shadow(2px 0 #beff37); }
+  94% { transform:translate(1px,-1px); filter:drop-shadow(-2px 0 #b75bff); }
+}
+.pr-rw-glitch { animation:prRwGlitch 3.8s steps(1,end) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pr-rw-glitch { animation:none!important; }
+}
