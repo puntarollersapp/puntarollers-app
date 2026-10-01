@@ -4,7 +4,7 @@ export const ROLLERWEEN = {
   label: 'SEASON 2026',
   startsAt: '2026-10-01T00:00:00-03:00',
   endsAt: '2026-10-31T23:59:59-03:00',
-  noticeVersion: '2026-10-01-v1',
+  noticeVersion: '2026-10-01-v2-rsvp',
   timeTrial: {
     slug: 'rollerween-toma-4-2026-10-07',
     dateLabel: 'MIÉRCOLES 07 OCT',
