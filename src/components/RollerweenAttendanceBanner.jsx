@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ProfileAvatar from './ProfileAvatar'
+import { useAuth } from '../lib/auth'
 import { ROLLERWEEN, isTimeTrialBannerActive } from '../lib/rollerween'
 
 function nameOf(p){return p?.nombre_completo||[p?.nombre,p?.apellido].filter(Boolean).join(' ')||'Roller PR'}
 
 export default function RollerweenAttendanceBanner(){
+  const {user}=useAuth()
   const [people,setPeople]=useState([])
   const [now,setNow]=useState(()=>Date.now())
+  const [attending,setAttending]=useState(false)
+  const [saving,setSaving]=useState(false)
 
   useEffect(()=>{
     if(!isTimeTrialBannerActive(new Date(now)))return
@@ -20,13 +24,36 @@ export default function RollerweenAttendanceBanner(){
       if(!alive)return
       const map=new Map((profiles||[]).map(p=>[String(p.id),p]))
       setPeople((rsvps||[]).map(r=>map.get(String(r.profile_id))).filter(Boolean))
+      setAttending(Boolean(user?.id&&(rsvps||[]).some(r=>String(r.profile_id)===String(user.id))))
       setNow(Date.now())
     }
     load()
     const t=window.setInterval(load,30000)
     window.addEventListener('focus',load)
     return()=>{alive=false;window.clearInterval(t);window.removeEventListener('focus',load)}
-  },[])
+  },[user?.id])
+
+  async function toggleAttend(){
+    if(!user?.id||saving)return
+    setSaving(true)
+    const next=!attending
+    const {error}=await supabase.from('pr_event_rsvps').upsert({
+      event_slug:ROLLERWEEN.timeTrial.slug,
+      profile_id:user.id,
+      status:next?'attending':'not_attending',
+      updated_at:new Date().toISOString(),
+    },{onConflict:'event_slug,profile_id'})
+    if(!error){
+      setAttending(next)
+      const [{data:rsvps},{data:profiles}]=await Promise.all([
+        supabase.from('pr_event_rsvps').select('profile_id,updated_at').eq('event_slug',ROLLERWEEN.timeTrial.slug).eq('status','attending').order('updated_at',{ascending:true}),
+        supabase.from('profiles_feed').select('*').limit(500),
+      ])
+      const map=new Map((profiles||[]).map(p=>[String(p.id),p]))
+      setPeople((rsvps||[]).map(r=>map.get(String(r.profile_id))).filter(Boolean))
+    }
+    setSaving(false)
+  }
 
   if(!isTimeTrialBannerActive(new Date(now)))return null
 
@@ -48,6 +75,7 @@ export default function RollerweenAttendanceBanner(){
         <p className="text-[8px] font-black uppercase tracking-[.14em] text-white/25">{people.length} confirmado{people.length===1?'':'s'}</p>
         <span className="text-[8px] font-black text-[#BEFF37]">ROAD TO SHIFTER →</span>
       </div>
+      {user?.id&&<button type="button" onClick={toggleAttend} disabled={saving} className={`mt-3 w-full rounded-[15px] border px-4 py-3 text-[9px] font-black uppercase tracking-[.12em] transition active:scale-[.99] ${attending?'border-[#BEFF37]/25 bg-[#BEFF37]/10 text-[#BEFF37]':'border-violet-300/20 bg-violet-400/10 text-violet-200'}`}>{saving?'GUARDANDO…':attending?'✓ VOY A LA TOMA · CAMBIAR':'CONFIRMAR QUE VOY →'}</button>}
     </div>
   </article>
 }
