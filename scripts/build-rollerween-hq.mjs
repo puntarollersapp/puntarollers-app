@@ -14,5 +14,5 @@ function build(dirName, outName, expectedFiles, expectedBytes) {
   console.log(`Built ${out} (${buf.length} bytes)`)
 }
 
-build('rollerween_exact_webp', 'rollerween-2026-exact.webp', 5, 74804)
-build('rollerween_exact_badge', 'rollerween-badge-exact.webp', 1, 13334)
+build('rollerween_exact_webp', 'rollerween-2026-exact.webp', 5, 70520)
+build('rollerween_exact_badge', 'rollerween-badge-exact.webp', 1, 13836)
