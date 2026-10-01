@@ -15,4 +15,4 @@ function build(dirName, outName, expectedFiles, expectedBytes) {
 }
 
 build('rollerween_exact_webp', 'rollerween-2026-exact.webp', 5, 74804)
-build('rollerween_exact_badge', 'rollerween-badge-exact.webp', 1, 13836)
+build('rollerween_exact_badge', 'rollerween-badge-exact.webp', 1, 13334)
