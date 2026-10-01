@@ -172,3 +172,33 @@ html.pr-rollerween h3 {
 @media (prefers-reduced-motion: reduce) {
   .pr-rw-glitch { animation:none!important; }
 }
+
+
+html.pr-rollerween .pr-panel {
+  border-color: rgba(183,91,255,.20);
+  background: linear-gradient(145deg,rgba(183,91,255,.065),rgba(255,255,255,.018));
+  box-shadow:0 24px 70px rgba(48,12,70,.20);
+}
+html.pr-rollerween .pr-card {
+  border-color:rgba(183,91,255,.14);
+  background:rgba(183,91,255,.035);
+}
+html.pr-rollerween .section-label { color:rgba(190,255,55,.58); }
+html.pr-rollerween .btn-gold {
+  background:linear-gradient(110deg,#9f4cff 0%,#b75bff 52%,#beff37 130%);
+  color:#09070c;
+  box-shadow:0 12px 34px rgba(183,91,255,.22);
+}
+html.pr-rollerween .input-pr {
+  border-color:rgba(183,91,255,.20)!important;
+  background:rgba(183,91,255,.045)!important;
+}
+html.pr-rollerween .input-pr:focus {
+  border-color:rgba(190,255,55,.48)!important;
+  box-shadow:0 0 0 3px rgba(190,255,55,.055)!important;
+}
+html.pr-rollerween .app-shell > header a[href="/app/actividad"] {
+  border-color:rgba(190,255,55,.28)!important;
+  background:linear-gradient(135deg,#6f23b1,#a644f0 58%,#b9f63a)!important;
+  box-shadow:0 10px 34px rgba(133,48,203,.30)!important;
+}
