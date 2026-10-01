@@ -23,6 +23,10 @@ const initialForm = {
 }
 
 export default function Inscripciones2026() {
+  const campaignPromo = useMemo(() => {
+    const raw = new URLSearchParams(window.location.search).get('promo') || ''
+    return raw.replace(/\s+/g, '').toUpperCase() === 'ROLLERWINPR' ? 'ROLLERWINPR' : ''
+  }, [])
   const [step, setStep] = useState(0)
   const [mode, setMode] = useState(null)
   const [form, setForm] = useState(initialForm)
@@ -30,7 +34,7 @@ export default function Inscripciones2026() {
   const [registrationId, setRegistrationId] = useState('')
   const [error, setError] = useState('')
   const [personalizadasAbiertas, setPersonalizadasAbiertas] = useState(true)
-  const [referralCode, setReferralCode] = useState('')
+  const [referralCode, setReferralCode] = useState(campaignPromo)
   const [referralValid, setReferralValid] = useState(null)
   const [paymentAmount, setPaymentAmount] = useState(null)
   const [paymentOriginal, setPaymentOriginal] = useState(null)
@@ -49,6 +53,22 @@ export default function Inscripciones2026() {
     loadStatus()
   }, [])
 
+  useEffect(() => {
+    if (!campaignPromo) return
+    let active = true
+    const validateCampaign = async () => {
+      const { data, error } = await supabase.rpc('validate_pr_referral_code', { p_code: campaignPromo })
+      if (!active || error) return
+      const row = Array.isArray(data) ? data[0] : null
+      if (row) {
+        setReferralCode('ROLLERWINPR')
+        setReferralValid(row)
+      }
+    }
+    validateCampaign()
+    return () => { active = false }
+  }, [campaignPromo])
+
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
 
   const chooseMode = (value) => {
@@ -56,7 +76,7 @@ export default function Inscripciones2026() {
     setMode(value)
     setForm(initialForm)
     setRegistrationId('')
-    setReferralCode('')
+    setReferralCode(campaignPromo)
     setReferralValid(null)
     setPaymentAmount(null)
     setPaymentOriginal(null)
@@ -165,11 +185,11 @@ export default function Inscripciones2026() {
 
         {step === 1 && mode === 'personalizadas' && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(0)}>← Cambiar modalidad</button><p className="pr-reg-kicker">PERSONALIZADAS 1 A 1</p><h1>Una hora enfocada 100% en vos.</h1><p className="pr-reg-lead">Encuentros individuales adaptados a tu nivel, tus objetivos y tu ritmo. Desde cero o para perfeccionar técnica.</p><div className="pr-reg-price"><span>Cuponera</span><strong>$2.900</strong><small>4 encuentros · 60 min aprox.</small></div><div className="pr-reg-feature-grid"><article><b>🎯 A tu medida</b><p>Equilibrio, empuje, frenadas, giros, seguridad, técnica y práctica en calle.</p></article><article><b>📅 Vos elegís</b><p>Cada domingo recibís los horarios libres y reservás el que mejor te quede.</p></article><article><b>⚡ Flexible</b><p>Podés tomar 1 o 2 clases por semana o dejar semanas libres.</p></article><article><b>🔒 Cupos reales</b><p>Es una persona por hora, por eso la disponibilidad es más limitada.</p></article></div><div className="pr-reg-info"><b>Cancelaciones</b><p>Si avisás con anticipación, el cupón no se pierde. Si no asistís o cancelás cuando ya llegó el horario, el encuentro se descuenta.</p></div>{!personalizadasAbiertas && <div className="pr-reg-info pr-reg-closed-info"><b>🔒 Inscripciones pausadas</b><p>Durante la semana no tomamos nuevas preinscripciones. Los nuevos cupos se publican el domingo de tarde.</p></div>}<button className="pr-reg-primary" disabled={!personalizadasAbiertas} onClick={() => setStep(2)}>{personalizadasAbiertas ? 'Quiero hacer mi pre-reserva →' : 'Inscripciones pausadas'}</button></div>}
 
-        {step === 2 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(1)}>← Volver a la información</button><p className="pr-reg-kicker">DATOS DEL ALUMNO</p><h1>Ahora sí, contanos quién sos.</h1><div className="pr-reg-form-grid"><label>Nombre completo<input value={form.nombre_completo} onChange={e => update('nombre_completo', e.target.value)} autoComplete="name" /></label><label>Edad<input type="number" inputMode="numeric" value={form.edad} onChange={e => update('edad', e.target.value)} /></label><label>Localidad<input value={form.localidad} onChange={e => update('localidad', e.target.value)} /></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e => update('email', e.target.value)} autoComplete="email" /></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e => update('telefono', e.target.value)} autoComplete="tel" /></label><label>Nivel de patín<select value={form.nivel} onChange={e => update('nivel', e.target.value)}><option value="">Seleccioná</option><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></label></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid} />{referralValid && <div className="pr-reg-info"><b>🎉 Beneficio Amigos PR</b><p>{mode === 'personalizadas' ? 'Tenés 10% OFF en tu primera cuponera.' : 'Tenés 10% OFF en tus primeras 2 mensualidades.'} El alumno que te invitó también recibirá su beneficio cuando confirmemos tu pago.</p></div>}{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" onClick={() => validateStudent() && setStep(3)}>Continuar →</button></div>}
+        {step === 2 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(1)}>← Volver a la información</button><p className="pr-reg-kicker">DATOS DEL ALUMNO</p><h1>Ahora sí, contanos quién sos.</h1><div className="pr-reg-form-grid"><label>Nombre completo<input value={form.nombre_completo} onChange={e => update('nombre_completo', e.target.value)} autoComplete="name" /></label><label>Edad<input type="number" inputMode="numeric" value={form.edad} onChange={e => update('edad', e.target.value)} /></label><label>Localidad<input value={form.localidad} onChange={e => update('localidad', e.target.value)} /></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e => update('email', e.target.value)} autoComplete="email" /></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e => update('telefono', e.target.value)} autoComplete="tel" /></label><label>Nivel de patín<select value={form.nivel} onChange={e => update('nivel', e.target.value)}><option value="">Seleccioná</option><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></label></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid} />{referralValid && <div className="pr-reg-info"><b>{referralValid?.code === 'ROLLERWINPR' ? '🎃 Beneficio RollerWeen' : '🎉 Beneficio Amigos PR'}</b><p>{referralValid?.code === 'ROLLERWINPR' ? (mode === 'personalizadas' ? 'Tenés 10% OFF en tu primera cuponera. El descuento se calcula automáticamente antes de pagar.' : 'Tenés 10% OFF en tus primeras 2 mensualidades. La primera se descuenta ahora y la segunda queda registrada para Tesorería.') : `${mode === 'personalizadas' ? 'Tenés 10% OFF en tu primera cuponera.' : 'Tenés 10% OFF en tus primeras 2 mensualidades.'} El alumno que te invitó también recibirá su beneficio cuando confirmemos tu pago.`}</p></div>}{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" onClick={() => validateStudent() && setStep(3)}>Continuar →</button></div>}
 
         {step === 3 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(2)}>← Volver a mis datos</button><p className="pr-reg-kicker">TU MODALIDAD</p>{mode === 'grupales' ? <><h1>Elegí tu turno de los sábados.</h1><p className="pr-reg-lead">El miércoles 19:30 está incluido para todos.</p><div className="pr-reg-radio-list">{saturdayOptions.map(option => <label key={option} className={form.turno_sabado === option ? 'selected' : ''}><input type="radio" name="turno" checked={form.turno_sabado === option} onChange={() => update('turno_sabado', option)} /><span>{option}</span></label>)}</div></> : <><h1>¿Qué te gustaría conseguir?</h1><p className="pr-reg-lead">Así podemos preparar mejor tu experiencia desde el primer encuentro.</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e => update('objetivo_personalizadas', e.target.value)} placeholder="Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…" /></>}{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" disabled={sending || (mode === 'personalizadas' && !personalizadasAbiertas)} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : mode === 'personalizadas' && !personalizadasAbiertas ? 'Inscripciones pausadas' : 'Ver pago y confirmar →'}</button></div>}
 
-        {step === 4 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button><p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Aunque cierres esta página, tus datos ya aparecen en nuestro panel. Ahora elegí Mercado Pago o transferencia.</p></div>{paymentOriginal > amount && <div className="pr-reg-info"><b>🤝 Amigos PR aplicado</b><p>Precio normal: <s>${paymentOriginal.toLocaleString('es-UY')}</s> · Descuento: 10% · <strong>Ahorrás ${(paymentOriginal - amount).toLocaleString('es-UY')}</strong>.</p></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={amount} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment} /></div>}
+        {step === 4 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button><p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Aunque cierres esta página, tus datos ya aparecen en nuestro panel. Ahora elegí Mercado Pago o transferencia.</p></div>{paymentOriginal > amount && <div className="pr-reg-info"><b>{referralCode === 'ROLLERWINPR' ? '🎃 RollerWeen aplicado' : '🤝 Amigos PR aplicado'}</b><p>Precio normal: <s>${paymentOriginal.toLocaleString('es-UY')}</s> · Descuento: 10% · <strong>Ahorrás ${(paymentOriginal - amount).toLocaleString('es-UY')}</strong>.{referralCode === 'ROLLERWINPR' && mode === 'grupales' ? ' La segunda mensualidad mantendrá el mismo beneficio.' : ''}</p></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={amount} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment} /></div>}
 
         {step === 5 && <div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">SOLICITUD RECIBIDA</p><h1>¡Ya estás en la lista para septiembre!</h1><p className="pr-reg-lead">{finishedWith === 'mercadopago' ? 'Tu pago quedó acreditado y tu lugar está confirmado.' : finishedWith === 'mercadopago_pending' ? 'Tu pago está siendo procesado. Tu inscripción quedó guardada y te avisaremos cuando se acredite.' : 'Recibimos tu pre-reserva. Cuando verifiquemos la transferencia, te contactaremos para confirmar tu lugar.'}</p><PaidClassAccess items={classAccess} />{classAccess.length === 0 && <div className="pr-reg-info"><b>¿Qué sigue?</b><p>Antes de comenzar en septiembre, recibirás la información necesaria para incorporarte.</p></div>}</div>}
       </section>
