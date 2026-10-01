@@ -94,19 +94,5 @@ html.pr-rollerween .pr-profile-avatar-pulse::before {
   border-color:rgba(190,255,55,.48)!important;
   box-shadow:0 0 16px rgba(183,91,255,.38);
 }
-html.pr-rollerween .pr-profile-avatar-pulse::after {
-  content:''!important;
-  position:absolute!important;
-  inset:auto -17px -15px auto!important;
-  width:48px!important;
-  height:48px!important;
-  border-radius:50%!important;
-  border:1px solid rgba(190,255,55,.48)!important;
-  background:#09060d url('/rollerween-2026-approved.png?v=20261001-master2') center/contain no-repeat!important;
-  box-shadow:0 0 14px rgba(217,70,239,.70),0 0 11px rgba(190,255,55,.20)!important;
-  opacity:1!important;
-  transform:none!important;
-  animation:none!important;
-  pointer-events:none;
-  z-index:6;
-}
+/* The large personal portrait stays clean; member badges live on ProfileAvatar. */
+html.pr-rollerween .pr-profile-avatar-pulse::after { display:none!important; content:none!important; }
