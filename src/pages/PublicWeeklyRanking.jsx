@@ -147,10 +147,9 @@ function ProgressWheel({ pct, totalKm, maxTarget }) {
   </div>
 }
 
-function PRUnlock({ campaign, activities, profiles, result }) {
+function PRUnlock({ campaign, ranking = [], result }) {
   if (!campaign) return null
-  const range = { start: campaign.starts_on, end: campaign.ends_on }
-  const campaignRanking = makeRanking(activities, profiles, range)
+  const campaignRanking = ranking
   const totalKm = campaignRanking.reduce((sum, row) => sum + row.km, 0)
   const maxTarget = Number(campaign.prize_3_target_km || 1)
   const pct = Math.min(100, Math.round((totalKm / maxTarget) * 100))
@@ -307,8 +306,8 @@ export default function PublicWeeklyRanking() {
   const initialPeriod = requested === 'week' ? 'week' : 'month'
   const [period, setPeriod] = useState(initialPeriod)
   const [loading, setLoading] = useState(true)
-  const [activities, setActivities] = useState([])
   const [rankingRows, setRankingRows] = useState({ week: [], month: [], previousMonth: [] })
+  const [unlockRanking, setUnlockRanking] = useState([])
   const [profiles, setProfiles] = useState(new Map())
   const [message, setMessage] = useState('')
   const [statuses, setStatuses] = useState({})
@@ -325,9 +324,8 @@ export default function PublicWeeklyRanking() {
       if (!silent) setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, activitiesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse] = await Promise.all([
+        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
-          supabase.from('pr_inline_skate_activities').select('*').eq('eliminada', false).order('fecha_inicio', { ascending: false }).limit(1000),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.week.start, p_end_date: ranges.week.end }),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.month.start, p_end_date: ranges.month.end }),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.previousMonth.start, p_end_date: ranges.previousMonth.end }),
@@ -335,7 +333,6 @@ export default function PublicWeeklyRanking() {
           supabase.from('pr_unlock_campaigns').select('*').eq('active', true).order('starts_on', { ascending: false }).limit(1).maybeSingle(),
         ])
         if (!active) return
-        if (activitiesResponse.error) throw activitiesResponse.error
         if (weekResponse.error) throw weekResponse.error
         if (monthResponse.error) throw monthResponse.error
         if (previousMonthResponse.error) throw previousMonthResponse.error
@@ -351,7 +348,6 @@ export default function PublicWeeklyRanking() {
             photo: profilePhoto(profile),
           }
         }).sort((a, b) => b.km - a.km || b.sessions - a.sessions || a.name.localeCompare(b.name))
-        setActivities(activitiesResponse.data || [])
         setRankingRows({
           week: hydrateRanking(weekResponse.data),
           month: hydrateRanking(monthResponse.data),
@@ -361,9 +357,22 @@ export default function PublicWeeklyRanking() {
         setProfiles(profileMap)
         setUnlockCampaign(unlockResponse.data || null)
         if (unlockResponse.data?.id) {
-          const { data: resultData } = await supabase.from('pr_unlock_results').select('*').eq('campaign_id', unlockResponse.data.id).maybeSingle()
-          if (active) setUnlockResult(resultData || null)
-        } else if (active) setUnlockResult(null)
+          const [unlockRankingResponse, resultResponse] = await Promise.all([
+            supabase.rpc('pr_get_inline_ranking', {
+              p_start_date: unlockResponse.data.starts_on,
+              p_end_date: unlockResponse.data.ends_on,
+            }),
+            supabase.from('pr_unlock_results').select('*').eq('campaign_id', unlockResponse.data.id).maybeSingle(),
+          ])
+          if (unlockRankingResponse.error) throw unlockRankingResponse.error
+          if (active) {
+            setUnlockRanking(hydrateRanking(unlockRankingResponse.data))
+            setUnlockResult(resultResponse.data || null)
+          }
+        } else if (active) {
+          setUnlockRanking([])
+          setUnlockResult(null)
+        }
       } catch (_) {
         if (active && !silent) setMessage('No pudimos cargar el ranking en este momento.')
       } finally {
@@ -408,7 +417,7 @@ export default function PublicWeeklyRanking() {
             <div className="relative mt-4 inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[10px] font-black uppercase tracking-[.10em] text-white/45">{rangeLabel}</div>
           </section>
 
-          <PRUnlock campaign={unlockCampaign} activities={activities} profiles={profiles} result={unlockResult} />
+          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} />
 
           <section className="rounded-[30px] border border-white/[.08] bg-[#0b0c10] p-5 shadow-[0_24px_70px_rgba(0,0,0,.28)]">
             {loading ? (
