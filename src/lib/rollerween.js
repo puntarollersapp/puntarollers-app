@@ -24,7 +24,8 @@ export const ROLLERWEEN = {
     place: 'Parque La Loma',
     startsAt: '2026-10-09T20:00:00-03:00',
   },
-  weeklyChallengeKm: 500,
+  weeklyChallengeKm: 200,
+  weeklyBombonsKm: 350,
 }
 
 export function isRollerweenActive(now = new Date()) {
