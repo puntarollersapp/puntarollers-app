@@ -10,7 +10,7 @@ export const ROLLERWEEN = {
     dateLabel: 'MIÉRCOLES 07 OCT',
     timeLabel: '19:30',
     title: 'Toma de tiempo #04',
-    detail: 'Cuarta toma previa a Shifter. Por calendario puede ser la penúltima medición antes de la carrera.',
+    detail: 'Entrenamiento indispensable. Es la cuarta toma previa a Shifter y, por calendario, puede ser la penúltima medición antes de la carrera.',
     place: 'Pista de Ciclismo Punta del Este · frente al Centro de Convenciones',
     startsAt: '2026-10-07T19:30:00-03:00',
     bannerEndsAt: '2026-10-07T23:59:59-03:00',
