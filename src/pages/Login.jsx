@@ -4,7 +4,7 @@ import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
 import { isRollerweenActive } from '../lib/rollerween'
 
-const ROLLERWEEN_ART='/rollerween-2026-exact.webp?v=20261002-userfile'
+const ROLLERWEEN_ART='/rollerween-logo-original-20261001-r2.png?v=original-r2'
 
 export default function Login() {
   const [documento, setDocumento] = useState('')
