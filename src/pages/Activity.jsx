@@ -1329,7 +1329,6 @@ export default function Activity() {
         )}
 
         <div>
-          <div className="mb-2 flex justify-end"><button type="button" onClick={() => setShowWelcome(true)} className="rounded-full border border-violet-300/15 bg-violet-400/[.06] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-violet-200/70">¿Qué hay de nuevo?</button></div>
           <PRMomentsRail currentProfileId={currentReactionProfileId} />
         </div>
 
