@@ -1,3 +1,4 @@
+import RollerweenBadge from '../components/RollerweenBadge'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
@@ -1601,7 +1602,8 @@ function ProfileAvatar({
         )}
       </div>
 
-      {verified && <VerifiedBadge size={22} className="absolute -bottom-1.5 -right-1.5" />}
+      <RollerweenBadge className="absolute -right-1 -bottom-1 z-20 h-6 w-6"/>
+      {verified && <VerifiedBadge size={22} className="absolute -top-1.5 -right-1.5 z-20" />}
     </div>
   )
 }
