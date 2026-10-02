@@ -7,7 +7,7 @@ import PRMomentsRail from '../components/PRMomentsRail'
 import RollerFeedComments from '../components/RollerFeedComments'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
-import RollerFeedWelcome from '../components/RollerFeedWelcome'
+import CommunityPhoto from '../components/community/CommunityPhoto'
 
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
@@ -692,10 +692,10 @@ export default function Activity() {
 
   const [activities, setActivities] = useState([])
   const [legacyItems, setLegacyItems] = useState([])
+  const [socialPosts, setSocialPosts] = useState([])
   const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
   const [moments, setMoments] = useState([])
-  const [showWelcome, setShowWelcome] = useState(false)
   const [reactions, setReactions] = useState([])
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
@@ -705,16 +705,6 @@ export default function Activity() {
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
   const initialSyncDone = useRef(false)
-
-  useEffect(() => {
-    const key = `pr-rollerfeed-welcome-v1:${profileId || 'guest'}`
-    if (window.localStorage.getItem(key) !== 'seen') setShowWelcome(true)
-  }, [profileId])
-
-  function closeWelcome() {
-    window.localStorage.setItem(`pr-rollerfeed-welcome-v1:${profileId || 'guest'}`, 'seen')
-    setShowWelcome(false)
-  }
 
   useEffect(() => {
     let active = true
@@ -801,6 +791,7 @@ export default function Activity() {
       legacyResponse,
       eventsResponse,
       reactionsResponse,
+      socialResponse,
     ] = await Promise.all([
       supabase.from('profiles_feed').select('*').limit(500),
 
@@ -826,7 +817,11 @@ export default function Activity() {
         .select('*')
         .order('created_at', { ascending: true })
         .limit(2000),
+      supabase.rpc('community_social_feed'),
     ])
+
+    if(socialResponse.error)setMessage('No pudimos cargar las publicaciones: '+socialResponse.error.message)
+    else setSocialPosts(Array.isArray(socialResponse.data)?socialResponse.data:[])
 
     if (profilesResponse.error) {
       setMessage(
@@ -1071,6 +1066,7 @@ export default function Activity() {
     })
 
     return [
+      ...socialPosts.map(post=>({...post,id:`social-${post.id}`,postId:post.id,type:'SocialPost',date:post.created_at})),
       ...momentPosts,
       ...birthdays,
       ...eventPosts,
@@ -1083,6 +1079,7 @@ export default function Activity() {
     )
   }, [
     activities,
+    socialPosts,
     legacyItems,
     events,
     moments,
@@ -1412,7 +1409,7 @@ export default function Activity() {
                     onReact={selectReaction}
                     onOpenReactions={() => setReactionModalItem(item)}
                   />
-                  {item.type !== 'Moment' && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
+                  {!['Moment','SocialPost'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
             </div>
@@ -1441,7 +1438,6 @@ export default function Activity() {
             onClose={() => setReactionModalItem(null)}
           />
         )}
-        {showWelcome && <RollerFeedWelcome onClose={closeWelcome} />}
       </div>
     </AppLayout>
   )
@@ -1533,11 +1529,26 @@ function FeedCard({
     return <TrainingCard item={item} {...reactionProps} />
   }
 
+  if (item.type === 'SocialPost') return <SocialPostCard item={item} />
+
   if (item.type === 'Moment') {
     return <MomentCard item={item} />
   }
 
   return <CommunityCard item={item} {...reactionProps} />
+}
+
+function SocialPostCard({ item }) {
+  const navigate=useNavigate()
+  const name=[item.author?.nombre,item.author?.apellido].filter(Boolean).join(' ')||'Integrante PR'
+  return <article className="overflow-hidden rounded-[29px] border border-white/10 bg-white/[.035] p-4">
+    <button type="button" onClick={()=>navigate(`/app/comunidad/perfil/${item.author_id}`)} className="flex items-center gap-3 text-left">
+      <ProfileAvatar photo={item.author?.foto} name={name}/><div><p className="text-sm font-black text-white">{name}</p><p className="mt-1 text-[10px] text-white/35">{new Date(item.created_at).toLocaleString('es-UY')}</p></div>
+    </button>
+    {item.body&&<p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-white/75">{item.body}</p>}
+    {item.media?.length>0&&<div className="mt-3 grid grid-cols-2 gap-1">{item.media.map(photo=><a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="aspect-square overflow-hidden rounded-xl"><CommunityPhoto src={photo.url}/></a>)}</div>}
+    <button type="button" onClick={()=>navigate('/app/comunidad')} className="mt-4 w-full rounded-xl border border-violet-300/20 py-3 text-xs font-bold text-violet-200">{item.comments?.length||0} comentarios · {item.reactions?.length||0} reacciones · Abrir publicación →</button>
+  </article>
 }
 
 function MomentCard({ item }) {

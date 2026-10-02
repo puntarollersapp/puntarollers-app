@@ -10,10 +10,10 @@ function isTreasury(profile) { return Boolean(profile?.es_tesoreria) || profile?
 function isProfessor(profile) { if (isTreasury(profile)) return false; return Boolean(profile?.es_profesor) || profile?.role === 'profesor' || profile?.role === 'admin' }
 function initials(name) { return String(name || 'PR').split(/\s+/).filter(Boolean).slice(0,2).map((part)=>part[0]?.toUpperCase()).join('') || 'PR' }
 
-export default function ProfileAvatar({ profile, className='h-14 w-14', rounded='rounded-full', badge=true, imageClassName='' }) {
+export default function ProfileAvatar({ profile, className='h-14 w-14', rounded='rounded-full', badge=true, rollerweenBadge=false, imageClassName='' }) {
   const name=profileName(profile), photo=profilePhoto(profile), treasury=isTreasury(profile), professor=isProfessor(profile), rollerween=isRollerweenActive()
   const title=treasury ? `${name} · Tesorera` : professor ? `${name} · Profe` : name
-  const showRollerweenBadge=rollerween&&!professor
+  const showRollerweenBadge=rollerween&&rollerweenBadge
   return <div className={`relative shrink-0 ${className}`} title={title}>
     {rollerween&&<div className={`absolute -inset-[3px] ${rounded} bg-gradient-to-br from-fuchsia-500 via-violet-500 to-lime-300 opacity-95 blur-[.2px] shadow-[0_0_12px_rgba(168,85,247,.62),0_0_20px_rgba(190,255,55,.20)]`}/>} 
     <div className={`relative z-[1] grid h-full w-full place-items-center overflow-hidden border ${rollerween?'border-black/70':'border-white/10'} bg-gradient-to-br from-orange-400/20 to-violet-500/15 ${rounded}`}>

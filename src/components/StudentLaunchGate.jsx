@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import LaunchExperience from './LaunchExperience'
 import { PR_LAUNCH, hasLaunchBypass } from '../lib/launch'
 import { supabase } from '../lib/supabase'
 import RollerweenBriefing from './RollerweenBriefing'
@@ -98,7 +97,6 @@ export default function StudentLaunchGate({ user, children }) {
     return (
       <>
         {children}
-        <LaunchExperience user={user} />
         <RollerweenBriefing user={user} />
       </>
     )
