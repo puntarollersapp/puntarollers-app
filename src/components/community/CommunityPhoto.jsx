@@ -22,3 +22,14 @@ export default function CommunityPhoto({ src, eager = false }) {
       onLoad={() => setLoaded(true)} onError={() => { if (!fallback) setFallback(true); else setFailed(true) }} />
   </div>
 }
+
+export function CommunityFullPhoto({ src }) {
+  const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
+  return <div className="relative overflow-hidden rounded-[24px] bg-violet-400/10">
+    <img src={thumbnailUrl(src)} alt="Foto del álbum" className="max-h-[68vh] w-full object-contain" />
+    <img src={src} alt="Foto original del álbum" onLoad={() => setLoaded(true)} onError={() => setFailed(true)}
+      className={`absolute inset-0 h-full w-full object-contain ${loaded ? 'opacity-100' : 'opacity-0'}`} />
+    {!loaded && <span role="status" className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] text-white/80">{failed ? 'Vista previa · no se pudo cargar el original' : 'Cargando calidad original…'}</span>}
+  </div>
+}
