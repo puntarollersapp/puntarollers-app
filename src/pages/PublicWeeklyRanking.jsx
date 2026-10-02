@@ -261,7 +261,7 @@ function Podium({ ranking, period, statuses }) {
       <div className="relative">
         {order === 1 && <div className="absolute -inset-6 rounded-full bg-amber-300/10 blur-2xl" />}
         <PodiumAvatar row={row} size={order === 1 ? 'xl' : 'lg'} />
-        <span className={`absolute -bottom-2 left-1/2 grid -translate-x-1/2 place-items-center rounded-full border-[3px] border-[#0b0c10] font-black ${order === 1 ? 'h-8 w-8 bg-amber-300 text-black' : order === 2 ? 'h-7 w-7 bg-slate-200 text-black' : 'h-7 w-7 bg-orange-700 text-white'}`}>{order}</span>
+        <span className={`absolute -bottom-2 left-1/2 z-30 grid -translate-x-1/2 place-items-center rounded-full border-[3px] border-[#0b0c10] font-black ${order === 1 ? 'h-8 w-8 bg-amber-300 text-black' : order === 2 ? 'h-7 w-7 bg-slate-200 text-black' : 'h-7 w-7 bg-orange-700 text-white'}`}>{order}</span>
       </div>
       <p className="mt-5 max-w-[115px] truncate text-center text-sm font-black">{row.name}</p>
       <p className={`mt-1 text-xl font-black ${order === 1 ? 'text-amber-300' : 'text-white'}`}>{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
