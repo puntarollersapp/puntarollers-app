@@ -106,7 +106,7 @@ function buildPopupHTML(raw) {
   </div>`
 }
 
-export default function MapView({ locations=[], allLocations=[], selectedId=null, loading=false, onMarkerClick, onMapReady, onUserLocated }) {
+export default function MapView({ locations=[], allLocations=[], selectedId=null, loading=false, onMarkerClick, onMapReady, onUserLocated, paddingBottom=380 }) {
   const containerRef = useRef(null)
   const mapRef       = useRef(null)
   const markersRef   = useRef({})
@@ -139,18 +139,18 @@ export default function MapView({ locations=[], allLocations=[], selectedId=null
     map.addControl(new mapboxgl.NavigationControl({ showCompass:false }), 'top-right')
     map.addControl(new mapboxgl.ScaleControl({ unit:'metric' }), 'bottom-left')
     map.on('load', () => {
-      map.setPadding({ bottom: 380, top: 60, left: 0, right: 0 })
+      map.setPadding({ bottom: paddingBottom, top: 20, left: 0, right: 0 })
       setMapReady(true)
       onMapReady?.(map)
     })
-    return () => { map.remove(); mapRef.current = null }
+    return () => { map.remove(); mapRef.current = null; onMapReady?.(null) }
   }, []) // eslint-disable-line
 
   useEffect(() => {
     if (!mapReady || !mapRef.current) return
     const map = mapRef.current
     allLocations.forEach(loc => {
-      if (markersRef.current[loc.id]) return
+      if (markersRef.current[loc.id] || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return
       const el = createMarkerEl(loc.type, loc.featured, loc.name)
       const popup = new mapboxgl.Popup({ offset:52, closeButton:true, maxWidth:'300px' })
         .setHTML(buildPopupHTML(loc))

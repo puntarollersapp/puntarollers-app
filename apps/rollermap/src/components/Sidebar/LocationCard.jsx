@@ -15,7 +15,7 @@ function formatDistance(km) {
   return `${Math.round(km)} km`
 }
 
-const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick }, ref) {
+const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick, basePath="" }, ref) {
   const navigate = useNavigate()
   const initials = loc.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
   const isEscuela = loc.type === 'escuela'
@@ -24,7 +24,7 @@ const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick }
 
   function handleClick() {
     onClick(loc)
-    navigate(`/lugar/${slugify(loc.name)}`)
+    navigate(`${basePath}/lugar/${slugify(loc.name)}`)
   }
 
   return (
@@ -32,6 +32,10 @@ const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick }
       ref={ref}
       className={`rm-card rm-loc-card ${selected ? 'rm-loc-card--selected' : ''}`}
       onClick={handleClick}
+      role="link"
+      tabIndex={0}
+      aria-label={`Ver ${loc.name}`}
+      onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleClick() } }}
       style={{
         borderLeft: `3px solid ${selected ? accentColor : 'transparent'}`,
         transition: 'all 0.18s ease',

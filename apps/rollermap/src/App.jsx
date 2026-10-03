@@ -19,7 +19,7 @@ function useIsDesktop() {
   return isDesktop
 }
 
-function SplashScreen({ onDone }) {
+export function SplashScreen({ onDone, embedded = false }) {
   const [fading, setFading] = useState(false)
   useEffect(() => {
     const t1 = setTimeout(() => setFading(true), 3500)
@@ -28,7 +28,7 @@ function SplashScreen({ onDone }) {
   }, [onDone])
 
   return (
-    <div style={{
+    <div className={embedded ? "rm-splash" : undefined} style={{
       position:'fixed', inset:0, zIndex:999,
       background:'#0A0A16',
       display:'flex', flexDirection:'column',

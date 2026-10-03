@@ -9,7 +9,7 @@ function slugify(name) {
     .trim().replace(/\s+/g, '-')
 }
 
-export default function LocationDetail() {
+export default function LocationDetail({ backPath="/", publicBasePath="" }) {
   const { slug } = useParams()
   const navigate = useNavigate()
   const [loc, setLoc] = useState(null)
@@ -43,7 +43,7 @@ export default function LocationDetail() {
     <div style={{ minHeight:'100dvh', background:'#0A0A16', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, fontFamily:'Barlow, sans-serif', padding:24 }}>
       <span style={{ fontSize:48 }}>🛼</span>
       <p style={{ color:'#E8E8F0', fontSize:18, fontWeight:700 }}>Ubicación no encontrada</p>
-      <button onClick={() => navigate('/')} style={{ background:'linear-gradient(135deg,#00E5CC,#9B4DFF)', color:'#000', border:'none', borderRadius:8, padding:'10px 20px', fontWeight:700, cursor:'pointer', fontSize:14 }}>
+      <button onClick={() => navigate(backPath)} style={{ background:'linear-gradient(135deg,#00E5CC,#9B4DFF)', color:'#000', border:'none', borderRadius:8, padding:'10px 20px', fontWeight:700, cursor:'pointer', fontSize:14 }}>
         ← Volver al mapa
       </button>
     </div>
@@ -57,14 +57,14 @@ export default function LocationDetail() {
   const mapUrl = loc.lat && loc.lng
     ? `https://www.google.com/maps?q=${loc.lat},${loc.lng}`
     : null
-  const shareUrl = window.location.href
+  const shareUrl = publicBasePath ? `${window.location.origin}${publicBasePath}/lugar/${slug}` : window.location.href
 
   return (
     <div style={{ minHeight:'100dvh', background:'#0A0A16', fontFamily:'Barlow, sans-serif', color:'#E8E8F0' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700&display=swap');
         @keyframes spin { to { transform:rotate(360deg) } }
-        * { box-sizing:border-box; margin:0; padding:0; }
+        .pr-rollermap *, .pr-rollermap *::before, .pr-rollermap *::after { box-sizing:border-box; }
       `}</style>
 
       {/* Header con imagen o color */}
@@ -77,7 +77,7 @@ export default function LocationDetail() {
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 40%, #0A0A16 100%)' }}/>
 
         {/* Botón volver */}
-        <button onClick={() => navigate('/')}
+        <button onClick={() => navigate(backPath)}
           style={{ position:'absolute', top:16, left:16, background:'rgba(10,10,22,0.8)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, color:'#E8E8F0', padding:'8px 14px', fontSize:13, fontWeight:600, cursor:'pointer', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', gap:6 }}>
           ← Mapa
         </button>
@@ -176,9 +176,9 @@ export default function LocationDetail() {
         {/* Footer */}
         <div style={{ textAlign:'center', marginTop:32, paddingTop:20, borderTop:'1px solid rgba(255,255,255,0.06)' }}>
           <p style={{ fontSize:12, color:'#6666AA' }}>Encontrá más escuelas y grupos en</p>
-          <button onClick={() => navigate('/')}
+          <button onClick={() => navigate(backPath)}
             style={{ background:'none', border:'none', color:'#00E5CC', fontSize:14, fontWeight:700, cursor:'pointer', marginTop:4 }}>
-            🛼 rollermap.app
+            RollerMap · Punta Rollers
           </button>
         </div>
       </div>
