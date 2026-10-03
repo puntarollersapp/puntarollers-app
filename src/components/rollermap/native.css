@@ -26,6 +26,7 @@
 .pr-rollermap .rm-admin{min-height:50dvh}
 .pr-rollermap .rm-admin__header{position:relative;top:auto;flex-wrap:wrap}
 .pr-rollermap .rm-splash{position:absolute!important;bottom:auto!important;height:70dvh;z-index:70!important;min-height:350px}
+
 .pr-rollermap .pr-rm-intro{padding:18px;border:1px solid rgba(0,229,204,.15);border-radius:24px;background:radial-gradient(ellipse at 100% 0,rgba(155,77,255,.12),transparent 70%),linear-gradient(135deg,rgba(0,229,204,.07),transparent)}
 .pr-rollermap .pr-rm-register{border-radius:16px;box-shadow:0 8px 28px rgba(0,229,204,.1)}
 .pr-rollermap .pr-rm-list .rm-loc-card{border-radius:18px}
@@ -34,6 +35,4 @@
 .pr-rollermap .pr-rm-error{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.07)}
 .pr-rollermap .pr-rm-error button,.pr-rollermap .pr-rm-empty button{min-height:44px;padding:10px 16px}
 .pr-rollermap .pr-rm-empty h2{font-size:18px;color:var(--ink)}
-.pr-rollermap .pr-rm-explorer{padding:20px;border:1px solid rgba(0,229,204,.22);border-radius:24px;background:radial-gradient(circle at 95% 0,rgba(155,77,255,.2),transparent 48%),linear-gradient(145deg,rgba(0,229,204,.09),rgba(255,255,255,.025));display:grid;gap:16px;box-shadow:0 16px 40px rgba(0,0,0,.22)}
-.pr-rollermap .pr-rm-explorer h2{font-family:var(--font-cond);font-size:27px;color:var(--ink);margin:5px 0 7px}.pr-rollermap .pr-rm-explorer p:last-child{color:var(--ink3);line-height:1.6}.pr-rollermap .pr-rm-explorer .rm-btn{width:100%;min-height:48px}.pr-rollermap .pr-rm-explorer-modal{display:grid;gap:14px;padding:24px}.pr-rollermap .pr-rm-explorer-modal h2{font-family:var(--font-cond);font-size:30px;color:var(--ink)}.pr-rollermap .pr-rm-explorer-modal>p{line-height:1.65;color:var(--ink3)}.pr-rollermap .pr-rm-explorer-note{padding:14px;border-radius:15px;border:1px solid rgba(0,229,204,.2);background:rgba(0,229,204,.06);font-size:12px;line-height:1.6;color:var(--ink2)}.pr-rollermap .pr-rm-explorer-status{font-size:12px!important;color:var(--brand)!important}
 @media(max-width:360px){.pr-rollermap .pr-rm-directory{padding:14px 12px}.pr-rollermap .pr-rm-intro{padding:14px;gap:10px}.pr-rollermap .pr-rm-intro img{width:64px;height:64px}.pr-rollermap .pr-rm-eyebrow{font-size:8px;letter-spacing:1px}}
