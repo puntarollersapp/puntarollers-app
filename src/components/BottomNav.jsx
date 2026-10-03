@@ -17,7 +17,7 @@ function NavIcon({ type }) {
 function isActive(pathname,item){
   if(item.path==='/app/perfil')return pathname==='/app/perfil'||pathname==='/app/perfil-clasico'
   if(item.path==='/app/entrenamiento')return pathname==='/app/entrenamiento'||pathname==='/app/evolucion'
-  if(item.path==='/app/mi-pr')return pathname==='/app/mi-pr'||pathname==='/app/insignias'||pathname==='/app/musica'||pathname==='/app/prcard'||pathname==='/app/tracking'||pathname==='/app/avatar'||pathname==='/app/avatar-premium'
+  if(item.path==='/app/mi-pr')return pathname==='/app/mi-pr'||pathname==='/app/rollermap'||pathname==='/app/insignias'||pathname==='/app/musica'||pathname==='/app/prcard'||pathname==='/app/tracking'||pathname==='/app/avatar'||pathname==='/app/avatar-premium'
   if(item.path==='/app/comunidad')return pathname==='/app/comunidad'||pathname==='/app/mensajes'
   if(item.path==='/admin')return pathname.startsWith('/admin')||pathname==='/tesoreria'
   return pathname===item.path

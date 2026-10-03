@@ -1,0 +1,2 @@
+import AppLayout from '../layouts/AppLayout'
+export default function RollerMap({admin=false}){return <AppLayout title={admin?'Administrar RollerMap':'RollerMap'} showBack><iframe title={admin?'Administración de RollerMap':'Mapa de escuelas y grupos de patinaje'} src={admin?'/rollermap/admin':'/rollermap/'} allow="geolocation" style={{display:'block',width:'100%',height:'calc(100dvh - 160px)',minHeight:440,border:0}} /></AppLayout>}
