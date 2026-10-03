@@ -1,0 +1,171 @@
+diff --git a/public/sw.js b/public/sw.js
+new file mode 100644
+index 0000000..90b6e23
+--- /dev/null
++++ b/public/sw.js
+@@ -0,0 +1,12 @@
++// Retire the old offline application and move existing installed clients to PR.
++self.addEventListener('install',()=>self.skipWaiting())
++self.addEventListener('activate',event=>event.waitUntil((async()=>{
++  await self.clients.claim()
++  const clients=await self.clients.matchAll({type:'window'})
++  for(const client of clients){
++    const path=new URL(client.url).pathname
++    const destination=path.startsWith('/admin')?'https://www.puntarollers.com/admin/rollermap':`https://www.puntarollers.com/rollermap${path.startsWith('/lugar/')?path:'/'}`
++    await client.navigate(destination).catch(()=>{})
++  }
++  await self.registration.unregister()
++})()))
+diff --git a/src/main.jsx b/src/main.jsx
+index 6edd34d..45ee9a8 100644
+--- a/src/main.jsx
++++ b/src/main.jsx
+@@ -1,22 +1,7 @@
+-import { StrictMode } from 'react'
+ import { createRoot } from 'react-dom/client'
+-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+-
+-import './styles/global.css'
+-
+-import App            from './App'
+-import AdminPanel     from './components/Admin/AdminPanel'
+-import LocationDetail from './components/Detail/LocationDetail'
+-
+-createRoot(document.getElementById('root')).render(
+-  <StrictMode>
+-    <BrowserRouter>
+-      <Routes>
+-        <Route path="/"          element={<App />} />
+-        <Route path="/admin"     element={<AdminPanel />} />
+-        <Route path="/lugar/:slug" element={<LocationDetail />} />
+-      </Routes>
+-    </BrowserRouter>
+-  </StrictMode>
+-)
+-
++const path=window.location.pathname
++const suffix=path.startsWith('/lugar/')?path:path.startsWith('/rollermap/')?path.slice('/rollermap'.length):'/'
++const destination=path.startsWith('/admin')?'https://www.puntarollers.com/admin/rollermap':`https://www.puntarollers.com/rollermap${suffix}`
++createRoot(document.getElementById('root')).render(<main style={{fontFamily:'Arial,sans-serif',background:'#0a0a16',color:'#e8e8f0',minHeight:'100vh',display:'grid',placeItems:'center',textAlign:'center',padding:24}}><div><img src="/logo.png" alt="RollerMap" width="180"/><h1>RollerMap ahora forma parte de Punta Rollers</h1><p>El mismo mapa, con una experiencia renovada.</p><a href={destination} style={{color:'#00e5cc'}}>Abrir RollerMap →</a></div></main>)
++navigator.serviceWorker?.getRegistrations().then(registrations=>Promise.all(registrations.map(reg=>reg.unregister()))).catch(()=>{})
++window.location.replace(destination)
+diff --git a/vercel.json b/vercel.json
+index 0d199b2..1a94285 100644
+--- a/vercel.json
++++ b/vercel.json
+@@ -1,5 +1,50 @@
+ {
+-  "rewrites": [
+-    { "source": "/(.*)", "destination": "/index.html" }
++  "routes": [
++    {
++      "src": "/sw\\.js",
++      "headers": {
++        "Cache-Control": "no-store",
++        "Service-Worker-Allowed": "/"
++      },
++      "dest": "/sw.js"
++    },
++    {
++      "src": "/",
++      "status": 307,
++      "headers": {
++        "Location": "https://www.puntarollers.com/rollermap/"
++      }
++    },
++    {
++      "handle": "filesystem"
++    },
++    {
++      "src": "/lugar/(.*)",
++      "status": 307,
++      "headers": {
++        "Location": "https://www.puntarollers.com/rollermap/lugar/$1"
++      }
++    },
++    {
++      "src": "/admin(?:/.*)?",
++      "status": 307,
++      "headers": {
++        "Location": "https://www.puntarollers.com/admin/rollermap"
++      }
++    },
++    {
++      "src": "/rollermap/(.*)",
++      "status": 307,
++      "headers": {
++        "Location": "https://www.puntarollers.com/rollermap/$1"
++      }
++    },
++    {
++      "src": "/(.*)",
++      "status": 307,
++      "headers": {
++        "Location": "https://www.puntarollers.com/rollermap/"
++      }
++    }
+   ]
+ }
+diff --git a/vite.config.js b/vite.config.js
+index 97f7eae..014046c 100644
+--- a/vite.config.js
++++ b/vite.config.js
+@@ -1,57 +1,3 @@
+ import { defineConfig } from 'vite'
+ import react from '@vitejs/plugin-react'
+-import { VitePWA } from 'vite-plugin-pwa'
+-
+-export default defineConfig({
+-  plugins: [
+-    react(),
+-    VitePWA({
+-      registerType: 'autoUpdate',
+-      includeAssets: ['favicon.svg', 'logo.png', 'og-image.png'],
+-      manifest: {
+-        name: 'RollerMap · Alianza Roller',
+-        short_name: 'RollerMap',
+-        description: 'El mapa interactivo del roller en Uruguay',
+-        theme_color: '#00E5CC',
+-        background_color: '#0A0A16',
+-        display: 'standalone',
+-        orientation: 'portrait',
+-        scope: '/',
+-        start_url: '/',
+-        icons: [
+-          {
+-            src: '/icon-192.png',
+-            sizes: '192x192',
+-            type: 'image/png',
+-            purpose: 'any maskable'
+-          },
+-          {
+-            src: '/icon-512.png',
+-            sizes: '512x512',
+-            type: 'image/png',
+-            purpose: 'any maskable'
+-          }
+-        ]
+-      },
+-      workbox: {
+-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+-        runtimeCaching: [
+-          {
+-            urlPattern: /^https:\/\/api\.mapbox\.com\/.*/i,
+-            handler: 'NetworkFirst',
+-            options: { cacheName: 'mapbox-cache' }
+-          },
+-          {
+-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+-            handler: 'NetworkFirst',
+-            options: { cacheName: 'supabase-cache' }
+-          }
+-        ]
+-      }
+-    })
+-  ],
+-  server: {
+-    port: 5173,
+-  },
+-})
++export default defineConfig({plugins:[react()],server:{port:5173}})

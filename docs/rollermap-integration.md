@@ -31,3 +31,15 @@ The Vercel preview build passed. Browser checks confirmed 32 public results, sea
 ## Native integration validation
 
 Main app build passed; emitted RollerMap CSS was checked for global body/html/root leakage and PR Tailwind compilation was preserved. Native Vercel preview checks confirmed zero application iframes, a 518px content width without horizontal overflow, 32 public places, search reducing Punta to three results, detail image/contact links and return navigation, and all three registration steps without sending a record. The dialog remained within the viewport, locked background scrolling and restored focus on Escape. Map fallback retained the directory in this browser without WebGL. Authenticated private/admin navigation and an actual welcome delivery were not exercised in this browser session. No database schema or existing welcome-email sending logic changed.
+
+## Domain cutover (prepared, not activated)
+
+`rollermap.app` is attached to the original RollerMap Vercel project. The proposed change in `rollermap-domain-cutover.patch` adds reversible 307 redirects to PR's public directory and matching place pages, an admin redirect, a fallback transition page, and a retirement service worker for the previously installed offline app. The former source code and database remain preserved. The original service worker is not registered by the new build.
+
+Source reconciliation on 2026-10-03: all 36 source records match the exported migration snapshot (excluding date serialization only); no new records or edits need importing. The target has 36 records.
+
+The transition build passed locally. Activation is blocked: the RollerMap GitHub connector rejects writes to `PuntaRollers/rollermap` with HTTP 403 `Resource not accessible by integration`, despite the account having repo admin permissions. Vercel's direct deployment tool is unavailable. Grant the connector write access to this repository, then apply the patch and verify root, place and admin redirects plus `/sw.js` before considering the domain unified. The domain is still serving the original deployment until that step is completed.
+
+## Directory refinements
+
+Search ignores diacritics; filter/type/city/view state is stored in URL query parameters and restored when returning from place detail. Image thumbnails load lazily. Public navigation provides PR branding and a sign-in entry instead of anonymous profile/sign-out buttons. Connection failures expose retry; empty results provide filter reset. Approved locations without coordinates remain visible in the list (map markers still require valid coordinates). No data or approval/email logic is altered.

@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 function slugify(name) {
   return name.toLowerCase()
@@ -17,6 +17,7 @@ function formatDistance(km) {
 
 const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick, basePath="" }, ref) {
   const navigate = useNavigate()
+  const location = useLocation()
   const initials = loc.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
   const isEscuela = loc.type === 'escuela'
   const accentColor = isEscuela ? '#00E5CC' : '#9B4DFF'
@@ -24,7 +25,7 @@ const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick, 
 
   function handleClick() {
     onClick(loc)
-    navigate(`${basePath}/lugar/${slugify(loc.name)}`)
+    navigate(`${basePath}/lugar/${slugify(loc.name)}`, basePath ? {state:{rollermapReturn:location.pathname+location.search}} : undefined)
   }
 
   return (
@@ -50,7 +51,7 @@ const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick, 
             width:48, height:48, borderRadius:10, overflow:'hidden',
             flexShrink:0, border:'1px solid rgba(255,255,255,0.1)'
           }}>
-            <img src={loc.image_url} alt={loc.name}
+            <img src={loc.image_url} alt={loc.name} loading="lazy" decoding="async"
               style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
           </div>
         ) : (
