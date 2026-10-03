@@ -6,7 +6,7 @@ import ExplorerRoutesMap from './ExplorerRoutesMap'
 const labels={calle:'Calle',rambla:'Rambla',ciclovia:'Ciclovía',parque:'Parque',pista:'Pista',circuito:'Circuito',inicial:'Inicial',intermedio:'Intermedio',avanzado:'Avanzado',excelente:'Excelente',buena:'Bueno',irregular:'Irregular',mala:'Malo',bajo:'Bajo',medio:'Medio',alto:'Alto',si:'Buena',parcial:'Parcial',no:'Sin iluminación',pavimento_roto:'Pavimento roto',obras:'Obras / calle cortada',arena_piedras:'Arena o piedras',transito:'Cambió el tránsito',iluminacion:'Problema de iluminación',otro:'Otro cambio'}
 export default function ExplorerAdminPreview({onBack}){
  const{user}=useAuth()
- const[routes,setRoutes]=useState([]),[profiles,setProfiles]=useState({}),[photos,setPhotos]=useState({}),[reports,setReports]=useState({}),[loading,setLoading]=useState(true),[filter,setFilter]=useState('pending'),[busy,setBusy]=useState(''),[selected,setSelected]=useState('')
+ const[routes,setRoutes]=useState([]),[profiles,setProfiles]=useState({}),[photos,setPhotos]=useState({}),[reports,setReports]=useState({}),[loading,setLoading]=useState(true),[filter,setFilter]=useState('pending'),[busy,setBusy]=useState(''),[selected,setSelected]=useState(''),[notes,setNotes]=useState({})
  async function load(){
    setLoading(true)
    const{data,error}=await supabase.from('pr_rollermap_routes').select('*').order('created_at',{ascending:false})
@@ -27,7 +27,7 @@ export default function ExplorerAdminPreview({onBack}){
  useEffect(()=>{load()},[])
  async function moderate(route,status){
    setBusy(route.id)
-   const payload={status,moderation_note:null}
+   const payload={status,moderation_note:status==='rejected'?(notes[route.id]?.trim()||'Revisá el trazado o la información antes de volver a enviarlo.'):null}
    if(status==='approved')Object.assign(payload,{approved_at:new Date().toISOString(),approved_by:user.id,last_confirmed_at:new Date().toISOString()})
    const{error}=await supabase.from('pr_rollermap_routes').update(payload).eq('id',route.id)
    if(!error&&(photos[route.id]||[]).length)await supabase.from('pr_rollermap_route_photos').update({status:status==='approved'?'approved':'rejected'}).eq('route_id',route.id)
@@ -50,7 +50,7 @@ export default function ExplorerAdminPreview({onBack}){
      {imgs.length>0&&<div className="rx-admin-photos">{imgs.map(i=><img key={i.id} src={i.image_url} alt="Foto aportada"/>)}</div>}
      {r.description&&<p className="rx-admin-description">{r.description}</p>}
      {r.hazards?.length>0&&<div className="rx-warning"><b>Alertas</b>{r.hazards.join(' · ')}</div>}
-     {pending.length>0&&<div className="rx-admin-reports"><small>REPORTES PENDIENTES</small>{pending.map(rep=><div key={rep.id}><div><b>{labels[rep.kind]||rep.kind}</b><p>{rep.detail||'Sin detalle adicional'}</p></div><div><button disabled={busy===rep.id} onClick={e=>{e.stopPropagation();reportStatus(rep.id,'reviewed')}}>✓ Revisado</button><button disabled={busy===rep.id} onClick={e=>{e.stopPropagation();reportStatus(rep.id,'dismissed')}}>Descartar</button></div></div>)}</div>}
+     {r.status!=='approved'&&<div className="rx-moderation-note"><label>Nota para quien aportó<textarea rows="2" maxLength="500" value={notes[r.id]??r.moderation_note??''} onChange={e=>{e.stopPropagation();setNotes(v=>({...v,[r.id]:e.target.value}))}} onClick={e=>e.stopPropagation()} placeholder="Ej. ajustá el inicio del tramo o agregá una foto del piso…"/></label></div>}{pending.length>0&&<div className="rx-admin-reports"><small>REPORTES PENDIENTES</small>{pending.map(rep=><div key={rep.id}><div><b>{labels[rep.kind]||rep.kind}</b><p>{rep.detail||'Sin detalle adicional'}</p></div><div><button disabled={busy===rep.id} onClick={e=>{e.stopPropagation();reportStatus(rep.id,'reviewed')}}>✓ Revisado</button><button disabled={busy===rep.id} onClick={e=>{e.stopPropagation();reportStatus(rep.id,'dismissed')}}>Descartar</button></div></div>)}</div>}
      <div className="rx-admin-actions">{r.status!=='approved'&&<button disabled={busy===r.id} className="approve" onClick={e=>{e.stopPropagation();moderate(r,'approved')}}>✓ Aprobar y publicar</button>}{r.status!=='rejected'&&<button disabled={busy===r.id} onClick={e=>{e.stopPropagation();moderate(r,'rejected')}}>Rechazar</button>}{r.status==='approved'&&<button disabled={busy===r.id} onClick={e=>{e.stopPropagation();moderate(r,'archived')}}>Archivar</button>}</div>
    </article>})}</div>}
  </div>
