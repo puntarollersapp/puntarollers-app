@@ -566,7 +566,7 @@ export default function Home() {
             <SectionTitle emoji="📲" eyebrow="Ecosistema PR" title="Todo conectado." />
             <div className="mt-5 grid grid-cols-2 gap-3">
               <ExternalMini href="https://puntarollerscard.com/" emoji="💳" title="PR Card" text="Beneficios y comercios" />
-              <ExternalMini href="https://rollermap.vercel.app/" emoji="🗺️" title="RollerMap" text="Lugares para rodar" />
+              <ExternalMini href="/rollermap/" emoji="🗺️" title="RollerMap" text="Lugares para rodar" />
               <LinkMini to="/alianza" emoji="🤝" title="Alianza Rollers" text="La red que nos conecta" />
               <LinkMini to="/terminos" emoji="📋" title="Reglas PR" text="Cómo funciona el club" />
             </div>
