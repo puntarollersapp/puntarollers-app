@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import WelcomeEmailSettings from './WelcomeEmailSettings'
 import { mapboxToken } from '../../lib/mapbox'
 import { useState, useEffect, useMemo, useCallback } from 'react'
@@ -181,7 +182,8 @@ export default function AdminPanel() {
     const {data:{subscription}}=supabase.auth.onAuthStateChange(()=>{setTimeout(check,0)})
     return ()=>{active=false;subscription.unsubscribe()}
   },[])
-  const handleLogout=()=>{window.top.location.href='/app/mi-pr'}
+  const navigate=useNavigate()
+  const handleLogout=()=>navigate('/app/mi-pr')
 
   const handleGeocode = useCallback(async (id, coords) => {
     await updateLocation(id, { lat: coords.lat, lng: coords.lng })

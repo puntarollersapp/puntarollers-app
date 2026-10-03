@@ -299,6 +299,23 @@ function SuccessScreen({form,onClose}) {
 }
 
 export default function RegisterForm({onClose,isDesktop=false}) {
+  const dialogRef=useRef(null)
+  useEffect(()=>{
+    const previous=document.activeElement
+    const overflow=document.body.style.overflow
+    document.body.style.overflow='hidden'
+    dialogRef.current?.querySelector('button')?.focus()
+    const trap=(event)=>{
+      if(event.key!=='Tab')return
+      const items=[...dialogRef.current.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href]')].filter(el=>el.getClientRects().length)
+      const first=items[0],last=items[items.length-1]
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}
+    }
+    const dialog=dialogRef.current
+    dialog?.addEventListener('keydown',trap)
+    return()=>{document.body.style.overflow=overflow;dialog?.removeEventListener('keydown',trap);if(previous?.isConnected)previous.focus()}
+  },[])
   const cities=useCities()
   const [step,setStep]=useState(1)
   const [form,setForm]=useState(INITIAL_FORM)
@@ -347,7 +364,7 @@ export default function RegisterForm({onClose,isDesktop=false}) {
 
   return (
     <div className="rm-overlay" onClick={(e)=>{if(e.target===e.currentTarget) onClose()}}>
-      <div className="rm-modal" style={isDesktop?{borderRadius:'var(--r-xl)',maxHeight:'90dvh',margin:'auto'}:{}}>
+      <div ref={dialogRef} className="rm-modal" role="dialog" aria-modal="true" aria-label="Registrar escuela o grupo" style={isDesktop?{borderRadius:'var(--r-xl)',maxHeight:'90dvh',margin:'auto'}:{}}>
         <div className="rm-modal__header">
           <button className="rm-btn rm-btn--icon" onClick={isSuccess?onClose:handleBack}>{step===1||isSuccess?'✕':'←'}</button>
           <div>

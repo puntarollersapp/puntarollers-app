@@ -1,8 +1,12 @@
 # RollerMap in Punta Rollers
 
-RollerMap source is maintained in `apps/rollermap`. The PR build emits its isolated bundle into `dist/rollermap`; it runs on the same origin and Supabase project as PR, inside the application frame at `/app/rollermap`. Admin access is `/admin/rollermap`, linked from PR Control. Public location pages remain shareable at `/rollermap/lugar/:slug`.
+RollerMap is a native, lazy-loaded React section of Punta Rollers. `src/components/rollermap/NativeRollerMap.jsx` reuses the original map, locations, registration, detail and administrator components from `apps/rollermap/src`. It shares PR's Supabase client and router; no application iframe or second React root is rendered.
 
-Mi PR uses its existing card layout and an animated folded map icon. RollerMap retains its original splash; the PR startup animation is skipped when entering its private routes directly. The existing public Mapbox client token is fetched from the read-only `pr_rollermap_public_config` table (or supplied by `VITE_MAPBOX_TOKEN`); no token is committed to GitHub. No RollerMap service worker is registered, so it cannot overwrite PR's offline scope.
+Mi PR retains its four original cards and a full-width animated RollerMap banner. Private directory and detail routes are `/app/rollermap` and `/app/rollermap/lugar/:slug`; the admin remains `/admin/rollermap`. Public routes `/rollermap` and `/rollermap/lugar/:slug` are rendered by the same PR app and preserve shared links and welcome-email URLs. The old `/rollermap/admin` link redirects to the protected admin route.
+
+Mobile navigation is ordinary page scrolling: readable search and city/type filters, a prominent registration action, list/map controls and location cards. Registration uses a modal above PR navigation with focus containment and body scroll locking. Map rendering failures leave the list usable. Original RollerMap splash identity is retained; Halloween startup is skipped for its routes. No RollerMap service worker is registered.
+
+Vite scopes the original RollerMap CSS to `.pr-rollermap`, preserving PR's existing Tailwind/PostCSS pipeline. The original static assets are copied to `dist/rollermap` by the main build; there is no second HTML deployment. Its public Mapbox client token is fetched from `pr_rollermap_public_config` (or supplied by `VITE_MAPBOX_TOKEN`).
 
 ## Migration validation
 
@@ -20,6 +24,10 @@ Emails are private in `pr_rollermap_contacts`. RLS exposes approved locations pu
 
 The old RollerMap remains online as a fallback and still writes to its original database. New registrations on the old site after this snapshot must be reconciled before retiring or redirecting that site. Existing RollerMap admin accounts are not imported; management uses the PR administrator account.
 
-## Browser validation and remaining checks
+## Previous browser validation and remaining checks
 
 The Vercel preview build passed. Browser checks confirmed 32 public results, search filtering, original splash, place details and image/contact links, and registration steps without sending a registration. The cloud browser does not support WebGL; the directory and registration now remain available with a clear map fallback instead of a blank screen. Interactive map rendering on a WebGL-capable device, mobile layout, the authenticated shared admin session, and actual welcome-email delivery remain to be checked. SQL role and approval tests passed; no real welcome was sent.
+
+## Native integration validation
+
+Main app build passed; emitted RollerMap CSS was checked for global body/html/root leakage and PR Tailwind compilation was preserved. Native preview browser verification is pending. No database schema or existing welcome-email sending logic changed.
