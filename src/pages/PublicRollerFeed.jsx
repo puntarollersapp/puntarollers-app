@@ -34,6 +34,7 @@ function isPublicTraining(activity) {
 function resolveLegacyType(item) {
   const type = lower(item?.tipo)
   if (type === 'cumpleanos' || type === 'cumpleaños') return 'Cumpleaños'
+  if (type === 'logro') return 'Logro'
   if (type === 'entrenamiento') return 'Entrenamiento'
   if (type === 'insignia') return 'Insignia'
   if (type === 'evento') return 'Evento'
@@ -62,7 +63,7 @@ function isPublicLegacyItem(item) {
     return false
   }
 
-  return ['Publicación', 'Entrenamiento', 'Cumpleaños', 'Evento'].includes(
+  return ['Publicación', 'Logro', 'Entrenamiento', 'Cumpleaños', 'Evento'].includes(
     resolveLegacyType(item)
   )
 }
@@ -395,6 +396,7 @@ export default function PublicRollerFeed() {
                 profilePhoto(profile) ||
                 item.alumno_foto ||
                 item.foto_alumno ||
+                item.creado_por_foto ||
                 '',
               creator:
                 item.creado_por_nombre ||
@@ -969,6 +971,7 @@ function DemoStat({ value, label }) {
 
 function PublicFeedCard({ item, fallbackEmoji }) {
   const typeStyles = {
+    logro:{emoji:'✓',color:'text-emerald-200',bg:'bg-emerald-400/15'},
     entrenamiento: {
       emoji: '🛼',
       color: 'text-orange-300',
@@ -1000,7 +1003,7 @@ function PublicFeedCard({ item, fallbackEmoji }) {
   const style = typeStyles[key] || typeStyles.publicación
 
   return (
-    <article className="overflow-hidden rounded-[24px] border border-white/10 bg-[#0b0c10]">
+    <article className={`overflow-hidden rounded-[24px] border ${item.type==='Logro'?'border-amber-200/45 bg-[radial-gradient(circle_at_90%_0%,rgba(251,191,36,.20),transparent_60%),linear-gradient(135deg,#173b2b,#101710)]':'border-white/10 bg-[#0b0c10]'}`}>
       <div className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
           {item.photo ? (
@@ -1030,7 +1033,7 @@ function PublicFeedCard({ item, fallbackEmoji }) {
               <span
                 className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] ${style.bg} ${style.color}`}
               >
-                {style.emoji} {item.type}
+                {style.emoji} {item.type==='Logro'?'LOGRO DESBLOQUEADO':item.type}
               </span>
             </div>
 
