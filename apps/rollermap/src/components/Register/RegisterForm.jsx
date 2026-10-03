@@ -27,9 +27,14 @@ function MiniMap({lat,lng,onChange}) {
   const markerRef=useRef(null)
   const debounceRef=useRef(null)
   const [hasMarker,setHasMarker]=useState(false)
+  const [mapUnavailable,setMapUnavailable]=useState(false)
 
   useEffect(()=>{
-    const map=new mapboxgl.Map({container:containerRef.current,style:'mapbox://styles/mapbox/dark-v11',center:[-56.1645,-32.5228],zoom:5.5,minZoom:4,maxZoom:17})
+    let map
+    try {
+      if (!mapboxgl.supported()) throw new Error("WebGL unavailable")
+      map=new mapboxgl.Map({container:containerRef.current,style:'mapbox://styles/mapbox/dark-v11',center:[-56.1645,-32.5228],zoom:5.5,minZoom:4,maxZoom:17})
+    } catch {setMapUnavailable(true);return}
     map.addControl(new mapboxgl.NavigationControl({showCompass:false}),'top-right')
     map.on('click',(e)=>{
       const {lat:la,lng:ln}=e.lngLat
@@ -66,7 +71,8 @@ function MiniMap({lat,lng,onChange}) {
   return (
     <div className="rm-minimap">
       <div ref={containerRef} style={{width:'100%',height:'100%'}}/>
-      {!hasMarker&&<div className="rm-minimap__hint">👆 Tocá el mapa para marcar tu ubicación</div>}
+      {mapUnavailable&&<div className="rm-minimap__hint">Mapa no disponible. Podés ingresar la dirección y las coordenadas abajo.</div>}
+      {!mapUnavailable&&!hasMarker&&<div className="rm-minimap__hint">👆 Tocá el mapa para marcar tu ubicación</div>}
     </div>
   )
 }

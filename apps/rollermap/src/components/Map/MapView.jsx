@@ -113,11 +113,15 @@ export default function MapView({ locations=[], allLocations=[], selectedId=null
   const activePopup  = useRef(null)
   const userMarker   = useRef(null)
   const [mapReady, setMapReady] = useState(false)
+  const [mapUnavailable, setMapUnavailable] = useState(false)
 
   useEffect(() => {
     if (mapRef.current) return
     markersRef.current = {}
-    const map = new mapboxgl.Map({
+    let map
+    try {
+      if (!mapboxgl.supported()) throw new Error("WebGL unavailable")
+      map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: URUGUAY_CENTER,
@@ -127,6 +131,10 @@ export default function MapView({ locations=[], allLocations=[], selectedId=null
       pitchWithRotate: false,
       maxBounds: [[-62,-36],[-52,-28]],
     })
+    } catch {
+      setMapUnavailable(true)
+      return
+    }
     mapRef.current = map
     map.addControl(new mapboxgl.NavigationControl({ showCompass:false }), 'top-right')
     map.addControl(new mapboxgl.ScaleControl({ unit:'metric' }), 'bottom-left')
@@ -186,6 +194,7 @@ export default function MapView({ locations=[], allLocations=[], selectedId=null
   useEffect(() => {
     if (!onUserLocated) return
     window.__rmLocate = (coords) => {
+      if (!mapRef.current) return
       userMarker.current?.remove()
       userMarker.current = new mapboxgl.Marker({ element: createUserMarkerEl() })
         .setLngLat([coords.longitude, coords.latitude])
@@ -199,7 +208,8 @@ export default function MapView({ locations=[], allLocations=[], selectedId=null
   return (
     <div style={{ position:'relative', width:'100%', height:'100%' }}>
       <div ref={containerRef} style={{ width:'100%', height:'100%' }} />
-      {(loading || !mapReady) && (
+      {mapUnavailable && <div className="rm-map-loading" role="status">Tu navegador no admite el mapa interactivo. Podés explorar las escuelas y grupos en la lista.</div>}
+      {!mapUnavailable && (loading || !mapReady) && (
         <div className="rm-map-loading">
           <div className="rm-spinner rm-spinner--brand" /> Cargando mapa…
         </div>
