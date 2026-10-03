@@ -25,7 +25,7 @@ const LocationCard = forwardRef(function LocationCard({ loc, selected, onClick, 
 
   function handleClick() {
     onClick(loc)
-    navigate(`${basePath}/lugar/${slugify(loc.name)}`, basePath ? {state:{rollermapReturn:location.pathname+location.search}} : undefined)
+    navigate(`${basePath}/lugar/${slugify(loc.name)}`, basePath ? {state:{rollermapReturn:location.pathname.replace(/\/$/, "")+location.search}} : undefined)
   }
 
   return (
