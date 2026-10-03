@@ -20,6 +20,6 @@ Emails are private in `pr_rollermap_contacts`. RLS exposes approved locations pu
 
 The old RollerMap remains online as a fallback and still writes to its original database. New registrations on the old site after this snapshot must be reconciled before retiring or redirecting that site. Existing RollerMap admin accounts are not imported; management uses the PR administrator account.
 
-## Checks still required before cutover
+## Browser validation and remaining checks
 
-Confirm the Vercel deployment, public map loading, place detail navigation, mobile layout and shared admin session. Verify a welcome email via an explicitly approved registration before claiming actual delivery.
+The Vercel preview build passed. Browser checks confirmed 32 public results, search filtering, original splash, place details and image/contact links, and registration steps without sending a registration. The cloud browser does not support WebGL; the directory and registration now remain available with a clear map fallback instead of a blank screen. Interactive map rendering on a WebGL-capable device, mobile layout, the authenticated shared admin session, and actual welcome-email delivery remain to be checked. SQL role and approval tests passed; no real welcome was sent.
