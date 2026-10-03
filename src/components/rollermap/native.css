@@ -26,3 +26,13 @@
 .pr-rollermap .rm-admin{min-height:50dvh}
 .pr-rollermap .rm-admin__header{position:relative;top:auto;flex-wrap:wrap}
 .pr-rollermap .rm-splash{position:absolute!important;bottom:auto!important;height:70dvh;z-index:70!important;min-height:350px}
+
+.pr-rollermap .pr-rm-intro{padding:18px;border:1px solid rgba(0,229,204,.15);border-radius:24px;background:radial-gradient(ellipse at 100% 0,rgba(155,77,255,.12),transparent 70%),linear-gradient(135deg,rgba(0,229,204,.07),transparent)}
+.pr-rollermap .pr-rm-register{border-radius:16px;box-shadow:0 8px 28px rgba(0,229,204,.1)}
+.pr-rollermap .pr-rm-list .rm-loc-card{border-radius:18px}
+.pr-rollermap .pr-rm-list .rm-loc-card:focus-visible,.pr-rollermap button:focus-visible,.pr-rollermap a:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.pr-rollermap .pr-rm-error,.pr-rollermap .pr-rm-empty{padding:20px;border:1px solid var(--line);border-radius:20px;display:grid;gap:12px;line-height:1.6}
+.pr-rollermap .pr-rm-error{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.07)}
+.pr-rollermap .pr-rm-error button,.pr-rollermap .pr-rm-empty button{min-height:44px;padding:10px 16px}
+.pr-rollermap .pr-rm-empty h2{font-size:18px;color:var(--ink)}
+@media(max-width:360px){.pr-rollermap .pr-rm-directory{padding:14px 12px}.pr-rollermap .pr-rm-intro{padding:14px;gap:10px}.pr-rollermap .pr-rm-intro img{width:64px;height:64px}.pr-rollermap .pr-rm-eyebrow{font-size:8px;letter-spacing:1px}}

@@ -13,26 +13,28 @@ function getDistanceKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
 }
 
-export function useMapState(locations = []) {
+const searchable = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+
+export function useMapState(locations = [], initial = {}) {
   const [selectedId,   setSelectedId]  = useState(null)
-  const [filterType,   setFilterType]  = useState(null)
-  const [filterCity,   setFilterCity]  = useState(null)
-  const [search,       setSearch]      = useState('')
+  const [filterType,   setFilterType]  = useState(initial.type || null)
+  const [filterCity,   setFilterCity]  = useState(initial.city || null)
+  const [search,       setSearch]      = useState(initial.q || '')
   const [userLocation, setUserLocation] = useState(null) // { lat, lng }
 
   const cities = useMemo(() => {
     const set = new Set(locations.map((l) => l.city))
-    return Array.from(set).sort()
+    return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'))
   }, [locations])
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
+    const q = searchable(search)
 
     let result = locations.filter((l) => {
       if (filterType && l.type !== filterType) return false
       if (filterCity && l.city !== filterCity) return false
-      if (q && !l.name.toLowerCase().includes(q) &&
-               !l.city.toLowerCase().includes(q)) return false
+      if (q && !searchable(l.name).includes(q) &&
+               !searchable(l.city).includes(q)) return false
       return true
     })
 
@@ -41,7 +43,7 @@ export function useMapState(locations = []) {
       result = result
         .map(l => ({
           ...l,
-          distanceKm: (l.lat && l.lng)
+          distanceKm: (Number.isFinite(l.lat) && Number.isFinite(l.lng))
             ? getDistanceKm(userLocation.lat, userLocation.lng, l.lat, l.lng)
             : null
         }))
