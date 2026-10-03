@@ -30,4 +30,4 @@ The Vercel preview build passed. Browser checks confirmed 32 public results, sea
 
 ## Native integration validation
 
-Main app build passed; emitted RollerMap CSS was checked for global body/html/root leakage and PR Tailwind compilation was preserved. Native preview browser verification is pending. No database schema or existing welcome-email sending logic changed.
+Main app build passed; emitted RollerMap CSS was checked for global body/html/root leakage and PR Tailwind compilation was preserved. Native Vercel preview checks confirmed zero application iframes, a 518px content width without horizontal overflow, 32 public places, search reducing Punta to three results, detail image/contact links and return navigation, and all three registration steps without sending a record. The dialog remained within the viewport, locked background scrolling and restored focus on Escape. Map fallback retained the directory in this browser without WebGL. Authenticated private/admin navigation and an actual welcome delivery were not exercised in this browser session. No database schema or existing welcome-email sending logic changed.
