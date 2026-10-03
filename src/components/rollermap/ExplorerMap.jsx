@@ -44,7 +44,8 @@ export default function ExplorerMap({points,onChange}){
    markers.current.forEach(m=>m.remove());markers.current=[]
    points.forEach((p,i)=>{
      const label=i===0?'A':i===points.length-1?'B':String(i)
-     const m=new mapboxgl.Marker({element:markerEl(label),anchor:'center'}).setLngLat([p.lng,p.lat]).addTo(map)
+     const m=new mapboxgl.Marker({element:markerEl(label),anchor:'center',draggable:true}).setLngLat([p.lng,p.lat]).addTo(map)
+     m.on('dragend',()=>{const ll=m.getLngLat(),next=pointsRef.current.map((item,n)=>n===i?{...item,lng:ll.lng,lat:ll.lat}:item);changeRef.current?.(next)})
      markers.current.push(m)
    })
  },[points,ready])
@@ -67,6 +68,6 @@ export default function ExplorerMap({points,onChange}){
    <div className="rx-map-tools"><button type="button" onClick={locate} disabled={locating}>{locating?'Ubicando…':'◎ Mi ubicación'}</button>{points.length>1&&<button type="button" onClick={fit}>Encuadrar</button>}</div>
    {!ready&&!error&&<div className="rx-map-loading">Cargando mapa real…</div>}
    {error&&<div className="rx-map-error">{error}</div>}
-   <div className="rx-map-help">{points.length===0?'Tocá el punto exacto donde comienza el tramo':points.length===1?'Ahora marcá el siguiente punto':'Seguí tocando la calle para acompañar curvas y cruces'}</div>
+   <div className="rx-map-help">{points.length===0?'Tocá el punto exacto donde comienza el tramo':points.length===1?'Ahora marcá el siguiente punto':'Seguí tocando la calle para acompañar curvas y cruces · podés arrastrar cualquier punto para corregirlo'}</div>
  </div>
 }
