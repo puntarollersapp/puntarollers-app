@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useLayoutEffect } from 'react'
 import LocationCard from '../Sidebar/LocationCard'
 
-const HANDLE_H  = 64
+const HANDLE_H  = 112
 const TOP_INSET = 10
 
 function getSnapY() {
@@ -19,6 +19,9 @@ export default function BottomSheet({ sheetState, onStateChange, filtered, citie
     const snap=getSnapY()
     translateRef.current=snap[sheetState]??snap.closed
     if (sheetRef.current) sheetRef.current.style.transform=`translateY(${translateRef.current}px)`
+    const resize=()=>{translateRef.current=getSnapY()[sheetState]??getSnapY().closed;if(sheetRef.current)sheetRef.current.style.transform=`translateY(${translateRef.current}px)`}
+    window.addEventListener('resize',resize)
+    return()=>window.removeEventListener('resize',resize)
   },[sheetState])
 
   useEffect(()=>{
@@ -75,6 +78,7 @@ export default function BottomSheet({ sheetState, onStateChange, filtered, citie
       <div className="rm-sheet__handle-zone" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onMouseDown={onMouseDown}>
         <div className="rm-sheet__handle"/>
         <div className="rm-sheet__header">
+          <button className="rm-btn rm-btn--primary" style={{minHeight:44,fontSize:13,padding:"8px 12px",whiteSpace:"normal"}} onPointerDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()} onClick={onRegisterClick}>Registrar escuela o grupo</button>
           <img src="/rollermap/logo.png" alt="RollerMap" style={{height:36,width:'auto',objectFit:'contain'}}/>
           <span style={{fontSize:11,fontWeight:700,color:'var(--muted2)',background:'var(--line2)',padding:'3px 10px',borderRadius:'var(--r-full)'}}>
             {loading?'…':`${filtered.length} lugar${filtered.length!==1?'es':''}`}
@@ -107,17 +111,7 @@ export default function BottomSheet({ sheetState, onStateChange, filtered, citie
         ))}
       </div>
 
-      {sheetState!=='closed'&&(
-        <div style={{flexShrink:0,margin:'0 12px 16px',padding:'11px 13px',background:'var(--grad-soft)',border:'1px solid rgba(0,229,204,0.2)',borderRadius:'var(--r-sm)',display:'flex',alignItems:'center',gap:10}}>
-          <div style={{flex:1,fontSize:12,color:'var(--muted)'}}>
-            <strong style={{fontSize:12.5,fontWeight:700,color:'var(--ink)',display:'block',marginBottom:1}}>¿Tenés una escuela o grupo?</strong>
-            Sumalo al mapa
-          </div>
-          <button className="rm-btn rm-btn--primary rm-btn--sm" style={{flexShrink:0,borderRadius:'var(--r-full)'}} onClick={onRegisterClick}>
-            Registrar →
-          </button>
-        </div>
-      )}
+
     </div>
   )
 }
