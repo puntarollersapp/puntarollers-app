@@ -306,6 +306,7 @@ function resolveLegacyType(item) {
     return 'Cumpleaños'
   }
 
+  if (type === 'logro') return 'Logro'
   if (type === 'entrenamiento') return 'Entrenamiento'
   if (type === 'insignia') return 'Insignia'
   if (type === 'evento') return 'Evento'
@@ -345,6 +346,7 @@ function isPublicLegacyItem(item) {
 
   return [
     'Publicación',
+    'Logro',
     'Entrenamiento',
     'Cumpleaños',
     'Insignia',
@@ -483,6 +485,7 @@ function normalizeLegacyItem(item, profilesByAnyId) {
       getProfilePhoto(recipientProfile) ||
       item.alumno_foto ||
       item.foto_alumno ||
+      item.creado_por_foto ||
       '',
     verified: getProfileVerified(recipientProfile),
     creatorName:
@@ -1794,17 +1797,18 @@ function CommunityCard({
   onReact,
   onOpenReactions,
 }) {
+  const isAchievement = item.type === 'Logro'
   const isBadge = item.type === 'Insignia'
   const isEvent = item.type === 'Evento'
 
-  const icon = isBadge
+  const icon = isAchievement ? '✓' : isBadge
     ? '🏅'
     : isEvent
       ? '📅'
       : '📣'
 
   return (
-    <article className="rounded-[29px] border border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.018] p-4">
+    <article className={`relative overflow-hidden rounded-[29px] border p-5 ${isAchievement?'border-amber-200/45 bg-[radial-gradient(circle_at_95%_0%,rgba(251,191,36,.2),transparent_50%),linear-gradient(135deg,#173b2b,#151912)] shadow-[0_12px_35px_rgba(16,185,129,.12)]':'border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.018]'}`}>
       <div className="flex items-center gap-3">
         <ProfileAvatar
           photo={item.userPhoto}
@@ -1829,7 +1833,7 @@ function CommunityCard({
 
       <div className="mt-4">
         <p className="section-label text-pr-gold">
-          {item.type}
+          {isAchievement?'LOGRO DESBLOQUEADO · ROAD TO SHIFTER':item.type}
         </p>
 
         <h3 className="font-display text-[24px] leading-tight text-white mt-2">
