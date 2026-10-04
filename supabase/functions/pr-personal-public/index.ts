@@ -50,6 +50,12 @@ async function sendEmail(to: string, subject: string, html: string) {
   } catch { return false }
 }
 
+function studentBookingEmail(fullName: string, slots: any[]) {
+  const firstName = String(fullName || '').trim().split(/\s+/)[0] || 'Hola'
+  const rows = slots.map((s: any) => `<div style="padding:14px 16px;margin:10px 0;border:1px solid #e9e5f4;border-radius:14px;background:#faf9ff"><div style="font-size:13px;color:#6b6480;text-transform:uppercase;letter-spacing:.06em">PR Personal</div><div style="font-size:17px;font-weight:700;color:#241b38;margin-top:4px">${esc(dateUY(s.fecha))}</div><div style="font-size:16px;color:#4b3d66;margin-top:3px">${esc(timeUY(s.hora_inicio))}–${esc(timeUY(s.hora_fin))}</div></div>`).join('')
+  return `<div style="background:#f4f1f8;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#241b38"><div style="max-width:560px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;border:1px solid #ebe6f1"><div style="padding:26px 28px;background:#241b38;color:#fff"><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Punta Rollers</div><div style="font-size:25px;font-weight:800;margin-top:7px">Tus reservas están confirmadas</div></div><div style="padding:26px 28px"><p style="font-size:16px;line-height:1.55;margin:0 0 18px">Hola ${esc(firstName)}. Estos son los turnos que tenés reservados actualmente:</p>${rows}<div style="margin-top:22px;padding:18px;border-radius:14px;background:#f6f3fa"><div style="font-weight:700;margin-bottom:8px">Importante</div><div style="font-size:14px;line-height:1.55;color:#51465f">Si no podés asistir, avisanos con anticipación para poder reacomodar la clase y conservarla. Una inasistencia sin aviso se considera clase utilizada. Si el turno se suspende por clima, la clase se reintegra a tu PR Pass.</div></div><p style="font-size:14px;line-height:1.55;color:#6b6480;margin:20px 0 0">Guardá este correo como comprobante de tus horarios reservados. Si necesitás modificar alguno, contactanos.</p><p style="font-size:14px;font-weight:700;margin:22px 0 0">Punta Rollers · PR Personal</p></div></div></div>`
+}
+
 async function findProfile(db: any, phoneValue: unknown) {
   const phone = normalizePhone(phoneValue)
   if (phone.length < 8) return { phone, profile: null }
@@ -158,10 +164,23 @@ Deno.serve(async (req) => {
       const when = `${dateUY(slot.fecha)} · ${timeUY(slot.hora_inicio)}–${timeUY(slot.hora_fin)}`
       const prefix = demo ? '[DEMO] ' : ''
       const adminHtml = `<div><strong>Alumno:</strong> ${esc(fullName)}<br/><strong>Turno:</strong> ${esc(when)}</div>`
-      const studentHtml = `<div><strong>${esc(when)}</strong><p>Tu clase quedó reservada.</p></div>`
-      const [adminSent, studentSent] = await Promise.all([sendEmail(ADMIN_EMAIL, `${prefix}🛼 PR Personal — ${fullName} reservó ${timeUY(slot.hora_inicio)}`, adminHtml), profile.email ? sendEmail(profile.email, `${prefix}Tu clase PR Personal está reservada 🛼`, studentHtml) : Promise.resolve(false)])
+
+      // Build the student confirmation from every active future reservation, including the one just created.
+      // This keeps the latest email as a complete receipt even when the student books more than one class.
+      const { data: futureReservations, error: futureReservationsError } = await db.from('pr_personal_reservas').select('disponibilidad_id').eq('alumno_id', profile.id).eq('estado', 'reservada')
+      if (futureReservationsError) throw futureReservationsError
+      const futureIds = (futureReservations || []).map((r: any) => r.disponibilidad_id)
+      let confirmedSlots: any[] = [slot]
+      if (futureIds.length) {
+        const { data: futureSlots, error: futureSlotsError } = await db.from('pr_personal_disponibilidad').select('id,fecha,hora_inicio,hora_fin').in('id', futureIds).gte('fecha', today).order('fecha', { ascending: true }).order('hora_inicio', { ascending: true })
+        if (futureSlotsError) throw futureSlotsError
+        if ((futureSlots || []).length) confirmedSlots = futureSlots
+      }
+      const studentHtml = studentBookingEmail(fullName, confirmedSlots)
+      const studentSubject = confirmedSlots.length > 1 ? `${prefix}Tus reservas PR Personal están confirmadas 🛼` : `${prefix}Tu clase PR Personal está reservada 🛼`
+      const [adminSent, studentSent] = await Promise.all([sendEmail(ADMIN_EMAIL, `${prefix}🛼 PR Personal — ${fullName} reservó ${timeUY(slot.hora_inicio)}`, adminHtml), profile.email ? sendEmail(profile.email, studentSubject, studentHtml) : Promise.resolve(false)])
       await db.from('pr_personal_reservas').update({ email_admin_enviado: adminSent, email_confirmacion_enviado: studentSent, updated_at: new Date().toISOString() }).eq('id', reservation.id)
-      return json({ ok: true, reservation, slot: { id: slot.id, fecha: slot.fecha, hora_inicio: slot.hora_inicio, hora_fin: slot.hora_fin }, student: { nombre: profile.nombre, apellido: profile.apellido }, pass, email: { admin: adminSent, alumno: studentSent, alumno_tiene_email: Boolean(profile.email) } })
+      return json({ ok: true, reservation, slot: { id: slot.id, fecha: slot.fecha, hora_inicio: slot.hora_inicio, hora_fin: slot.hora_fin }, student: { nombre: profile.nombre, apellido: profile.apellido }, pass, email: { admin: adminSent, alumno: studentSent, alumno_tiene_email: Boolean(profile.email), horarios_confirmados: confirmedSlots.length } })
     }
 
     return okError('Acción no válida.')
