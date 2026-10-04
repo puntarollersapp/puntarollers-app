@@ -8,7 +8,7 @@ const cors = {
 }
 
 const ADMIN_EMAIL = 'claudiofaccelli@gmail.com'
-const FROM_EMAIL = 'Punta Rollers <onboarding@resend.dev>'
+const FROM_EMAIL = 'Punta Rollers <hola@puntarollers.com>'
 const DEMO_PROFILE_ID = 'pr_personal_demo_v1'
 const DEMO_MARKER = '[DEMO PR PERSONAL]'
 const DEMO_PREVIEW_HOST = 'puntarollers-app-git-feature-p-6b1f8f-puntarollersapps-projects.vercel.app'
