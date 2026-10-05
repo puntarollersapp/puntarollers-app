@@ -97,80 +97,43 @@ async function sendPaymentNotification(
   const resendKey = Deno.env.get("RESEND_API_KEY");
   if (!resendKey) return false;
 
-  const { data: claimed, error: claimError } = await supabase
-    .rpc("claim_pr_mp_payment_notification", { p_attempt_id: attempt.id });
+  const { data: claimed, error: claimError } = await supabase.rpc("claim_pr_mp_payment_notification", { p_attempt_id: attempt.id });
   if (claimError || claimed !== true) return !claimError;
 
-  let name = "-";
-  let program = "Inscripción Punta Rollers";
-  let phone = "-";
-  let email = "-";
-
-  if (attempt.registration_type === "inscripciones_2026") {
-    const { data, error } = await supabase
-      .from("pr_inscripciones_2026")
-      .select("nombre_completo, modalidad, telefono, email")
-      .eq("id", attempt.registration_id)
-      .maybeSingle();
-    if (error || !data) {
-      await supabase.from("pr_mercadopago_payments")
-        .update({ payment_notification_claimed_at: null })
-        .eq("id", attempt.id);
-      return false;
-    }
-    name = data.nombre_completo;
-    phone = data.telefono;
-    email = data.email;
-    program = data.modalidad === "kids"
-      ? "PR Kids"
-      : data.modalidad === "grupales" ? "Adultos" : "Personalizadas";
-  } else {
-    const { data, error } = await supabase
-      .from("pr_clinica_oct_2026_inscripciones")
-      .select("nombre_completo, telefono, email")
-      .eq("id", attempt.registration_id)
-      .maybeSingle();
-    if (error || !data) {
-      await supabase.from("pr_mercadopago_payments")
-        .update({ payment_notification_claimed_at: null })
-        .eq("id", attempt.id);
-      return false;
-    }
-    name = data.nombre_completo;
-    phone = data.telefono;
-    email = data.email ?? "-";
-    program = "Clínica de Octubre";
+  const table = attempt.registration_type === "inscripciones_2026"
+    ? "pr_inscripciones_2026"
+    : "pr_clinica_oct_2026_inscripciones";
+  const { data, error } = await supabase.from(table).select("*").eq("id", attempt.registration_id).maybeSingle();
+  if (error || !data) {
+    await supabase.from("pr_mercadopago_payments").update({ payment_notification_claimed_at: null }).eq("id", attempt.id);
+    return false;
   }
 
+  const program = attempt.registration_type === "clinica_oct_2026"
+    ? "Clínica Internacional Miguel Flores"
+    : data.modalidad === "kids" ? "PR Kids" : data.modalidad === "grupales" ? "Adultos · Clases Grupales" : "Personalizadas 1 a 1";
   const amount = Number(attempt.amount).toLocaleString("es-UY");
-  const subject = `✅ Pago Mercado Pago acreditado — ${program} — ${name}`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;background:#f6f7f9;padding:24px;color:#151515">
-      <div style="max-width:620px;margin:auto;background:white;border-radius:18px;padding:28px;border:1px solid #ececec">
-        <div style="font-size:13px;font-weight:700;color:#00a650;letter-spacing:.08em;text-transform:uppercase">Punta Rollers · Pago acreditado</div>
-        <h1 style="font-size:24px;margin:8px 0 20px">${escapeHtml(program)}</h1>
-        <p><strong>Alumno/a:</strong> ${escapeHtml(name)}</p>
-        <p><strong>Monto:</strong> $${escapeHtml(amount)} UYU</p>
-        <p><strong>WhatsApp:</strong> ${escapeHtml(phone)}</p>
-        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-        <p><strong>ID de inscripción:</strong> ${escapeHtml(attempt.registration_id)}</p>
-        <p><strong>ID de pago:</strong> ${escapeHtml(attempt.provider_payment_id)}</p>
-        <p style="color:#777"><strong>Fecha:</strong> ${escapeHtml(new Date().toLocaleString("es-UY", { timeZone: "America/Montevideo" }))}</p>
-      </div>
-    </div>`;
+  const adminEmail = Deno.env.get("PAYMENT_NOTIFICATION_EMAIL") ?? "claudiofaccelli@gmail.com";
+  const customerEmail = typeof data.email === "string" && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(data.email.trim()) ? data.email.trim().toLowerCase() : null;
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const schedule = attempt.registration_type === "clinica_oct_2026"
+    ? "<p><strong>Fechas:</strong> 28, 29 y 30 de octubre de 2026</p><p><strong>Modalidad:</strong> Clínica completa · 3 jornadas</p>"
+    : data.modalidad === "kids"
+      ? `<p><strong>Horario:</strong> ${escapeHtml(data.turno_sabado || "Sábado 19:00–20:00 · Pista cerrada Maldonado")}</p>`
+      : data.modalidad === "grupales"
+        ? `<p><strong>Encuentro incluido:</strong> Miércoles 19:30–20:30 · Parada 2, Punta del Este</p><p><strong>Turno sábado:</strong> ${escapeHtml(data.turno_sabado)}</p>`
+        : "<p><strong>Modalidad:</strong> Personalizadas 1 a 1</p><p>Los horarios disponibles se habilitan semanalmente para que elijas tu turno.</p>";
+
+  const adminHtml = `<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:Arial,sans-serif;color:#111"><div style="max-width:620px;margin:auto;padding:24px"><div style="background:#fff;border:1px solid #e6e6ea;border-radius:22px;padding:30px"><div style="font-size:12px;font-weight:900;letter-spacing:1.4px;color:#00a650">PUNTA ROLLERS · PAGO ACREDITADO</div><h1 style="font-size:26px;margin:10px 0 18px">${escapeHtml(program)}</h1><p><strong>Alumno/a:</strong> ${escapeHtml(data.nombre_completo)}</p><p><strong>Monto:</strong> ${escapeHtml(amount)} UYU</p><p><strong>WhatsApp:</strong> ${escapeHtml(data.telefono)}</p><p><strong>Email:</strong> ${escapeHtml(data.email)}</p>${schedule}<p><strong>ID de inscripción:</strong> ${escapeHtml(attempt.registration_id)}</p><p><strong>ID de pago:</strong> ${escapeHtml(attempt.provider_payment_id)}</p></div></div></body></html>`;
+  const customerHtml = `<!doctype html><html><body style="margin:0;background:#0b0b0f;font-family:Arial,sans-serif;color:#fff"><div style="max-width:620px;margin:auto;padding:28px 16px"><div style="background:#15151c;border:1px solid #292934;border-radius:24px;padding:30px"><div style="color:#78df9a;font-size:12px;font-weight:900;letter-spacing:1.5px">PUNTA ROLLERS · PAGO ACREDITADO</div><h1 style="margin:10px 0 12px;font-size:30px">Tu lugar está confirmado ✓</h1><p style="color:#c8c8d1;line-height:1.6">Hola, <b>${escapeHtml(data.nombre_completo)}</b>. Mercado Pago confirmó correctamente tu pago de <b>${escapeHtml(amount)} UYU</b>.</p><div style="background:#101014;border-radius:16px;padding:18px;margin:22px 0"><p style="margin:0 0 10px"><b>${escapeHtml(program)}</b></p>${schedule}</div><p style="color:#c8c8d1;line-height:1.6">${attempt.registration_type === "clinica_oct_2026" ? "Tu inscripción a la clínica quedó confirmada." : data.modalidad === "personalizadas" ? "Tu cuponera quedó confirmada. Vas a poder elegir tus horarios dentro de la disponibilidad semanal." : "Tu inscripción quedó confirmada. Te esperamos sobre ruedas."}</p><p style="margin-top:24px;color:#777784;font-size:12px">Punta Rollers · No es solo patinar, es pertenecer.</p></div></div></body></html>`;
+
+  const batch = [{ from: "Punta Rollers <hola@puntarollers.com>", to: [adminEmail], subject: `✅ Pago acreditado — ${program} — ${data.nombre_completo}`, html: adminHtml }];
+  if (customerEmail) batch.push({ from: "Punta Rollers <hola@puntarollers.com>", to: [customerEmail], subject: `✓ Pago acreditado · ${program}`, html: customerHtml });
+
+  const response = await fetch("https://api.resend.com/emails/batch", {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${resendKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Punta Rollers <onboarding@resend.dev>",
-      to: [Deno.env.get("PAYMENT_NOTIFICATION_EMAIL") ?? "claudiofaccelli@gmail.com"],
-      subject,
-      html,
-    }),
+    headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify(batch),
     signal: AbortSignal.timeout(8_000),
   }).catch(() => null);
 
