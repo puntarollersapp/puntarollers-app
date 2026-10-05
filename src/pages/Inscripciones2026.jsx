@@ -4,195 +4,43 @@ import ReferralCodeField from '../components/ReferralCodeField'
 import RegistrationPayment, { PaidClassAccess } from '../components/RegistrationPayment'
 import './Inscripciones2026.css'
 
-const groupSchedules = [
-  { day: 'Miércoles', time: '19:30–20:30', level: 'Todos los niveles', place: 'Parada 2 · Punta del Este', type: 'Aire libre' },
-  { day: 'Sábado', time: '09:00–10:00', level: 'Intermedios + Avanzados', place: 'Parada 2 · Punta del Este', type: 'Aire libre' },
-  { day: 'Sábado', time: '10:00–11:00', level: 'Principiantes', place: 'Parada 2 · Punta del Este', type: 'Aire libre' },
-  { day: 'Sábado', time: '20:00–21:00', level: 'Todos los niveles', place: 'Maldonado', type: 'Pista cerrada' },
+const schedules=[
+ {value:'Sábado 09:00–10:00 · Intermedios/Avanzados · Parada 2',time:'09:00–10:00',es:'Intermedios + Avanzados',en:'Intermediate + Advanced',place:'Parada 2 · Punta del Este'},
+ {value:'Sábado 10:00–11:00 · Principiantes · Parada 2',time:'10:00–11:00',es:'Principiantes',en:'Beginners',place:'Parada 2 · Punta del Este'},
+ {value:'Sábado 20:00–21:00 · Todos los niveles · Pista cerrada Maldonado',time:'20:00–21:00',es:'Todos los niveles',en:'All levels',place:'Maldonado · Indoor'},
 ]
-
-const saturdayOptions = [
-  'Sábado 09:00–10:00 · Intermedios/Avanzados · Parada 2',
-  'Sábado 10:00–11:00 · Principiantes · Parada 2',
-  'Sábado 20:00–21:00 · Todos los niveles · Pista cerrada Maldonado',
-]
-
-const initialForm = {
-  nombre_completo: '', edad: '', localidad: '', email: '', telefono: '', nivel: '',
-  turno_sabado: '', objetivo_personalizadas: '',
+const initialForm={nombre_completo:'',edad:'',localidad:'',email:'',telefono:'',nivel:'',turno_sabado:'',objetivo_personalizadas:''}
+const copy={
+ es:{new:'Nuevos ingresos · Octubre 2026',title:'Elegí cómo querés patinar.',lead:'Primero conocé cada modalidad. Después te guiamos paso a paso para hacer tu pre-reserva.',choose:'Elegí una opción para ver horarios, precios y disponibilidad.',group:'Clases Grupales',groupSmall:'Hasta 2 encuentros por semana',private:'Personalizadas 1 a 1',privateSmall:'Una hora enfocada 100% en vos',paused:'Inscripciones pausadas',sunday:'Nuevos cupos el domingo de tarde',note:'Tu lugar se confirma únicamente después de que verifiquemos el pago.',change:'← Cambiar modalidad',groupTitle:'Patiná, aprendé y compartí.',monthly:'Mensualidad',included:'Miércoles 19:30 + 1 turno fijo los sábados',weather:'🌦️ Sobre las clases al aire libre',weatherP:'Los encuentros en Parada 2 dependen del clima. Si se suspenden por lluvia, no generan una fecha adicional de recuperación.',start:'Continuar con mi inscripción',startSub:'Siguiente paso: completás tus datos personales',privateTitle:'Una hora enfocada 100% en vos.',privateLead:'Encuentros individuales adaptados a tu nivel, tus objetivos y tu ritmo. Desde cero o para perfeccionar técnica.',pack:'Cuponera',packSmall:'4 encuentros · 60 min aprox.',tailored:'🎯 A tu medida',tailoredP:'Equilibrio, empuje, frenadas, giros, seguridad y técnica.',chooseTime:'📅 Vos elegís',chooseTimeP:'Cada domingo recibís los horarios libres y reservás el que mejor te quede.',flex:'⚡ Flexible',flexP:'Podés tomar 1 o 2 clases por semana o dejar semanas libres.',real:'🔒 Cupos reales',realP:'Es una persona por hora, por eso la disponibilidad es limitada.',backInfo:'← Volver a la información',data:'DATOS DEL ALUMNO',who:'Ahora sí, contanos quién sos.',name:'Nombre completo',age:'Edad',city:'Localidad',level:'Nivel de patín',select:'Seleccioná',beginner:'Principiante',intermediate:'Intermedio',advanced:'Avanzado',continue:'Guardar mis datos y continuar',continueSub:'Después elegís tu turno u objetivo; todavía no se realiza ningún pago',backData:'← Volver a mis datos',mode:'TU MODALIDAD',sat:'Elegí tu turno de los sábados.',wed:'El miércoles 19:30 está incluido para todos.',goal:'¿Qué te gustaría conseguir?',goalLead:'Así podemos preparar mejor tu experiencia desde el primer encuentro.',goalPlaceholder:'Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…',payment:'Guardar pre-reserva y ver opciones de pago',paymentSub:'Tus datos quedarán guardados antes de pasar al pago',saving:'Guardando pre-reserva…',last:'ÚLTIMO PASO',pay:'Elegí cómo querés pagar.',saved:'✅ Tu pre-reserva ya quedó registrada',savedP:'Aunque cierres esta página, tus datos ya aparecen en nuestro panel. Ahora elegí Mercado Pago o transferencia.',received:'SOLICITUD RECIBIDA',welcome:'¡Ya estás en la lista para octubre!',required:'Completá todos los datos para continuar.',badAge:'Ingresá una edad válida.',pickSat:'Elegí tu turno de los sábados.',tellGoal:'Contanos brevemente qué te gustaría trabajar.',invalid:'Revisá el código Amigos PR y tocá “Aplicar”, o dejalo vacío para continuar sin descuento.',saveError:'No pudimos guardar tu pre-reserva. Probá nuevamente en unos minutos.'},
+ en:{new:'New students · October 2026',title:'Choose how you want to skate.',lead:'First, explore each option. Then we guide you step by step through your pre-registration.',choose:'Choose an option to see schedules, prices and availability.',group:'Group Classes',groupSmall:'Up to 2 sessions per week',private:'1-to-1 Private Lessons',privateSmall:'One hour focused entirely on you',paused:'Registration paused',sunday:'New spots open Sunday afternoon',note:'Your place is confirmed only after we verify payment.',change:'← Change option',groupTitle:'Skate, learn and share.',monthly:'Monthly fee',included:'Wednesday 19:30 + 1 fixed Saturday slot',weather:'🌦️ Outdoor classes',weatherP:'Sessions at Parada 2 depend on weather. Rain cancellations do not generate an additional make-up date.',start:'Continue to registration',startSub:'Next: complete your personal details',privateTitle:'One hour focused entirely on you.',privateLead:'Individual sessions adapted to your level, goals and pace. Start from zero or improve your technique.',pack:'4-class pack',packSmall:'4 sessions · approx. 60 min',tailored:'🎯 Tailored to you',tailoredP:'Balance, stride, braking, turns, safety and technique.',chooseTime:'📅 You choose',chooseTimeP:'Every Sunday you receive the available times and choose what works best.',flex:'⚡ Flexible',flexP:'Take 1 or 2 lessons per week, or skip a week when needed.',real:'🔒 Real availability',realP:'Only one person per hour, so availability is limited.',backInfo:'← Back to information',data:'STUDENT DETAILS',who:'Tell us a little about you.',name:'Full name',age:'Age',city:'City / area',level:'Skating level',select:'Choose',beginner:'Beginner',intermediate:'Intermediate',advanced:'Advanced',continue:'Save my details and continue',continueSub:'Next you choose your schedule or goal; no payment is made yet',backData:'← Back to my details',mode:'YOUR OPTION',sat:'Choose your Saturday time.',wed:'Wednesday at 19:30 is included for everyone.',goal:'What would you like to achieve?',goalLead:'This helps us prepare your experience from the first session.',goalPlaceholder:'E.g. learn from zero, feel safer, improve braking, technique, street skating…',payment:'Save pre-registration and view payment options',paymentSub:'Your details will be saved before you move to payment',saving:'Saving pre-registration…',last:'FINAL STEP',pay:'Choose how you want to pay.',saved:'✅ Your pre-registration is saved',savedP:'Even if you close this page, your details are already in our system. Now choose Mercado Pago or bank transfer.',received:'REQUEST RECEIVED',welcome:'You’re on the October list!',required:'Please complete all fields to continue.',badAge:'Please enter a valid age.',pickSat:'Please choose your Saturday time.',tellGoal:'Tell us briefly what you would like to work on.',invalid:'Check the Amigos PR code and tap “Apply”, or leave it blank to continue without a discount.',saveError:'We could not save your pre-registration. Please try again in a few minutes.'}
 }
 
-export default function Inscripciones2026() {
-  const campaignPromo = useMemo(() => {
-    const raw = new URLSearchParams(window.location.search).get('promo') || ''
-    return raw.replace(/\s+/g, '').toUpperCase() === 'ROLLERWEENPR' ? 'ROLLERWEENPR' : ''
-  }, [])
-  const [step, setStep] = useState(0)
-  const [mode, setMode] = useState(null)
-  const [form, setForm] = useState(initialForm)
-  const [sending, setSending] = useState(false)
-  const [registrationId, setRegistrationId] = useState('')
-  const [error, setError] = useState('')
-  const [personalizadasAbiertas, setPersonalizadasAbiertas] = useState(true)
-  const [referralCode, setReferralCode] = useState(campaignPromo)
-  const [referralValid, setReferralValid] = useState(null)
-  const [paymentAmount, setPaymentAmount] = useState(null)
-  const [paymentOriginal, setPaymentOriginal] = useState(null)
-  const [finishedWith, setFinishedWith] = useState('')
-  const [classAccess, setClassAccess] = useState([])
-
-  const baseAmount = mode === 'personalizadas' ? 2900 : 1500
-  const amount = paymentAmount ?? baseAmount
-  const progress = useMemo(() => `${Math.min(step + 1, 5)} / 5`, [step])
-
-  useEffect(() => {
-    const loadStatus = async () => {
-      const { data } = await supabase.rpc('estado_inscripciones_2026')
-      if (data?.personalizadas_abiertas === false) setPersonalizadasAbiertas(false)
-    }
-    loadStatus()
-  }, [])
-
-  useEffect(() => {
-    if (!campaignPromo) return
-    let active = true
-    const validateCampaign = async () => {
-      const { data, error } = await supabase.rpc('validate_pr_referral_code', { p_code: campaignPromo })
-      if (!active || error) return
-      const row = Array.isArray(data) ? data[0] : null
-      if (row) {
-        setReferralCode('ROLLERWEENPR')
-        setReferralValid(row)
-      }
-    }
-    validateCampaign()
-    return () => { active = false }
-  }, [campaignPromo])
-
-  const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
-
-  const chooseMode = (value) => {
-    if (value === 'personalizadas' && !personalizadasAbiertas) return
-    setMode(value)
-    setForm(initialForm)
-    setRegistrationId('')
-    setReferralCode(campaignPromo)
-    setReferralValid(null)
-    setPaymentAmount(null)
-    setPaymentOriginal(null)
-    setError('')
-    setStep(1)
-  }
-
-  const validateStudent = () => {
-    if (!form.nombre_completo.trim() || !form.edad || !form.localidad.trim() || !form.email.trim() || !form.telefono.trim() || !form.nivel) {
-      setError('Completá todos los datos para continuar.')
-      return false
-    }
-    const age = Number(form.edad)
-    if (!Number.isInteger(age) || age < 5 || age > 100) {
-      setError('Ingresá una edad válida.')
-      return false
-    }
-    setError('')
-    return true
-  }
-
-  const validateSpecific = () => {
-    if (mode === 'grupales' && !form.turno_sabado) {
-      setError('Elegí tu turno de los sábados.')
-      return false
-    }
-    if (mode === 'personalizadas' && !form.objetivo_personalizadas.trim()) {
-      setError('Contanos brevemente qué te gustaría trabajar.')
-      return false
-    }
-    setError('')
-    return true
-  }
-
-  const buildPayload = () => ({
-    p_modalidad: mode,
-    p_nombre_completo: form.nombre_completo.trim(),
-    p_edad: Number(form.edad),
-    p_localidad: form.localidad.trim(),
-    p_email: form.email.trim().toLowerCase(),
-    p_telefono: form.telefono.trim(),
-    p_nivel: form.nivel,
-    p_turno_sabado: mode === 'grupales' ? form.turno_sabado : null,
-    p_objetivo_personalizadas: mode === 'personalizadas' ? form.objetivo_personalizadas.trim() : null,
-    p_nombre_responsable: null,
-    p_quiere_remera: null,
-    p_referral_code: referralCode.trim() || null,
-  })
-
-  const createPreReservation = async () => {
-    if (registrationId) {
-      setStep(4)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-    if (referralCode.trim() && !referralValid) {
-      setError('Revisá el código Amigos PR y tocá “Aplicar”, o dejalo vacío para continuar sin descuento.')
-      return
-    }
-
-    setSending(true)
-    setError('')
-    const { data, error: insertError } = await supabase.rpc('registrar_inscripcion_2026_v4', buildPayload())
-    setSending(false)
-
-    if (insertError || !data?.id) {
-      console.error('Registration error', insertError)
-      const message = String(insertError?.message || '')
-      if (message.includes('CODIGO_AMIGOS_PR_INVALIDO')) {
-        setReferralValid(null)
-        setError('Ese código Amigos PR no es válido. Revisalo o dejalo vacío para continuar normalmente.')
-      } else if (mode === 'personalizadas' && message.includes('PERSONALIZADAS_CERRADAS')) {
-        setPersonalizadasAbiertas(false)
-        setError('Las inscripciones para Personalizadas están pausadas. Los nuevos cupos se publican el domingo de tarde.')
-      } else {
-        setError('No pudimos guardar tu pre-reserva. Probá nuevamente en unos minutos.')
-      }
-      return
-    }
-
-    setRegistrationId(data.id)
-    setPaymentAmount(Number(data.monto))
-    setPaymentOriginal(Number(data.monto_original || data.monto))
-    setStep(4)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const finishPayment = (method, result) => {
-    setFinishedWith(method)
-    setClassAccess(method === 'mercadopago' && Array.isArray(result?.classAccess) ? result.classAccess : [])
-    setStep(5)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  return (
-    <main className="pr-reg-shell">
-      <div className="pr-reg-orb pr-reg-orb-a" />
-      <div className="pr-reg-orb pr-reg-orb-b" />
-      <section className="pr-reg-card">
-        <header className="pr-reg-brand"><img src="/logo.png" alt="Punta Rollers" className="pr-reg-logo" /><span className="pr-reg-pill">Nuevos ingresos · Octubre 2026</span></header>
-        {step < 5 && <div className="pr-reg-progress"><span style={{ width: `${((step + 1) / 5) * 100}%` }} /><small>{progress}</small></div>}
-
-        {step === 0 && <div className="pr-reg-stage"><p className="pr-reg-kicker">INSCRIPCIONES 2026</p><h1>Elegí cómo querés patinar.</h1><p className="pr-reg-lead">Estas inscripciones son para comenzar en octubre. Primero conocé cada modalidad y después decidí si querés hacer tu pre-reserva.</p><p className="pr-reg-choice-hint">Elegí la opción que más te interese para ver cómo funciona, precios y disponibilidad.</p><div className="pr-reg-choice-grid"><button className="pr-reg-choice pr-reg-choice-group" onClick={() => chooseMode('grupales')}><span className="pr-reg-promo pr-reg-promo-group">🔥 2 días por semana</span><span className="pr-reg-choice-icon">👥</span><strong>Clases Grupales</strong><small>Hasta 2 encuentros por semana</small><b>$1.500 / mes</b></button><button className={`pr-reg-choice pr-reg-choice-private ${!personalizadasAbiertas ? 'is-closed' : ''}`} onClick={() => chooseMode('personalizadas')} disabled={!personalizadasAbiertas}><span className="pr-reg-promo pr-reg-promo-private">{personalizadasAbiertas ? '✨ Precio especial septiembre' : '🔒 Inscripciones pausadas'}</span><span className="pr-reg-choice-icon">⭐</span><strong>Personalizadas 1 a 1</strong><small>{personalizadasAbiertas ? 'Una hora enfocada 100% en vos' : 'Nuevos cupos el domingo de tarde'}</small><b>{personalizadasAbiertas ? '$2.900 / 4 clases' : 'Volvé el domingo'}</b></button></div><p className="pr-reg-note">Tu lugar se confirma únicamente después de que verifiquemos el pago.</p></div>}
-
-        {step === 1 && mode === 'grupales' && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(0)}>← Cambiar modalidad</button><p className="pr-reg-kicker">CLASES GRUPALES</p><h1>Patiná, aprendé y compartí.</h1><div className="pr-reg-price"><span>Mensualidad</span><strong>$1.500</strong><small>Miércoles + 1 turno fijo los sábados</small></div><div className="pr-reg-schedules">{groupSchedules.map(item => <article key={`${item.day}-${item.time}`}><div><b>{item.day}</b><strong>{item.time}</strong></div><p>{item.level}</p><small>{item.place} · {item.type}</small></article>)}</div><div className="pr-reg-info"><b>🌦️ Sobre las clases al aire libre</b><p>Los encuentros en Parada 2 dependen del clima. Si se suspenden por lluvia, no generan una fecha adicional de recuperación.</p></div><button className="pr-reg-primary" onClick={() => setStep(2)}>Quiero hacer mi pre-reserva →</button></div>}
-
-        {step === 1 && mode === 'personalizadas' && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(0)}>← Cambiar modalidad</button><p className="pr-reg-kicker">PERSONALIZADAS 1 A 1</p><h1>Una hora enfocada 100% en vos.</h1><p className="pr-reg-lead">Encuentros individuales adaptados a tu nivel, tus objetivos y tu ritmo. Desde cero o para perfeccionar técnica.</p><div className="pr-reg-price"><span>Cuponera</span><strong>$2.900</strong><small>4 encuentros · 60 min aprox.</small></div><div className="pr-reg-feature-grid"><article><b>🎯 A tu medida</b><p>Equilibrio, empuje, frenadas, giros, seguridad, técnica y práctica en calle.</p></article><article><b>📅 Vos elegís</b><p>Cada domingo recibís los horarios libres y reservás el que mejor te quede.</p></article><article><b>⚡ Flexible</b><p>Podés tomar 1 o 2 clases por semana o dejar semanas libres.</p></article><article><b>🔒 Cupos reales</b><p>Es una persona por hora, por eso la disponibilidad es más limitada.</p></article></div><div className="pr-reg-info"><b>Cancelaciones</b><p>Si avisás con anticipación, el cupón no se pierde. Si no asistís o cancelás cuando ya llegó el horario, el encuentro se descuenta.</p></div>{!personalizadasAbiertas && <div className="pr-reg-info pr-reg-closed-info"><b>🔒 Inscripciones pausadas</b><p>Durante la semana no tomamos nuevas preinscripciones. Los nuevos cupos se publican el domingo de tarde.</p></div>}<button className="pr-reg-primary" disabled={!personalizadasAbiertas} onClick={() => setStep(2)}>{personalizadasAbiertas ? 'Quiero hacer mi pre-reserva →' : 'Inscripciones pausadas'}</button></div>}
-
-        {step === 2 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(1)}>← Volver a la información</button><p className="pr-reg-kicker">DATOS DEL ALUMNO</p><h1>Ahora sí, contanos quién sos.</h1><div className="pr-reg-form-grid"><label>Nombre completo<input value={form.nombre_completo} onChange={e => update('nombre_completo', e.target.value)} autoComplete="name" /></label><label>Edad<input type="number" inputMode="numeric" value={form.edad} onChange={e => update('edad', e.target.value)} /></label><label>Localidad<input value={form.localidad} onChange={e => update('localidad', e.target.value)} /></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e => update('email', e.target.value)} autoComplete="email" /></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e => update('telefono', e.target.value)} autoComplete="tel" /></label><label>Nivel de patín<select value={form.nivel} onChange={e => update('nivel', e.target.value)}><option value="">Seleccioná</option><option>Principiante</option><option>Intermedio</option><option>Avanzado</option></select></label></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid} />{referralValid && <div className="pr-reg-info"><b>{referralValid?.code === 'ROLLERWEENPR' ? '🎃 Beneficio RollerWeen · RollerWeenPR' : '🎉 Beneficio Amigos PR'}</b><p>{referralValid?.code === 'ROLLERWEENPR' ? (mode === 'personalizadas' ? 'Tenés 10% OFF en tu primera cuponera. El descuento se calcula automáticamente antes de pagar.' : 'Tenés 10% OFF en tus primeras 2 mensualidades. La primera se descuenta ahora y la segunda queda registrada para Tesorería.') : `${mode === 'personalizadas' ? 'Tenés 10% OFF en tu primera cuponera.' : 'Tenés 10% OFF en tus primeras 2 mensualidades.'} El alumno que te invitó también recibirá su beneficio cuando confirmemos tu pago.`}</p></div>}{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" onClick={() => validateStudent() && setStep(3)}>Continuar →</button></div>}
-
-        {step === 3 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(2)}>← Volver a mis datos</button><p className="pr-reg-kicker">TU MODALIDAD</p>{mode === 'grupales' ? <><h1>Elegí tu turno de los sábados.</h1><p className="pr-reg-lead">El miércoles 19:30 está incluido para todos.</p><div className="pr-reg-radio-list">{saturdayOptions.map(option => <label key={option} className={form.turno_sabado === option ? 'selected' : ''}><input type="radio" name="turno" checked={form.turno_sabado === option} onChange={() => update('turno_sabado', option)} /><span>{option}</span></label>)}</div></> : <><h1>¿Qué te gustaría conseguir?</h1><p className="pr-reg-lead">Así podemos preparar mejor tu experiencia desde el primer encuentro.</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e => update('objetivo_personalizadas', e.target.value)} placeholder="Ej.: aprender desde cero, ganar seguridad, mejorar frenadas, técnica, salir a calle…" /></>}{error && <p className="pr-reg-error">{error}</p>}<button className="pr-reg-primary" disabled={sending || (mode === 'personalizadas' && !personalizadasAbiertas)} onClick={() => validateSpecific() && createPreReservation()}>{sending ? 'Guardando pre-reserva…' : mode === 'personalizadas' && !personalizadasAbiertas ? 'Inscripciones pausadas' : 'Ver pago y confirmar →'}</button></div>}
-
-        {step === 4 && <div className="pr-reg-stage"><button className="pr-reg-back" onClick={() => setStep(3)}>← Volver</button><p className="pr-reg-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><div className="pr-reg-info"><b>✅ Tu pre-reserva ya quedó registrada</b><p>Aunque cierres esta página, tus datos ya aparecen en nuestro panel. Ahora elegí Mercado Pago o transferencia.</p></div>{paymentOriginal > amount && <div className="pr-reg-info"><b>{referralCode === 'ROLLERWEENPR' ? '🎃 RollerWeen aplicado' : '🤝 Amigos PR aplicado'}</b><p>Precio normal: <s>${paymentOriginal.toLocaleString('es-UY')}</s> · Descuento: 10% · <strong>Ahorrás ${(paymentOriginal - amount).toLocaleString('es-UY')}</strong>.{referralCode === 'ROLLERWEENPR' && mode === 'grupales' ? ' La segunda mensualidad mantendrá el mismo beneficio.' : ''}</p></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={amount} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment} /></div>}
-
-        {step === 5 && <div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">SOLICITUD RECIBIDA</p><h1>¡Ya estás en la lista para octubre!</h1><p className="pr-reg-lead">{finishedWith === 'mercadopago' ? 'Tu pago quedó acreditado y tu lugar está confirmado.' : finishedWith === 'mercadopago_pending' ? 'Tu pago está siendo procesado. Tu inscripción quedó guardada y te avisaremos cuando se acredite.' : 'Recibimos tu pre-reserva. Cuando verifiquemos la transferencia, te contactaremos para confirmar tu lugar.'}</p><PaidClassAccess items={classAccess} />{classAccess.length === 0 && <div className="pr-reg-info"><b>¿Qué sigue?</b><p>Antes de comenzar en octubre, recibirás la información necesaria para incorporarte.</p></div>}</div>}
-      </section>
-    </main>
-  )
+export default function Inscripciones2026(){
+ const campaignPromo=useMemo(()=>{const raw=new URLSearchParams(window.location.search).get('promo')||'';return raw.replace(/\s+/g,'').toUpperCase()==='ROLLERWEENPR'?'ROLLERWEENPR':''},[])
+ const [lang,setLang]=useState(()=>localStorage.getItem('pr-language')==='en'?'en':'es'),t=copy[lang]
+ const [step,setStep]=useState(0),[mode,setMode]=useState(null),[form,setForm]=useState(initialForm),[sending,setSending]=useState(false),[registrationId,setRegistrationId]=useState(''),[error,setError]=useState(''),[personalizadasAbiertas,setPersonalizadasAbiertas]=useState(true),[referralCode,setReferralCode]=useState(campaignPromo),[referralValid,setReferralValid]=useState(null),[paymentAmount,setPaymentAmount]=useState(null),[paymentOriginal,setPaymentOriginal]=useState(null),[finishedWith,setFinishedWith]=useState(''),[classAccess,setClassAccess]=useState([])
+ const baseAmount=mode==='personalizadas'?2900:1500,amount=paymentAmount??baseAmount,progress=`${Math.min(step+1,5)} / 5`
+ useEffect(()=>{localStorage.setItem('pr-language',lang);document.documentElement.lang=lang==='en'?'en':'es'},[lang])
+ useEffect(()=>{supabase.rpc('estado_inscripciones_2026').then(({data})=>{if(data?.personalizadas_abiertas===false)setPersonalizadasAbiertas(false)})},[])
+ useEffect(()=>{if(!campaignPromo)return;let active=true;supabase.rpc('validate_pr_referral_code',{p_code:campaignPromo}).then(({data,error})=>{if(!active||error)return;const row=Array.isArray(data)?data[0]:null;if(row){setReferralCode('ROLLERWEENPR');setReferralValid(row)}});return()=>{active=false}},[campaignPromo])
+ const update=(k,v)=>setForm(p=>({...p,[k]:v})),go=s=>{setStep(s);window.scrollTo({top:0,behavior:'smooth'})}
+ const chooseMode=v=>{if(v==='personalizadas'&&!personalizadasAbiertas)return;setMode(v);setForm(initialForm);setRegistrationId('');setReferralCode(campaignPromo);setReferralValid(null);setPaymentAmount(null);setPaymentOriginal(null);setError('');go(1)}
+ const validateStudent=()=>{if(!form.nombre_completo.trim()||!form.edad||!form.localidad.trim()||!form.email.trim()||!form.telefono.trim()||!form.nivel){setError(t.required);return false}const age=Number(form.edad);if(!Number.isInteger(age)||age<5||age>100){setError(t.badAge);return false}setError('');return true}
+ const validateSpecific=()=>{if(mode==='grupales'&&!form.turno_sabado){setError(t.pickSat);return false}if(mode==='personalizadas'&&!form.objetivo_personalizadas.trim()){setError(t.tellGoal);return false}setError('');return true}
+ const payload=()=>({p_modalidad:mode,p_nombre_completo:form.nombre_completo.trim(),p_edad:Number(form.edad),p_localidad:form.localidad.trim(),p_email:form.email.trim().toLowerCase(),p_telefono:form.telefono.trim(),p_nivel:form.nivel,p_turno_sabado:mode==='grupales'?form.turno_sabado:null,p_objetivo_personalizadas:mode==='personalizadas'?form.objetivo_personalizadas.trim():null,p_nombre_responsable:null,p_quiere_remera:null,p_referral_code:referralCode.trim()||null})
+ const createPreReservation=async()=>{if(registrationId){go(4);return}if(referralCode.trim()&&!referralValid){setError(t.invalid);return}setSending(true);setError('');const{data,error:insertError}=await supabase.rpc('registrar_inscripcion_2026_v4',payload());setSending(false);if(insertError||!data?.id){const m=String(insertError?.message||'');if(m.includes('CODIGO_AMIGOS_PR_INVALIDO')){setReferralValid(null);setError(t.invalid)}else if(mode==='personalizadas'&&m.includes('PERSONALIZADAS_CERRADAS')){setPersonalizadasAbiertas(false);setError(t.paused)}else setError(t.saveError);return}setRegistrationId(data.id);setPaymentAmount(Number(data.monto));setPaymentOriginal(Number(data.monto_original||data.monto));go(4)}
+ const finishPayment=(method,result)=>{setFinishedWith(method);setClassAccess(method==='mercadopago'&&Array.isArray(result?.classAccess)?result.classAccess:[]);go(5)}
+ const CTA=({onClick,disabled,children,sub})=><div className="pr-reg-cta-wrap"><button className="pr-reg-primary" disabled={disabled} onClick={onClick}>{children}</button>{sub&&<small>{sub}</small>}</div>
+ return <main className="pr-reg-shell"><div className="pr-reg-orb pr-reg-orb-a"/><div className="pr-reg-orb pr-reg-orb-b"/><section className="pr-reg-card">
+  <header className="pr-reg-brand"><img src="/logo.png" alt="Punta Rollers" className="pr-reg-logo"/><span className="pr-reg-pill">{t.new}</span></header>
+  <div className="pr-reg-language" role="group" aria-label="Language"><button className={lang==='es'?'active':''} onClick={()=>setLang('es')} aria-pressed={lang==='es'}>🇺🇾 Español</button><button className={lang==='en'?'active':''} onClick={()=>setLang('en')} aria-pressed={lang==='en'}>🇺🇸 English</button></div>
+  {step<5&&<div className="pr-reg-progress"><span style={{width:`${((step+1)/5)*100}%`}}/><small>{progress}</small></div>}
+  {step===0&&<div className="pr-reg-stage"><p className="pr-reg-kicker">{lang==='es'?'INSCRIPCIONES 2026':'REGISTRATION 2026'}</p><h1>{t.title}</h1><p className="pr-reg-lead">{t.lead}</p><p className="pr-reg-choice-hint">{t.choose}</p><div className="pr-reg-choice-grid"><button className="pr-reg-choice pr-reg-choice-group" onClick={()=>chooseMode('grupales')}><span className="pr-reg-choice-icon">👥</span><strong>{t.group}</strong><small>{t.groupSmall}</small><b>$1.500 / {lang==='es'?'mes':'month'}</b></button><button className={`pr-reg-choice pr-reg-choice-private ${!personalizadasAbiertas?'is-closed':''}`} onClick={()=>chooseMode('personalizadas')} disabled={!personalizadasAbiertas}><span className="pr-reg-choice-icon">⭐</span><strong>{t.private}</strong><small>{personalizadasAbiertas?t.privateSmall:t.sunday}</small><b>{personalizadasAbiertas?'$2.900 / 4 clases':t.paused}</b></button></div><p className="pr-reg-note">{t.note}</p></div>}
+  {step===1&&mode==='grupales'&&<div className="pr-reg-stage"><button className="pr-reg-back" onClick={()=>go(0)}>{t.change}</button><p className="pr-reg-kicker">{t.group.toUpperCase()}</p><h1>{t.groupTitle}</h1><div className="pr-reg-price"><span>{t.monthly}</span><strong>$1.500</strong><small>{t.included}</small></div><div className="pr-reg-schedules">{schedules.map(s=><article key={s.value}><div><b>{lang==='es'?'Sábado':'Saturday'}</b><strong>{s.time}</strong></div><p>{s[lang]}</p><small>{s.place}</small></article>)}</div><div className="pr-reg-info"><b>{t.weather}</b><p>{t.weatherP}</p></div><CTA onClick={()=>go(2)} sub={t.startSub}>{t.start} →</CTA></div>}
+  {step===1&&mode==='personalizadas'&&<div className="pr-reg-stage"><button className="pr-reg-back" onClick={()=>go(0)}>{t.change}</button><p className="pr-reg-kicker">{t.private.toUpperCase()}</p><h1>{t.privateTitle}</h1><p className="pr-reg-lead">{t.privateLead}</p><div className="pr-reg-price"><span>{t.pack}</span><strong>$2.900</strong><small>{t.packSmall}</small></div><div className="pr-reg-feature-grid"><article><b>{t.tailored}</b><p>{t.tailoredP}</p></article><article><b>{t.chooseTime}</b><p>{t.chooseTimeP}</p></article><article><b>{t.flex}</b><p>{t.flexP}</p></article><article><b>{t.real}</b><p>{t.realP}</p></article></div><CTA disabled={!personalizadasAbiertas} onClick={()=>go(2)} sub={personalizadasAbiertas?t.startSub:t.sunday}>{personalizadasAbiertas?t.start:t.paused} →</CTA></div>}
+  {step===2&&<div className="pr-reg-stage pr-reg-stage-form"><button className="pr-reg-back" onClick={()=>go(1)}>{t.backInfo}</button><p className="pr-reg-kicker">{t.data}</p><h1>{t.who}</h1><div className="pr-reg-form-grid"><label>{t.name}<input value={form.nombre_completo} onChange={e=>update('nombre_completo',e.target.value)} autoComplete="name"/></label><label>{t.age}<input type="number" inputMode="numeric" value={form.edad} onChange={e=>update('edad',e.target.value)}/></label><label>{t.city}<input value={form.localidad} onChange={e=>update('localidad',e.target.value)}/></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e=>update('email',e.target.value)} autoComplete="email"/></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e=>update('telefono',e.target.value)} autoComplete="tel"/></label><label>{t.level}<select value={form.nivel} onChange={e=>update('nivel',e.target.value)}><option value="">{t.select}</option><option value="Principiante">{t.beginner}</option><option value="Intermedio">{t.intermediate}</option><option value="Avanzado">{t.advanced}</option></select></label></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid}/>{error&&<p className="pr-reg-error">{error}</p>}<CTA onClick={()=>validateStudent()&&go(3)} sub={t.continueSub}>{t.continue} →</CTA></div>}
+  {step===3&&<div className="pr-reg-stage"><button className="pr-reg-back" onClick={()=>go(2)}>{t.backData}</button><p className="pr-reg-kicker">{t.mode}</p>{mode==='grupales'?<><h1>{t.sat}</h1><p className="pr-reg-lead">{t.wed}</p><div className="pr-reg-radio-list">{schedules.map(s=><label key={s.value} className={form.turno_sabado===s.value?'selected':''}><input type="radio" name="turno" checked={form.turno_sabado===s.value} onChange={()=>update('turno_sabado',s.value)}/><span>{lang==='es'?'Sábado':'Saturday'} {s.time} · {s[lang]} · {s.place}</span></label>)}</div></>:<><h1>{t.goal}</h1><p className="pr-reg-lead">{t.goalLead}</p><textarea className="pr-reg-textarea" rows="6" value={form.objetivo_personalizadas} onChange={e=>update('objetivo_personalizadas',e.target.value)} placeholder={t.goalPlaceholder}/></>}{error&&<p className="pr-reg-error">{error}</p>}<CTA disabled={sending||(mode==='personalizadas'&&!personalizadasAbiertas)} onClick={()=>validateSpecific()&&createPreReservation()} sub={t.paymentSub}>{sending?t.saving:t.payment} →</CTA></div>}
+  {step===4&&<div className="pr-reg-stage"><button className="pr-reg-back" onClick={()=>go(3)}>← {lang==='es'?'Volver':'Back'}</button><p className="pr-reg-kicker">{t.last}</p><h1>{t.pay}</h1><div className="pr-reg-info"><b>{t.saved}</b><p>{t.savedP}</p></div>{paymentOriginal>amount&&<div className="pr-reg-info"><b>🤝 {referralCode==='ROLLERWEENPR'?'RollerWeen':'Amigos PR'}</b><p>10% OFF · <strong>${amount.toLocaleString('es-UY')}</strong></p></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={amount} payerEmail={form.email} payerName={form.nombre_completo} onFinished={finishPayment}/></div>}
+  {step===5&&<div className="pr-reg-stage pr-reg-success"><div className="pr-reg-success-icon">✓</div><p className="pr-reg-kicker">{t.received}</p><h1>{t.welcome}</h1><p className="pr-reg-lead">{finishedWith==='mercadopago'?(lang==='es'?'Tu pago quedó acreditado y tu lugar está confirmado.':'Your payment was received and your place is confirmed.'):(lang==='es'?'Tu inscripción quedó guardada. Te contactaremos para confirmar tu lugar.':'Your registration has been saved. We will contact you to confirm your place.')}</p><PaidClassAccess items={classAccess}/></div>}
+ </section></main>
 }
