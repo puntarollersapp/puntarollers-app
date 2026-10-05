@@ -1,127 +1,34 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ReferralCodeField from '../components/ReferralCodeField'
 import RegistrationPayment, { PaidClassAccess } from '../components/RegistrationPayment'
 import './PRKidsInscripciones2026.css'
 
-const initialForm = {
-  nombre_nino: '',
-  edad: '',
-  nivel: '',
-  nombre_responsable: '',
-  email: '',
-  telefono: '',
-  quiere_remera: true,
+const initialForm={nombre_nino:'',edad:'',nivel:'',nombre_responsable:'',email:'',telefono:'',quiere_remera:true}
+const copy={
+ es:{badge:'🛼 Pequeños sobre ruedas',top:'🌈 INSCRIPCIONES PR KIDS 2026',title:<>Aprendé, divertite y hacé amigos <em>sobre ruedas.</em></>,lead:<>Un espacio pensado para aprender patinaje con <strong>seguridad</strong>, ganar <strong>confianza</strong> y disfrutar cada logro. Acá aprender también se siente como jugar.</>,ribbon:'✨ Cada logro se celebra',sat:'Sábados',indoor:'Pista cerrada',monthly:'mensual por niño',roof:'Siempre bajo techo',weather:'Sin depender del clima',safe:'🛡️ Seguridad',fun:'🎮 Diversión',friends:'🤝 Amigos',know:'Conocé PR Kids antes de inscribir',knowp:'Te mostramos cómo funcionan las clases, qué incluye la mensualidad y toda la información importante para las familias.',discover:'Conocer PR Kids y continuar',discoverSub:'Primero te mostramos cómo funcionan las clases',back:'← Volver',adventure:'UNA CLASE QUE SE SIENTE COMO AVENTURA',learn:'Aprender jugando también es aprender en serio.',safety:'Seguridad primero',safetyp:'Control, equilibrio y confianza sobre los patines desde cada etapa.',skills:'Habilidades reales',skillsp:'Coordinación, frenadas, postura, desplazamiento y autonomía.',play:'Aprender jugando',playp:'Juegos y desafíos adaptados a la edad para mantener la motivación.',community:'Comunidad',communityp:'Amigos, risas y experiencias compartidas dentro de Punta Rollers.',track:'Pista cerrada y techada',medical:'Cobertura médica',medicalp:'Disponible en el establecimiento.',family:'Comodidad para las familias',familyp:'Baños privados y cambiadores.',fee:'Mensualidad PR Kids',nomatricula:'Sin matrícula',shirtInfo:'👕 Remera PR Kids personalizada con el nombre del niño: $690 única vez. La sugerimos como parte del uniforme, pero podés decidir agregarla o no al momento de reservar.',enroll:'Continuar con la inscripción',enrollSub:'Siguiente paso: datos del niño/a y adulto responsable',backInfo:'← Volver a la info',now:'AHORA SÍ 💫',who:'Contanos quién se suma a la aventura.',whoLead:'Primero los datos del niño o niña. Después, los del adulto responsable.',child:'Datos del niño/a',name:'Nombre completo',age:'Edad',level:'Nivel de patín',select:'Seleccioná una opción',first:'Primera vez',beginner:'Principiante',intermediate:'Intermedio',adult:'Adulto responsable',guardian:'Nombre del padre, madre o tutor',shirt:'👕 Quiero agregar la remera PR Kids',shirtSmall:'$690 · única vez · personalizada con el nombre del niño/a',shirtP:'Viene seleccionada porque forma parte del uniforme de la escuela, pero podés destildarla si preferís adquirirla más adelante.',continuePay:'Guardar datos y continuar al pago',continuePaySub:'Revisaremos tu pre-reserva antes de elegir cómo pagar',saving:'Guardando pre-reserva…',last:'ÚLTIMO PASO',pay:'Elegí cómo querés pagar.',payLead:'La pre-reserva ya quedó registrada. El importe incluye automáticamente el descuento y la remera elegida.',saved:'Pre-reserva registrada',savedp:'Aunque cierres esta página, los datos del alumno ya quedaron guardados en Punta Rollers.',student:'🧒 Alumno/a',schedule:'🗓️ Horario',yes:'Sí · $690',notNow:'No por ahora',received:'INSCRIPCIÓN RECIBIDA',welcome:'¡Bienvenido/a a PR Kids!',required:'Completá todos los datos para continuar.',badAge:'Ingresá una edad válida para PR Kids.',invalidReferral:'Revisá el código Amigos PR y tocá “Aplicar”, o dejalo vacío para continuar sin descuento.',saveError:'No pudimos guardar la pre-reserva. Probá nuevamente en unos minutos.'},
+ en:{badge:'🛼 Little skaters',top:'🌈 PR KIDS REGISTRATION 2026',title:<>Learn, have fun and make friends <em>on wheels.</em></>,lead:<>A space designed to learn skating <strong>safely</strong>, build <strong>confidence</strong> and enjoy every achievement. Learning here also feels like playing.</>,ribbon:'✨ Every achievement matters',sat:'Saturdays',indoor:'Indoor rink',monthly:'per child / month',roof:'Always indoors',weather:'No weather cancellations',safe:'🛡️ Safety',fun:'🎮 Fun',friends:'🤝 Friends',know:'Discover PR Kids before registering',knowp:'See how classes work, what the monthly fee includes and the key information families need.',discover:'Discover PR Kids and continue',discoverSub:'First, see how classes work',back:'← Back',adventure:'A CLASS THAT FEELS LIKE AN ADVENTURE',learn:'Learning through play is serious learning too.',safety:'Safety first',safetyp:'Control, balance and confidence on skates at every stage.',skills:'Real skills',skillsp:'Coordination, braking, posture, movement and independence.',play:'Learning through play',playp:'Age-appropriate games and challenges to keep motivation high.',community:'Community',communityp:'Friends, laughs and shared experiences at Punta Rollers.',track:'Covered indoor rink',medical:'Medical coverage',medicalp:'Available at the venue.',family:'Comfort for families',familyp:'Private bathrooms and changing areas.',fee:'PR Kids monthly fee',nomatricula:'No enrollment fee',shirtInfo:'👕 Personalized PR Kids shirt with the child’s name: $690 one-time payment. We recommend it as part of the uniform, but you can choose whether to add it.',enroll:'Continue to registration',enrollSub:'Next: child and parent/guardian details',backInfo:'← Back to information',now:'LET’S GET STARTED 💫',who:'Tell us who is joining the adventure.',whoLead:'First the child’s details, then the parent or guardian’s.',child:'Child details',name:'Full name',age:'Age',level:'Skating level',select:'Choose an option',first:'First time',beginner:'Beginner',intermediate:'Intermediate',adult:'Parent / guardian',guardian:'Parent or guardian name',shirt:'👕 Add the PR Kids shirt',shirtSmall:'$690 · one-time · personalized with the child’s name',shirtP:'It is selected by default because it is part of the school uniform, but you can uncheck it and purchase it later.',continuePay:'Save details and continue to payment',continuePaySub:'We’ll save your pre-registration before you choose how to pay',saving:'Saving pre-registration…',last:'FINAL STEP',pay:'Choose how you want to pay.',payLead:'Your pre-registration has been saved. The amount automatically includes the selected discount and shirt.',saved:'Pre-registration saved',savedp:'Even if you close this page, the student’s details are already saved with Punta Rollers.',student:'🧒 Student',schedule:'🗓️ Schedule',yes:'Yes · $690',notNow:'Not now',received:'REGISTRATION RECEIVED',welcome:'Welcome to PR Kids!',required:'Please complete all fields to continue.',badAge:'Please enter a valid age for PR Kids.',invalidReferral:'Check the Amigos PR code and tap “Apply”, or leave it blank to continue without a discount.',saveError:'We could not save the pre-registration. Please try again in a few minutes.'}
 }
 
-export default function PRKidsInscripciones2026() {
-  const [step, setStep] = useState(0)
-  const [form, setForm] = useState(initialForm)
-  const [sending, setSending] = useState(false)
-  const [registrationId, setRegistrationId] = useState('')
-  const [error, setError] = useState('')
-  const [referralCode, setReferralCode] = useState('')
-  const [referralValid, setReferralValid] = useState(null)
-  const [paymentAmount, setPaymentAmount] = useState(null)
-  const [paymentOriginal, setPaymentOriginal] = useState(null)
-  const [finishedWith, setFinishedWith] = useState('')
-  const [classAccess, setClassAccess] = useState([])
-  const progress = useMemo(() => `${Math.min(step + 1, 4)} / 4`, [step])
-  const baseTotal = 2000 + (form.quiere_remera ? 690 : 0)
-  const total = paymentAmount ?? baseTotal
-
-  const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
-
-  const validateData = () => {
-    if (!form.nombre_nino.trim() || !form.edad || !form.nivel || !form.nombre_responsable.trim() || !form.email.trim() || !form.telefono.trim()) {
-      setError('Completá todos los datos para continuar.')
-      return false
-    }
-    const age = Number(form.edad)
-    if (!Number.isInteger(age) || age < 3 || age > 17) {
-      setError('Ingresá una edad válida para PR Kids.')
-      return false
-    }
-    setError('')
-    return true
-  }
-
-  const buildPayload = () => ({
-    p_modalidad: 'kids',
-    p_nombre_completo: form.nombre_nino.trim(),
-    p_edad: Number(form.edad),
-    p_localidad: null,
-    p_email: form.email.trim().toLowerCase(),
-    p_telefono: form.telefono.trim(),
-    p_nivel: form.nivel,
-    p_turno_sabado: 'Sábado 19:00–20:00 · Pista cerrada Maldonado',
-    p_objetivo_personalizadas: null,
-    p_nombre_responsable: form.nombre_responsable.trim(),
-    p_quiere_remera: form.quiere_remera,
-    p_referral_code: referralCode.trim() || null,
-  })
-
-  const createPreReservation = async () => {
-    if (!validateData()) return
-    if (registrationId) {
-      setStep(3)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-    if (referralCode.trim() && !referralValid) {
-      setError('Revisá el código Amigos PR y tocá “Aplicar”, o dejalo vacío para continuar sin descuento.')
-      return
-    }
-
-    setSending(true)
-    setError('')
-    const { data, error: insertError } = await supabase.rpc('registrar_inscripcion_2026_v4', buildPayload())
-    setSending(false)
-
-    if (insertError || !data?.id) {
-      console.error('PR Kids registration error', insertError)
-      if (String(insertError?.message || '').includes('CODIGO_AMIGOS_PR_INVALIDO')) {
-        setReferralValid(null)
-        setError('Ese código Amigos PR no es válido. Revisalo o dejalo vacío para continuar normalmente.')
-      } else {
-        setError('No pudimos guardar la pre-reserva. Probá nuevamente en unos minutos.')
-      }
-      return
-    }
-
-    setRegistrationId(data.id)
-    setPaymentAmount(Number(data.monto))
-    setPaymentOriginal(Number(data.monto_original || data.monto))
-    setStep(3)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const finishPayment = (method, result) => {
-    setFinishedWith(method)
-    setClassAccess(method === 'mercadopago' && Array.isArray(result?.classAccess) ? result.classAccess : [])
-    setStep(4)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  return (
-    <main className="prk-shell">
-      <div className="prk-blob prk-blob-a" />
-      <div className="prk-blob prk-blob-b" />
-      <div className="prk-stars" aria-hidden="true">✦ · ✧ · ✦ · ✧</div>
-      <section className="prk-card">
-        <header className="prk-header"><div className="prk-brand"><img src="/logo.png" alt="Punta Rollers" /><div><p>PR KIDS</p><span>Punta Rollers · 2026</span></div></div><span className="prk-badge">🛼 Pequeños sobre ruedas</span></header>
-        {step < 4 && <div className="prk-progress"><span style={{ width: `${((step + 1) / 4) * 100}%` }} /><small>{progress}</small></div>}
-
-        {step === 0 && <div className="prk-stage prk-stage-home"><div className="prk-home-topline"><span>🌈</span> INSCRIPCIONES PR KIDS 2026</div><h1 className="prk-home-title">Aprendé, divertite y hacé amigos <em>sobre ruedas.</em></h1><p className="prk-lead prk-home-lead">Un espacio pensado para aprender patinaje con <strong>seguridad</strong>, ganar <strong>confianza</strong> y disfrutar cada logro. Acá aprender también se siente como jugar.</p><div className="prk-home-ribbon">✨ Cada logro se celebra</div><div className="prk-quick-grid prk-quick-grid-home"><article className="blue"><span>🗓️</span><div><b>Sábados</b><small>19:00 a 20:00</small></div></article><article className="pink"><span>🏟️</span><div><b>Pista cerrada</b><small>Maldonado · Indoor</small></div></article><article className="yellow"><span>💛</span><div><b>$2.000</b><small>mensual por niño</small></div></article><article className="green"><span>☔</span><div><b>Siempre bajo techo</b><small>Sin depender del clima</small></div></article></div><div className="prk-home-values"><span>🛡️ Seguridad</span><span>🎮 Diversión</span><span>🤝 Amigos</span></div><div className="prk-note-card prk-home-note"><span>💫</span><div><b>Conocé PR Kids antes de inscribir</b><p>Te mostramos cómo funcionan las clases, qué incluye la mensualidad y toda la información importante para las familias.</p></div></div><button className="prk-primary" onClick={() => setStep(1)}>Descubrir PR Kids →</button></div>}
-
-        {step === 1 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(0)}>← Volver</button><p className="prk-kicker">UNA CLASE QUE SE SIENTE COMO AVENTURA</p><h1>Aprender jugando también es aprender en serio.</h1><div className="prk-benefits"><article><span>🛡️</span><div><b>Seguridad primero</b><p>Control, equilibrio y confianza sobre los patines desde cada etapa.</p></div></article><article><span>🎯</span><div><b>Habilidades reales</b><p>Coordinación, frenadas, postura, desplazamiento y autonomía.</p></div></article><article><span>🎮</span><div><b>Aprender jugando</b><p>Juegos y desafíos adaptados a la edad para mantener la motivación.</p></div></article><article><span>🤝</span><div><b>Comunidad</b><p>Amigos, risas y experiencias compartidas dentro de Punta Rollers.</p></div></article></div><div className="prk-details"><div><span>📍</span><p><b>Pista cerrada y techada</b><small>Calle Solís casi Lavalleja · Maldonado</small></p></div><div><span>👩‍⚕️</span><p><b>Cobertura médica</b><small>Disponible en el establecimiento.</small></p></div><div><span>🚻</span><p><b>Comodidad para las familias</b><small>Baños privados y cambiadores.</small></p></div></div><div className="prk-price-card"><p>Mensualidad PR Kids</p><strong>$2.000</strong><small>Sin matrícula</small><hr /><p className="uniform">👕 Remera PR Kids personalizada con el nombre del niño: $690 única vez. La sugerimos como parte del uniforme, pero podés decidir agregarla o no al momento de reservar.</p></div><button className="prk-primary" onClick={() => setStep(2)}>Quiero inscribirlo/a →</button></div>}
-
-        {step === 2 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(1)}>← Volver a la info</button><p className="prk-kicker">AHORA SÍ 💫</p><h1>Contanos quién se suma a la aventura.</h1><p className="prk-lead">Primero los datos del niño o niña. Después, los del adulto responsable.</p><div className="prk-section-label"><span>🧒</span><b>Datos del niño/a</b></div><div className="prk-form-grid"><label>Nombre completo<input value={form.nombre_nino} onChange={e => update('nombre_nino', e.target.value)} autoComplete="name" /></label><label>Edad<input type="number" inputMode="numeric" value={form.edad} onChange={e => update('edad', e.target.value)} /></label><label className="full">Nivel de patín<select value={form.nivel} onChange={e => update('nivel', e.target.value)}><option value="">Seleccioná una opción</option><option>Primera vez</option><option>Principiante</option><option>Intermedio</option></select></label></div><div className="prk-section-label adult"><span>👨‍👩‍👧</span><b>Adulto responsable</b></div><div className="prk-form-grid"><label className="full">Nombre del padre, madre o tutor<input value={form.nombre_responsable} onChange={e => update('nombre_responsable', e.target.value)} /></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e => update('email', e.target.value)} autoComplete="email" /></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e => update('telefono', e.target.value)} autoComplete="tel" /></label></div><div className={`prk-shirt-option ${form.quiere_remera ? 'selected' : ''}`}><label><input type="checkbox" checked={form.quiere_remera} onChange={e => update('quiere_remera', e.target.checked)} /><span className="prk-shirt-check">✓</span><span className="prk-shirt-copy"><b>👕 Quiero agregar la remera PR Kids</b><small>$690 · única vez · personalizada con el nombre del niño/a</small></span></label><p>Viene seleccionada porque forma parte del uniforme de la escuela, pero podés destildarla si preferís adquirirla más adelante.</p></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid} compact />{referralValid && <div className="prk-note-card prk-success-note"><span>🤝</span><div><b>Amigos PR aplicado</b><p>El niño/a obtiene 10% OFF en sus primeras 2 mensualidades. La remera no entra en el descuento. El alumno que lo invitó recibe su beneficio cuando confirmemos el pago.</p></div></div>}{error && <p className="prk-error">{error}</p>}<button className="prk-primary" disabled={sending} onClick={createPreReservation}>{sending ? 'Guardando pre-reserva…' : 'Continuar al pago →'}</button></div>}
-
-        {step === 3 && <div className="prk-stage"><button className="prk-back" onClick={() => setStep(2)}>← Volver a los datos</button><div className="prk-final-icon">🏁</div><p className="prk-kicker">ÚLTIMO PASO</p><h1>Elegí cómo querés pagar.</h1><p className="prk-lead">La pre-reserva ya quedó registrada. El importe incluye automáticamente el descuento y la remera elegida.</p><div className="prk-note-card prk-success-note"><span>✅</span><div><b>Pre-reserva registrada</b><p>Aunque cierres esta página, los datos del alumno ya quedaron guardados en Punta Rollers.</p></div></div><div className="prk-summary"><div><span>🧒 Alumno/a</span><b>{form.nombre_nino}</b></div><div><span>🗓️ Horario</span><b>Sábado · 19:00 a 20:00</b></div><div><span>💛 Mensualidad</span><b>{paymentOriginal > total ? <><s>$2.000</s> · $1.800</> : '$2.000'}</b></div><div><span>👕 Remera</span><b>{form.quiere_remera ? 'Sí · $690' : 'No por ahora'}</b></div></div>{paymentOriginal > total && <div className="prk-note-card prk-success-note"><span>🎉</span><div><b>10% OFF Amigos PR</b><p>Se descontaron $200 de la mensualidad. La remera mantiene su precio normal.</p></div></div>}<RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={total} payerEmail={form.email} payerName={form.nombre_nino} onFinished={finishPayment} /></div>}
-
-        {step === 4 && <div className="prk-stage prk-final"><div className="prk-final-icon">🎉</div><p className="prk-kicker">INSCRIPCIÓN RECIBIDA</p><h1>¡Bienvenido/a a PR Kids!</h1><p className="prk-lead">{finishedWith === 'mercadopago' ? `El pago de ${form.nombre_nino} quedó acreditado.` : finishedWith === 'mercadopago_pending' ? 'El pago está siendo procesado y te avisaremos cuando se acredite.' : 'Guardamos la inscripción y verificaremos el comprobante enviado por WhatsApp.'}</p><PaidClassAccess items={classAccess} /></div>}
-      </section>
-    </main>
-  )
+export default function PRKidsInscripciones2026(){
+ const [lang,setLang]=useState(()=>localStorage.getItem('pr-language')==='en'?'en':'es'); const t=copy[lang]
+ const [step,setStep]=useState(0),[form,setForm]=useState(initialForm),[sending,setSending]=useState(false),[registrationId,setRegistrationId]=useState(''),[error,setError]=useState(''),[referralCode,setReferralCode]=useState(''),[referralValid,setReferralValid]=useState(null),[paymentAmount,setPaymentAmount]=useState(null),[paymentOriginal,setPaymentOriginal]=useState(null),[finishedWith,setFinishedWith]=useState(''),[classAccess,setClassAccess]=useState([])
+ const progress=useMemo(()=>`${Math.min(step+1,4)} / 4`,[step]); const baseTotal=2000+(form.quiere_remera?690:0); const total=paymentAmount??baseTotal
+ useEffect(()=>{localStorage.setItem('pr-language',lang);document.documentElement.lang=lang==='en'?'en':'es'},[lang])
+ const update=(k,v)=>setForm(p=>({...p,[k]:v})); const go=s=>{setStep(s);window.scrollTo({top:0,behavior:'smooth'})}
+ const validateData=()=>{if(!form.nombre_nino.trim()||!form.edad||!form.nivel||!form.nombre_responsable.trim()||!form.email.trim()||!form.telefono.trim()){setError(t.required);return false}const age=Number(form.edad);if(!Number.isInteger(age)||age<3||age>17){setError(t.badAge);return false}setError('');return true}
+ const buildPayload=()=>({p_modalidad:'kids',p_nombre_completo:form.nombre_nino.trim(),p_edad:Number(form.edad),p_localidad:null,p_email:form.email.trim().toLowerCase(),p_telefono:form.telefono.trim(),p_nivel:form.nivel,p_turno_sabado:'Sábado 19:00–20:00 · Pista cerrada Maldonado',p_objetivo_personalizadas:null,p_nombre_responsable:form.nombre_responsable.trim(),p_quiere_remera:form.quiere_remera,p_referral_code:referralCode.trim()||null})
+ const createPreReservation=async()=>{if(!validateData())return;if(registrationId){go(3);return}if(referralCode.trim()&&!referralValid){setError(t.invalidReferral);return}setSending(true);setError('');const{data,error:insertError}=await supabase.rpc('registrar_inscripcion_2026_v4',buildPayload());setSending(false);if(insertError||!data?.id){console.error('PR Kids registration error',insertError);if(String(insertError?.message||'').includes('CODIGO_AMIGOS_PR_INVALIDO')){setReferralValid(null);setError(t.invalidReferral)}else setError(t.saveError);return}setRegistrationId(data.id);setPaymentAmount(Number(data.monto));setPaymentOriginal(Number(data.monto_original||data.monto));go(3)}
+ const finishPayment=(method,result)=>{setFinishedWith(method);setClassAccess(method==='mercadopago'&&Array.isArray(result?.classAccess)?result.classAccess:[]);go(4)}
+ const CTA=({onClick,disabled,children,sub})=><div className="prk-cta-wrap"><button className="prk-primary" disabled={disabled} onClick={onClick}>{children}</button>{sub&&<small>{sub}</small>}</div>
+ return <main className="prk-shell"><div className="prk-blob prk-blob-a"/><div className="prk-blob prk-blob-b"/><div className="prk-stars" aria-hidden="true">✦ · ✧ · ✦ · ✧</div><section className="prk-card">
+  <header className="prk-header"><div className="prk-brand"><img src="/logo.png" alt="Punta Rollers"/><div><p>PR KIDS</p><span>Punta Rollers · 2026</span></div></div><span className="prk-badge">{t.badge}</span></header>
+  <div className="prk-language" role="group" aria-label="Language"><button className={lang==='es'?'active':''} onClick={()=>setLang('es')} aria-pressed={lang==='es'}><span>🇺🇾</span> Español</button><button className={lang==='en'?'active':''} onClick={()=>setLang('en')} aria-pressed={lang==='en'}><span>🇺🇸</span> English</button></div>
+  {step<4&&<div className="prk-progress"><span style={{width:`${((step+1)/4)*100}%`}}/><small>{progress}</small></div>}
+  {step===0&&<div className="prk-stage prk-stage-home"><div className="prk-home-topline">{t.top}</div><h1 className="prk-home-title">{t.title}</h1><p className="prk-lead prk-home-lead">{t.lead}</p><div className="prk-home-ribbon">{t.ribbon}</div><div className="prk-quick-grid prk-quick-grid-home"><article className="blue"><span>🗓️</span><div><b>{t.sat}</b><small>19:00–20:00</small></div></article><article className="pink"><span>🏟️</span><div><b>{t.indoor}</b><small>Maldonado · Indoor</small></div></article><article className="yellow"><span>💛</span><div><b>$2.000</b><small>{t.monthly}</small></div></article><article className="green"><span>☔</span><div><b>{t.roof}</b><small>{t.weather}</small></div></article></div><div className="prk-home-values"><span>{t.safe}</span><span>{t.fun}</span><span>{t.friends}</span></div><div className="prk-note-card prk-home-note"><span>💫</span><div><b>{t.know}</b><p>{t.knowp}</p></div></div><CTA onClick={()=>go(1)} sub={t.discoverSub}>{t.discover} →</CTA></div>}
+  {step===1&&<div className="prk-stage"><button className="prk-back" onClick={()=>go(0)}>{t.back}</button><p className="prk-kicker">{t.adventure}</p><h1>{t.learn}</h1><div className="prk-benefits"><article><span>🛡️</span><div><b>{t.safety}</b><p>{t.safetyp}</p></div></article><article><span>🎯</span><div><b>{t.skills}</b><p>{t.skillsp}</p></div></article><article><span>🎮</span><div><b>{t.play}</b><p>{t.playp}</p></div></article><article><span>🤝</span><div><b>{t.community}</b><p>{t.communityp}</p></div></article></div><div className="prk-details"><div><span>📍</span><p><b>{t.track}</b><small>Calle Solís casi Lavalleja · Maldonado</small></p></div><div><span>👩‍⚕️</span><p><b>{t.medical}</b><small>{t.medicalp}</small></p></div><div><span>🚻</span><p><b>{t.family}</b><small>{t.familyp}</small></p></div></div><div className="prk-price-card"><p>{t.fee}</p><strong>$2.000</strong><small>{t.nomatricula}</small><hr/><p className="uniform">{t.shirtInfo}</p></div><CTA onClick={()=>go(2)} sub={t.enrollSub}>{t.enroll} →</CTA></div>}
+  {step===2&&<div className="prk-stage prk-stage-form"><button className="prk-back" onClick={()=>go(1)}>{t.backInfo}</button><p className="prk-kicker">{t.now}</p><h1>{t.who}</h1><p className="prk-lead">{t.whoLead}</p><div className="prk-section-label"><span>🧒</span><b>{t.child}</b></div><div className="prk-form-grid"><label>{t.name}<input value={form.nombre_nino} onChange={e=>update('nombre_nino',e.target.value)} autoComplete="name"/></label><label>{t.age}<input type="number" inputMode="numeric" value={form.edad} onChange={e=>update('edad',e.target.value)}/></label><label className="full">{t.level}<select value={form.nivel} onChange={e=>update('nivel',e.target.value)}><option value="">{t.select}</option><option value="Primera vez">{t.first}</option><option value="Principiante">{t.beginner}</option><option value="Intermedio">{t.intermediate}</option></select></label></div><div className="prk-section-label adult"><span>👨‍👩‍👧</span><b>{t.adult}</b></div><div className="prk-form-grid"><label className="full">{t.guardian}<input value={form.nombre_responsable} onChange={e=>update('nombre_responsable',e.target.value)}/></label><label>Email<input type="email" inputMode="email" value={form.email} onChange={e=>update('email',e.target.value)} autoComplete="email"/></label><label>WhatsApp<input type="tel" inputMode="tel" value={form.telefono} onChange={e=>update('telefono',e.target.value)} autoComplete="tel"/></label></div><div className={`prk-shirt-option ${form.quiere_remera?'selected':''}`}><label><input type="checkbox" checked={form.quiere_remera} onChange={e=>update('quiere_remera',e.target.checked)}/><span className="prk-shirt-check">✓</span><span className="prk-shirt-copy"><b>{t.shirt}</b><small>{t.shirtSmall}</small></span></label><p>{t.shirtP}</p></div><ReferralCodeField value={referralCode} onChange={setReferralCode} onValidated={setReferralValid} compact/>{error&&<p className="prk-error">{error}</p>}<CTA disabled={sending} onClick={createPreReservation} sub={!sending?t.continuePaySub:null}>{sending?t.saving:`${t.continuePay} →`}</CTA></div>}
+  {step===3&&<div className="prk-stage"><button className="prk-back" onClick={()=>go(2)}>{t.backInfo}</button><div className="prk-final-icon">🏁</div><p className="prk-kicker">{t.last}</p><h1>{t.pay}</h1><p className="prk-lead">{t.payLead}</p><div className="prk-note-card prk-success-note"><span>✅</span><div><b>{t.saved}</b><p>{t.savedp}</p></div></div><div className="prk-summary"><div><span>{t.student}</span><b>{form.nombre_nino}</b></div><div><span>{t.schedule}</span><b>{lang==='en'?'Saturday · 19:00–20:00':'Sábado · 19:00 a 20:00'}</b></div><div><span>💛 {t.fee}</span><b>{paymentOriginal>total?<><s>$2.000</s> · $1.800</>:'$2.000'}</b></div><div><span>👕 PR Kids</span><b>{form.quiere_remera?t.yes:t.notNow}</b></div></div><RegistrationPayment registrationType="inscripciones_2026" registrationId={registrationId} amount={total} payerEmail={form.email} payerName={form.nombre_nino} onFinished={finishPayment}/></div>}
+  {step===4&&<div className="prk-stage prk-final"><div className="prk-final-icon">🎉</div><p className="prk-kicker">{t.received}</p><h1>{t.welcome}</h1><p className="prk-lead">{lang==='en'?(finishedWith==='mercadopago'?`Payment for ${form.nombre_nino} was confirmed.`:finishedWith==='mercadopago_pending'?'The payment is being processed. We will let you know when it is confirmed.':'We saved the registration and will verify the receipt sent via WhatsApp.'):(finishedWith==='mercadopago'?`El pago de ${form.nombre_nino} quedó acreditado.`:finishedWith==='mercadopago_pending'?'El pago está siendo procesado y te avisaremos cuando se acredite.':'Guardamos la inscripción y verificaremos el comprobante enviado por WhatsApp.')}</p><PaidClassAccess items={classAccess}/></div>}
+ </section></main>
 }
