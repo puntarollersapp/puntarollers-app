@@ -108,6 +108,30 @@ export default function RegistrationPayment({ registrationType, registrationId, 
     }
   }, [amount, containerId, method, onFinished, payerEmail, registrationId, registrationType])
 
+  const finishTransfer = async () => {
+    setStatus('processing')
+    setMessage('Registrando tu transferencia…')
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/notificar-transferencia-inscripcion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+        body: JSON.stringify({ registrationType, registrationId }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        setStatus('error')
+        setMessage('Tu inscripción sigue guardada, pero no pudimos registrar el aviso de transferencia. Enviá el comprobante por WhatsApp y te ayudamos.')
+        return
+      }
+      setStatus('pending')
+      setMessage('Transferencia informada. Te enviamos un email y verificaremos el comprobante antes de confirmar tu lugar.')
+      onFinished?.('transferencia', result)
+    } catch {
+      setStatus('error')
+      setMessage('Tu inscripción sigue guardada, pero no pudimos registrar el aviso. Enviá el comprobante por WhatsApp y te ayudamos.')
+    }
+  }
+
   return <div className="registration-payment">
     <div className="registration-payment__choices">
       <button type="button" className={method === 'mercadopago' ? 'active' : ''} onClick={() => setMethod('mercadopago')}><span>💳</span><b>Pagar ahora</b><small>Tarjeta con Mercado Pago</small></button>
@@ -127,7 +151,8 @@ export default function RegistrationPayment({ registrationType, registrationId, 
       <div><b>Tarjeta Prex · Claudio Facelli</b><p>Cuenta Prex: <strong>70658</strong></p></div>
       <p>Después de transferir, enviá el comprobante. El mensaje ya incluye nombre, importe e identificación de la inscripción.</p>
       <a href={whatsappUrl} target="_blank" rel="noreferrer">Enviar comprobante por WhatsApp</a>
-      <button type="button" className="registration-payment__finish" onClick={() => onFinished?.('transferencia')}>Ya transferí · finalizar</button>
+      <button type="button" className="registration-payment__finish" disabled={status === 'processing'} onClick={finishTransfer}>{status === 'processing' ? 'Registrando transferencia…' : 'Ya transferí · finalizar'}</button>
+      {method === 'transferencia' && message && <p className={`registration-payment__message ${status}`}>{message}</p>}
     </div>}
   </div>
 }
