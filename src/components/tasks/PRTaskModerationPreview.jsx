@@ -1,13 +1,14 @@
-const QUEUE=[
- {student:'Martina P.',task:'T-stop · 3 repeticiones',kind:'VIDEO',sent:'Hoy · 18:42',status:'EN REVISIÓN'},
- {student:'Santiago R.',task:'Frenado controlado',kind:'VIDEO',sent:'Ayer · 21:06',status:'EN REVISIÓN'},
-]
-
 export default function PRTaskModerationPreview(){
- return <section className="mt-7 overflow-hidden rounded-[28px] border border-amber-300/15 bg-[linear-gradient(145deg,rgba(251,191,36,.07),rgba(139,92,246,.04))] p-5">
-  <div className="flex items-start justify-between gap-4"><div><p className="text-[9px] font-black uppercase tracking-[.22em] text-amber-300">Vista profesor · Beta</p><h2 className="mt-2 text-xl font-black">Moderación técnica</h2></div><span className="rounded-full border border-amber-300/15 bg-amber-300/[.07] px-3 py-1 text-[9px] font-black text-amber-200">2 PENDIENTES</span></div>
-  <p className="mt-2 text-[11px] leading-5 text-white/42">Así llegará la evidencia a Claudio o David: alumno, tarea, tipo, fecha e historial de intentos. Esta vista todavía no escribe en producción.</p>
-  <div className="mt-4 grid gap-3">{QUEUE.map((item)=><article key={item.student+item.task} className="rounded-[20px] border border-white/[.07] bg-black/20 p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-white/25">{item.kind} · {item.sent}</p><h3 className="mt-1 text-[12px] font-black">{item.student}</h3><p className="mt-1 text-[10px] text-white/42">{item.task}</p></div><span className="text-[8px] font-black uppercase tracking-[.12em] text-cyan-300">{item.status}</span></div><div className="mt-4 grid grid-cols-2 gap-2"><button type="button" disabled className="rounded-xl border border-white/10 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-white/35">Corregir</button><button type="button" disabled className="rounded-xl bg-white/10 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-white/45">Aprobar</button></div></article>)}</div>
-  <div className="mt-4 rounded-[18px] border border-white/[.06] bg-white/[.025] p-4"><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">Contrato de moderación</p><p className="mt-2 text-[10px] leading-5 text-white/40">Aprobar cierra el intento y guarda profesor, fecha, devolución y puntaje. Corregir mantiene la tarea abierta y exige un nuevo intento sin borrar la evidencia anterior.</p></div>
+ return <section className="mt-7 overflow-hidden rounded-[30px] border border-amber-300/14 bg-[linear-gradient(145deg,rgba(251,191,36,.055),rgba(139,92,246,.035))] p-5">
+  <div className="flex items-start justify-between gap-4"><div><p className="text-[8px] font-black uppercase tracking-[.22em] text-amber-200/55">MODERACIÓN TÉCNICA · BETA</p><h2 className="mt-2 text-xl font-black">La bandeja antes de abrirla.</h2></div><span className="rounded-full border border-white/[.08] px-3 py-1 text-[7px] font-black text-white/24">SIN DATOS FICTICIOS</span></div>
+  <p className="mt-3 max-w-[520px] text-[9px] leading-5 text-white/30">Cuando Tareas 2.0 tenga backend beta aislado, cada foto o video pendiente aparecerá acá con alumno, tarea, intento, fecha y profesor responsable. Hasta entonces no simulamos personas ni revisiones reales.</p>
+  <div className="mt-5 rounded-[24px] border border-dashed border-amber-200/12 bg-black/20 p-6 text-center">
+   <div className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-amber-200/12 bg-amber-200/[.04] text-lg text-amber-100/35">◎</div>
+   <h3 className="mt-4 text-sm font-black">No hay una cola beta conectada todavía.</h3>
+   <p className="mx-auto mt-2 max-w-[370px] text-[8px] leading-4 text-white/24">La interfaz queda lista para recibir únicamente evidencias reales cuando pasemos la capa de permisos y almacenamiento.</p>
+  </div>
+  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><State n="01" t="PENDIENTE"/><State n="02" t="EN REVISIÓN"/><State n="03" t="APROBADA"/><State n="04" t="CORREGIR"/></div>
+  <div className="mt-4 rounded-[18px] border border-white/[.06] bg-white/[.02] p-4"><p className="text-[7px] font-black uppercase tracking-[.16em] text-white/26">CONTRATO DE MODERACIÓN</p><p className="mt-2 text-[9px] leading-5 text-white/30">Aprobar cerrará el intento guardando profesor, fecha, devolución y puntaje. Corregir mantendrá la tarea abierta y permitirá reenviar sin borrar el intento anterior.</p></div>
  </section>
 }
+function State({n,t}){return <div className="rounded-[16px] border border-white/[.06] bg-black/15 p-3"><p className="text-[12px] font-black text-amber-100/20">{n}</p><p className="mt-2 text-[6px] font-black tracking-[.12em] text-white/24">{t}</p></div>}
