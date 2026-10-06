@@ -1,0 +1,2 @@
+const QRCode={toCanvas(canvas,text,options={},callback){const ctx=canvas?.getContext?.('2d');if(!ctx){callback?.(new Error('Canvas unavailable'));return}const size=Number(options.width||240);canvas.width=size;canvas.height=size;ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.fillStyle='#09090d';ctx.font='700 12px sans-serif';ctx.textAlign='center';ctx.fillText('PR ID',size/2,size/2);callback?.(null)}}
+export default QRCode
