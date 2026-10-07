@@ -3,64 +3,16 @@ import { useNavigate, Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
 import { isRollerweenActive } from '../lib/rollerween'
+import { isPRNextActive } from '../lib/prNext'
 
 const ROLLERWEEN_ART='/rollerween-logo-original-20261001-r2.png?v=original-r2'
 
-export default function Login() {
-  const [documento, setDocumento] = useState('')
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login, user, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
-  const rollerween = isRollerweenActive()
-
-  useEffect(() => {
-    if (authLoading || !user) return
-    navigate('/app/perfil', { replace: true })
-  }, [authLoading, user, navigate])
-
-  async function handleSubmit(event) {
-    event.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const result = await login(documento, pin)
-      if (result?.error) { setError(result.error); return }
-      if (result?.user?.id && (!['admin','profesor'].includes(result?.user?.role) || result?.user?.documento === '48036677')) {
-        const { data: training } = await (await import('../lib/supabase')).supabase
-          .from('pr_training_enrollments')
-          .select('category')
-          .eq('profile_id', result.user.id)
-          .eq('event_slug','shifter-marathon-2026')
-          .maybeSingle()
-        if (training?.category && training.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
-        else if (training?.category === 'NO') window.localStorage.removeItem('pr_training_visible')
-      }
-      navigate('/app/perfil', { replace: true })
-    } catch {
-      setError('No pudimos iniciar sesión. Revisá tus datos.')
-    } finally { setLoading(false) }
-  }
-
-  if (authLoading || user) return null
-  return (
-    <PublicLayout>
-      <div className="min-h-[calc(100vh-70px)] px-5 py-8 max-w-md mx-auto flex flex-col justify-center">
-        <section className="text-center mb-8 animate-fade-up">
-          {rollerween ? <img src={ROLLERWEEN_ART} alt="RollerWeen Season 2026 · Punta Rollers" className="mx-auto mb-5 h-auto w-[195px] max-w-[60vw] object-contain drop-shadow-[0_0_20px_rgba(183,91,255,.32)]"/> : <div className="w-20 h-20 mx-auto rounded-[26px] grid place-items-center bg-pr-gold/10 border border-pr-gold/20 shadow-[0_20px_55px_rgba(0,0,0,.35)]"><img src="/logo.png" alt="Punta Rollers" className="w-14 h-14 object-contain" /></div>}
-          <p className={rollerween?'pr-rw-kicker mt-2':'section-label mt-6'}>{rollerween?'OCT.01—31 · SEASON 2026':'PuntaRollers.app'}</p>
-          <h1 className={rollerween?'pr-rw-title pr-rw-glitch mt-2 text-[45px] text-white':'font-display text-[38px] leading-none text-white mt-2'}>{rollerween?<>ENTER <span className="pr-rw-purple">ROLLERWEEN.</span></>:'Tu club, en tu bolsillo.'}</h1>
-          <p className="text-white/40 text-sm mt-3 max-w-[290px] mx-auto">{rollerween?'Octubre se vive sobre ruedas. Entrá a tu PR para ver desafíos, preparación y todo lo que se viene.':'Ingresá para ver tu perfil, progreso, beneficios y vida dentro de PR.'}</p>
-        </section>
-        <form onSubmit={handleSubmit} className="pr-panel p-5 space-y-4 animate-fade-up stagger-1">
-          <label className="block"><span className="section-label">Documento</span><input value={documento} onChange={e=>setDocumento(e.target.value)} inputMode="numeric" placeholder="Ej: 12345678" className="input-pr mt-2" /></label>
-          <label className="block"><span className="section-label">PIN personal</span><input value={pin} onChange={e=>setPin(e.target.value)} type="password" inputMode="numeric" placeholder="Ingresá tu PIN" className="input-pr mt-2" /></label>
-          {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300 text-xs text-center">{error}</div>}
-          <button type="submit" disabled={loading} className="btn-gold w-full disabled:opacity-50">{loading?'Ingresando…':rollerween?'ENTRAR A ROLLERWEEN →':'Ingresar a mi cuenta'}</button>
-        </form>
-        <Link to="/" className="text-center text-white/30 text-xs mt-6">Volver al sitio público</Link>
-      </div>
-    </PublicLayout>
-  )
+export default function Login(){
+ const[documento,setDocumento]=useState(''),[pin,setPin]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(false)
+ const{login,user,loading:authLoading}=useAuth();const navigate=useNavigate();const next=isPRNextActive(),rollerween=!next&&isRollerweenActive()
+ useEffect(()=>{if(authLoading||!user)return;navigate(next?'/app/dashboard':'/app/perfil',{replace:true})},[authLoading,user,navigate,next])
+ async function handleSubmit(event){event.preventDefault();setError('');setLoading(true);try{const result=await login(documento,pin);if(result?.error){setError(result.error);return}if(result?.user?.id&&(!['admin','profesor'].includes(result?.user?.role)||result?.user?.documento==='48036677')){const{data:training}=await(await import('../lib/supabase')).supabase.from('pr_training_enrollments').select('category').eq('profile_id',result.user.id).eq('event_slug','shifter-marathon-2026').maybeSingle();if(training?.category&&training.category!=='NO')window.localStorage.setItem('pr_training_visible','1');else if(training?.category==='NO')window.localStorage.removeItem('pr_training_visible')}navigate(next?'/app/dashboard':'/app/perfil',{replace:true})}catch{setError('No pudimos iniciar sesión. Revisá tus datos.')}finally{setLoading(false)}}
+ if(authLoading||user)return null
+ if(next)return <PublicLayout><main className="relative mx-auto flex min-h-[calc(100vh-70px)] w-full max-w-md flex-col justify-center overflow-hidden px-5 py-10 text-white"><div className="pointer-events-none absolute -right-28 top-24 h-72 w-72 rounded-full bg-violet-600/15 blur-3xl"/><div className="pointer-events-none absolute -left-20 bottom-24 h-56 w-56 rounded-full bg-cyan-400/[.07] blur-3xl"/><section className="relative mb-7"><div className="flex items-center justify-between"><div className="grid h-14 w-14 place-items-center rounded-[19px] border border-violet-300/20 bg-violet-400/[.07] text-xl font-black tracking-[-.08em] shadow-[0_0_45px_rgba(124,58,237,.16)]">PR</div><span className="rounded-full border border-violet-300/15 bg-violet-300/[.05] px-3 py-1 text-[8px] font-black tracking-[.18em] text-violet-200/60">PR NEXT · BETA</span></div><p className="mt-8 text-[8px] font-black uppercase tracking-[.26em] text-violet-300/65">PUNTA ROLLERS</p><h1 className="mt-3 text-[42px] font-black leading-[.94] tracking-[-.055em]">TU PR.<br/><span className="text-white/40">NUEVA ETAPA.</span></h1><p className="mt-4 max-w-[330px] text-[12px] leading-6 text-white/38">Entrá a tu espacio. Tareas, asistencia, comunidad, historia y todo lo que construís dentro de Punta Rollers.</p></section><form onSubmit={handleSubmit} className="relative space-y-3 rounded-[30px] border border-white/[.08] bg-[#0d0c12]/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,.45)]"><label className="block"><span className="text-[8px] font-black uppercase tracking-[.18em] text-white/28">Documento</span><input value={documento} onChange={e=>setDocumento(e.target.value)} inputMode="numeric" placeholder="Tu documento" className="mt-2 w-full rounded-[18px] border border-white/[.08] bg-black/30 px-4 py-4 text-sm text-white outline-none transition focus:border-violet-300/35"/></label><label className="block"><span className="text-[8px] font-black uppercase tracking-[.18em] text-white/28">PIN personal</span><input value={pin} onChange={e=>setPin(e.target.value)} type="password" inputMode="numeric" placeholder="Ingresá tu PIN" className="mt-2 w-full rounded-[18px] border border-white/[.08] bg-black/30 px-4 py-4 text-sm text-white outline-none transition focus:border-violet-300/35"/></label>{error&&<div className="rounded-[16px] border border-red-400/15 bg-red-400/[.07] p-3 text-center text-xs text-red-200">{error}</div>}<button type="submit" disabled={loading} className="mt-2 w-full rounded-[18px] bg-gradient-to-r from-violet-600 to-violet-500 px-5 py-4 text-[10px] font-black uppercase tracking-[.15em] shadow-[0_14px_35px_rgba(124,58,237,.22)] disabled:opacity-50">{loading?'Ingresando…':'Entrar a mi PR →'}</button></form><p className="relative mt-5 text-center text-[8px] font-bold uppercase tracking-[.14em] text-white/18">No es solo patinar, es pertenecer.</p></main></PublicLayout>
+ return <PublicLayout><div className="min-h-[calc(100vh-70px)] px-5 py-8 max-w-md mx-auto flex flex-col justify-center"><section className="text-center mb-8">{rollerween?<img src={ROLLERWEEN_ART} alt="RollerWeen Season 2026 · Punta Rollers" className="mx-auto mb-5 h-auto w-[195px] max-w-[60vw] object-contain"/>:<div className="w-20 h-20 mx-auto rounded-[26px] grid place-items-center bg-pr-gold/10 border border-pr-gold/20"><img src="/logo.png" alt="Punta Rollers" className="w-14 h-14 object-contain"/></div>}<p className={rollerween?'pr-rw-kicker mt-2':'section-label mt-6'}>{rollerween?'OCT.01—31 · SEASON 2026':'PuntaRollers.app'}</p><h1 className={rollerween?'pr-rw-title mt-2 text-[45px] text-white':'font-display text-[38px] leading-none text-white mt-2'}>{rollerween?<>ENTER <span className="pr-rw-purple">ROLLERWEEN.</span></>:'Tu club, en tu bolsillo.'}</h1></section><form onSubmit={handleSubmit} className="pr-panel p-5 space-y-4"><label className="block"><span className="section-label">Documento</span><input value={documento} onChange={e=>setDocumento(e.target.value)} inputMode="numeric" placeholder="Ej: 12345678" className="input-pr mt-2"/></label><label className="block"><span className="section-label">PIN personal</span><input value={pin} onChange={e=>setPin(e.target.value)} type="password" inputMode="numeric" placeholder="Ingresá tu PIN" className="input-pr mt-2"/></label>{error&&<div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300 text-xs text-center">{error}</div>}<button type="submit" disabled={loading} className="btn-gold w-full disabled:opacity-50">{loading?'Ingresando…':rollerween?'ENTRAR A ROLLERWEEN →':'Ingresar a mi cuenta'}</button></form><Link to="/" className="text-center text-white/30 text-xs mt-6">Volver al sitio público</Link></div></PublicLayout>
 }

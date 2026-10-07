@@ -9,6 +9,7 @@ import RollerFeedComments from '../components/RollerFeedComments'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CommunityPhoto from '../components/community/CommunityPhoto'
+import { isPRNextActive } from '../lib/prNext'
 
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
@@ -16,6 +17,7 @@ const FEED_FILTERS = [
   { key: 'Cumpleaños', label: 'Cumples' },
   { key: 'Evento', label: 'Eventos' },
 ]
+const NEXT_FEED_FILTERS=FEED_FILTERS.filter(x=>x.key!=='Cumpleaños')
 
 const REACTION_OPTIONS = [
   { key: 'aplauso', icon: '👏', label: 'Grande' },
@@ -1097,6 +1099,7 @@ export default function Activity() {
         (item) =>
           item.type !== 'Insignia' &&
           item.type !== 'Evento' &&
+          (!isPRNextActive() || (item.type !== 'Cumpleaños' && item.type !== 'Moment')) &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
       const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4)
@@ -1333,12 +1336,12 @@ export default function Activity() {
         )}
 
         <div>
-          <PRMomentsRail currentProfileId={currentReactionProfileId} />
+          {!isPRNextActive()&&<PRMomentsRail currentProfileId={currentReactionProfileId} />}
         </div>
 
         <section className="overflow-x-auto -mx-[18px] px-[18px]">
           <div className="flex gap-2 min-w-max">
-            {FEED_FILTERS.map((item) => {
+            {(isPRNextActive()?NEXT_FEED_FILTERS:FEED_FILTERS).map((item) => {
               const active = filter === item.key
 
               return (
