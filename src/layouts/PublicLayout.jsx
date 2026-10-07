@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { isPRNextActive } from '../lib/prNext'
 
 export default function PublicLayout({ children }) {
   const location = useLocation()
   const { user, loading } = useAuth()
+  const next = isPRNextActive()
 
   useEffect(() => {
     const legacyKidsLinks = document.querySelectorAll(
@@ -30,7 +32,7 @@ export default function PublicLayout({ children }) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const profileHref = !loading && user ? '/app/perfil' : '/login'
+  const profileHref = !loading && user ? (next ? '/app/mi-pr' : '/app/perfil') : '/login'
   const profileActive = location.pathname === '/login' || location.pathname.startsWith('/app/')
 
   return (
@@ -64,7 +66,7 @@ export default function PublicLayout({ children }) {
           />
           <NavItem
             href={profileHref}
-            label="Perfil"
+            label={next ? "Mi PR" : "Perfil"}
             icon="profile"
             active={profileActive}
           />
