@@ -18,6 +18,7 @@ const FEED_FILTERS = [
   { key: 'Evento', label: 'Eventos' },
 ]
 const NEXT_FEED_FILTERS=FEED_FILTERS.filter(x=>x.key!=='Cumpleaños')
+const isCommunityOnlyNextItem=(item)=>['Cumpleaños','Moment','SocialPost'].includes(item?.type)
 
 const REACTION_OPTIONS = [
   { key: 'aplauso', icon: '👏', label: 'Grande' },
@@ -1099,7 +1100,7 @@ export default function Activity() {
         (item) =>
           item.type !== 'Insignia' &&
           item.type !== 'Evento' &&
-          (!isPRNextActive() || (item.type !== 'Cumpleaños' && item.type !== 'Moment')) &&
+          (!isPRNextActive() || !isCommunityOnlyNextItem(item)) &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
       const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4)
@@ -1366,12 +1367,12 @@ export default function Activity() {
           <div className="flex items-end justify-between gap-4 mb-3">
             <div>
               <p className="section-label">
-                Comunidad PR
+                {isPRNextActive()?'ROLLERFEED · ACTIVIDAD PR':'Comunidad PR'}
               </p>
 
               <h2 className="font-display text-[27px] text-white mt-1">
                 {filter === 'Todos'
-                  ? 'Lo último sobre ruedas'
+                  ? (isPRNextActive()?'Entrenamientos y novedades':'Lo último sobre ruedas')
                   : filter === 'Cumpleaños'
                     ? 'Cumpleaños'
                     : FEED_FILTERS.find(
