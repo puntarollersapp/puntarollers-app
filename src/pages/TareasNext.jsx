@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import PRCheckTecnicoPreview from '../components/tasks/PRCheckTecnicoPreview'
