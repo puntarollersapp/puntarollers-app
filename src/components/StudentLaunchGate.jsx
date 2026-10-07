@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { PR_LAUNCH, hasLaunchBypass } from '../lib/launch'
+import { isPRNextActive } from '../lib/prNext'
 import { supabase } from '../lib/supabase'
 import RollerweenBriefing from './RollerweenBriefing'
 
@@ -36,6 +37,7 @@ function twoDigits(value) {
 export default function StudentLaunchGate({ user, children }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const next = isPRNextActive()
   const [trainingChecked, setTrainingChecked] = useState(false)
   const target = useMemo(
     () => new Date(STUDENT_LAUNCH_GATE.opensAt).getTime(),
@@ -55,7 +57,7 @@ export default function StudentLaunchGate({ user, children }) {
   useEffect(() => {
     let active = true
     async function ensureTrainingChoice() {
-      if (!user?.id) { if (active) setTrainingChecked(true); return }
+      if (next || !user?.id) { if (active) setTrainingChecked(true); return }
       const isTreasury = user?.esTesoreria === true || user?.es_tesoreria === true
       const isStaff = user?.role === 'admin' || user?.role === 'profesor'
       const shouldAsk = !isTreasury && (!isStaff || user?.documento === '48036677')
@@ -80,7 +82,7 @@ export default function StudentLaunchGate({ user, children }) {
     }
     ensureTrainingChoice()
     return () => { active = false }
-  }, [user?.id, user?.role, user?.documento, user?.esTesoreria, user?.es_tesoreria, location.pathname, navigate])
+  }, [next, user?.id, user?.role, user?.documento, user?.esTesoreria, user?.es_tesoreria, location.pathname, navigate])
 
   useEffect(() => {
     if (!locked) return undefined
