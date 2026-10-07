@@ -99,7 +99,7 @@ export default function StudentLaunchGate({ user, children }) {
     return (
       <>
         {children}
-        <RollerweenBriefing user={user} />
+        {!next && <RollerweenBriefing user={user} />}
       </>
     )
   }
