@@ -6,7 +6,7 @@ import { isChristmasSeasonActive, PR_SEASON_ASSETS } from '../lib/prSeason'
 const ROLLERWEEN_ART='/rollerween-logo-original-20261001-r2.png?v=original-r2'
 
 export default function LoadingScreen({onDone}){
- const[leaving,setLeaving]=useState(false),christmas=isChristmasSeasonActive(),next=isPRNextActive(),rollerween=!next&&!christmas&&isRollerweenActive()
+ const[leaving,setLeaving]=useState(false),next=isPRNextActive(),christmas=!next&&isChristmasSeasonActive(),rollerween=!next&&!christmas&&isRollerweenActive()
  useEffect(()=>{const t1=setTimeout(()=>setLeaving(true),2400),t2=setTimeout(()=>onDone?.(),2900);return()=>{clearTimeout(t1);clearTimeout(t2)}},[onDone])
  const background=christmas?'radial-gradient(circle at 50% 44%,rgba(159,23,42,.18),transparent 38%),linear-gradient(180deg,#09090a,#020203)':next?'radial-gradient(circle at 50% 40%,rgba(124,58,237,.20),transparent 34%),radial-gradient(circle at 75% 30%,rgba(34,211,238,.07),transparent 24%),linear-gradient(180deg,#09080d,#020203)':rollerween?'radial-gradient(circle at 50% 38%,rgba(116,38,190,.20),transparent 36%),linear-gradient(180deg,#070509,#020203)':'radial-gradient(ellipse 80% 60% at 50% 40%,#0d0d22 0%,#050508 100%)'
  return <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${leaving?'pointer-events-none opacity-0':'opacity-100'}`} style={{background}}>
