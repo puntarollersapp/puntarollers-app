@@ -1,15 +1,19 @@
 -- PREPARED ONLY: do not execute without staging tests and a recoverable backup.
 -- The current trigger uses current_user in a SECURITY DEFINER function owned by postgres.
+-- SECURITY INVOKER is essential: payment RPCs may execute as postgres, whereas
+-- direct client UPDATE statements execute as authenticated.
 -- Fix privilege escalation without modifying historical payments.
 CREATE OR REPLACE FUNCTION public.proteger_campos_profile()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = public
 AS $$
 BEGIN
-  -- current_user is NOT the caller for SECURITY DEFINER functions.
-  IF auth.role() = 'service_role' OR public.soy_admin() THEN
+  -- SECURITY INVOKER: current_user is the effective role of the statement.
+  -- Trusted SECURITY DEFINER payment RPCs run as postgres, while a direct
+  -- browser UPDATE runs as authenticated. Never switch this back to DEFINER.
+  IF current_user IN ('postgres', 'service_role') OR public.soy_admin() THEN
     RETURN NEW;
   END IF;
 
