@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { getCupos } from '../data/cupos'
@@ -251,13 +251,6 @@ export default function Home() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const totalCupos = useMemo(() => (
-    Number(cupos?.miercoles?.principiantes || 0) +
-    Number(cupos?.miercoles?.avanzado || 0) +
-    Number(cupos?.sabado?.kids || 0) +
-    Number(cupos?.sabado?.adultos || 0)
-  ), [cupos])
-
   return (
     <PublicLayout>
       <main className="overflow-hidden bg-[#050508] text-white">
@@ -291,7 +284,7 @@ export default function Home() {
 
               <div className="mt-9 grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 pt-5">
                 <HeroStat value="10" label="años juntos" />
-                <HeroStat value={totalCupos} label="cupos hoy" />
+                <HeroStat value="3" label="turnos semanales" />
                 <HeroStat value="2" label="sedes PR" />
               </div>
             </div>
@@ -311,7 +304,7 @@ export default function Home() {
 
           {/* CLASES + CUPOS: PRIORIDAD */}
           <section id="clases" className="scroll-mt-8 pt-10">
-            <SectionTitle emoji="🛼" eyebrow="Clases PR" title="Elegí cuándo rodar." text="Horarios, ubicación y cupos reales. Todo a mano." />
+            <SectionTitle emoji="🛼" eyebrow="Clases PR" title="Elegí cuándo rodar." text="Horarios y ubicaciones. Confirmá la disponibilidad antes de inscribirte." />
 
             <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-white/[.05] p-1.5">
               <DayButton active={day === 'miercoles'} onClick={() => setDay('miercoles')}>Miércoles</DayButton>
@@ -323,7 +316,7 @@ export default function Home() {
                 <ClassRow emoji="🌊" title="Clases mixtas" subtitle="Principiantes · Intermedios · Avanzados" time="19:30 — 20:30" location="Parada 2 · Punta del Este" seats={cupos.miercoles.principiantes} />
               ) : (
                 <>
-                  <ClassRow emoji="☀️" title="Adultos mixtos" subtitle="Clase al aire libre" time="09:00 — 10:00" location="Parada 2 · Punta del Este" seats={cupos.miercoles.avanzado} />
+                  <ClassRow emoji="☀️" title="Adultos mixtos" subtitle="Clase al aire libre" time="09:00 — 10:00" location="Parada 2 · Punta del Este" seats={null} />
                   <ClassRow emoji="🧒" title="PR Kids" subtitle="Pista cerrada" time="19:00 — 20:00" location="Maldonado · Indoor" seats={cupos.sabado.kids} />
                   <ClassRow emoji="⚡" title="Adultos mixtos" subtitle="Pista cerrada" time="20:00 — 21:00" location="Maldonado · Indoor" seats={cupos.sabado.adultos} />
                 </>
@@ -626,7 +619,7 @@ function ClassRow({ emoji, title, subtitle, time, location, seats }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div><h3 className="text-sm font-black">{title}</h3><p className="mt-0.5 text-[11px] text-white/40">{subtitle}</p></div>
-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${low ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{seats} cupos</span>
+            {seats == null ? <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black text-white/70">Consultar cupos</span> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${low ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{seats} cupos</span>}
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/55"><span>🕐 {time}</span><span>📍 {location}</span></div>
         </div>
