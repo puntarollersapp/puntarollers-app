@@ -18,17 +18,18 @@ export function validateTrainingDraft(draft) {
   if (String(draft.title || '').trim().length < 5) errors.push('El título necesita al menos 5 caracteres')
   if (String(draft.objective || '').trim().length < 10) errors.push('El objetivo necesita al menos 10 caracteres')
   if (draft.cycle && !/^\d{4}-(0[1-9]|1[0-2])$/.test(draft.cycle)) errors.push('El ciclo debe tener formato AAAA-MM')
-  if (!Array.isArray(draft.variants) || draft.variants.length !== 2 || TRAINING_PATHS.some(path => !draft.variants.some(v => v.path === path))) {
+  if (!Array.isArray(draft.variants) || draft.variants.length !== 2 || new Set(draft.variants.map(v => v?.path)).size !== 2 || TRAINING_PATHS.some(path => !draft.variants.some(v => v?.path === path))) {
     errors.push('Deben existir los dos recorridos internos')
     return errors
   }
   for (const variant of draft.variants) {
-    if (!['CON_TACO', 'SIN_TACO', 'AMBOS'].includes(variant.equipment)) errors.push('Condición de equipo inválida')
-    if (!Array.isArray(variant.steps) || variant.steps.length === 0) {
+    if (!variant || !['CON_TACO', 'SIN_TACO', 'AMBOS'].includes(variant.equipment)) errors.push('Condición de equipo inválida')
+    if (!variant || !Array.isArray(variant.steps) || variant.steps.length === 0) {
       errors.push('Faltan pasos para el recorrido ' + variant.path)
       continue
     }
     for (const step of variant.steps) {
+      if (!step || typeof step !== 'object') { errors.push('Paso vacío o inválido'); continue }
       if (!['PRACTICA', 'EVIDENCIA'].includes(step.kind)) errors.push('Tipo de paso inválido')
       if (String(step.instructions || '').trim().length < 10) errors.push('Un paso necesita instrucciones')
       if (step.kind === 'EVIDENCIA' && !TRAINING_EVIDENCE.includes(step.evidence)) errors.push('Tipo de evidencia inválido')
