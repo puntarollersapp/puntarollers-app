@@ -1,5 +1,5 @@
-import {useState} from 'react'
-import {Link} from 'react-router-dom'
+import {useEffect,useState} from 'react'
+import {Link,useSearchParams} from 'react-router-dom'
 import {supabase} from '../lib/supabase'
 import {useAuth} from '../lib/auth'
 import './PRKidsInscripciones2026.css'
@@ -8,7 +8,10 @@ const initial={nombre_tutor:'',documento_tutor:'',email_tutor:'',telefono_tutor:
 function Input({label,value,onChange,type='text',placeholder,required=true}){return <label className="full"><span>{label}</span><input required={required} type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/></label>}
 export default function PRKidsClub(){
  const {user}=useAuth()
+ const [params]=useSearchParams()
  const [stage,setStage]=useState('home'),[data,setData]=useState(initial),[hijos,setHijos]=useState([{nombre:''}]),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
+ useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('');setBusy(true);try{
  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
@@ -21,25 +24,25 @@ export default function PRKidsClub(){
   {stage==='home'&&<section className="prk-stage prk-stage-home">
    <span className="prk-home-topline">✦ BIENVENIDOS A PR KIDS CLUB ✦</span>
    <h1 className="prk-home-title">PEQUEÑOS<br/><em>GRANDES LOGROS.</em></h1>
-   <p className="prk-lead prk-home-lead">¡Los chicos también tendrán su propio perfil en Punta Rollers, igual que los adultos! Un espacio para que madres, padres y tutores acompañen su aventura: ver lo que practicamos en cada clase, guardar fotos autorizadas, seguir las asistencias y celebrar sus logros.</p>
-   <div className="prk-home-ribbon">UN PERFIL PARA CADA PEQUEÑO ROLLER</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Si tenés dos o más hijos en PR Kids, vas a poder verlos desde una misma cuenta familiar. Cada uno tendrá sus propios recuerdos, sellos e insignias.</p>
+   <p className="prk-lead prk-home-lead">En nuestra escuela, cada pequeño avance cuenta. Por eso creamos un espacio para las familias dentro de puntarollers.com, donde cada niño tendrá su propio perfil, como ya sucede con los alumnos adultos.</p>
+   <div className="prk-home-ribbon">UN PERFIL PARA CADA PEQUEÑO ROLLER</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Vas a poder conocer qué practicamos los sábados, ver recuerdos de las clases, acompañar sus progresos y descubrir sus nuevas insignias. Si vienen hermanos, los dos estarán en tu misma cuenta.</p>
    <div className="prk-quick-grid prk-quick-grid-home">{features.map(([icon,title,desc,color])=><article className={color} key={title}><span>{icon}</span><div><b>{title}</b><small>{desc}</small></div></article>)}</div>
-   <button className="prk-primary" onClick={()=>setStage('form')}>SOLICITAR ACCESO FAMILIAR →</button>
-   <Link to={user?'/app/perfil':'/login'} className="mt-5 block text-center text-sm font-bold text-white/60 underline underline-offset-4">Ya tengo cuenta en Punta Rollers</Link>
-   <p className="mt-6 text-xs leading-5 text-white/40">Los accesos familiares requieren aprobación de Punta Rollers. No se crean perfiles infantiles públicos.</p>
+   <button className="prk-primary" onClick={()=>setStage('form')}>{user?'VINCULAR A MI HIJO/A →':'CREAR NUESTRO ACCESO FAMILIAR →'}</button>
+   {!user&&<Link to="/login?next=%2Fkids%3Fregistro%3D1" className="mt-5 block text-center text-sm font-bold text-white/60 underline underline-offset-4">Ya soy alumno de Punta Rollers · Ingresar con mi documento y PIN</Link>}
+   <p className="mt-6 text-xs leading-5 text-white/40">La solicitud es gratuita. Después de verificar los datos, habilitaremos el acceso a los perfiles familiares.</p>
   </section>}
   {stage==='form'&&<section className="prk-stage">
    <button type="button" className="prk-back" onClick={()=>setStage('home')}>← Volver</button>
    <p className="prk-kicker">ACCESO FAMILIAR · PR KIDS</p><h1>¡HOLA,<br/>FAMILIA ROLLER!</h1>
-   <p className="prk-lead">Primero necesitamos los datos del adulto que ingresará a la plataforma. Después agregás a tu hijo o hija, y si son hermanos podés incluirlos en la misma solicitud.</p>
+   <p className="prk-lead">Completá los datos del adulto que va a ingresar a la cuenta. Después contanos qué niño o niños de PR Kids querés vincular.</p>
    <form onSubmit={submit}>
     <h2 className="prk-section-label">01 / Tu cuenta como adulto responsable</h2><p className="mb-4 text-sm leading-6 text-white/60">Estos datos son del <strong className="text-white">padre, madre o tutor</strong>, NO del niño. El documento del adulto será el que se use para iniciar sesión en Punta Rollers.</p>
     <div className="prk-form-grid">
-     <Input label="Nombre y apellido" value={data.nombre_tutor} onChange={v=>set('nombre_tutor',v)} placeholder="Nombre completo"/>
-     <Input label="Documento del padre, madre o tutor (para ingresar)" value={data.documento_tutor} onChange={v=>set('documento_tutor',v.replace(/\D/g,'').slice(0,12))} placeholder="Sin puntos"/>
+     <Input label="Nombre y apellido del adulto" value={data.nombre_tutor} onChange={v=>set('nombre_tutor',v)} placeholder="Nombre completo"/>
+     <Input label="Cédula del adulto (con esta ingresás a la plataforma)" value={data.documento_tutor} onChange={v=>set('documento_tutor',v.replace(/\D/g,'').slice(0,12))} placeholder="Sin puntos"/>
      <Input label="Correo electrónico" type="email" value={data.email_tutor} onChange={v=>set('email_tutor',v)} placeholder="nombre@email.com"/>
      <Input label="WhatsApp" type="tel" value={data.telefono_tutor} onChange={v=>set('telefono_tutor',v)} placeholder="099 123 456"/>
-     <label className="full"><span>¿Ya sos alumno de Punta Rollers?</span><select value={String(data.es_alumno)} onChange={e=>set('es_alumno',e.target.value==='true')}><option value="false">No, solo soy madre/padre/tutor</option><option value="true">Sí, ya tengo documento y PIN</option></select></label>
+     <label className="full"><span>¿Ya tenés perfil de alumno adulto en Punta Rollers?</span><select value={String(data.es_alumno)} onChange={e=>set('es_alumno',e.target.value==='true')}><option value="false">No, solo soy madre/padre/tutor</option><option value="true">Sí, ya tengo documento y PIN</option></select></label>
     </div>
     <h2 className="prk-section-label adult">02 / Tus pequeños rollers</h2><p className="mb-4 text-sm leading-6 text-white/60">Escribí el nombre completo del niño o niña que asiste a PR Kids. ¿También viene su hermano o hermana? Agregalo acá, sin hacer otra solicitud.</p>
     <div className="prk-form-grid">
