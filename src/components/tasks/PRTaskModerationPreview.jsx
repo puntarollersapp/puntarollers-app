@@ -8,7 +8,7 @@ export default function PRTaskModerationPreview(){
    <p className="mx-auto mt-2 max-w-[370px] text-[8px] leading-4 text-white/24">La interfaz queda lista para recibir únicamente evidencias reales cuando pasemos la capa de permisos y almacenamiento.</p>
   </div>
   <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><State n="01" t="PENDIENTE"/><State n="02" t="EN REVISIÓN"/><State n="03" t="APROBADA"/><State n="04" t="CORREGIR"/></div>
-  <div className="mt-4 rounded-[18px] border border-white/[.06] bg-white/[.02] p-4"><p className="text-[7px] font-black uppercase tracking-[.16em] text-white/26">CONTRATO DE MODERACIÓN</p><p className="mt-2 text-[9px] leading-5 text-white/30">Aprobar cerrará el intento guardando profesor, fecha, devolución y puntaje. Corregir mantendrá la tarea abierta y permitirá reenviar sin borrar el intento anterior.</p></div>
+  <div className="mt-4 rounded-[18px] border border-white/[.06] bg-white/[.02] p-4"><p className="text-[7px] font-black uppercase tracking-[.16em] text-white/26">CONTRATO DE MODERACIÓN</p><p className="mt-2 text-[9px] leading-5 text-white/30">Aprobar cerrará el intento guardando profesor, fecha, devolución técnica. Solicitar corrección conservará la participación y mantendrá la tarea abierta y permitirá reenviar sin borrar el intento anterior.</p></div>
  </section>
 }
 function State({n,t}){return <div className="rounded-[16px] border border-white/[.06] bg-black/15 p-3"><p className="text-[12px] font-black text-amber-100/20">{n}</p><p className="mt-2 text-[6px] font-black tracking-[.12em] text-white/24">{t}</p></div>}
