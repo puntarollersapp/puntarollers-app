@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
 import { isRollerweenActive } from '../lib/rollerween'
@@ -13,12 +13,15 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const next = params.get('next')
+  const destination = next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\') ? next : '/app/perfil'
   const rollerween = isRollerweenActive()
 
   useEffect(() => {
     if (authLoading || !user) return
-    navigate('/app/perfil', { replace: true })
-  }, [authLoading, user, navigate])
+    navigate(destination, { replace: true })
+  }, [authLoading, user, navigate, destination])
 
   async function handleSubmit(event) {
     event.preventDefault()
