@@ -118,6 +118,22 @@ export default function PRTesoreria(){
     if(!window.confirm(`Registrar ${money(amount)} para ${profile.nombre} ${profile.apellido||''} · ${monthLabel(periodo)} · ${form.metodo}?`))return
     setBusy(true);setMsg('')
     try{
+      // Revalidar contra Supabase: la lista local puede estar desactualizada si
+      // Claudio y Lucía tienen Tesorería abierta en dispositivos distintos.
+      // Esto reduce dobles cobros, pero el bloqueo atómico debe estar en el RPC.
+      const {data:latestDue,error:latestDueError}=await supabase
+        .from('pr_mensualidades')
+        .select('estado')
+        .eq('alumno_id',profile.id)
+        .eq('periodo',periodo)
+        .maybeSingle()
+      if(latestDueError)throw new Error('No se pudo verificar el estado actual del pago. No se registró ningún cobro. Actualizá Tesorería e intentá nuevamente.')
+      if(latestDue?.estado==='pagado'){
+        await load()
+        setSelected(null)
+        setMsg('Este alumno ya figura como PAGADO en Supabase. Es posible que otro integrante de Tesorería lo haya registrado. No se generó un nuevo cobro.')
+        return
+      }
       const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
       const {error}=await supabase.rpc('pr_registrar_mensualidad',{
         p_alumno_id:profile.id,p_periodo:periodo,p_monto:amount,
