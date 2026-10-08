@@ -19,11 +19,11 @@ test('publishing cycles is admin-only and reviewing requires staff authorization
 })
 
 test('feed events never include private evidence or pathway and require consent', () => {
-  const base = { submissionId: 'sub-1', studentDisplayName: 'Alumna', taskPublicTitle: 'Frenado', studentFeedConsent: true }
+  const base = { assignmentId: 'assignment-1', studentDisplayName: 'Alumna', taskPublicTitle: 'Frenado', studentFeedConsent: true }
   assert.equal(publicTrainingCompletionEvent({ ...base, isMinor: true, guardianConsent: false }), null)
   const event = publicTrainingCompletionEvent({ ...base, isMinor: true, guardianConsent: true, evidenceUrl: 'private', path: 'BASE', teacherFeedback: 'private' })
   assert.deepEqual(Object.keys(event).sort(), ['eventType', 'idempotencyKey', 'studentDisplayName', 'taskPublicTitle'])
-  assert.equal(event.idempotencyKey, 'training-completed:sub-1')
+  assert.equal(event.idempotencyKey, 'training-completed:assignment-1')
 })
 
 test('uploads reject missing types, oversized and empty files', () => {
@@ -32,4 +32,12 @@ test('uploads reject missing types, oversized and empty files', () => {
   assert.equal(isAllowedTrainingUpload({ ...base, bytes: 3000 }), false)
   assert.equal(isAllowedTrainingUpload({ ...base, bytes: 0 }), false)
   assert.equal(isAllowedTrainingUpload({ ...base, mimeType: 'application/octet-stream' }), false)
+})
+
+test('re-submissions keep one public completion key', () => {
+  const base = { assignmentId: 'assignment-1', studentDisplayName: 'Alumna', taskPublicTitle: 'Frenado', studentFeedConsent: true }
+  const first = publicTrainingCompletionEvent({ ...base, submissionId: 'attempt-1' })
+  const corrected = publicTrainingCompletionEvent({ ...base, submissionId: 'attempt-2' })
+  assert.equal(first.idempotencyKey, corrected.idempotencyKey)
+  assert.equal(publicTrainingCompletionEvent({ submissionId: 'attempt-3', studentFeedConsent: true, studentDisplayName: 'Alumna', taskPublicTitle: 'Frenado' }), null)
 })
