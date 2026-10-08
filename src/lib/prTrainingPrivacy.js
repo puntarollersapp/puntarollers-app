@@ -19,14 +19,14 @@ export function mayReviewTrainingSubmission({ viewerRole, isAuthorizedTeacher = 
 }
 
 // Never return media, student path, teacher feedback or review status to RollerFeed.
-export function publicTrainingCompletionEvent({ submissionId, studentDisplayName, taskPublicTitle, studentFeedConsent, isMinor, guardianConsent }) {
-  if (!submissionId || !studentFeedConsent || (isMinor && !guardianConsent)) return null
+export function publicTrainingCompletionEvent({ assignmentId, studentDisplayName, taskPublicTitle, studentFeedConsent, isMinor, guardianConsent }) {
+  if (!assignmentId || !studentFeedConsent || (isMinor && !guardianConsent)) return null
   const name = String(studentDisplayName || '').trim()
   const title = String(taskPublicTitle || '').trim()
   if (!name || !title) return null
   return {
     eventType: 'TRAINING_COMPLETED',
-    idempotencyKey: 'training-completed:' + String(submissionId),
+    idempotencyKey: 'training-completed:' + String(assignmentId),
     studentDisplayName: name,
     taskPublicTitle: title,
   }
