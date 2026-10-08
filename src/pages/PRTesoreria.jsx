@@ -151,6 +151,21 @@ export default function PRTesoreria(){
     if(!window.confirm(`${estado==='bonificado'?'Bonificar sin cobrar':'Registrar acuerdo de pago para'} ${profile.nombre} ${profile.apellido||''} · ${monthLabel(periodo)}?`))return
     setBusy(true);setMsg('')
     try{
+      // Evitar que una pantalla desactualizada cambie a bonificado/acuerdo
+      // una mensualidad que otra persona acaba de acreditar como pagada.
+      const {data:latestDue,error:latestDueError}=await supabase
+        .from('pr_mensualidades')
+        .select('estado')
+        .eq('alumno_id',profile.id)
+        .eq('periodo',periodo)
+        .maybeSingle()
+      if(latestDueError)throw new Error('No se pudo verificar el estado actual. No se modificó la mensualidad.')
+      if(latestDue?.estado==='pagado'){
+        await load()
+        setSelected(null)
+        setMsg('Esta mensualidad ya figura como PAGADA. No se cambió a bonificación ni acuerdo. Revisá el pago registrado.')
+        return
+      }
       const by=`${user?.nombre||''} ${user?.apellido||''}`.trim()||'Tesorería PR'
       const {error}=await supabase.rpc('pr_marcar_mensualidad_especial',{
         p_alumno_id:profile.id,p_periodo:periodo,p_estado:estado,p_gracia_hasta:gracia_hasta,
