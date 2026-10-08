@@ -52,7 +52,7 @@ export default function PRTesoreria(){
       await supabase.functions.invoke('pr-tesoreria-montos',{body:{action:'sync',periodo}})
       await supabase.rpc('pr_actualizar_estado_mensualidades')
       const [{data:p,error:pe},{data:d,error:de},{data:m,error:me},{data:c,error:ce}] = await Promise.all([
-        supabase.from('profiles').select('id,nombre,apellido,telefono,email,foto,role,estado,auth_user_id,es_solo_personalizadas').eq('role','alumno').neq('estado','Inactivo').eq('es_solo_personalizadas',false).order('nombre'),
+        supabase.from('profiles').select('id,nombre,apellido,telefono,email,foto,role,estado,auth_user_id,es_solo_personalizadas,es_tesoreria,exento_mensualidad').eq('role','alumno').neq('estado','Inactivo').eq('es_solo_personalizadas',false).eq('es_tesoreria',false).eq('exento_mensualidad',false).order('nombre'),
         supabase.from('pr_mensualidades').select('*').eq('periodo',periodo).order('created_at'),
         supabase.from('pr_tesoreria_movimientos').select('*').gte('fecha',periodo).lt('fecha',new Date(new Date(periodo+'T12:00:00').setMonth(new Date(periodo+'T12:00:00').getMonth()+1)).toISOString().slice(0,10)).order('fecha',{ascending:false}),
         supabase.from('pr_tesoreria_config').select('*').eq('id',1).single()
