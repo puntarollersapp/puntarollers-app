@@ -1,0 +1,24 @@
+name: PR NEXT Training checks
+on:
+  push:
+    branches:
+      - beta/pr-next-work-batch
+    paths:
+      - 'src/lib/prTraining*.js'
+      - 'tests/prTraining*.test.js'
+      - 'package.json'
+      - '.github/workflows/pr-next-training.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  training:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Training unit tests
+        run: npm run test:training
