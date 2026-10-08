@@ -311,7 +311,7 @@ export default function Home() {
 
           {/* CLASES + CUPOS: PRIORIDAD */}
           <section id="clases" className="scroll-mt-8 pt-10">
-            <SectionTitle emoji="🛼" eyebrow="Clases PR" title="Elegí cuándo rodar." text="Horarios, ubicación y cupos reales. Todo a mano." />
+            <SectionTitle emoji="🛼" eyebrow="Clases PR" title="Elegí cuándo rodar." text="Horarios y ubicaciones. Confirmá la disponibilidad antes de inscribirte." />
 
             <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-white/[.05] p-1.5">
               <DayButton active={day === 'miercoles'} onClick={() => setDay('miercoles')}>Miércoles</DayButton>
