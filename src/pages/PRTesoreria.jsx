@@ -16,6 +16,7 @@ function statusMeta(row,profile){
   if(row?.estado==='bonificado') return ['BONIFICADO','bg-sky-500/15 text-sky-300 border-sky-400/20']
   if(row?.estado==='acuerdo') return ['ACUERDO','bg-violet-500/15 text-violet-300 border-violet-400/20']
   if(row?.estado==='vencido') return ['VENCIDO','bg-red-500/15 text-red-300 border-red-400/20']
+  if(row?.estado==='pendiente' && row?.vencimiento && today()<=String(row.vencimiento).slice(0,10)) return ['EN PLAZO','bg-sky-500/15 text-sky-200 border-sky-400/20']
   return ['PENDIENTE','bg-amber-500/15 text-amber-200 border-amber-400/20']
 }
 
