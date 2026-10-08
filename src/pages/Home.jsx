@@ -323,7 +323,7 @@ export default function Home() {
                 <ClassRow emoji="🌊" title="Clases mixtas" subtitle="Principiantes · Intermedios · Avanzados" time="19:30 — 20:30" location="Parada 2 · Punta del Este" seats={cupos.miercoles.principiantes} />
               ) : (
                 <>
-                  <ClassRow emoji="☀️" title="Adultos mixtos" subtitle="Clase al aire libre" time="09:00 — 10:00" location="Parada 2 · Punta del Este" seats={cupos.miercoles.avanzado} />
+                  <ClassRow emoji="☀️" title="Adultos mixtos" subtitle="Clase al aire libre" time="09:00 — 10:00" location="Parada 2 · Punta del Este" seats={null} />
                   <ClassRow emoji="🧒" title="PR Kids" subtitle="Pista cerrada" time="19:00 — 20:00" location="Maldonado · Indoor" seats={cupos.sabado.kids} />
                   <ClassRow emoji="⚡" title="Adultos mixtos" subtitle="Pista cerrada" time="20:00 — 21:00" location="Maldonado · Indoor" seats={cupos.sabado.adultos} />
                 </>
@@ -626,7 +626,7 @@ function ClassRow({ emoji, title, subtitle, time, location, seats }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div><h3 className="text-sm font-black">{title}</h3><p className="mt-0.5 text-[11px] text-white/40">{subtitle}</p></div>
-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${low ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{seats} cupos</span>
+            {seats == null ? <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black text-white/70">Consultar cupos</span> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${low ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{seats} cupos</span>}
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/55"><span>🕐 {time}</span><span>📍 {location}</span></div>
         </div>
