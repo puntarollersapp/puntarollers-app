@@ -9,7 +9,7 @@ export default function TrainingBuilderV2() {
   const [initialDraft] = useState(() => {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(STORE_KEY) || 'null')
-      return parsed && parsed.version === 2 && Array.isArray(parsed.variants) && parsed.variants.length === 2 ? parsed : newTrainingDraft()
+      return parsed && parsed.version === 2 && Array.isArray(parsed.variants) && parsed.variants.length === 2 && parsed.variants.every(v => v && Array.isArray(v.steps) && v.steps.every(step => step && typeof step === 'object')) ? parsed : newTrainingDraft()
     } catch { return newTrainingDraft() }
   })
   const [draft, setDraft] = useState(initialDraft)
