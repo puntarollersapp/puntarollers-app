@@ -86,10 +86,11 @@ export default function PRTesoreria(){
   }),[merged,query,filter,isAdmin,unlinkedOpen])
 
   const stats=useMemo(()=>{
-    const paid=dues.filter(x=>x.estado==='pagado')
-    const special=dues.filter(x=>['bonificado','acuerdo'].includes(x.estado))
-    const pending=dues.filter(x=>x.estado==='pendiente')
-    const overdue=dues.filter(x=>x.estado==='vencido')
+    const visibleDues=merged.filter(x=>String(x.estado||'').toLowerCase()!=='pausado').map(x=>x.due).filter(Boolean)
+    const paid=visibleDues.filter(x=>x.estado==='pagado')
+    const special=visibleDues.filter(x=>['bonificado','acuerdo'].includes(x.estado))
+    const pending=visibleDues.filter(x=>x.estado==='pendiente')
+    const overdue=visibleDues.filter(x=>x.estado==='vencido')
     const ingresos=moves.filter(x=>x.tipo==='ingreso').reduce((a,b)=>a+Number(b.monto||0),0)
     const gastos=moves.filter(x=>x.tipo==='gasto').reduce((a,b)=>a+Number(b.monto||0),0)
     const income=moves.filter(x=>x.tipo==='ingreso'&&x.categoria==='mensualidad')
@@ -97,7 +98,7 @@ export default function PRTesoreria(){
     const lucia=income.filter(x=>x.metodo==='Transferencia Lucía').reduce((a,b)=>a+Number(b.monto||0),0)
     const totalPagado=income.reduce((a,b)=>a+Number(b.monto||0),0)
     return {paid,special,pending,overdue,ingresos,gastos,saldo:ingresos-gastos,claudio,lucia,totalPagado}
-  },[dues,moves])
+  },[merged,moves])
 
   async function registerPayment(profile, form){
     if(busy)return
