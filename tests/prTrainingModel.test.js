@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { addTrainingStep, countsAsSubmitted, newTrainingDraft, participationPercent, validateTrainingDraft } from '../src/lib/prTrainingModel.js'
+import { addTrainingStep, countsAsSubmitted, newTrainingDraft, participationPercent, validateTrainingDraft, nextTrainingStatus, trainingProgressSnapshot } from '../src/lib/prTrainingModel.js'
 
 test('a fresh draft requires title, objective and both pathway steps', () => {
   const draft = newTrainingDraft()
@@ -38,4 +38,23 @@ test('participation counts valid submissions, not technical approvals', () => {
   assert.equal(countsAsSubmitted('CORRECCION_SOLICITADA'), true)
   assert.equal(countsAsSubmitted('REENVIO_EN_REVISION'), true)
   assert.equal(countsAsSubmitted('BORRADOR'), false)
+})
+
+test('review state machine rejects invalid and premature actions', () => {
+  assert.equal(nextTrainingStatus('PENDIENTE', 'APPROVE'), null)
+  assert.equal(nextTrainingStatus('PENDIENTE', 'SUBMIT'), 'CUMPLIDO_EN_REVISION')
+  assert.equal(nextTrainingStatus('CUMPLIDO_EN_REVISION', 'REQUEST_CORRECTION'), 'CORRECCION_SOLICITADA')
+  assert.equal(nextTrainingStatus('CORRECCION_SOLICITADA', 'RESUBMIT'), 'REENVIO_EN_REVISION')
+  assert.equal(nextTrainingStatus('REENVIO_EN_REVISION', 'APPROVE'), 'APROBADO')
+  assert.equal(nextTrainingStatus('APROBADO', 'SUBMIT'), null)
+})
+
+test('optional practice never changes required participation', () => {
+  const snapshot = trainingProgressSnapshot([
+    { required: true, status: 'CORRECCION_SOLICITADA' },
+    { required: true, status: 'PENDIENTE' },
+    { required: false, status: 'APROBADO' },
+  ])
+  assert.deepEqual(snapshot, { required: 2, submitted: 1, percentage: 50 })
+  assert.equal(trainingProgressSnapshot([]).percentage, null)
 })
