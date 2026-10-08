@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:training": "node --test tests/prTrainingModel.test.js"
+    "test:training": "node --test tests/prTrainingModel.test.js tests/prTrainingPrivacy.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
