@@ -25,7 +25,7 @@ export function validateTrainingDraft(draft) {
   for (const variant of draft.variants) {
     if (!variant || !['CON_TACO', 'SIN_TACO', 'AMBOS'].includes(variant.equipment)) errors.push('Condición de equipo inválida')
     if (!variant || !Array.isArray(variant.steps) || variant.steps.length === 0) {
-      errors.push('Faltan pasos para el recorrido ' + variant.path)
+      errors.push('Faltan pasos para el recorrido ' + (variant?.path || 'desconocido'))
       continue
     }
     for (const step of variant.steps) {
