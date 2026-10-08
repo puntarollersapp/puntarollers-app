@@ -47,3 +47,26 @@ export function addTrainingStep(draft, path, kind = 'PRACTICA') {
       : variant),
   }
 }
+
+export const TRAINING_REVIEW_EVENTS = ['SUBMIT', 'REQUEST_CORRECTION', 'RESUBMIT', 'APPROVE']
+
+// A pure state machine: persistence, permissions, audit and notifications belong to the backend.
+export function nextTrainingStatus(current, event) {
+  const transitions = {
+    PENDIENTE: { SUBMIT: 'CUMPLIDO_EN_REVISION' },
+    BORRADOR: { SUBMIT: 'CUMPLIDO_EN_REVISION' },
+    CUMPLIDO_EN_REVISION: { REQUEST_CORRECTION: 'CORRECCION_SOLICITADA', APPROVE: 'APROBADO' },
+    CORRECCION_SOLICITADA: { RESUBMIT: 'REENVIO_EN_REVISION' },
+    REENVIO_EN_REVISION: { REQUEST_CORRECTION: 'CORRECCION_SOLICITADA', APPROVE: 'APROBADO' },
+    APROBADO: {},
+  }
+  if (!TRAINING_REVIEW_EVENTS.includes(event) || !Object.hasOwn(transitions, current)) return null
+  return transitions[current][event] || null
+}
+
+export function trainingProgressSnapshot(assignments) {
+  if (!Array.isArray(assignments)) return null
+  const required = assignments.filter(a => a && a.required === true)
+  const submitted = required.filter(a => countsAsSubmitted(a.status)).length
+  return { required: required.length, submitted, percentage: participationPercent(required.length, submitted) }
+}
