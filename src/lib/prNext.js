@@ -16,7 +16,7 @@ export function isPRNextPreview(){
 export function isPRNextActive(now=new Date()){
   if(import.meta.env.VITE_PR_NEXT_FORCE_OFF==='true')return false
   if(isPRNextPreview())return true
-  return now.getTime()>=new Date(PR_NEXT_LAUNCH_ISO).getTime()
+  return false // Production remains off until explicit launch authorization
 }
 
 export function getPRNextState(now=new Date()){
