@@ -17,7 +17,7 @@ export function validateTrainingDraft(draft) {
   if (!draft || draft.version !== 2) return ['Versión de borrador incompatible']
   if (String(draft.title || '').trim().length < 5) errors.push('El título necesita al menos 5 caracteres')
   if (String(draft.objective || '').trim().length < 10) errors.push('El objetivo necesita al menos 10 caracteres')
-  if (draft.cycle && !/^\d{4}-(0[1-9]|1[0-2])$/.test(draft.cycle)) errors.push('El ciclo debe tener formato AAAA-MM')
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(draft.cycle || ''))) errors.push('El ciclo debe tener formato AAAA-MM')
   if (!Array.isArray(draft.variants) || draft.variants.length !== 2 || new Set(draft.variants.map(v => v?.path)).size !== 2 || TRAINING_PATHS.some(path => !draft.variants.some(v => v?.path === path))) {
     errors.push('Deben existir los dos recorridos internos')
     return errors
