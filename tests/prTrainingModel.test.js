@@ -58,3 +58,12 @@ test('optional practice never changes required participation', () => {
   assert.deepEqual(snapshot, { required: 2, submitted: 1, percentage: 50 })
   assert.equal(trainingProgressSnapshot([]).percentage, null)
 })
+
+test('monthly cycle is mandatory and calendar-valid', () => {
+  const draft = newTrainingDraft()
+  assert.ok(validateTrainingDraft(draft).some(error => error.includes('ciclo')))
+  draft.cycle = '2026-13'
+  assert.ok(validateTrainingDraft(draft).some(error => error.includes('ciclo')))
+  draft.cycle = '2026-11'
+  assert.equal(validateTrainingDraft(draft).some(error => error.includes('ciclo')), false)
+})
