@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { getCupos } from '../data/cupos'
@@ -251,13 +251,6 @@ export default function Home() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const totalCupos = useMemo(() => (
-    Number(cupos?.miercoles?.principiantes || 0) +
-    Number(cupos?.miercoles?.avanzado || 0) +
-    Number(cupos?.sabado?.kids || 0) +
-    Number(cupos?.sabado?.adultos || 0)
-  ), [cupos])
-
   return (
     <PublicLayout>
       <main className="overflow-hidden bg-[#050508] text-white">
@@ -291,7 +284,7 @@ export default function Home() {
 
               <div className="mt-9 grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 pt-5">
                 <HeroStat value="10" label="años juntos" />
-                <HeroStat value={totalCupos} label="cupos hoy" />
+                <HeroStat value="3" label="turnos semanales" />
                 <HeroStat value="2" label="sedes PR" />
               </div>
             </div>
