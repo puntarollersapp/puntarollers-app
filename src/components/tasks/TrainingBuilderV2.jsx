@@ -6,13 +6,14 @@ const PATH_LABEL = { BASE: 'Recorrido A · interno', CONTINUIDAD: 'Recorrido B �
 const EVIDENCE_LABEL = { CONFIRMACION: 'Confirmación', FOTO: 'Foto', VIDEO: 'Video', STRAVA: 'Actividad Strava' }
 
 export default function TrainingBuilderV2() {
-  const [draft, setDraft] = useState(() => {
+  const [initialDraft] = useState(() => {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(STORE_KEY) || 'null')
       return parsed && parsed.version === 2 ? parsed : newTrainingDraft()
     } catch { return newTrainingDraft() }
   })
-  const [saved, setSaved] = useState('')
+  const [draft, setDraft] = useState(initialDraft)
+  const [saved, setSaved] = useState(() => { try { return window.localStorage.getItem(STORE_KEY) || '' } catch { return '' } })
   const [preview, setPreview] = useState(false)
   const [notice, setNotice] = useState('')
   const current = JSON.stringify(draft)
@@ -21,7 +22,7 @@ export default function TrainingBuilderV2() {
   function patch(fields) { setDraft(prev => ({ ...prev, ...fields })); setPreview(false); setNotice('') }
   function updateVariant(path, fn) {
     setDraft(prev => ({ ...prev, variants: prev.variants.map(v => v.path === path ? fn(v) : v) }))
-    setPreview(false)
+    setPreview(false); setNotice('')
   }
   function updateStep(path, index, fields) {
     updateVariant(path, v => ({ ...v, steps: v.steps.map((s, i) => i === index ? { ...s, ...fields } : s) }))
@@ -53,7 +54,7 @@ export default function TrainingBuilderV2() {
         <textarea value={step.instructions} maxLength={1600} rows={2} onChange={e => updateStep(variant.path, index, { instructions: e.target.value })} placeholder="Instrucciones claras para este paso" className="mt-3 w-full rounded-lg border border-white/20 bg-black/30 p-3 text-sm" />
         {step.kind === 'EVIDENCIA' && <label className="mt-2 block text-sm">Tipo de evidencia <select value={step.evidence} onChange={e => updateStep(variant.path, index, { evidence: e.target.value })} className="ml-2 rounded-lg border border-white/20 bg-[#14231d] p-2">{Object.entries(EVIDENCE_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>}
       </div>)}
-      <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => setDraft(prev => addTrainingStep(prev, variant.path, 'PRACTICA'))} className="rounded-xl border border-emerald-300/40 px-4 py-3 text-sm font-bold">+ Práctica</button><button type="button" onClick={() => setDraft(prev => addTrainingStep(prev, variant.path, 'EVIDENCIA'))} className="rounded-xl border border-cyan-300/40 px-4 py-3 text-sm font-bold">+ Evidencia</button></div>
+      <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => { setDraft(prev => addTrainingStep(prev, variant.path, 'PRACTICA')); setPreview(false); setNotice('') }} className="rounded-xl border border-emerald-300/40 px-4 py-3 text-sm font-bold">+ Práctica</button><button type="button" onClick={() => { setDraft(prev => addTrainingStep(prev, variant.path, 'EVIDENCIA')); setPreview(false); setNotice('') }} className="rounded-xl border border-cyan-300/40 px-4 py-3 text-sm font-bold">+ Evidencia</button></div>
     </div>)}
     <div className="mt-5 flex flex-wrap gap-2"><button type="button" onClick={save} className="rounded-xl bg-emerald-200 px-5 py-3 text-sm font-black text-black">Guardar borrador</button><button type="button" disabled={errors.length > 0} onClick={() => setPreview(true)} className="rounded-xl border border-white/20 px-5 py-3 text-sm disabled:opacity-30">Previsualizar</button><button type="button" onClick={reset} className="rounded-xl border border-white/20 px-5 py-3 text-sm">Descartar</button></div>
     {errors.length > 0 && <div className="mt-4 rounded-xl border border-amber-200/20 p-4"><p className="text-sm font-bold">Para previsualizar:</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-white/70">{errors.map((error, i) => <li key={i}>{error}</li>)}</ul></div>}
