@@ -12,8 +12,8 @@ export default function PRKidsClub(){
  const [params]=useSearchParams()
  const demoMode=params.get('demo')==='1'
  const demoFamily={guardian:{nombre:'Familia de ejemplo'},children:[{id:'demo-1',nombre:'Sofía (ejemplo)'},{id:'demo-2',nombre:'Mateo (ejemplo)'}]}
- const visibleFamily=demoMode?demoFamily:familyHome
  const [familyHome,setFamilyHome]=useState(null),[familyLoading,setFamilyLoading]=useState(true),[familySession,setFamilySession]=useState(null),[sessionReady,setSessionReady]=useState(false),[guardianAccess,setGuardianAccess]=useState('')
+ const visibleFamily=demoMode?demoFamily:familyHome
  const [selectedChild,setSelectedChild]=useState(null),[childTab,setChildTab]=useState('clases'),[stage,setStage]=useState('home'),[data,setData]=useState(initial),[hijos,setHijos]=useState([{nombre:''}]),[busy,setBusy]=useState(false),[error,setError]=useState('')
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
  useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
