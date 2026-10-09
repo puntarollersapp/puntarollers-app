@@ -7,3 +7,16 @@
 .prk-quick-grid>button span{font-size:1.8rem;position:absolute;top:16px;left:18px}
 .prk-quick-grid>button b{display:block;font-weight:800}
 .prk-quick-grid>button small{display:block;opacity:.8;margin-top:5px}
+
+/* PR Kids family cards: explicitly override legacy quick-grid button rules.
+   Legacy .prk-quick-grid>button span uses absolute positioning and caused overlap. */
+.prk-quick-grid.prk-family-children{display:grid;grid-template-columns:1fr;gap:14px}
+.prk-quick-grid.prk-family-children>button.prk-child-card{display:grid;grid-template-columns:72px minmax(0,1fr) 20px;align-items:center;justify-content:initial;column-gap:17px;min-height:114px;box-sizing:border-box;padding:18px 20px;position:relative;flex-direction:unset}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-photo{position:relative;top:auto;left:auto;display:grid;place-items:center;width:72px;height:72px;min-width:72px;max-width:72px;border-radius:50%;overflow:hidden;font-size:inherit;flex:none}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-photo>span{position:static;top:auto;left:auto;display:block;font-size:30px;line-height:1;font-weight:900}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-info{position:static;top:auto;left:auto;display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;font-size:inherit}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-info b{display:block;font-size:clamp(17px,4vw,22px);line-height:1.25;overflow-wrap:anywhere}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-info small{display:block;margin:0;font-size:12px;line-height:1.4;opacity:1;color:#b9cbe1}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-info small span{position:static;top:auto;left:auto;display:inline;font-size:12px}
+.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-chevron{position:static;top:auto;left:auto;display:block;align-self:center;font-size:20px;line-height:1}
+@media(max-width:530px){.prk-quick-grid.prk-family-children>button.prk-child-card{grid-template-columns:60px minmax(0,1fr) 16px;column-gap:12px;min-height:100px;padding:15px}.prk-quick-grid.prk-family-children>button.prk-child-card .prk-child-photo{width:60px;height:60px;min-width:60px;max-width:60px}}
