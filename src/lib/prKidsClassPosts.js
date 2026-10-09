@@ -33,7 +33,7 @@ export function validateClassDraft(draft) {
   if (String(draft?.title || '').trim().length < 4 || String(draft?.title || '').trim().length > 100) errors.push('El título debe tener entre 4 y 100 caracteres.')
   if (String(draft?.summary || '').trim().length < 12 || String(draft?.summary || '').trim().length > 2000) errors.push('El resumen debe tener entre 12 y 2000 caracteres.')
   if (String(draft?.teacherNote || '').length > 500) errors.push('El mensaje del profesor es demasiado largo.')
-  if (normalizeSkills(draft?.skills).length > 20) errors.push('Hay demasiadas habilidades.')
+  if (Array.isArray(draft?.skills) && draft.skills.length > 20) errors.push('Hay demasiadas habilidades.')
   return errors
 }
 export function sortClassPosts(posts) {
@@ -49,4 +49,17 @@ export function filterClassPosts(posts, {date='all', query=''}={}) {
     const text = [post.title, post.summary, post.detail, post.teacherName, post.author_display_name, ...(post.skills || [])].join(' ').toLocaleLowerCase('es-UY')
     return !term || text.includes(term)
   })
+}
+
+// Local draft-only backup: no photographs, student identifiers or access tokens.
+export function serializeLocalClassDraft(draft) {
+  if (validateClassDraft(draft).some(e => e.includes('demasiado'))) return null
+  return JSON.stringify({version:1,date:normalizeClassDate(draft?.date),title:String(draft?.title||'').slice(0,100),summary:String(draft?.summary||'').slice(0,2000),teacherNote:String(draft?.teacherNote||'').slice(0,500),skills:normalizeSkills(draft?.skills)})
+}
+export function parseLocalClassDraft(raw) {
+  try {
+    const data=JSON.parse(raw)
+    if (data?.version!==1 || !data.date || !normalizeClassDate(data.date)) return null
+    return {date:data.date,title:String(data.title||'').slice(0,100),summary:String(data.summary||'').slice(0,2000),teacherNote:String(data.teacherNote||'').slice(0,500),skills:normalizeSkills(data.skills)}
+  } catch { return null }
 }
