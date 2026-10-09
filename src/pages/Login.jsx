@@ -17,6 +17,7 @@ export default function Login() {
   const next = params.get('next')
   const destination = next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\') ? next : '/app/perfil'
   const rollerween = isRollerweenActive()
+  const isNextBeta = import.meta.env.VITE_SUPABASE_URL === 'https://azheisnfaedjqcuhiylo.supabase.co'
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -56,11 +57,12 @@ export default function Login() {
           <h1 className={rollerween?'pr-rw-title pr-rw-glitch mt-2 text-[45px] text-white':'font-display text-[38px] leading-none text-white mt-2'}>{rollerween?<>ENTER <span className="pr-rw-purple">ROLLERWEEN.</span></>:'Tu club, en tu bolsillo.'}</h1>
           <p className="text-white/40 text-sm mt-3 max-w-[290px] mx-auto">{rollerween?'Octubre se vive sobre ruedas. Entrá a tu PR para ver desafíos, preparación y todo lo que se viene.':'Ingresá para ver tu perfil, progreso, beneficios y vida dentro de PR.'}</p>
         </section>
+        {isNextBeta && <div role="status" className="mb-4 rounded-xl border border-purple-400/40 bg-purple-500/10 p-4 text-sm text-white/90"><strong className="block mb-1">PR NEXT · Versión de pruebas</strong>Esta copia todavía no tiene cuentas habilitadas. Tu documento y PIN de Punta Rollers original no funcionarán aquí por ahora. No es necesario que cambies tu PIN ni te registres nuevamente.</div>}
         <form onSubmit={handleSubmit} className="pr-panel p-5 space-y-4 animate-fade-up stagger-1">
           <label className="block"><span className="section-label">Documento</span><input value={documento} onChange={e=>setDocumento(e.target.value)} inputMode="numeric" placeholder="Ej: 12345678" className="input-pr mt-2" /></label>
           <label className="block"><span className="section-label">PIN personal</span><input value={pin} onChange={e=>setPin(e.target.value)} type="password" inputMode="numeric" placeholder="Ingresá tu PIN" className="input-pr mt-2" /></label>
           {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-red-300 text-xs text-center">{error}</div>}
-          <button type="submit" disabled={loading} className="btn-gold w-full disabled:opacity-50">{loading?'Ingresando…':rollerween?'ENTRAR A ROLLERWEEN →':'Ingresar a mi cuenta'}</button>
+          <button type="submit" disabled={loading || isNextBeta} className="btn-gold w-full disabled:opacity-50">{loading?'Ingresando…':rollerween?'ENTRAR A ROLLERWEEN →':'Ingresar a mi cuenta'}</button>
         </form>
         <Link to="/" className="text-center text-white/30 text-xs mt-6">Volver al sitio público</Link>
       </div>
