@@ -6,7 +6,7 @@ export function projectFamilyHome(payload) {
  const guardianName=String(payload.guardian.nombre||'').trim().slice(0,100)
  const ids=new Set()
  const children=payload.children.filter(c=>{
-  if(!c || typeof c.id!=='string' || !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(c.id) || ids.has(c.id))return false
+  if(!c || typeof c.id!=='string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.id) || ids.has(c.id))return false
   ids.add(c.id)
   return true
  }).slice(0,12).map(c=>({
