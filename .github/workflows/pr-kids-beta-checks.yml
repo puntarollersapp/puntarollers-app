@@ -19,4 +19,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node --test src/lib/prKidsFamilyValidation.test.js src/lib/prKidsTreasuryMatching.test.js
+      - run: npm run test:kids
       - run: npm run build
