@@ -22,7 +22,9 @@ No marcar como terminado hasta ejecutar pruebas reales de extremo a extremo.
 - [ ] Mostrar coincidencias de todos los registros de Tesorería con nombres normalizados y prefijos Kid/PR Kid.
 - [ ] Resolver cada hijo con perfil de Tesorería existente o crear uno nuevo.
 - [x] Mostrar checklist temporal de 5 verificaciones administrativas en la revisión beta (no persistente, no habilita acceso).
-- [ ] Persistir verificaciones administrativas con auditoría y autor responsable.
+- [x] Crear tabla protegida y endpoints admin para guardar verificaciones con fecha y autor.
+- [x] Conectar botón de guardado de revisión y observaciones en la bandeja beta.
+- [ ] Validar en navegador el guardado, lectura e historial de verificaciones.
 - [ ] Aprobar transaccionalmente, con auditoría y protección contra reintentos.
 - [ ] Rechazo/suspensión/reactivación con motivo y permisos.
 - [ ] Prueba de cuenta admin, profesor, alumno y visitante.
@@ -52,3 +54,5 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - 2026-10-08: consulta admin de candidatos desplegada (v4; v5 republicada sin cambio de lógica), botón integrado a la bandeja beta y estado de carga añadido. La fuente consultada es `profiles` (máximo 1000 filas), NO el universo de Tesorería; por tanto no hay conciliación completa. Sin pruebas E2E ejecutadas.
 
 - 2026-10-08: checklist temporal de identidad, vínculo, niño, Tesorería y contacto integrado en la bandeja beta. Se pierde al recargar; no debe interpretarse como verificación formal ni aprobación.
+
+- 2026-10-08: migración `pr_kids_family_review_audit_20261008` aplicada, Edge Function v6 con `review-save` y `review-history` restringidos a admin, UI beta con guardado de comprobaciones y notas. Pendiente prueba E2E y presentación completa del historial.
