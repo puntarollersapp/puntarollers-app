@@ -1,0 +1,30 @@
+name: PR NEXT Beta - build aislado
+on:
+  push:
+    branches: [pr-next-beta-supervision-2026]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Habilitar pnpm
+        run: corepack enable
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+      - name: Pruebas locales sin datos reales
+        run: npm run test:training
+      - name: Compilar beta sin secretos
+        run: pnpm run build
+      - name: Guardar compilacion privada como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-next-beta-build
+          path: dist/
+          if-no-files-found: error
