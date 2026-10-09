@@ -40,7 +40,7 @@ export default function Login() {
         if (training?.category && training.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
         else if (training?.category === 'NO') window.localStorage.removeItem('pr_training_visible')
       }
-      navigate('/app/perfil', { replace: true })
+      navigate(destination, { replace: true })
     } catch {
       setError('No pudimos iniciar sesión. Revisá tus datos.')
     } finally { setLoading(false) }
