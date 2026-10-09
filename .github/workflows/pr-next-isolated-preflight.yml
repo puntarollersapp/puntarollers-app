@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Run offline isolation regression tests
+        run: node scripts/test-beta-isolation.mjs
       - name: Verify isolated beta configuration (fail closed)
         env:
           PR_NEXT_ISOLATED_BETA: ${{ vars.PR_NEXT_ISOLATED_BETA }}
