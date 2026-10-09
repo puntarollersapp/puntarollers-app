@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {isSaturday,nextSaturdayDate,normalizeSkills,validateClassDraft,sortClassPosts,filterClassPosts,serializeLocalClassDraft,parseLocalClassDraft} from '../src/lib/prKidsClassPosts.js'
+import {isSaturday,nextSaturdayDate,normalizeSkills,validateClassDraft,sortClassPosts,filterClassPosts,serializeLocalClassDraft,parseLocalClassDraft,normalizeFamilyClassPost} from '../src/lib/prKidsClassPosts.js'
 
 test('Saturday date rules',()=>{
  assert.equal(isSaturday('2026-10-10'),true)
@@ -23,4 +23,16 @@ test('Local text draft serialization',()=>{
  const draft={date:'2026-10-10',title:'Frenadas',summary:'Practicamos frenadas en equipo',teacherNote:'Muy bien',skills:['Giros']}
  assert.deepEqual(parseLocalClassDraft(serializeLocalClassDraft(draft)),draft)
  assert.equal(parseLocalClassDraft('invalid'),null)
+})
+
+test('family timeline never displays drafts or invalid class dates',()=>{
+ assert.equal(normalizeFamilyClassPost({status:'draft',class_date:'2026-10-10',title:'Privado'}),null)
+ assert.equal(normalizeFamilyClassPost({status:'published',class_date:'2026-10-09',title:'Otro día'}),null)
+})
+test('published family post excludes media URLs and unapproved fields',()=>{
+ const p=normalizeFamilyClassPost({id:'abc',status:'published',class_date:'2026-10-10',title:'Frenadas',summary:'Practicamos juntos',skills:['Giros'],author_display_name:'Profesor',teacher_note:'Muy bien',photos:['private-photo'],medical_note:'secret'})
+ assert.equal(p.date,'2026-10-10')
+ assert.deepEqual(p.photos,[])
+ assert.equal(p.medical_note,undefined)
+ assert.equal(p.teacher,'Profesor')
 })
