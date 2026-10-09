@@ -10,9 +10,11 @@ function Input({label,value,onChange,type='text',placeholder,required=true,readO
 export default function PRKidsClub(){
  const {user}=useAuth()
  const [params]=useSearchParams()
+ const [familyHome,setFamilyHome]=useState(null),[familyLoading,setFamilyLoading]=useState(false)
  const [stage,setStage]=useState('home'),[data,setData]=useState(initial),[hijos,setHijos]=useState([{nombre:''}]),[busy,setBusy]=useState(false),[error,setError]=useState('')
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
  useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
+ useEffect(()=>{let live=true;async function loadFamily(){const {data:session}=await supabase.auth.getSession();if(!session?.session)return;setFamilyLoading(true);try{const {data:family,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}});if(live&&!error&&family?.ok)setFamilyHome(family)}finally{if(live)setFamilyLoading(false)}}loadFamily();return()=>{live=false}},[user?.id])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('')
  const errors=validateFamilyApplication({adult:data,children:hijos,authenticatedDocument:user?.documento})
@@ -27,7 +29,8 @@ export default function PRKidsClub(){
  return <main className="prk-shell"><div className="prk-blob prk-blob-a"/><div className="prk-blob prk-blob-b"/>
  <div className="prk-card">
   <header className="prk-header"><Link to="/" className="prk-brand"><img src="/logo.png" alt="Punta Rollers"/><div><p>PR KIDS CLUB</p><span>Una aventura sobre ruedas</span></div></Link><span className="prk-badge">FAMILY EXPERIENCE</span></header>
-  {stage==='home'&&<section className="prk-stage prk-stage-home">
+  {familyHome?.children?.length>0&&stage==='home'&&<section className="prk-stage"><p className="prk-kicker">MI FAMILIA ROLLER</p><h1>¡HOLA, {familyHome.guardian.nombre}!</h1><p className="prk-lead">Estos son los perfiles infantiles vinculados y aprobados para tu cuenta.</p><div className="prk-quick-grid">{familyHome.children.map(child=><article key={child.id} className="blue"><span>✦</span><div><b>{child.nombre}</b><small>Perfil familiar verificado</small></div></article>)}</div></section>}
+  {stage==='home'&&!familyHome&&<section className="prk-stage prk-stage-home">
    <span className="prk-home-topline">✦ BIENVENIDOS A PR KIDS CLUB ✦</span>
    <h1 className="prk-home-title">PEQUEÑOS<br/><em>GRANDES LOGROS.</em></h1>
    <p className="prk-lead prk-home-lead">En nuestra escuela, cada pequeño avance cuenta. Por eso creamos un espacio para las familias dentro de puntarollers.com, donde cada niño tendrá su propio perfil, como ya sucede con los alumnos adultos.</p>
