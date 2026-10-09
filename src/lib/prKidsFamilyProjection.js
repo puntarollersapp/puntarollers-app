@@ -12,6 +12,7 @@ export function projectFamilyHome(payload) {
  }).slice(0,12).map(c=>({
   id:c.id,
   nombre:String(c.nombre||c.nombre_confirmado||'').trim().slice(0,120),
+  foto_url:typeof c.foto_url==='string' && c.foto_url.startsWith('https://')?c.foto_url:null,
   class_posts:Array.isArray(c.class_posts)?c.class_posts.filter(p=>p?.status==='published').slice(0,100):[]
  }))
  return {guardian:{nombre:guardianName||'Familia roller'},children}
