@@ -8,7 +8,7 @@ const IS_PR_NEXT_BETA = import.meta.env.VITE_SUPABASE_URL === 'https://azheisnfa
 const BETA_SESSION_KEY = 'pr_next_beta_supervision'
 const BETA_SUPERVISOR = {
  id:'pr-next-beta-supervisor', authUserId:'', nombre:'Supervisión', apellido:'PR NEXT',
- documento:'', role:'admin', esProfesor:true, participaComoAlumno:false,
+ documento:'', role:'alumno', esProfesor:false, participaComoAlumno:true,
  exentoMensualidad:true, esTesoreria:false, profesorId:'', ciudad:'', instagram:'',
  email:'', fechaNacimiento:'', miembroDesde:'2026', estado:'Activo',
  accesoHabilitado:true, mensualidadHasta:'', verificado:false, foto:'', banner:'',
