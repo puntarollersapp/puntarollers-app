@@ -28,3 +28,14 @@
 .prk-passport-footnote{margin-top:18px;color:#b5bdd0;font-size:12px;line-height:1.65}
 @media(max-width:530px){.prk-family-children .prk-child-card{min-height:105px;padding:16px;gap:14px}.prk-child-photo{width:64px;height:64px}.prk-stamp-mark{width:55px;height:55px;padding:7px}.prk-passport-summary>div{padding:12px}.prk-passport-summary strong{font-size:29px}}
 @media(prefers-reduced-motion:reduce){.prk-family-children .prk-child-card,.prk-family-children .prk-child-card:before{transition:none}.prk-family-children .prk-child-card:hover{transform:none}}
+
+/* Seal artwork presentation: ink on paper, not a gold badge. */
+.prk-dashboard-stamps{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:20px}
+.prk-dashboard-stamp,.prk-dashboard-stamp.is-earned,.prk-dashboard-stamp.is-pending{display:grid;place-items:center;min-height:116px;padding:10px;border-radius:16px;background:#e9e5dc;border:1px solid #c7c1b7;box-shadow:inset 0 2px 8px rgba(20,20,20,.04);color:#141414}
+.prk-dashboard-stamp.is-pending{background:#242632;border:1px dashed #777887;box-shadow:none}
+.prk-dashboard-stamp .prk-stamp-mark{width:min(100%,95px);height:auto;aspect-ratio:1;border:0;border-radius:0;box-shadow:none;padding:0;transform:rotate(-7deg)}
+.prk-dashboard-stamp .prk-stamp-mark img{width:100%;height:100%;border-radius:0;object-fit:contain;filter:grayscale(1) contrast(1.25)}
+.prk-dashboard-stamp.is-pending .prk-stamp-mark{opacity:.13;transform:rotate(0)}
+.prk-dashboard-stamp.is-earned:nth-child(3n+2) .prk-stamp-mark{transform:rotate(5deg)}
+.prk-dashboard-stamp.is-earned:nth-child(3n+3) .prk-stamp-mark{transform:rotate(-2deg)}
+@media(max-width:530px){.prk-dashboard-stamps{gap:9px}.prk-dashboard-stamp,.prk-dashboard-stamp.is-earned,.prk-dashboard-stamp.is-pending{min-height:94px;padding:8px}.prk-dashboard-stamp .prk-stamp-mark{width:min(100%,78px);height:auto}}
