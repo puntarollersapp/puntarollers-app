@@ -53,13 +53,13 @@ export function filterClassPosts(posts, {date='all', query=''}={}) {
 
 // Local draft-only backup: no photographs, student identifiers or access tokens.
 export function serializeLocalClassDraft(draft) {
-  if (validateClassDraft(draft).some(e => e.includes('demasiado'))) return null
+  if (validateClassDraft(draft).length > 0) return null
   return JSON.stringify({version:1,date:normalizeClassDate(draft?.date),title:String(draft?.title||'').slice(0,100),summary:String(draft?.summary||'').slice(0,2000),teacherNote:String(draft?.teacherNote||'').slice(0,500),skills:normalizeSkills(draft?.skills)})
 }
 export function parseLocalClassDraft(raw) {
   try {
     const data=JSON.parse(raw)
-    if (data?.version!==1 || !data.date || !normalizeClassDate(data.date)) return null
+    if (data?.version!==1 || !data.date || !isSaturday(data.date)) return null
     return {date:data.date,title:String(data.title||'').slice(0,100),summary:String(data.summary||'').slice(0,2000),teacherNote:String(data.teacherNote||'').slice(0,500),skills:normalizeSkills(data.skills)}
   } catch { return null }
 }
