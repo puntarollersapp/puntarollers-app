@@ -60,7 +60,8 @@ export function parseLocalClassDraft(raw) {
   try {
     const data=JSON.parse(raw)
     if (data?.version!==1 || !data.date || !isSaturday(data.date)) return null
-    return {date:data.date,title:String(data.title||'').slice(0,100),summary:String(data.summary||'').slice(0,2000),teacherNote:String(data.teacherNote||'').slice(0,500),skills:normalizeSkills(data.skills)}
+    const restored={date:data.date,title:String(data.title||'').slice(0,100),summary:String(data.summary||'').slice(0,2000),teacherNote:String(data.teacherNote||'').slice(0,500),skills:normalizeSkills(data.skills)}
+    return validateClassDraft(restored).length===0?restored:null
   } catch { return null }
 }
 
