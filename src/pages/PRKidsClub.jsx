@@ -39,11 +39,13 @@ export default function PRKidsClub(){
    <p className="prk-lead prk-home-lead">Conocé qué practicó tu hijo en cada clase, seguí su pasaporte roller y encontrá sus recuerdos. Un espacio privado para acompañarlo desde casa.</p>
    <div className="prk-home-ribbon">PASAPORTE ROLLER · CADA CLASE SUMA UN SELLO</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Si tenés más de un hijo en PR Kids, vas a poder acompañarlos desde el mismo acceso familiar.</p>
    <div className="prk-quick-grid prk-quick-grid-home">{features.map(([icon,title,desc,color])=><article className={color} key={title}><span>{icon}</span><div><b>{title}</b><small>{desc}</small></div></article>)}</div>
-   <button className="prk-primary" onClick={()=>setStage('form')}>{user?'PEDIR ACCESO PARA MI HIJO/A →':'PEDIR ACCESO PARA MI HIJO/A →'}</button>
+   <button className="prk-primary" onClick={()=>setStage('form')}>PEDIR ACCESO PARA MI HIJO/A →</button>
    {!user&&<Link to="/login?next=%2Fkids%3Fregistro%3D1" className="mt-5 block text-center text-sm font-bold text-white/60 underline underline-offset-4">Ya soy alumno de Punta Rollers · Ingresar con mi documento y PIN</Link>}
    <p className="mt-6 text-xs leading-5 text-white/40">La solicitud es gratuita. Después de verificar los datos, habilitaremos el acceso a los perfiles familiares.</p>
   </section>}
-  {stage==='form'&&<section className="prk-stage">
+  {stage==='form'&&familyLoading&&<section className="prk-stage"><p className="prk-lead">Verificando tu acceso familiar…</p></section>}
+  {stage==='form'&&!familyLoading&&familyHome?.children?.length>0&&<section className="prk-stage"><p className="prk-kicker">ACCESO HABILITADO</p><h1>Tu familia ya tiene acceso</h1><p className="prk-lead">Volvé a tu espacio familiar para ver los perfiles aprobados.</p><button type="button" className="prk-primary" onClick={()=>setStage('home')}>VER MI FAMILIA →</button></section>}
+  {stage==='form'&&!familyLoading&&!familyHome&&<section className="prk-stage">
    <button type="button" className="prk-back" onClick={()=>setStage('home')}>← Volver</button>
    <p className="prk-kicker">ACCESO FAMILIAR · PR KIDS</p><h1>¡HOLA,<br/>FAMILIA ROLLER!</h1>
    <p className="prk-lead">Primero contanos si ya usás Punta Rollers. Después completá tus datos y los de tus hijos que asisten a PR Kids.</p>
