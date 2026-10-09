@@ -36,3 +36,8 @@ test('published family post excludes media URLs and unapproved fields',()=>{
  assert.equal(p.medical_note,undefined)
  assert.equal(p.teacher,'Profesor')
 })
+
+test('invalid local drafts are never persisted or restored',()=>{
+ assert.equal(serializeLocalClassDraft({date:'2026-10-09',title:'X',summary:'Breve'}),null)
+ assert.equal(parseLocalClassDraft(JSON.stringify({version:1,date:'2026-10-09',title:'Clase',summary:'Texto suficientemente largo'})),null)
+})
