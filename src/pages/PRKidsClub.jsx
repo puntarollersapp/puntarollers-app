@@ -13,7 +13,7 @@ export default function PRKidsClub(){
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
  useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
- async function submit(e){e.preventDefault();if(busy)return;setError('');if(user?.documento&&data.documento_tutor!==user.documento){setError('La cédula debe coincidir con tu cuenta de Punta Rollers.');return}if(hijos.some(h=>h.nombre.trim().split(/\\s+/).length<2)){setError('Ingresá nombre y apellido de cada niño para ayudar a identificar su registro en Tesorería.');return}setBusy(true);try{
+ async function submit(e){e.preventDefault();if(busy)return;setError('');if(user?.documento&&data.documento_tutor!==user.documento){setError('La cédula debe coincidir con tu cuenta de Punta Rollers.');return}if(hijos.some(h=>h.nombre.trim().split(/\s+/).length<2)){setError('Ingresá nombre y apellido de cada niño para ayudar a identificar su registro en Tesorería.');return}setBusy(true);try{
  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
  if(err||r?.error)throw Error(r?.error||'No pudimos enviar la solicitud. Intentá nuevamente.')
  setStage('done')
