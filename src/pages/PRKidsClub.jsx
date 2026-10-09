@@ -44,6 +44,7 @@ export default function PRKidsClub(){
    <div className="prk-home-ribbon">PASAPORTE ROLLER · CADA CLASE SUMA UN SELLO</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Si tenés más de un hijo en PR Kids, vas a poder acompañarlos desde el mismo acceso familiar.</p>
    <div className="prk-quick-grid prk-quick-grid-home">{features.map(([icon,title,desc,color])=><article className={color} key={title}><span>{icon}</span><div><b>{title}</b><small>{desc}</small></div></article>)}</div>
    <button className="prk-primary" onClick={()=>setStage('form')}>PEDIR ACCESO PARA MI HIJO/A →</button>
+   <Link to="/kids?demo=1" className="mt-4 block rounded-xl border border-[#69d9ff]/35 bg-[#69d9ff]/10 px-5 py-4 text-center text-sm font-black text-[#9ceaff]">EXPLORAR DEMO FAMILIAR →</Link>
    {!user&&<Link to="/login?next=%2Fkids%3Fregistro%3D1" className="mt-5 block text-center text-sm font-bold text-white/60 underline underline-offset-4">Ya soy alumno de Punta Rollers · Ingresar con mi documento y PIN</Link>}
    <p className="mt-6 text-xs leading-5 text-white/40">La solicitud es gratuita. Después de verificar los datos, habilitaremos el acceso a los perfiles familiares.</p>
   </section>}
