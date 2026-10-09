@@ -1,4 +1,3 @@
-import SpinPreview from '../components/training/SpinPreview'
 import {useEffect,useState} from 'react'
 import AppLayout from '../layouts/AppLayout'
 
@@ -28,7 +27,7 @@ export default function TareasNext(){
  <button type="button" onClick={()=>setShowGuide(x=>!x)} className="mt-5 w-full rounded-xl border border-white/15 px-4 py-3 text-xs font-black">{showGuide?'Ocultar':'Ver'} proceso de revisión</button>
  {showGuide&&<div className="mt-3 grid gap-2">{['Enviado · check 1','Aprobado / calificado · check 2','Revisión exclusiva de Claudio y David','Evidencia: foto, video o Strava según la consigna'].map(t=><p key={t} className="rounded-xl border border-white/10 p-3 text-xs text-white/65">{t}</p>)}</div>}
  </section>
- <SpinPreview/><section><p className="mb-3 text-[11px] font-black tracking-[.2em] text-white/50">CÓMO FUNCIONA</p><div className="grid gap-3 sm:grid-cols-2">{STAGES.map(([n,title,desc])=><div key={n} className="rounded-[24px] border border-white/10 bg-[#14151b] p-5"><span className="text-[26px] font-black text-lime-200/55">{n}</span><h2 className="mt-4 text-lg font-black">{title}</h2><p className="mt-2 text-xs leading-5 text-white/50">{desc}</p></div>)}</div></section>
+ <section><p className="mb-3 text-[11px] font-black tracking-[.2em] text-white/50">CÓMO FUNCIONA</p><div className="grid gap-3 sm:grid-cols-2">{STAGES.map(([n,title,desc])=><div key={n} className="rounded-[24px] border border-white/10 bg-[#14151b] p-5"><span className="text-[26px] font-black text-lime-200/55">{n}</span><h2 className="mt-4 text-lg font-black">{title}</h2><p className="mt-2 text-xs leading-5 text-white/50">{desc}</p></div>)}</div></section>
  <p className="rounded-2xl border border-white/10 p-4 text-xs leading-5 text-white/55">Esta pantalla es una prueba de interacción en tu navegador. Guarda únicamente si revelaste la ruleta en este dispositivo; no registra entregas, asignaciones, evidencias, notas ni alumnos en Supabase.</p>
  </main></AppLayout>
 }
