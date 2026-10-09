@@ -63,3 +63,22 @@ export function parseLocalClassDraft(raw) {
     return {date:data.date,title:String(data.title||'').slice(0,100),summary:String(data.summary||'').slice(0,2000),teacherNote:String(data.teacherNote||'').slice(0,500),skills:normalizeSkills(data.skills)}
   } catch { return null }
 }
+
+// Canonical client-side shape for an eventual server-provided timeline.
+// Do not use this helper to determine authorization: the server must filter first.
+export function normalizeFamilyClassPost(post) {
+  if (!post || !isSaturday(post.class_date || post.date)) return null
+  const status=post.status
+  if (status && status!=='published') return null
+  return {
+    id:String(post.id||''),
+    date:post.class_date||post.date,
+    title:String(post.title||'').slice(0,100),
+    detail:String(post.summary||post.detail||'').slice(0,2000),
+    skills:normalizeSkills(post.skills),
+    teacher:String(post.author_display_name||post.teacherName||'Profesor/a'),
+    note:String(post.teacher_note||post.note||'').slice(0,500),
+    avatar:typeof post.teacher_avatar_url==='string'?post.teacher_avatar_url:null,
+    photos:[] // Images require a separate, consent-checked signed URL request.
+  }
+}
