@@ -17,6 +17,7 @@ No marcar como terminado hasta ejecutar pruebas reales de extremo a extremo.
 - [x] Bandeja de solicitudes, filtro, búsqueda y detalle.
 - [x] Rechazo restringido a rol admin en Edge Function.
 - [x] Endpoint de detalle admin, versión 3 de pr-kids-family-access.
+- [x] Implementar y versionar algoritmo orientativo de coincidencias de nombres (sin conectar aún a Tesorería).
 - [ ] Mostrar coincidencias de Tesorería con nombres normalizados y prefijos Kid/PR Kid.
 - [ ] Resolver cada hijo con perfil de Tesorería existente o crear uno nuevo.
 - [ ] Aprobar transaccionalmente, con auditoría y protección contra reintentos.
@@ -42,3 +43,5 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 
 ## Registro de cambios
 - 2026-10-08: rama beta creada, bandeja administrativa ampliada, validación de nombre corregida, estado de solicitud duplicada diferenciado, endpoint administrativo request-detail desplegado. No se aprobaron familias reales.
+
+- 2026-10-08 (continuación): agregado `src/lib/prKidsTreasuryMatching.js` con normalización de prefijos y ranking orientativo, más 7 pruebas unitarias escritas. Sin consultas reales a Tesorería, sin vinculación ni aprobación. Pruebas pendientes de ejecución.
