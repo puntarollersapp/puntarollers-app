@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { supabaseUrl } from '../../lib/supabase'
 
 export function thumbnailUrl(original) {
   try {
     const url = new URL(original)
     const prefix = '/storage/v1/object/public/'
-    if (url.hostname !== 'ycgxnzeaihuwlwfwalom.supabase.co' || !url.pathname.startsWith(prefix)) return original
+    if (url.origin !== supabaseUrl || !url.pathname.startsWith(prefix)) return original
     const path = url.pathname.slice(prefix.length)
     if (!/^(community-albums|community-media)\//.test(path)) return original
     return `/api/community-thumbnail?path=${encodeURIComponent(path)}&v=1`

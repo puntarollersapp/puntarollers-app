@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
@@ -46,7 +46,12 @@ function rollerMapAssets() {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
+  if (env.VITE_PR_NEXT_REPLICA !== 'true' || env.VITE_SUPABASE_URL !== 'https://azheisnfaedjqcuhiylo.supabase.co') throw new Error('Replica build requires isolated beta configuration')
+  if (env.VERCEL_ENV === 'production') throw new Error('Replica production deployment is disabled')
+  return {
   plugins: [react(), rollerMapAssets()],
   css: { postcss: { plugins: [tailwindcss(), autoprefixer(), scopedRollerMap] } }
+  }
 })

@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 export const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim()
 export const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
+export const isReplica = String(import.meta.env.VITE_PR_NEXT_REPLICA) === 'true'
+if (!isReplica || supabaseUrl !== 'https://azheisnfaedjqcuhiylo.supabase.co') {
+  throw new Error('La réplica requiere Supabase beta aislada.')
+}
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export async function uploadPublicImage(bucket, file, folder = 'uploads') {

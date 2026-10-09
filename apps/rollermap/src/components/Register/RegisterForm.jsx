@@ -117,6 +117,7 @@ async function submitToSupabase(form) {
 }
 
 async function submitToFormspree(form) {
+  if (String(import.meta.env.VITE_PR_NEXT_REPLICA) === 'true') return
   const body={
     _subject:`[RollerMap] Nueva solicitud: ${form.name}`,
     tipo:form.type,

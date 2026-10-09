@@ -1,9 +1,11 @@
 import sharp from 'sharp'
 
-const ORIGIN = 'https://ycgxnzeaihuwlwfwalom.supabase.co'
+const ORIGIN = String(process.env.VITE_SUPABASE_URL || '').trim()
+const BETA_ORIGIN = 'https://azheisnfaedjqcuhiylo.supabase.co'
 const MAX_BYTES = 25 * 1024 * 1024
 
 export default async function handler(req, res) {
+  if (ORIGIN !== BETA_ORIGIN) return res.status(503).end('Beta storage unavailable')
   if (req.method !== 'GET') return res.status(405).end()
   const path = typeof req.query.path === 'string' ? req.query.path : ''
   // Only existing public community images; never accept an arbitrary URL.

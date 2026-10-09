@@ -8,6 +8,7 @@ const WHATSAPP = '59898971505'
 
 let sdkPromise
 function loadMercadoPago() {
+  if (String(import.meta.env.VITE_PR_NEXT_REPLICA) === 'true') return Promise.reject(new Error('Pagos reales desactivados en beta'))
   if (window.MercadoPago) return Promise.resolve(window.MercadoPago)
   if (!sdkPromise) {
     sdkPromise = new Promise((resolve, reject) => {
