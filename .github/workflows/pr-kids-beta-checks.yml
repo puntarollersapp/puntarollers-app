@@ -1,0 +1,22 @@
+name: PR Kids beta checks
+on:
+  push:
+    branches:
+      - feature/pr-kids-family-beta-20261008
+  pull_request:
+    paths:
+      - 'src/lib/prKids*'
+      - 'src/pages/PRKidsClub.jsx'
+      - 'src/pages/AdminKidsSolicitudes.jsx'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: node --test src/lib/prKidsFamilyValidation.test.js src/lib/prKidsTreasuryMatching.test.js
+      - run: npm run build
