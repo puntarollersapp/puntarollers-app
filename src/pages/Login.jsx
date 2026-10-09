@@ -15,7 +15,7 @@ export default function Login() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const next = params.get('next')
-  const destination = next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\') ? next : (isBeta ? '/app/dashboard' : '/app/perfil')
+  const destination = next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\') ? next : (isBeta ? '/app/supervision' : '/app/perfil')
   const rollerween = isRollerweenActive()
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function Login() {
           <h1 className={rollerween?'pr-rw-title pr-rw-glitch mt-2 text-[45px] text-white':'font-display text-[38px] leading-none text-white mt-2'}>{rollerween?<>ENTER <span className="pr-rw-purple">ROLLERWEEN.</span></>:'Tu club, en tu bolsillo.'}</h1>
           <p className="text-white/40 text-sm mt-3 max-w-[290px] mx-auto">{rollerween?'Octubre se vive sobre ruedas. Entrá a tu PR para ver desafíos, preparación y todo lo que se viene.':'Ingresá para ver tu perfil, progreso, beneficios y vida dentro de PR.'}</p>
         </section>
-        {isBeta && <div className="pr-panel p-5 mb-4 border border-pr-gold/30"><p className="text-pr-gold text-xs font-bold mb-2">PR NEXT · ENTORNO DE SUPERVISIÓN</p><p className="text-white/60 text-sm mb-4">Esta copia no está conectada a los usuarios ni a la base de datos oficial. No ingreses tu documento ni tu PIN real.</p><button type="button" className="btn-gold w-full" onClick={()=>{const result=enterBeta();if(result?.success)navigate('/app/dashboard',{replace:true})}}>Entrar a supervisar PR NEXT →</button></div>}
+        {isBeta && <div className="pr-panel p-5 mb-4 border border-pr-gold/30"><p className="text-pr-gold text-xs font-bold mb-2">PR NEXT · ENTORNO DE SUPERVISIÓN</p><p className="text-white/60 text-sm mb-4">Esta copia no está conectada a los usuarios ni a la base de datos oficial. No ingreses tu documento ni tu PIN real.</p><button type="button" className="btn-gold w-full" onClick={()=>{const result=enterBeta();if(result?.success)navigate('/app/supervision',{replace:true})}}>Entrar a supervisar PR NEXT →</button></div>}
         {!isBeta && <form onSubmit={handleSubmit} className="pr-panel p-5 space-y-4 animate-fade-up stagger-1">
           <label className="block"><span className="section-label">Documento</span><input value={documento} onChange={e=>setDocumento(e.target.value)} inputMode="numeric" placeholder="Ej: 12345678" className="input-pr mt-2" /></label>
           <label className="block"><span className="section-label">PIN personal</span><input value={pin} onChange={e=>setPin(e.target.value)} type="password" inputMode="numeric" placeholder="Ingresá tu PIN" className="input-pr mt-2" /></label>
