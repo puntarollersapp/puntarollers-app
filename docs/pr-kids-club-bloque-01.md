@@ -68,3 +68,12 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - [x] Panel beta: selección explícita por niño y botón para validar vínculos contra el servidor, sin botón de aprobación.
 - [ ] Ejecutar pruebas CI, revisión de compilación y pruebas reales con datos ficticios antes de exponer aprobación.
 - [ ] Diseñar y validar credenciales seguras de tutores no alumnos y acceso por sesión a perfiles infantiles.
+
+### 2026-10-08 · Aprobación auditada y lectura familiar privada
+- [x] Auditoría separada `pr_kids_family_approval_audit` con unicidad por solicitud, responsable, admin y selección de perfiles.
+- [x] RPC de aprobación transaccional actualizada y limitada a `service_role`, aún NO expuesta en API/UI.
+- [x] Restricción de unicidad de `pr_kids_guardians.auth_user_id` y nuevos índices para conciliación.
+- [x] Edge Function v14: `family-home` comprueba JWT y tutor activo vinculado a `auth_user_id`, devuelve solo hijos con vínculo aprobado, sin datos de pagos ni de otros niños.
+- [x] Vista beta `/kids` muestra perfiles familiares si la API devuelve familia activa; si no, conserva inscripción.
+- [ ] Aprobar con seguridad y habilitar cuenta real del tutor: credenciales/OTP, verificación de correo, vinculación de `auth_user_id` y activación explícita.
+- [ ] Ejecutar pruebas unitarias, integración de RLS, sesión familiar y compilación de rama beta.
