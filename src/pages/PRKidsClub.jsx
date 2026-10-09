@@ -38,7 +38,7 @@ export default function PRKidsClub(){
    <p className="prk-lead prk-home-lead">En nuestra escuela, cada pequeño avance cuenta. Por eso creamos un espacio para las familias dentro de puntarollers.com, donde cada niño tendrá su propio perfil, como ya sucede con los alumnos adultos.</p>
    <div className="prk-home-ribbon">UN PERFIL PARA CADA PEQUEÑO ROLLER</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Vas a poder conocer qué practicamos los sábados, ver recuerdos de las clases, acompañar sus progresos y descubrir sus nuevas insignias. Si vienen hermanos, los dos estarán en tu misma cuenta.</p>
    <div className="prk-quick-grid prk-quick-grid-home">{features.map(([icon,title,desc,color])=><article className={color} key={title}><span>{icon}</span><div><b>{title}</b><small>{desc}</small></div></article>)}</div>
-   <button className="prk-primary" onClick={()=>setStage('form')}>{user?'VINCULAR A MI HIJO/A →':'CREAR NUESTRO ACCESO FAMILIAR →'}</button>
+   <button className="prk-primary" onClick={()=>setStage('form')}>{user?'VINCULAR A MI HIJO/A →':'SOLICITAR ACCESO FAMILIAR →'}</button>
    {!user&&<Link to="/login?next=%2Fkids%3Fregistro%3D1" className="mt-5 block text-center text-sm font-bold text-white/60 underline underline-offset-4">Ya soy alumno de Punta Rollers · Ingresar con mi documento y PIN</Link>}
    <p className="mt-6 text-xs leading-5 text-white/40">La solicitud es gratuita. Después de verificar los datos, habilitaremos el acceso a los perfiles familiares.</p>
   </section>}
@@ -47,7 +47,7 @@ export default function PRKidsClub(){
    <p className="prk-kicker">ACCESO FAMILIAR · PR KIDS</p><h1>¡HOLA,<br/>FAMILIA ROLLER!</h1>
    <p className="prk-lead">Completá los datos del adulto que va a ingresar a la cuenta. Después contanos qué niño o niños de PR Kids querés vincular.</p>
    <form onSubmit={submit}>
-    <h2 className="prk-section-label">01 / Tu cuenta como adulto responsable</h2>{user&&<p className="mb-3 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-sm text-emerald-100">Ingresaste como {[user.nombre,user.apellido].filter(Boolean).join(' ')}. Conservás tu cuenta y PIN actuales. Tu cédula se toma de esa cuenta.</p>}<p className="mb-4 text-sm leading-6 text-white/60">Estos datos son del <strong className="text-white">padre, madre o tutor</strong>, NO del niño. El documento del adulto será el que se use para iniciar sesión en Punta Rollers.</p>
+    <h2 className="prk-section-label">01 / Tu cuenta como adulto responsable</h2>{user&&<p className="mb-3 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-sm text-emerald-100">Ingresaste como {[user.nombre,user.apellido].filter(Boolean).join(' ')}. Conservás tu cuenta y PIN actuales. Tu cédula se toma de esa cuenta.</p>}<p className="mb-4 text-sm leading-6 text-white/60">Estos datos son del <strong className="text-white">padre, madre o tutor</strong>, NO del niño. El documento del adulto sirve para verificar la identidad. Si ya sos alumno, conservás tu acceso actual; si sos responsable sin perfil de alumno, el acceso se habilitará por separado después de la revisión.</p>
     <div className="prk-form-grid">
      <Input label="Nombre y apellido del adulto" value={data.nombre_tutor} onChange={v=>set('nombre_tutor',v)} placeholder="Nombre completo"/>
      <Input label="Cédula del adulto (con esta ingresás a la plataforma)" value={data.documento_tutor} onChange={v=>set('documento_tutor',v.replace(/\D/g,'').slice(0,12))} placeholder="Sin puntos" readOnly={Boolean(user?.documento)}/>
