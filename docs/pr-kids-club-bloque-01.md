@@ -59,3 +59,5 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - 2026-10-08: migración `pr_kids_family_review_audit_20261008` aplicada, Edge Function v6 con `review-save` y `review-history` restringidos a admin, UI beta con guardado de comprobaciones y notas. Pendiente prueba E2E y presentación completa del historial.
 
 - 2026-10-08: Edge Function v7 incorpora `review-readiness` (solo consulta admin, `approval_enabled:false`); panel beta recupera última revisión y muestra si faltan checks. No es verificación documental ni aprobación efectiva. Falta test E2E.
+
+- 2026-10-08: Edge Function v10 busca candidatos en perfiles por páginas de 500 hasta 10.000, sin conciliación automática. GitHub Actions: no se encontraron ejecuciones para el commit que creó el workflow; pruebas CI aún sin confirmar. Falta identificar fuente financiera completa de Tesorería.
