@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:kids": "node --test tests/prKidsClassPosts.test.js"
+    "test:kids": "node --test tests/prKidsClassPosts.test.js tests/prKidsPassport.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
