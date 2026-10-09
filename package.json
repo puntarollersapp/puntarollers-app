@@ -10,9 +10,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "build:beta": "node scripts/check-beta-isolation.mjs && vite build",
+    "build:beta": "node scripts/check-beta-isolation.mjs && node scripts/check-beta-source-integrations.mjs && vite build",
     "check:beta": "node scripts/check-beta-isolation.mjs",
-    "test:beta-isolation": "node scripts/test-beta-isolation.mjs"
+    "test:beta-isolation": "node scripts/test-beta-isolation.mjs",
+    "check:beta-source": "node scripts/check-beta-source-integrations.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
