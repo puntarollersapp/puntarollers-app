@@ -1,0 +1,20 @@
+import { Link } from 'react-router-dom'
+import AppLayout from '../layouts/AppLayout'
+import { useAuth } from '../lib/auth'
+const modules=[['Tareas 2.0','/app/deberes','Tu próximo desafío','violet'],['Mi rendimiento','/app/evolucion','Tu evolución','cyan'],['Mi PR','/app/mi-pr','Tu identidad roller','amber'],['Comunidad','/app/comunidad','Tu gente PR','pink'],['RollerFeed','/app/actividad','La vida sobre ruedas','violet']]
+export default function DashboardNext(){
+ const {user}=useAuth();const name=(user?.nombre||'Roller').split(' ')[0]
+ const hour=new Date().getHours();const hello=hour<12?'Buenos días':hour<19?'Buenas tardes':'Buenas noches'
+ return <AppLayout title="Inicio"><main className="mx-auto w-full max-w-[760px] space-y-5 px-4 pb-32 pt-4 text-white">
+ <section className="relative min-h-[350px] overflow-hidden rounded-[34px] border border-violet-300/15 bg-[#08080d] p-5 shadow-[0_30px_110px_rgba(0,0,0,.52)] sm:p-6">
+ <div className="pointer-events-none absolute -right-28 -top-28 h-[360px] w-[360px] rounded-full bg-violet-600/20 blur-3xl"/>
+ <div className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-cyan-400/[.09] blur-3xl"/>
+ <div className="relative flex min-h-[310px] flex-col justify-between"><div>
+ <div className="flex items-center justify-between"><p className="text-[12px] font-black uppercase tracking-[.28em] text-violet-300">PUNTA ROLLERS · NEXT</p><span className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1 text-[12px] font-black tracking-[.16em] text-white/70">NUEVA ETAPA</span></div>
+ <p className="mt-12 text-[12px] font-black uppercase tracking-[.18em] text-white/65">{hello}</p><h1 className="mt-2 text-[clamp(38px,12vw,47px)] font-black leading-[.88] tracking-[-.065em]">{name}.<br/><span className="bg-gradient-to-r from-white/65 via-violet-200/60 to-cyan-200/45 bg-clip-text text-transparent">Seguimos.</span></h1>
+ <p className="mt-5 max-w-[450px] text-[14px] leading-6 text-white/75">Una nueva etapa empieza. <b className="text-white/85">Seguimos rodando.</b><br/>Ahora cada clase, tarea, kilómetro e historia empieza a hablar el mismo idioma.</p></div>
+ <div className="mt-7 flex items-end justify-between gap-5"><div><p className="text-[12px] font-black tracking-[.22em] text-white/65">ESTO ES</p><p className="mt-1 text-[13px] font-black text-white/85">Tu vida dentro de Punta Rollers.</p></div><Link to="/app/mi-pr" className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-violet-200/20 bg-violet-300/[.07] text-lg text-violet-100">↗</Link></div></div></section>
+ <section><p className="px-1 text-[11px] font-black tracking-[.2em] text-violet-300">TU ECOSISTEMA</p><h2 className="mt-2 px-1 text-[22px] font-black">Una app que se mueve con vos.</h2><div className="mt-4 grid grid-cols-2 gap-3">{modules.map(([title,to,subtitle,tone])=><Link key={title} to={to} className="relative flex min-h-[145px] flex-col justify-between rounded-[24px] border border-white/10 bg-gradient-to-br from-violet-300/[.07] to-transparent p-4"><span className="text-[10px] font-black tracking-[.2em] text-violet-200">PR NEXT</span><div><h3 className="text-[18px] font-black">{title}</h3><p className="mt-1 text-[11px] text-white/55">{subtitle}</p></div><span className="absolute bottom-4 right-4 text-white/70">↗</span></Link>)}</div></section>
+ <section className="rounded-[27px] border border-amber-200/10 bg-gradient-to-br from-amber-200/[.05] to-transparent p-5"><p className="text-[11px] font-black tracking-[.2em] text-amber-200/70">PR AWARDS · 2026</p><h2 className="mt-2 text-xl font-black">El año también merece escenario.</h2><p className="mt-2 text-[13px] text-white/60">Reconocimientos, comunidad y momentos que hicieron distinto este 2026.</p><p className="mt-3 text-xs font-black text-amber-100/70">1 DIC · VOTACIONES</p></section>
+ </main></AppLayout>
+}
