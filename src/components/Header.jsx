@@ -1,3 +1,4 @@
+import { isPRNextPreview } from '../lib/prNext'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { isRollerweenActive } from '../lib/rollerween'
@@ -20,6 +21,7 @@ export default function Header({ title, showBack = false, onBack }) {
     navigate('/', { replace: true })
   }
 
+  if(isPRNextPreview())return <header className="sticky top-0 z-50 border-b border-white/10 bg-[#09090e]/95 px-3 py-3 backdrop-blur-xl"><nav aria-label="Navegación principal PR NEXT" className="mx-auto flex max-w-[900px] items-center justify-between gap-2"><div className="flex items-center gap-1 sm:gap-3"><Link to="/app/dashboard" className={`rounded-xl px-2 py-3 text-[10px] font-black tracking-wide sm:px-4 sm:text-xs ${pathname==='/app/dashboard'?'bg-white/10 text-white':'text-white/65'}`}>HOME</Link><Link to="/app/evolucion" className={`rounded-xl px-2 py-3 text-[10px] font-black tracking-wide sm:px-4 sm:text-xs ${pathname==='/app/evolucion'?'bg-white/10 text-white':'text-white/65'}`}>MI RENDIMIENTO</Link></div><Link to="/app/deberes" className={`rounded-2xl border border-lime-200/35 px-3 py-3 text-[11px] font-black shadow-[0_5px_24px_rgba(190,242,100,.1)] sm:px-6 sm:text-sm ${pathname==='/app/deberes'?'bg-lime-200 text-black':'bg-lime-200/10 text-lime-100'}`}>TAREAS</Link></nav></header>
   return <header className="sticky top-0 z-50 border-b border-white/[0.055] bg-[#08080c]/92 backdrop-blur-2xl">
     <div className="relative flex h-[70px] items-center justify-between px-[18px]">
       {showBack ? <button type="button" onClick={onBack} aria-label="Volver" className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.075] bg-white/[0.035] active:scale-95"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-white/55" strokeWidth="1.9"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg></button> : <Link to="/" className="relative grid h-10 w-10 place-items-center active:scale-95" aria-label="Ir a la página pública de Punta Rollers"><img src="/logo.png" alt="Punta Rollers" className="h-9 w-9 object-contain"/>{rollerween&&<span className="absolute -bottom-1 -right-2 rounded-full border border-[#BEFF37]/25 bg-[#0b0810] px-1.5 py-0.5 font-mono text-[5px] font-black tracking-[.12em] text-[#BEFF37]">RW26</span>}</Link>}
