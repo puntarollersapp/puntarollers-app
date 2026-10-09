@@ -21,6 +21,8 @@ No marcar como terminado hasta ejecutar pruebas reales de extremo a extremo.
 - [x] Conectar búsqueda de perfiles PR (solo orientativa) a la bandeja beta, sin habilitar vinculación.
 - [ ] Mostrar coincidencias de todos los registros de Tesorería con nombres normalizados y prefijos Kid/PR Kid.
 - [ ] Resolver cada hijo con perfil de Tesorería existente o crear uno nuevo.
+- [x] Mostrar checklist temporal de 5 verificaciones administrativas en la revisión beta (no persistente, no habilita acceso).
+- [ ] Persistir verificaciones administrativas con auditoría y autor responsable.
 - [ ] Aprobar transaccionalmente, con auditoría y protección contra reintentos.
 - [ ] Rechazo/suspensión/reactivación con motivo y permisos.
 - [ ] Prueba de cuenta admin, profesor, alumno y visitante.
@@ -48,3 +50,5 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - 2026-10-08 (continuación): agregado `src/lib/prKidsTreasuryMatching.js` con normalización de prefijos y ranking orientativo, más 7 pruebas unitarias escritas. Sin consultas reales a Tesorería, sin vinculación ni aprobación. Pruebas pendientes de ejecución.
 
 - 2026-10-08: consulta admin de candidatos desplegada (v4; v5 republicada sin cambio de lógica), botón integrado a la bandeja beta y estado de carga añadido. La fuente consultada es `profiles` (máximo 1000 filas), NO el universo de Tesorería; por tanto no hay conciliación completa. Sin pruebas E2E ejecutadas.
+
+- 2026-10-08: checklist temporal de identidad, vínculo, niño, Tesorería y contacto integrado en la bandeja beta. Se pierde al recargar; no debe interpretarse como verificación formal ni aprobación.
