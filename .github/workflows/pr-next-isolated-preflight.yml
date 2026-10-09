@@ -1,0 +1,37 @@
+name: PR NEXT isolated beta preflight
+on:
+  push:
+    branches:
+      - pr-next-reconstruccion-desde-original-2026
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolation-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout original-based beta
+        uses: actions/checkout@v4
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify isolated beta configuration (fail closed)
+        env:
+          PR_NEXT_ISOLATED_BETA: ${{ vars.PR_NEXT_ISOLATED_BETA }}
+          PR_NEXT_BETA_SUPABASE_REF: ${{ vars.PR_NEXT_BETA_SUPABASE_REF }}
+          PR_NEXT_PRODUCTION_SUPABASE_REF: ${{ vars.PR_NEXT_PRODUCTION_SUPABASE_REF }}
+          VITE_SUPABASE_URL: ${{ vars.PR_NEXT_BETA_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.PR_NEXT_BETA_SUPABASE_ANON_KEY }}
+        run: node scripts/check-beta-isolation.mjs
+      - name: Build original app only after passing isolation check
+        if: success()
+        run: |
+          npm ci
+          npm run build:beta
+        env:
+          PR_NEXT_ISOLATED_BETA: ${{ vars.PR_NEXT_ISOLATED_BETA }}
+          PR_NEXT_BETA_SUPABASE_REF: ${{ vars.PR_NEXT_BETA_SUPABASE_REF }}
+          PR_NEXT_PRODUCTION_SUPABASE_REF: ${{ vars.PR_NEXT_PRODUCTION_SUPABASE_REF }}
+          VITE_SUPABASE_URL: ${{ vars.PR_NEXT_BETA_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.PR_NEXT_BETA_SUPABASE_ANON_KEY }}
