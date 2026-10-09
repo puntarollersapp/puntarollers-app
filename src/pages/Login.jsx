@@ -15,7 +15,7 @@ export default function Login() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const next = params.get('next')
-  const destination = next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\') ? next : '/app/perfil'
+  const destination = next?.startsWith('/') && !next.startsWith('//') && !next.includes('\\\\') ? next : (isBeta ? '/app/dashboard' : '/app/perfil')
   const rollerween = isRollerweenActive()
 
   useEffect(() => {
