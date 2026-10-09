@@ -77,3 +77,10 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - [x] Vista beta `/kids` muestra perfiles familiares si la API devuelve familia activa; si no, conserva inscripción.
 - [ ] Aprobar con seguridad y habilitar cuenta real del tutor: credenciales/OTP, verificación de correo, vinculación de `auth_user_id` y activación explícita.
 - [ ] Ejecutar pruebas unitarias, integración de RLS, sesión familiar y compilación de rama beta.
+
+### 2026-10-08 · Conciliación y caducidad de verificaciones
+- [x] Edge v15: mensualidad más reciente consultada por cada candidato (sin límite compartido de 300 mensualidades).
+- [x] Permisos RPC comprobados en catálogo PostgreSQL: únicamente `postgres` y `service_role` pueden ejecutar `pr_kids_approve_family`.
+- [x] Panel beta invalida la validación previa si se guardan nuevos checks o se vuelve a consultar Tesorería; reinicia selecciones al refrescar candidatos.
+- [x] Edge v16: falla de forma cerrada si no puede verificar si ya existe un tutor.
+- [ ] Pruebas E2E y compilación; acceso de tutores sin perfil de alumno, verificación de email y activación siguen pendientes.
