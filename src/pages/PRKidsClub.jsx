@@ -3,6 +3,7 @@ import {Link,useSearchParams} from 'react-router-dom'
 import {supabase} from '../lib/supabase'
 import {useAuth} from '../lib/auth'
 import {validateFamilyApplication} from '../lib/prKidsFamilyValidation'
+import {projectFamilyHome} from '../lib/prKidsFamilyProjection'
 import './PRKidsInscripciones2026.css'
 import PRKidsFamilyDashboard from '../components/PRKidsFamilyDashboard'
 const features=[['✦','Qué hicimos hoy','Conocé qué practicamos en la clase del sábado.','blue'],['▣','Pasaporte roller','Cada asistencia registrada con el escáner suma un sello para premios.','pink'],['★','Insignias','Descubrí las habilidades y los logros que consiguió.','yellow'],['▧','Fotos y videos','Recuerdos de las clases en una galería privada.','green']]
@@ -19,7 +20,7 @@ export default function PRKidsClub(){
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
  useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
  useEffect(()=>{let live=true;supabase.auth.getSession().then(({data})=>{if(live){setFamilySession(data?.session?.user?.id||null);setSessionReady(true)}}).catch(()=>{if(live){setFamilySession(null);setSessionReady(true)}});const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{if(live){setFamilySession(session?.user?.id||null);setSessionReady(true)}});return()=>{live=false;listener?.subscription?.unsubscribe()}},[])
- useEffect(()=>{let live=true;async function loadFamily(){setFamilyHome(null);setFamilyLoading(true);try{if(!sessionReady||!familySession)return;const {data:family,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}});if(!live)return;if(!error&&family?.ok){setFamilyHome(family);setSelectedChild(null);setGuardianAccess('')}else if(family?.error==='Acceso familiar pendiente de activación'){setGuardianAccess('Tu cuenta familiar está pendiente de activación. Administración te avisará cuando puedas ingresar.')}else{setGuardianAccess('')}}catch{}finally{if(live&&sessionReady)setFamilyLoading(false)}}loadFamily();return()=>{live=false}},[familySession,sessionReady])
+ useEffect(()=>{let live=true;async function loadFamily(){setFamilyHome(null);setFamilyLoading(true);try{if(!sessionReady||!familySession)return;const {data:family,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}});if(!live)return;if(!error&&family?.ok){const projected=projectFamilyHome(family);if(projected?.children?.length){setFamilyHome(projected);setSelectedChild(null);setGuardianAccess('')}else{setGuardianAccess('Todavía no hay perfiles infantiles aprobados para esta cuenta.')}}else if(family?.error==='Acceso familiar pendiente de activación'){setGuardianAccess('Tu cuenta familiar está pendiente de activación. Administración te avisará cuando puedas ingresar.')}else{setGuardianAccess('')}}catch{}finally{if(live&&sessionReady)setFamilyLoading(false)}}loadFamily();return()=>{live=false}},[familySession,sessionReady])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('')
  if(data.es_alumno===null){setError('Elegí si ya tenés cuenta de alumno adulto.');return}
