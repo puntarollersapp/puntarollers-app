@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
+import { isPRNextPreview } from './lib/prNext'
 
 ReactDOM.createRoot(
   document.getElementById('root')
@@ -14,7 +15,10 @@ ReactDOM.createRoot(
   </React.StrictMode>
 )
 
-if ('serviceWorker' in navigator) {
+if (isPRNextPreview() && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => registrations.forEach(registration => registration.unregister())).catch(() => {})
+}
+if (!isPRNextPreview() && 'serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
       const registration =
