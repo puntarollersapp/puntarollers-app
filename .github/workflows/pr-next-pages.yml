@@ -1,0 +1,37 @@
+name: PR NEXT Beta - publicar copia original
+on:
+  push:
+    branches: [pr-next-beta-supervision-2026]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pr-next-beta-pages
+  cancel-in-progress: true
+jobs:
+  beta:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Compilar copia original sin credenciales de produccion
+        env:
+          VITE_PR_NEXT_PREVIEW: 'true'
+          VITE_SUPABASE_URL: ''
+          VITE_SUPABASE_ANON_KEY: ''
+        run: pnpm run build -- --base=/puntarollers-app/
+      - name: Preparar rutas de SPA
+        run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
