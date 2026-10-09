@@ -84,3 +84,9 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - [x] Panel beta invalida la validación previa si se guardan nuevos checks o se vuelve a consultar Tesorería; reinicia selecciones al refrescar candidatos.
 - [x] Edge v16: falla de forma cerrada si no puede verificar si ya existe un tutor.
 - [ ] Pruebas E2E y compilación; acceso de tutores sin perfil de alumno, verificación de email y activación siguen pendientes.
+
+### 2026-10-08 · Cobertura adicional de regresión
+- [x] Seis nuevos casos de registro familiar (adulto ausente, lista vacía, hermanos repetidos, vínculo inválido, documento y teléfono cortos).
+- [x] Tres nuevos casos de matching de Tesorería (nombre de pila distinto, límite de seis sugerencias y ausencia de mutación de datos).
+- [ ] GitHub Actions no reporta ejecuciones para el último commit; pruebas y compilación no verificadas.
+- [ ] Activación de tutores no alumnos sigue deshabilitada hasta validar prueba de posesión de email, identidad y vínculo administrativo.
