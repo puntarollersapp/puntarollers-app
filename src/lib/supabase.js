@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 export const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim()
 export const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Preview builds have no production database credentials. Keep the UI bootable.\nconst safeUrl = supabaseUrl || 'https://pr-next-preview.invalid'\nconst safeKey = supabaseAnonKey || 'pr-next-preview-no-database'\nexport const supabase = createClient(safeUrl, safeKey, { auth: { persistSession: false, autoRefreshToken: false } })
 
 export async function uploadPublicImage(bucket, file, folder = 'uploads') {
   if (!file) return { url: null, error: 'No se seleccionó archivo' }
