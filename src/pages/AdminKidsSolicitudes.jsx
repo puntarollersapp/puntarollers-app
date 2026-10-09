@@ -24,6 +24,19 @@ export default function AdminKidsSolicitudes(){
   setReviewHistory(previous=>({...previous,[r.id]:result.reviews||[]}))
  }catch(e){setError(e.message)}finally{setReviewBusy('')}
 }
+ async function openReview(r){
+  if(selected===r.id){setSelected(null);return}
+  setSelected(r.id);setError('')
+  try{
+   const result=await invoke({action:'review-history',id:r.id})
+   const history=result.reviews||[]
+   setReviewHistory(prev=>({...prev,[r.id]:history}))
+   if(history.length){
+    setReviewChecks(prev=>({...prev,[r.id]:history[0].checks||{}}))
+    setReviewNotes(prev=>({...prev,[r.id]:history[0].note||''}))
+   }
+  }catch(e){setError(e.message)}
+ }
  async function reject(r){if(!window.confirm('¿Rechazar la solicitud de '+r.nombre_tutor+'? Esta acción no crea ni elimina cuentas.'))return;setBusy(r.id);try{await invoke({action:'reject',id:r.id});setSelected(null);await load()}catch(e){setError(e.message)}finally{setBusy('')}}
  return <main className="min-h-screen bg-[#090b13] px-4 py-8 text-white"><div className="mx-auto max-w-5xl">
   <Link to="/admin" className="text-sm font-bold text-white/60">← Volver a Administración</Link>
@@ -36,7 +49,7 @@ export default function AdminKidsSolicitudes(){
   {loading?<p className="mt-8 text-white/50">Cargando solicitudes…</p>:<div className="mt-5 space-y-3">{filtered.length===0&&<p className="rounded-xl bg-white/5 p-6 text-white/50">No hay solicitudes para este filtro.</p>}
   {filtered.map(r=><article key={r.id} className="rounded-2xl border border-white/10 bg-[#1b2235] p-5"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-xs text-violet-200">{stamp(r.created_at)}</p><h2 className="mt-1 text-lg font-black">{r.nombre_tutor}</h2><p className="text-sm text-white/60">{r.vinculo} · {r.es_alumno?'Declara ser alumno':'Responsable no alumno'}</p></div><span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold">{STATUSES[r.estado]||r.estado}</span></div>
    <Children request={r}/>
-   <button type="button" onClick={()=>setSelected(selected===r.id?null:r.id)} aria-expanded={selected===r.id} className="mt-4 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold">{selected===r.id?'Ocultar detalles':'Revisar solicitud'}</button>
+   <button type="button" onClick={()=>openReview(r)} aria-expanded={selected===r.id} className="mt-4 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold">{selected===r.id?'Ocultar detalles':'Revisar solicitud'}</button>
    {selected===r.id&&<section className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4"><h3 className="font-bold">Datos del responsable</h3><p className="mt-2 text-sm text-white/75">Documento: {r.documento_tutor}</p><p className="mt-1 break-all text-sm text-white/75">Email: {r.email_tutor}</p><p className="mt-1 text-sm text-white/75">Teléfono: {r.telefono_tutor}</p><div className="mt-4 rounded-lg border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100">Antes de aprobar: verificar identidad del adulto, vínculo familiar, cuenta existente y correspondencia de cada niño con Tesorería. La aprobación y la creación de credenciales todavía no están habilitadas.</div><button type="button" disabled={Boolean(matchBusy)} onClick={()=>findMatches(r)} className="mt-3 rounded-lg border border-violet-300/30 px-4 py-2 text-sm text-violet-200">{matchBusy===r.id?'Buscando…':'Buscar coincidencias'}</button><p className="mt-2 text-xs text-amber-200/80">Solo sugerencias de perfiles PR; no verifican parentesco ni pagos.</p>{matches[r.id]&&<div className="mt-3 space-y-2">{matches[r.id].map((child,i)=><div key={i} className="rounded-lg bg-white/5 p-3"><p className="font-bold">{child.nombre}</p>{child.matches?.length?child.matches.map(m=><p key={m.profile_id} className="text-sm text-white/60">{m.nombre} · {m.score===100?'Nombre exacto':'Similar'}</p>):<p className="text-xs text-white/50">Sin coincidencias. Revisar manualmente.</p>}</div>)}</div>}<div className="mt-4 rounded-xl border border-white/10 p-3"><p className="text-sm font-bold">Control previo a la aprobación</p><p className="mt-1 text-xs text-white/60">Guardá esta revisión para dejar constancia. Las comprobaciones no aprueban accesos.</p>{[['identity','Identidad del adulto'],['relation','Parentesco o tutela'],['children','Identidad de cada niño'],['treasury','Tesorería comprobada'],['contact','Contacto verificado']].map(([key,label])=><label key={key} className="mt-2 flex gap-2 text-sm"><input type="checkbox" checked={Boolean(reviewChecks[r.id]?.[key])} onChange={e=>setReviewChecks(prev=>({...prev,[r.id]:{...prev[r.id],[key]:e.target.checked}}))}/>{label}</label>)}<textarea aria-label="Observaciones de la revisión" placeholder="Observaciones (opcional)" value={reviewNotes[r.id]||''} onChange={e=>setReviewNotes(p=>({...p,[r.id]:e.target.value}))} maxLength={1000} className="mt-3 w-full rounded-lg border border-white/15 bg-black/30 p-2 text-sm"/><button type="button" disabled={Boolean(reviewBusy)} onClick={()=>saveReview(r)} className="mt-3 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold disabled:opacity-50">{reviewBusy===r.id?'Guardando…':'Guardar revisión'}</button>{reviewHistory[r.id]&&<p className="mt-2 text-xs text-white/60">Revisiones registradas: {reviewHistory[r.id].length}. Última: {reviewHistory[r.id][0]?stamp(reviewHistory[r.id][0].created_at):'—'}</p>}</div>{r.estado==='pendiente'&&<button type="button" disabled={Boolean(busy)} onClick={()=>reject(r)} className="mt-4 rounded-lg border border-red-300/30 px-4 py-2 text-sm font-bold text-red-200 disabled:opacity-50">{busy===r.id?'Procesando…':'Rechazar solicitud'}</button>}</section>}
   </article>)}</div>}
  </div></main>
