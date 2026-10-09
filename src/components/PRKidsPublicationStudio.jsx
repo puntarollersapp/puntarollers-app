@@ -12,7 +12,7 @@ export default function PRKidsPublicationStudio(){
  const [customSkill,setCustomSkill]=useState(''),[photos,setPhotos]=useState([]),[blocks,setBlocks]=useState([]),[dateFilter,setDateFilter]=useState('all'),[search,setSearch]=useState('')
  const draftKey=user?.id?'prk_class_draft_beta_'+user.id:null
  useEffect(()=>{if(!draftKey)return;try{const restored=parseLocalClassDraft(localStorage.getItem(draftKey));if(restored){setDraft(restored);setDraftRestored(true)}}catch{}},[draftKey])
- const saveLocalDraft=()=>{if(!draftKey)return;try{localStorage.setItem(draftKey,serializeLocalClassDraft(draft));setDraftSaved(true)}catch{setDraftSaved(false)}}
+ const saveLocalDraft=()=>{if(!draftKey)return;try{const serialized=serializeLocalClassDraft(draft);if(!serialized){setDraftSaved(false);return}localStorage.setItem(draftKey,serialized);setDraftSaved(true)}catch{setDraftSaved(false)}}
  const discardLocalDraft=()=>{if(draftKey)try{localStorage.removeItem(draftKey)}catch{};setDraftSaved(false);setDraftRestored(false);setDraft({...initial,date:nextSaturdayDate()});setPreview(false)}
  const filteredBlocks=filterClassPosts(blocks,{date:dateFilter,query:search})
  const availableDates=[...new Set(blocks.map(b=>b.date))].sort().reverse()
