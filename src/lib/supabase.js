@@ -3,6 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 export const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim()
 export const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
+// Esta rama es EXCLUSIVAMENTE una copia de PR NEXT BETA.
+// El ID está fijado al proyecto de pruebas independiente, no a producción.
+// No aceptar una URL de otro proyecto, aunque se configure por error en Vercel.
+const PR_NEXT_BETA_PROJECT_REF = 'azheisnfaedjqcuhiylo'
+const expectedBetaUrl = `https://${PR_NEXT_BETA_PROJECT_REF}.supabase.co`
+
+if (supabaseUrl.replace(/\/$/, '') !== expectedBetaUrl) {
+  throw new Error('PR NEXT BETA: conexión bloqueada. Se requiere exclusivamente el proyecto Supabase aislado.')
+}
+if (!supabaseAnonKey) {
+  throw new Error('PR NEXT BETA: falta la clave pública del proyecto aislado.')
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export async function uploadPublicImage(bucket, file, folder = 'uploads') {
