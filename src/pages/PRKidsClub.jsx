@@ -5,7 +5,7 @@ import {useAuth} from '../lib/auth'
 import './PRKidsInscripciones2026.css'
 const features=[['✦','Así entrenamos','Un diario de cada sábado, con fotos y lo que aprendimos.','blue'],['▣','Pasaporte roller','Cada asistencia suma un sello digital.','pink'],['★','Mis insignias','Habilidades, valores y logros para celebrar.','yellow'],['▧','Mis recuerdos','Galerías privadas para las familias.','green']]
 const initial={nombre_tutor:'',documento_tutor:'',email_tutor:'',telefono_tutor:'',nombre_nino:'',vinculo:'',es_alumno:false}
-function Input({label,value,onChange,type='text',placeholder,required=true}){return <label className="full"><span>{label}</span><input required={required} type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/></label>}
+function Input({label,value,onChange,type='text',placeholder,required=true,readOnly=false}){return <label className="full"><span>{label}</span><input required={required} readOnly={readOnly} type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/></label>}
 export default function PRKidsClub(){
  const {user}=useAuth()
  const [params]=useSearchParams()
@@ -13,7 +13,7 @@ export default function PRKidsClub(){
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
  useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
- async function submit(e){e.preventDefault();if(busy)return;setError('');setBusy(true);try{
+ async function submit(e){e.preventDefault();if(busy)return;setError('');if(user?.documento&&data.documento_tutor!==user.documento){setError('La cédula debe coincidir con tu cuenta de Punta Rollers.');return}if(hijos.some(h=>h.nombre.trim().split(/\\s+/).length<2)){setError('Ingresá nombre y apellido de cada niño para ayudar a identificar su registro en Tesorería.');return}setBusy(true);try{
  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
  if(err||r?.error)throw Error(r?.error||'No pudimos enviar la solicitud. Intentá nuevamente.')
  setStage('done')
@@ -36,13 +36,13 @@ export default function PRKidsClub(){
    <p className="prk-kicker">ACCESO FAMILIAR · PR KIDS</p><h1>¡HOLA,<br/>FAMILIA ROLLER!</h1>
    <p className="prk-lead">Completá los datos del adulto que va a ingresar a la cuenta. Después contanos qué niño o niños de PR Kids querés vincular.</p>
    <form onSubmit={submit}>
-    <h2 className="prk-section-label">01 / Tu cuenta como adulto responsable</h2><p className="mb-4 text-sm leading-6 text-white/60">Estos datos son del <strong className="text-white">padre, madre o tutor</strong>, NO del niño. El documento del adulto será el que se use para iniciar sesión en Punta Rollers.</p>
+    <h2 className="prk-section-label">01 / Tu cuenta como adulto responsable</h2>{user&&<p className="mb-3 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-sm text-emerald-100">Ingresaste como {[user.nombre,user.apellido].filter(Boolean).join(' ')}. Conservás tu cuenta y PIN actuales. Tu cédula se toma de esa cuenta.</p>}<p className="mb-4 text-sm leading-6 text-white/60">Estos datos son del <strong className="text-white">padre, madre o tutor</strong>, NO del niño. El documento del adulto será el que se use para iniciar sesión en Punta Rollers.</p>
     <div className="prk-form-grid">
      <Input label="Nombre y apellido del adulto" value={data.nombre_tutor} onChange={v=>set('nombre_tutor',v)} placeholder="Nombre completo"/>
-     <Input label="Cédula del adulto (con esta ingresás a la plataforma)" value={data.documento_tutor} onChange={v=>set('documento_tutor',v.replace(/\D/g,'').slice(0,12))} placeholder="Sin puntos"/>
+     <Input label="Cédula del adulto (con esta ingresás a la plataforma)" value={data.documento_tutor} onChange={v=>set('documento_tutor',v.replace(/\D/g,'').slice(0,12))} placeholder="Sin puntos" readOnly={Boolean(user?.documento)}/>
      <Input label="Correo electrónico" type="email" value={data.email_tutor} onChange={v=>set('email_tutor',v)} placeholder="nombre@email.com"/>
      <Input label="WhatsApp" type="tel" value={data.telefono_tutor} onChange={v=>set('telefono_tutor',v)} placeholder="099 123 456"/>
-     <label className="full"><span>¿Ya tenés perfil de alumno adulto en Punta Rollers?</span><select value={String(data.es_alumno)} onChange={e=>set('es_alumno',e.target.value==='true')}><option value="false">No, solo soy madre/padre/tutor</option><option value="true">Sí, ya tengo documento y PIN</option></select></label>
+     {!user&&<label className="full"><span>¿Ya tenés perfil de alumno adulto en Punta Rollers?</span><select value={String(data.es_alumno)} onChange={e=>set('es_alumno',e.target.value==='true')}><option value="false">No, solo soy madre/padre/tutor</option><option value="true">Sí, ya tengo documento y PIN</option></select></label>}
     </div>
     <h2 className="prk-section-label adult">02 / Tus pequeños rollers</h2><p className="mb-4 text-sm leading-6 text-white/60">Escribí el nombre completo del niño o niña que asiste a PR Kids. ¿También viene su hermano o hermana? Agregalo acá, sin hacer otra solicitud.</p>
     <div className="prk-form-grid">
