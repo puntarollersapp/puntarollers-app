@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react'
+import {useState} from 'react'
 import {useAuth} from '../lib/auth'
 const activities=['Equilibrio','Frenadas','Giros','Circuito con conos','Coordinación','Juego en equipo','Desplazamiento','Seguridad']
 const initial={title:'',date:new Date().toISOString().slice(0,10),summary:'',teacherNote:'',skills:[]}
@@ -9,7 +9,6 @@ export default function PRKidsPublicationStudio(){
  const [customSkill,setCustomSkill]=useState(''),[photos,setPhotos]=useState([]),[blocks,setBlocks]=useState([])
  const teacherName=[user?.nombre,user?.apellido].filter(Boolean).join(' ')||'Profesor/a'
  const teacherAvatar=user?.foto_url||user?.avatar_url||user?.foto||null
- useEffect(()=>()=>{photos.forEach(p=>URL.revokeObjectURL(p.url))},[photos])
  const addSkill=()=>{const value=customSkill.trim().slice(0,60);if(value&&!draft.skills.some(s=>s.toLowerCase()===value.toLowerCase()))change('skills',[...draft.skills,value]);setCustomSkill('')}
  const addPhotos=files=>{const allowed=Array.from(files||[]).filter(file=>file.type.startsWith('image/')&&file.size<=8*1024*1024);setPhotos(prev=>[...prev,...allowed.slice(0,Math.max(0,8-prev.length)).map(file=>({name:file.name,url:URL.createObjectURL(file)}))])}
  const removePhoto=index=>setPhotos(prev=>{URL.revokeObjectURL(prev[index].url);return prev.filter((_,i)=>i!==index)})
