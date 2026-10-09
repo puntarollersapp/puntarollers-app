@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {createClient} from '@supabase/supabase-js';
+const env=Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').filter(x=>x.includes('=')).map(x=>{const i=x.indexOf('=');return[x.slice(0,i),x.slice(i+1).trim().replace(/^['"]|['"]$/g,'')]}));
+assert.equal(env.VITE_SUPABASE_URL,'https://azheisnfaedjqcuhiylo.supabase.co');
+const origin='https://pr-next-replica-fiel-oahke3cf7-puntarollersapps-projects.vercel.app';
+const client=()=>createClient(env.VITE_SUPABASE_URL,env.VITE_SUPABASE_ANON_KEY,{auth:{persistSession:false},global:{headers:{Origin:origin}}});
+const results=[];
+async function check(name,fn){try{const detail=await fn();results.push({name,ok:true,detail});console.log(JSON.stringify(results.at(-1),(k,v)=>k==='db'?undefined:v));return detail}catch(e){results.push({name,ok:false,error:e.message});console.log(JSON.stringify(results.at(-1),(k,v)=>k==='db'?undefined:v));return null}}
+async function rpc(db,name,args={}){const r=await db.rpc(name,args);if(r.error)throw Error(r.error.message);if(r.data?.success===false)throw Error(r.data.error);return r.data}
+async function edge(db,name,body){const r=await db.functions.invoke(name,{body});if(r.error){let msg=r.error.message;if(r.error.context)msg+=' '+await r.error.context.text();throw Error(msg)}if(r.data?.error)throw Error(r.data.error);return r.data}
+const admin=client(),anon=client();
+await check('admin_login',async()=>{const r=await admin.auth.signInWithPassword({email:'99000001@usuarios.puntarollers.app',password:'PR-8462-99000001'});assert.ifError(r.error);return {authenticated:!!r.data.session}});
+await check('refresh_session',async()=>{const r=await admin.auth.refreshSession();assert.ifError(r.error);return {authenticated:!!r.data.session}});
+const users=[];
+for(const [documento,pin,nombre] of [['99000002','7539','Alumno Beta Dos'],['99000003','6824','Alumno Beta Tres'],['99000004','9753','Profesor Beta']]){
+ const u=await check('fixture_'+documento,async()=>{let list=await edge(admin,'pr-access-admin',{action:'list'});let existing=list.requests.find(x=>x.documento===documento);let r=existing?{id:existing.id,email_sent:false}:await edge(anon,'pr-access-request',{nombre_completo:nombre,documento,pin,email:documento+'@example.invalid',telefono:'000'+documento});assert.equal(r.email_sent,false);const id=r.id;const p=await edge(admin,'pr-access-admin',{action:'import',id});await edge(admin,'pr-access-admin',{action:'activate',id});const db=client();const a=await db.auth.signInWithPassword({email:documento+'@usuarios.puntarollers.app',password:`PR-${pin}-${documento}`});assert.ifError(a.error);return {id:p.profile_id,db,authid:a.data.user.id}});if(u){users.push(u);console.log(JSON.stringify({fixture_id:u.id,authid:u.authid}));}
+}
+const [one,two,outsider]=users;
+if(one&&two&&outsider){
+ for(const n of ['community_get_dashboard','community_social_feed','community_my_albums','community_my_notifications','community_my_friends','pr_dm_inbox'])await check('student_'+n,async()=>({data:await rpc(one.db,n)}));
+ await check('friend_request',()=>rpc(one.db,'community_send_friend_request',{target_profile_id:two.id}));
+ await check('friend_accept',async()=>{const d=await rpc(two.db,'community_get_dashboard');const r=d.incoming_requests.find(x=>x.id===one.id||x.profile_id===one.id)||d.incoming_requests[0];assert.ok(r);return rpc(two.db,'community_accept_friend_request',{request_id_value:r.request_id})});
+ const conv=await check('dm_open',()=>rpc(one.db,'pr_dm_open',{target_profile_id:two.id}));
+ const cid=conv?.id||conv?.conversation_id||conv?.conversation?.id;
+ if(cid){await check('dm_send',()=>rpc(one.db,'pr_dm_send',{conversation_id_value:cid,body_value:'Mensaje ficticio de prueba beta'}));await check('dm_receive',async()=>{const r=await rpc(two.db,'pr_dm_messages',{conversation_id_value:cid});assert.ok(JSON.stringify(r).includes('Mensaje ficticio'));return r});await check('dm_unauthorized_rejected',async()=>{const r=await outsider.db.rpc('pr_dm_messages',{conversation_id_value:cid});assert.ok(r.error||r.data?.success===false||Array.isArray(r.data)&&r.data.length===0);return {error:r.error?.message,data:r.data}});}
+ const pid=await check('create_post',()=>rpc(one.db,'community_create_post',{p_body:'Publicación ficticia beta',p_media_paths:[],p_tag_profile_ids:[two.id]}));
+ if(pid){await check('post_comment',()=>rpc(two.db,'community_add_comment',{p_post_id:pid,p_body:'Comentario ficticio beta'}));await check('post_reaction',()=>rpc(two.db,'community_toggle_reaction',{p_post_id:pid,p_reaction:'like'}));}
+ const aid=await check('create_album',()=>rpc(one.db,'community_create_album',{p_title:'Álbum ficticio beta',p_member_ids:[two.id]}));
+ if(aid)await check('album_accept',()=>rpc(two.db,'community_answer_album_invite',{p_album_id:aid,p_accept:true}));
+ await check('storage_upload',async()=>{const path=await rpc(one.db,'community_media_path',{p_kind:'post',p_ext:'png'});const bytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVgAAAABJRU5ErkJggg==','base64');const r=await one.db.storage.from('community-media').upload(path,bytes,{contentType:'image/png'});assert.ifError(r.error);const response=await fetch(one.db.storage.from('community-media').getPublicUrl(path).data.publicUrl);assert.equal(response.status,200);return {path,status:response.status}});
+ await check('notifications_received',async()=>{const r=await rpc(two.db,'community_my_notifications');assert.ok(r.length>0);return {count:r.length}});
+ await check('mark_notifications',()=>rpc(two.db,'community_mark_notifications_read'));
+ await check('profile_self_update',async()=>{const r=await one.db.from('profiles').update({sobre_mi:'Dato ficticio de prueba beta'}).eq('id',one.id).select('id,sobre_mi');assert.ifError(r.error);assert.equal(r.data.length,1);return r.data});
+ await check('role_escalation_rejected',async()=>{const r=await one.db.from('profiles').update({role:'admin'}).eq('id',one.id);assert.ok(r.error);return {error:r.error.message}});
+ await check('admin_edge_rejected_for_student',async()=>{const r=await one.db.functions.invoke('pr-access-admin',{body:{action:'list'}});assert.ok(r.error||r.data?.error);return {rejected:true}});
+}
+for(const [n,b]of [['pr-tesoreria-montos',{action:'sync',periodo:'2026-10-01'}],['pr-kids-family-access',{action:'list'}],['pr-access-admin',{action:'list'}]])await check('admin_edge_'+n,()=>edge(admin,n,b));
+await check('kids_request',()=>edge(anon,'pr-kids-family-access',{action:'request',nombre_tutor:'Tutor Ficticio Beta',documento_tutor:'99000005',email_tutor:'familia@example.invalid',telefono_tutor:'000000000',nombre_nino:'Niño Ficticio',vinculo:'tutor',es_alumno:false,hijos:[{nombre:'Niño Ficticio'}]}));
+await check('anonymous_private_rpc_rejected',async()=>{const r=await anon.rpc('community_get_dashboard');assert.ok(r.error);return {error:r.error.message}});
+fs.writeFileSync('replica-verification-results.json',JSON.stringify(results,(k,v)=>k==='db'?undefined:v,2));
+console.log(JSON.stringify({passed:results.filter(x=>x.ok).length,failed:results.filter(x=>!x.ok).length}));

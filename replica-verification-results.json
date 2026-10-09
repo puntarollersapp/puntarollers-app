@@ -1,0 +1,314 @@
+[
+  {
+    "name": "admin_login",
+    "ok": true,
+    "detail": {
+      "authenticated": true
+    }
+  },
+  {
+    "name": "refresh_session",
+    "ok": true,
+    "detail": {
+      "authenticated": true
+    }
+  },
+  {
+    "name": "fixture_99000002",
+    "ok": true,
+    "detail": {
+      "id": "alumno_ed2b9540-5316-4dd0-b763-9771b5903045",
+      "authid": "03c4b57f-61ae-4a24-9c62-3a7ef5f77484"
+    }
+  },
+  {
+    "name": "fixture_99000003",
+    "ok": true,
+    "detail": {
+      "id": "alumno_69ea325e-c256-4e15-a28b-dd2b08993aed",
+      "authid": "e37c7292-290d-4029-8e5c-c30efc13b3cb"
+    }
+  },
+  {
+    "name": "fixture_99000004",
+    "ok": true,
+    "detail": {
+      "id": "alumno_f4e25e11-05ee-4962-b3ea-03fcc4e85860",
+      "authid": "563f6a5b-b2f8-41cb-b871-ededcf9389dc"
+    }
+  },
+  {
+    "name": "student_community_get_dashboard",
+    "ok": true,
+    "detail": {
+      "data": {
+        "friends": [],
+        "incoming_requests": [],
+        "outgoing_requests": []
+      }
+    }
+  },
+  {
+    "name": "student_community_social_feed",
+    "ok": true,
+    "detail": {
+      "data": []
+    }
+  },
+  {
+    "name": "student_community_my_albums",
+    "ok": true,
+    "detail": {
+      "data": []
+    }
+  },
+  {
+    "name": "student_community_my_notifications",
+    "ok": true,
+    "detail": {
+      "data": []
+    }
+  },
+  {
+    "name": "student_community_my_friends",
+    "ok": true,
+    "detail": {
+      "data": []
+    }
+  },
+  {
+    "name": "student_pr_dm_inbox",
+    "ok": true,
+    "detail": {
+      "data": []
+    }
+  },
+  {
+    "name": "friend_request",
+    "ok": true,
+    "detail": {
+      "success": true
+    }
+  },
+  {
+    "name": "friend_accept",
+    "ok": true,
+    "detail": {
+      "success": true
+    }
+  },
+  {
+    "name": "dm_open",
+    "ok": true,
+    "detail": {
+      "success": true,
+      "conversation_id": "ded5ac6b-aaa5-4048-9260-05afb3850458"
+    }
+  },
+  {
+    "name": "dm_send",
+    "ok": true,
+    "detail": {
+      "success": true
+    }
+  },
+  {
+    "name": "dm_receive",
+    "ok": true,
+    "detail": [
+      {
+        "id": "c2020411-904a-477f-8df0-cb63de7395fd",
+        "body": "Mensaje ficticio de prueba beta",
+        "is_mine": false,
+        "read_at": null,
+        "media_url": null,
+        "created_at": "2026-10-09T22:42:28.433541+00:00",
+        "media_name": null,
+        "media_type": null
+      }
+    ]
+  },
+  {
+    "name": "dm_unauthorized_rejected",
+    "ok": true,
+    "detail": {
+      "data": []
+    }
+  },
+  {
+    "name": "create_post",
+    "ok": true,
+    "detail": "fa5dcd3a-eef5-4b1b-8a7b-bb5cc66389ed"
+  },
+  {
+    "name": "post_comment",
+    "ok": true,
+    "detail": "6786c436-4535-4f8a-8943-f840b2e06cb3"
+  },
+  {
+    "name": "post_reaction",
+    "ok": true,
+    "detail": true
+  },
+  {
+    "name": "create_album",
+    "ok": true,
+    "detail": "1464a724-9576-4c96-aeb2-d73bfb5cd385"
+  },
+  {
+    "name": "album_accept",
+    "ok": true,
+    "detail": true
+  },
+  {
+    "name": "storage_upload",
+    "ok": true,
+    "detail": {
+      "path": "alumno_ed2b9540-5316-4dd0-b763-9771b5903045/post-ef9fcc3c-3f83-4ab5-9714-5642df82d119.png",
+      "status": 200
+    }
+  },
+  {
+    "name": "notifications_received",
+    "ok": true,
+    "detail": {
+      "count": 5
+    }
+  },
+  {
+    "name": "mark_notifications",
+    "ok": true,
+    "detail": 5
+  },
+  {
+    "name": "profile_self_update",
+    "ok": true,
+    "detail": [
+      {
+        "id": "alumno_ed2b9540-5316-4dd0-b763-9771b5903045",
+        "sobre_mi": "Dato ficticio de prueba beta"
+      }
+    ]
+  },
+  {
+    "name": "role_escalation_rejected",
+    "ok": true,
+    "detail": {
+      "error": "Ese dato solo puede modificarlo el equipo de Punta Rollers."
+    }
+  },
+  {
+    "name": "admin_edge_rejected_for_student",
+    "ok": true,
+    "detail": {
+      "rejected": true
+    }
+  },
+  {
+    "name": "admin_edge_pr-tesoreria-montos",
+    "ok": true,
+    "detail": {
+      "ok": true,
+      "copied": [],
+      "promo_applied": []
+    }
+  },
+  {
+    "name": "admin_edge_pr-kids-family-access",
+    "ok": true,
+    "detail": {
+      "ok": true,
+      "requests": [
+        {
+          "id": "7691f4ba-39f3-4abf-8494-cba38b609ba6",
+          "created_at": "2026-10-09T22:40:48.582217+00:00",
+          "nombre_tutor": "Tutor Ficticio Beta",
+          "documento_tutor": "99000005",
+          "email_tutor": "familia@example.invalid",
+          "telefono_tutor": "000000000",
+          "nombre_nino": "Niño Ficticio",
+          "hijos": [
+            {
+              "nombre": "Niño Ficticio"
+            }
+          ],
+          "vinculo": "tutor",
+          "es_alumno": false,
+          "estado": "pendiente"
+        }
+      ]
+    }
+  },
+  {
+    "name": "admin_edge_pr-access-admin",
+    "ok": true,
+    "detail": {
+      "ok": true,
+      "requests": [
+        {
+          "id": "acbee335-b5d2-4cd3-a299-a1dd132f5047",
+          "nombre": "Profesor",
+          "apellido": "Beta",
+          "documento": "99000004",
+          "telefono": "00099000004",
+          "email": "99000004@example.invalid",
+          "status": "active",
+          "profile_id": "alumno_f4e25e11-05ee-4962-b3ea-03fcc4e85860",
+          "created_at": "2026-10-09T22:40:42.03442+00:00",
+          "updated_at": "2026-10-09T22:41:38.602+00:00",
+          "nombre_completo": "Profesor Beta",
+          "estado": "activo",
+          "imported_at": null,
+          "activated_at": null
+        },
+        {
+          "id": "6870f7f5-8235-49d3-9faf-32d370e95fe7",
+          "nombre": "Alumno",
+          "apellido": "Beta Tres",
+          "documento": "99000003",
+          "telefono": "00099000003",
+          "email": "99000003@example.invalid",
+          "status": "active",
+          "profile_id": "alumno_69ea325e-c256-4e15-a28b-dd2b08993aed",
+          "created_at": "2026-10-09T22:40:38.494835+00:00",
+          "updated_at": "2026-10-09T22:41:33.93+00:00",
+          "nombre_completo": "Alumno Beta Tres",
+          "estado": "activo",
+          "imported_at": null,
+          "activated_at": null
+        },
+        {
+          "id": "5e37f4bb-9800-4346-a672-f22d4cb6196c",
+          "nombre": "Alumno",
+          "apellido": "Beta Dos",
+          "documento": "99000002",
+          "telefono": "000000000",
+          "email": "99000002@example.invalid",
+          "status": "active",
+          "profile_id": "alumno_ed2b9540-5316-4dd0-b763-9771b5903045",
+          "created_at": "2026-10-09T22:40:31.838176+00:00",
+          "updated_at": "2026-10-09T22:41:28.797+00:00",
+          "nombre_completo": "Alumno Beta Dos",
+          "estado": "activo",
+          "imported_at": null,
+          "activated_at": null
+        }
+      ]
+    }
+  },
+  {
+    "name": "kids_request",
+    "ok": true,
+    "detail": {
+      "ok": true,
+      "already_exists": true
+    }
+  },
+  {
+    "name": "anonymous_private_rpc_rejected",
+    "ok": true,
+    "detail": {
+      "error": "permission denied for function community_get_dashboard"
+    }
+  }
+]
