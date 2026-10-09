@@ -5,15 +5,16 @@ const env=Object.fromEntries(fs.readFileSync('.env.local','utf8').split('\n').fi
 assert.equal(env.VITE_SUPABASE_URL,'https://azheisnfaedjqcuhiylo.supabase.co');
 const origin='https://pr-next-replica-fiel-oahke3cf7-puntarollersapps-projects.vercel.app';
 const client=()=>createClient(env.VITE_SUPABASE_URL,env.VITE_SUPABASE_ANON_KEY,{auth:{persistSession:false},global:{headers:{Origin:origin}}});
+for(const key of ['REPLICA_TEST_ADMIN_PASSWORD','REPLICA_TEST_PIN_2','REPLICA_TEST_PIN_3','REPLICA_TEST_PIN_4'])assert.ok(process.env[key], 'Missing '+key);
 const results=[];
 async function check(name,fn){try{const detail=await fn();results.push({name,ok:true,detail});console.log(JSON.stringify(results.at(-1),(k,v)=>k==='db'?undefined:v));return detail}catch(e){results.push({name,ok:false,error:e.message});console.log(JSON.stringify(results.at(-1),(k,v)=>k==='db'?undefined:v));return null}}
 async function rpc(db,name,args={}){const r=await db.rpc(name,args);if(r.error)throw Error(r.error.message);if(r.data?.success===false)throw Error(r.data.error);return r.data}
 async function edge(db,name,body){const r=await db.functions.invoke(name,{body});if(r.error){let msg=r.error.message;if(r.error.context)msg+=' '+await r.error.context.text();throw Error(msg)}if(r.data?.error)throw Error(r.data.error);return r.data}
 const admin=client(),anon=client();
-await check('admin_login',async()=>{const r=await admin.auth.signInWithPassword({email:'99000001@usuarios.puntarollers.app',password:'PR-8462-99000001'});assert.ifError(r.error);return {authenticated:!!r.data.session}});
+await check('admin_login',async()=>{const r=await admin.auth.signInWithPassword({email:'99000001@usuarios.puntarollers.app',password:process.env.REPLICA_TEST_ADMIN_PASSWORD});assert.ifError(r.error);return {authenticated:!!r.data.session}});
 await check('refresh_session',async()=>{const r=await admin.auth.refreshSession();assert.ifError(r.error);return {authenticated:!!r.data.session}});
 const users=[];
-for(const [documento,pin,nombre] of [['99000002','7539','Alumno Beta Dos'],['99000003','6824','Alumno Beta Tres'],['99000004','9753','Profesor Beta']]){
+for(const [documento,pin,nombre] of [['99000002',process.env.REPLICA_TEST_PIN_2,'Alumno Beta Dos'],['99000003',process.env.REPLICA_TEST_PIN_3,'Alumno Beta Tres'],['99000004',process.env.REPLICA_TEST_PIN_4,'Profesor Beta']]){
  const u=await check('fixture_'+documento,async()=>{let list=await edge(admin,'pr-access-admin',{action:'list'});let existing=list.requests.find(x=>x.documento===documento);let r=existing?{id:existing.id,email_sent:false}:await edge(anon,'pr-access-request',{nombre_completo:nombre,documento,pin,email:documento+'@example.invalid',telefono:'000'+documento});assert.equal(r.email_sent,false);const id=r.id;const p=await edge(admin,'pr-access-admin',{action:'import',id});await edge(admin,'pr-access-admin',{action:'activate',id});const db=client();const a=await db.auth.signInWithPassword({email:documento+'@usuarios.puntarollers.app',password:`PR-${pin}-${documento}`});assert.ifError(a.error);return {id:p.profile_id,db,authid:a.data.user.id}});if(u){users.push(u);console.log(JSON.stringify({fixture_id:u.id,authid:u.authid}));}
 }
 const [one,two,outsider]=users;
