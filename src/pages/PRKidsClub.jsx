@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react'
 import {Link,useSearchParams} from 'react-router-dom'
 import {supabase} from '../lib/supabase'
 import {useAuth} from '../lib/auth'
+import {validateFamilyApplication} from '../lib/prKidsFamilyValidation'
 import './PRKidsInscripciones2026.css'
 const features=[['✦','Así entrenamos','Un diario de cada sábado, con fotos y lo que aprendimos.','blue'],['▣','Pasaporte roller','Cada asistencia suma un sello digital.','pink'],['★','Mis insignias','Habilidades, valores y logros para celebrar.','yellow'],['▧','Mis recuerdos','Galerías privadas para las familias.','green']]
 const initial={nombre_tutor:'',documento_tutor:'',email_tutor:'',telefono_tutor:'',nombre_nino:'',vinculo:'',es_alumno:false}
@@ -13,11 +14,16 @@ export default function PRKidsClub(){
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
  useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
- async function submit(e){e.preventDefault();if(busy)return;setError('');if(user?.documento&&data.documento_tutor!==user.documento){setError('La cédula debe coincidir con tu cuenta de Punta Rollers.');return}if(hijos.some(h=>h.nombre.trim().split(/\s+/).length<2)){setError('Ingresá nombre y apellido de cada niño para ayudar a identificar su registro en Tesorería.');return}setBusy(true);try{
- const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
- if(err||r?.error)throw Error(r?.error||'No pudimos enviar la solicitud. Intentá nuevamente.')
- setStage(r?.already_exists?'pending':'done')
- }catch(e){setError(e.message)}finally{setBusy(false)}}
+ async function submit(e){e.preventDefault();if(busy)return;setError('')
+ const errors=validateFamilyApplication({adult:data,children:hijos,authenticatedDocument:user?.documento})
+ if(errors.length){setError(errors[0]);return}
+ setBusy(true)
+ try{
+  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
+  if(err||r?.error)throw Error(r?.error||'No pudimos enviar la solicitud. Intentá nuevamente.')
+  setStage(r?.already_exists?'pending':'done')
+ }catch(e){setError(e.message)}finally{setBusy(false)}
+}
  return <main className="prk-shell"><div className="prk-blob prk-blob-a"/><div className="prk-blob prk-blob-b"/>
  <div className="prk-card">
   <header className="prk-header"><Link to="/" className="prk-brand"><img src="/logo.png" alt="Punta Rollers"/><div><p>PR KIDS CLUB</p><span>Una aventura sobre ruedas</span></div></Link><span className="prk-badge">FAMILY EXPERIENCE</span></header>
