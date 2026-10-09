@@ -24,6 +24,7 @@ No marcar como terminado hasta ejecutar pruebas reales de extremo a extremo.
 - [x] Mostrar checklist temporal de 5 verificaciones administrativas en la revisión beta (no persistente, no habilita acceso).
 - [x] Crear tabla protegida y endpoints admin para guardar verificaciones con fecha y autor.
 - [x] Conectar botón de guardado de revisión y observaciones en la bandeja beta.
+- [x] Recuperar última revisión al abrir una solicitud y mostrar comprobaciones pendientes según servidor.
 - [ ] Validar en navegador el guardado, lectura e historial de verificaciones.
 - [ ] Aprobar transaccionalmente, con auditoría y protección contra reintentos.
 - [ ] Rechazo/suspensión/reactivación con motivo y permisos.
@@ -56,3 +57,5 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - 2026-10-08: checklist temporal de identidad, vínculo, niño, Tesorería y contacto integrado en la bandeja beta. Se pierde al recargar; no debe interpretarse como verificación formal ni aprobación.
 
 - 2026-10-08: migración `pr_kids_family_review_audit_20261008` aplicada, Edge Function v6 con `review-save` y `review-history` restringidos a admin, UI beta con guardado de comprobaciones y notas. Pendiente prueba E2E y presentación completa del historial.
+
+- 2026-10-08: Edge Function v7 incorpora `review-readiness` (solo consulta admin, `approval_enabled:false`); panel beta recupera última revisión y muestra si faltan checks. No es verificación documental ni aprobación efectiva. Falta test E2E.
