@@ -61,3 +61,10 @@ Un padre alumno y un padre no alumno completan la solicitud; Admin comprueba el 
 - 2026-10-08: Edge Function v7 incorpora `review-readiness` (solo consulta admin, `approval_enabled:false`); panel beta recupera última revisión y muestra si faltan checks. No es verificación documental ni aprobación efectiva. Falta test E2E.
 
 - 2026-10-08: Edge Function v10 busca candidatos en perfiles por páginas de 500 hasta 10.000, sin conciliación automática. GitHub Actions: no se encontraron ejecuciones para el commit que creó el workflow; pruebas CI aún sin confirmar. Falta identificar fuente financiera completa de Tesorería.
+
+### 2026-10-08 · Seguridad de aprobación y prevalidación
+- [x] RPC transaccional endurecida: última revisión completa, perfil obligatorio y único por niño, rechaza vínculos infantiles existentes y tutores previamente vinculados; no habilita acceso.
+- [x] Edge Function v13: `approval-validate` admin-only, sin escrituras, detecta duplicados, perfiles inexistentes y conflictos familiares.
+- [x] Panel beta: selección explícita por niño y botón para validar vínculos contra el servidor, sin botón de aprobación.
+- [ ] Ejecutar pruebas CI, revisión de compilación y pruebas reales con datos ficticios antes de exponer aprobación.
+- [ ] Diseñar y validar credenciales seguras de tutores no alumnos y acceso por sesión a perfiles infantiles.
