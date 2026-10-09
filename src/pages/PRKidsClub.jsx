@@ -16,7 +16,7 @@ export default function PRKidsClub(){
  async function submit(e){e.preventDefault();if(busy)return;setError('');if(user?.documento&&data.documento_tutor!==user.documento){setError('La cédula debe coincidir con tu cuenta de Punta Rollers.');return}if(hijos.some(h=>h.nombre.trim().split(/\s+/).length<2)){setError('Ingresá nombre y apellido de cada niño para ayudar a identificar su registro en Tesorería.');return}setBusy(true);try{
  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
  if(err||r?.error)throw Error(r?.error||'No pudimos enviar la solicitud. Intentá nuevamente.')
- setStage('done')
+ setStage(r?.already_exists?'pending':'done')
  }catch(e){setError(e.message)}finally{setBusy(false)}}
  return <main className="prk-shell"><div className="prk-blob prk-blob-a"/><div className="prk-blob prk-blob-b"/>
  <div className="prk-card">
@@ -54,6 +54,7 @@ export default function PRKidsClub(){
     <button disabled={busy||data.documento_tutor.length<6||hijos.some(h=>h.nombre.trim().length<3)} className="prk-primary" type="submit">{busy?'ENVIANDO SOLICITUD…':'ENVIAR SOLICITUD →'}</button>
    </form>
   </section>}
+  {stage==='pending'&&<section className="prk-stage prk-final"><div className="prk-final-icon">✓</div><p className="prk-kicker">SOLICITUD EN REVISIÓN</p><h1>¡YA TENEMOS<br/>TU SOLICITUD!</h1><p className="prk-lead">Ya existe una solicitud pendiente para esta cédula. No creamos otra cuenta ni duplicamos a tus hijos. Administración revisará los datos antes de habilitar el acceso.</p><Link className="prk-primary prk-link" to="/">VOLVER A PUNTA ROLLERS</Link></section>}
   {stage==='done'&&<section className="prk-stage prk-final"><div className="prk-final-icon">✓</div><p className="prk-kicker">SOLICITUD REGISTRADA</p><h1>¡YA ESTAMOS<br/>EN CONTACTO!</h1><p className="prk-lead">Recibimos tu solicitud familiar. Punta Rollers verificará el vínculo y te informará cuando el acceso esté habilitado.</p><Link className="prk-primary prk-link" to="/">VOLVER A PUNTA ROLLERS</Link></section>}
  </div></main>
 }
