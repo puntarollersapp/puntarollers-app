@@ -15,7 +15,7 @@ export default function AdminKidsSolicitudes(){
  useEffect(()=>{load()},[])
  const counts=useMemo(()=>rows.reduce((a,r)=>({...a,[r.estado]:(a[r.estado]||0)+1}),{pendiente:0,aprobado:0,rechazado:0}),[rows])
  const filtered=useMemo(()=>rows.filter(r=>(filter==='todas'||r.estado===filter)&&[r.nombre_tutor,r.documento_tutor,r.nombre_nino,...(Array.isArray(r.hijos)?r.hijos.map(h=>h.nombre):[])].join(' ').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())),[rows,filter,search])
- async function findMatches(r){setMatchBusy(r.id);setError('');try{const result=await invoke({action:'treasury-candidates',id:r.id});setMatches(current=>({...current,[r.id]:result.candidates||[]}))}catch(e){setError(e.message)}finally{setMatchBusy('')}}
+ async function findMatches(r){setMatchBusy(r.id);setError('');try{const result=await invoke({action:'treasury-candidates',id:r.id});setMatches(current=>({...current,[r.id]:result.candidates||[]}));setSelectedProfiles(previous=>({...previous,[r.id]:{}}));setPreflight(previous=>({...previous,[r.id]:null}))}catch(e){setError(e.message)}finally{setMatchBusy('')}}
  async function validateLinks(r){setPreflightBusy(r.id);setError('');try{const ids=(matches[r.id]||[]).map((_,i)=>selectedProfiles[r.id]?.[i]||'');const result=await invoke({action:'approval-validate',id:r.id,profile_ids:ids});setPreflight(prev=>({...prev,[r.id]:result}))}catch(e){setError(e.message)}finally{setPreflightBusy('')}}
  async function saveReview(r){
  setReviewBusy(r.id);setError('')
@@ -25,6 +25,7 @@ export default function AdminKidsSolicitudes(){
   const ready=await invoke({action:'review-readiness',id:r.id})
   setReadiness(prev=>({...prev,[r.id]:ready}))
   setReviewHistory(previous=>({...previous,[r.id]:result.reviews||[]}))
+  setPreflight(previous=>({...previous,[r.id]:null}))
  }catch(e){setError(e.message)}finally{setReviewBusy('')}
 }
  async function openReview(r){
