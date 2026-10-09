@@ -13,7 +13,7 @@ export default function PRKidsPublicationStudio(){
  const draftKey=user?.id?'prk_class_draft_beta_'+user.id:null
  useEffect(()=>{if(!draftKey)return;try{const restored=parseLocalClassDraft(localStorage.getItem(draftKey));if(restored){setDraft(restored);setDraftRestored(true)}}catch{}},[draftKey])
  const saveLocalDraft=()=>{if(!draftKey)return;try{const serialized=serializeLocalClassDraft(draft);if(!serialized){setDraftSaved(false);return}localStorage.setItem(draftKey,serialized);setDraftSaved(true)}catch{setDraftSaved(false)}}
- const discardLocalDraft=()=>{if(draftKey)try{localStorage.removeItem(draftKey)}catch{};setDraftSaved(false);setDraftRestored(false);setDraft({...initial,date:nextSaturdayDate()});setPreview(false)}
+ const discardLocalDraft=()=>{for(const url of photos.map(p=>p.url)){URL.revokeObjectURL(url);photoUrls.current.delete(url)}setPhotos([]);if(draftKey)try{localStorage.removeItem(draftKey)}catch{};setDraftSaved(false);setDraftRestored(false);setDraft({...initial,date:nextSaturdayDate()});setPreview(false)}
  const filteredBlocks=filterClassPosts(blocks,{date:dateFilter,query:search})
  const availableDates=[...new Set(blocks.map(b=>b.date))].sort().reverse()
  const teacherName=[user?.nombre,user?.apellido].filter(Boolean).join(' ')||'Profesor/a'
