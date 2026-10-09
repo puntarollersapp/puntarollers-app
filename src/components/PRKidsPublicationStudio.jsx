@@ -19,7 +19,7 @@ export default function PRKidsPublicationStudio(){
  const addSkill=()=>{const value=customSkill.trim().slice(0,60);if(value&&!draft.skills.some(s=>s.toLowerCase()===value.toLowerCase()))change('skills',normalizeSkills([...draft.skills,value]));setCustomSkill('')}
  const addPhotos=files=>{const allowed=Array.from(files||[]).filter(file=>file.type.startsWith('image/')&&file.size<=8*1024*1024);setPhotos(prev=>[...prev,...allowed.slice(0,Math.max(0,8-prev.length)).map(file=>({name:file.name,url:URL.createObjectURL(file)}))])}
  const removePhoto=index=>setPhotos(prev=>{URL.revokeObjectURL(prev[index].url);return prev.filter((_,i)=>i!==index)})
- const addPreviewBlock=()=>{if(!valid)return;setBlocks(prev=>[{...draft,id:Date.now(),teacherName,teacherAvatar,photos:[...photos]},...prev].sort((a,b)=>b.date.localeCompare(a.date)));setPreview(false);setDraft({...initial,date:draft.date});setPhotos([])}
+ const addPreviewBlock=()=>{if(!valid)return;setBlocks(prev=>[{...draft,id:Date.now(),teacherName,teacherAvatar,photos:[...photos]},...prev].sort((a,b)=>b.date.localeCompare(a.date)));setPreview(false);setDraft({...initial,date:draft.date});setPhotos([]);if(draftKey)try{localStorage.removeItem(draftKey)}catch{};setDraftSaved(false);setDraftRestored(false)}
  const change=(key,value)=>{setDraft(p=>({...p,[key]:value}));setCopied(false);setDraftSaved(false)}
  const toggle=skill=>change('skills',draft.skills.includes(skill)?draft.skills.filter(s=>s!==skill):[...draft.skills,skill])
  const validationErrors=validateClassDraft(draft)
