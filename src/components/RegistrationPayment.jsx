@@ -3,7 +3,7 @@ import { supabaseAnonKey, supabaseUrl } from '../lib/supabase'
 import './RegistrationPayment.css'
 import './PaidClassAccess.css'
 
-const MP_PUBLIC_KEY = String(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || 'APP_USR-ceb5b5a3-7bad-4f78-abee-c1767b154db8').trim()
+const MP_PUBLIC_KEY = String(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || '').trim()
 const WHATSAPP = '59898971505'
 
 let sdkPromise
@@ -43,6 +43,7 @@ export default function RegistrationPayment({ registrationType, registrationId, 
       try {
         const MercadoPago = await loadMercadoPago()
         if (cancelled) return
+        if (!MP_PUBLIC_KEY) throw new Error('mercadopago_public_key_missing')
         const mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'es-UY' })
         const bricks = mp.bricks()
         brickRef.current = await bricks.create('cardPayment', containerId, {
