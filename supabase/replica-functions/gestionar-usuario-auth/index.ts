@@ -65,7 +65,7 @@ if('documento'in patch&&doc!==target.documento){const {data:dupe}=await admin.fr
 const prior:Record<string,unknown>={};for(const k of Object.keys(patch))prior[k]=(target as any)[k];
 const {error:updated}=await admin.from('profiles').update(patch).eq('id',id);
 if(updated)return reply({error:updated.message},400);
-if(target.auth_user_id&&('pin'in patch||'documento'in patch)){
+if(target.auth_user_id&&('pin'in patch||('documento'in patch&&doc!==target.documento))){
 const {error:authUpdated}=await admin.auth.admin.updateUserById(target.auth_user_id,{email:doc+'@usuarios.puntarollers.app',password:'PR-'+pin+'-'+doc,email_confirm:true});
 if(authUpdated){await admin.from('profiles').update(Object.fromEntries(Object.entries(prior).filter(([,v])=>v!==undefined))).eq('id',id);return reply({error:'Falló actualización de acceso: '+authUpdated.message},500)}
 }
