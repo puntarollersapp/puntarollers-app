@@ -45,7 +45,7 @@ return reply({success:true,profile_id:id});
 }
 const id=String(body.profile_id||'');
 if(!id)return reply({error:'Falta perfil'},400);
-const {data:target,error:targetError}=await admin.from('profiles').select('id,role,documento,pin,auth_user_id').eq('id',id).maybeSingle();
+const {data:target,error:targetError}=await admin.from('profiles').select('*').eq('id',id).maybeSingle();
 if(targetError||!target)return reply({error:'Perfil no encontrado'},404);
 if(target.id===actor.id&&(action==='delete'||(patch.role&&patch.role!=='admin')))return reply({error:'No podés eliminar ni quitar tu propio rol administrador'},403);
 if(target.role==='admin'&&digits(actor.documento)!=='48036677')return reply({error:'Sin autorización para gestionar administradores'},403);
@@ -58,7 +58,7 @@ return reply({success:true});
 }
 if('documento'in patch&&String(patch.documento).length<6)return reply({error:'Documento inválido'},400);
 const doc=String(patch.documento??target.documento??''),pin=String(patch.pin??target.pin??'');
-if(('documento'in patch||'pin'in patch)&&!/^\d{4,8}$/.test(pin))return reply({error:'PIN inválido'},400);
+if(('documento'in patch||'pin'in patch)&&!/^\d{4,8}$/.test(pin))return reply({error:'Para cambiar el documento o PIN necesitás ingresar un PIN válido de 4 a 8 dígitos'},400);
 if('documento'in patch&&doc!==target.documento){const {data:dupe}=await admin.from('profiles').select('id').eq('documento',doc).maybeSingle();if(dupe&&dupe.id!==id)return reply({error:'Documento ya registrado'},409)}
 // Update profile first; if auth update fails, attempt restoring prior fields.
 const prior:Record<string,unknown>={};for(const k of Object.keys(patch))prior[k]=(target as any)[k];
