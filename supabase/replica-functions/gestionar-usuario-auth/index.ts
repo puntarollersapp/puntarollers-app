@@ -59,7 +59,7 @@ return reply({success:true});
 }
 if('documento'in patch&&String(patch.documento).length<6)return reply({error:'Documento inválido'},400);
 const doc=String(patch.documento??target.documento??''),pin=String(patch.pin??target.pin??'');
-if(('documento'in patch||'pin'in patch)&&!/^\d{4,8}$/.test(pin))return reply({error:'Para cambiar el documento o PIN necesitás ingresar un PIN válido de 4 a 8 dígitos'},400);
+if(('pin'in patch||('documento'in patch&&doc!==target.documento))&&!/^\d{4,8}$/.test(pin))return reply({error:'Para cambiar el documento o PIN necesitás ingresar un PIN válido de 4 a 8 dígitos'},400);
 if('documento'in patch&&doc!==target.documento){const {data:dupe}=await admin.from('profiles').select('id').eq('documento',doc).maybeSingle();if(dupe&&dupe.id!==id)return reply({error:'Documento ya registrado'},409)}
 // Update profile first; if auth update fails, attempt restoring prior fields.
 const prior:Record<string,unknown>={};for(const k of Object.keys(patch))prior[k]=(target as any)[k];
