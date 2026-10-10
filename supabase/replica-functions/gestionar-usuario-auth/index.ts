@@ -26,6 +26,7 @@ if(action!=='delete'&&(!input||typeof input!=='object'||Array.isArray(input)))re
 const patch:Record<string,unknown>={};
 if(input)for(const [k,v] of Object.entries(input))if(allowed.has(k))patch[k]=v;
 if('documento'in patch)patch.documento=digits(patch.documento);
+if(action==='update' && patch.pin==='') delete patch.pin;
 if('pin'in patch&&patch.pin!==null&&!/^\d{4,8}$/.test(String(patch.pin)))return reply({error:'PIN inválido'},400);
 if('role'in patch&&!['admin','profesor','alumno'].includes(String(patch.role)))return reply({error:'Rol inválido'},400);
 if(patch.role==='admin'&&digits(actor.documento)!=='48036677')return reply({error:'Sin autorización para asignar administradores'},403);
