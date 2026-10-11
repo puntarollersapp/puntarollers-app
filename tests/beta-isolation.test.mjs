@@ -4,11 +4,15 @@ import { readFileSync } from 'node:fs'
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
 
-test('beta users are blocked from private student routes', () => {
+test('beta users can reach private profile/training shell but are blocked from admin routes', () => {
   const app = read('src/App.jsx')
-  assert.match(app, /function PrivateRoute[\s\S]*?user\.role==='beta'[\s\S]*?<Navigate to="\/beta"/)
-  assert.match(app, /function AdminRoute[\s\S]*?user\.role==='beta'[\s\S]*?<Navigate to="\/beta"/)
-  assert.match(app, /function FullAdminRoute[\s\S]*?user\.role==='beta'[\s\S]*?<Navigate to="\/beta"/)
+  const privateRoute = app.slice(app.indexOf('function PrivateRoute'), app.indexOf('function AdminRoute'))
+  const adminRoute = app.slice(app.indexOf('function AdminRoute'), app.indexOf('function FullAdminRoute'))
+  const fullAdminRoute = app.slice(app.indexOf('function FullAdminRoute'), app.indexOf('function TreasuryRoute'))
+  assert.match(privateRoute, /if\(user\.role==='beta'\)return children/)
+  assert.doesNotMatch(privateRoute, /<Navigate to="\/beta"/)
+  assert.match(adminRoute, /user\.role==='beta'[\s\S]*?<Navigate to="\/beta"/)
+  assert.match(fullAdminRoute, /user\.role==='beta'[\s\S]*?<Navigate to="\/beta"/)
 })
 
 test('beta authentication has independent route and credentials', () => {
