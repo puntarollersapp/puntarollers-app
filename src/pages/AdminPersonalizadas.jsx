@@ -122,6 +122,26 @@ export default function AdminPersonalizadas() {
     }
   }
 
+  const editEmail = async () => {
+    if (!selectedStudent) return
+    const raw = window.prompt(`Email de ${selectedStudent.nombre} (dejá vacío para quitarlo):`, selectedStudent.email || '')
+    if (raw === null) return
+    const email = raw.trim().toLowerCase()
+    if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return setNotice('Ingresá un email válido.')
+    setBusy(true)
+    setNotice('')
+    try {
+      const { error } = await supabase.from('profiles').update({ email: email || null }).eq('id', selectedStudent.id)
+      if (error) throw error
+      await load()
+      setNotice(email ? 'Email actualizado correctamente.' : 'Email eliminado correctamente.')
+    } catch (err) {
+      setNotice(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const addSlot = async (e) => {
     e.preventDefault()
     if (!slot.fecha || !slot.hora_inicio) return setNotice('Elegí una fecha y una hora de inicio.')
@@ -261,6 +281,8 @@ export default function AdminPersonalizadas() {
         {selectedStudent && <section className="rounded-[30px] border border-red-300/20 bg-gradient-to-br from-red-500/10 via-white/[.035] to-black p-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="flex items-center gap-4"><Avatar student={selectedStudent} size="h-16 w-16" /><div><p className="text-[10px] font-black uppercase tracking-[.28em] text-red-300">Ficha del alumno</p><h2 className="mt-1 text-2xl font-black">{selectedStudent.nombre} {selectedStudent.apellido || ''}</h2><p className="mt-1 text-sm text-white/40">{selectedStudent.telefono || 'Sin teléfono'}{selectedStudent.email ? ` · ${selectedStudent.email}` : ''}</p></div></div><button onClick={() => setSelectedStudentId(null)} className="self-start rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-white/45">Cerrar</button></div>
 
           <div className={`mt-5 rounded-2xl border p-4 ${selectedStudent.telefono ? 'border-emerald-300/15 bg-emerald-400/[.06]' : 'border-amber-300/20 bg-amber-300/10'}`}><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Acceso al link de Personalizadas</p><p className="mt-1 text-sm text-white/55">{selectedStudent.telefono ? `Puede identificarse con ${selectedStudent.telefono}.` : 'Necesita un teléfono para poder identificarse desde el link público.'}</p></div><button disabled={busy} onClick={editPhone} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">{selectedStudent.telefono ? 'Editar teléfono' : '+ Agregar teléfono'}</button></div></div>
+
+          <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Email de contacto</p><p className="mt-1 text-sm text-white/55">{selectedStudent.email || 'Sin email cargado · no requiere documento'}</p></div><button disabled={busy} onClick={editEmail} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">{selectedStudent.email ? 'Editar email' : '+ Agregar email'}</button></div></div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3"><InfoCard label="Clases disponibles" value={activePass?.clases_disponibles ?? 0} /><InfoCard label="Clases utilizadas" value={activePass?.clases_utilizadas ?? 0} /><InfoCard label="Próxima clase" value={nextReservation && slotMap[nextReservation.disponibilidad_id] ? `${day(slotMap[nextReservation.disponibilidad_id].fecha)} · ${hhmm(slotMap[nextReservation.disponibilidad_id].hora_inicio)}` : 'Sin reserva'} small /></div>
           <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4"><p className="text-xs font-black uppercase tracking-widest text-white/35">Cargar clases</p><div className="mt-3 flex flex-wrap gap-2">{[1,2,4].map((n) => <button key={n} onClick={() => setCreditAmount(n)} className={`rounded-xl border px-4 py-2 text-xs font-black ${creditAmount === n ? 'border-red-400/50 bg-red-500/15 text-red-100' : 'border-white/10 text-white/60'}`}>+{n}</button>)}<input type="number" min="1" value={creditAmount} onChange={(e) => setCreditAmount(Number(e.target.value))} className="w-20 rounded-xl border border-white/10 bg-black/30 px-3 text-sm" /><button disabled={busy} onClick={addCredits} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">Cargar a PR Pass</button></div></div>
