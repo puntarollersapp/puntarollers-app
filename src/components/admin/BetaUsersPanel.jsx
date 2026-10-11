@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
-// Beta account creation remains disabled until isolated provisioning is verified.
 // Never enroll an existing student profile into testing from this panel.
 export default function BetaUsersPanel() {
   const [access, setAccess] = useState([])
@@ -46,7 +45,7 @@ export default function BetaUsersPanel() {
       if (submitting || !provisioningReady) return
       setSubmitting(true);setMessage('')
       try {
-        const { data, error } = await supabase.functions.invoke('pr-staging-beta-admin', {
+        const { data, error } = await supabase.functions.invoke('pr-staging-beta-admin-v2', {
           body: { action: 'create', nombre: nombre.trim(), apellido: apellido.trim(), documento: documento.trim(), password }
         })
         if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo crear la cuenta.')
@@ -78,7 +77,7 @@ export default function BetaUsersPanel() {
             if (resetting || !/^[0-9]{4}$/.test(resetPassword)) return
             setResetting(true);setMessage('')
             try {
-              const { data, error } = await supabase.functions.invoke('pr-beta-admin', {
+              const { data, error } = await supabase.functions.invoke('pr-staging-beta-admin-v2', {
                 body: { action: 'reset_password', profile_id: item.profile_id, password: resetPassword }
               })
               if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo actualizar la contraseña.')
