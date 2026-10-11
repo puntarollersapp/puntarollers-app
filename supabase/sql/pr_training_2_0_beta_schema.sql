@@ -1,5 +1,6 @@
--- PR Training 2.0 — schema proposal (BETA, NOT APPLIED)
--- Additive design. Preserves legacy Road to Shifter tables and data.
+-- PR Training 2.0 — canonical schema/migration source
+-- Core tables were applied to the isolated Staging project only. The RLS section below is versioned but still pending application there.
+-- NEVER apply this file wholesale to production. Additive design preserves legacy Road to Shifter tables and data.
 -- Source of truth: PR Training 2.0 Master PR NEXT (08/10/2026).
 
 create table if not exists public.pr_training_cycles_v2 (
@@ -108,7 +109,8 @@ on conflict(cycle_key) do nothing;
 -- 9) B4-13 4x500m occupies ONE duty; its four activities are subprogress 1/4..4/4.
 -- 10) progression changes affect next cycle only.
 
--- Staging security baseline. Production remains untouched until reviewed and explicitly approved.
+-- Staging security baseline (VERSIONED, CURRENTLY PENDING APPLICATION IN STAGING).
+-- Production remains untouched until reviewed and explicitly approved.
 alter table public.pr_training_cycles_v2 enable row level security;
 alter table public.pr_training_duties_v2 enable row level security;
 alter table public.pr_training_assignments_v2 enable row level security;
