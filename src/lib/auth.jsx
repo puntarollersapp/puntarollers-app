@@ -29,7 +29,7 @@ export function AuthProvider({children}){
   const cleanDoc=String(documento||'').replace(/\D/g,'')
   if(!/^\d{6,12}$/.test(cleanDoc)||!password)return {error:'Ingresá documento y contraseña válidos.'}
   const {data:authData,error:authError}=await supabase.auth.signInWithPassword({
-    email:`beta-${cleanDoc}@usuarios.puntarollers.app`,password
+    email:`beta-${cleanDoc}@beta.puntarollers.com`,password
   })
   if(authError||!authData?.user)return {error:'Credenciales Beta incorrectas.'}
   const {data:profile,error:profileError}=await supabase.from('profiles').select('*')
