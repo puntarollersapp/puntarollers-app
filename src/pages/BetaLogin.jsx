@@ -30,7 +30,7 @@ export default function BetaLogin() {
     if(!/^\d{6,12}$/.test(cleanDoc)||password.length<12){setError('Para preparar la Beta usá un documento de prueba y una contraseña de al menos 12 caracteres.');return}
     setSetupBusy(true);setError('')
     try{
-      const email=`beta-${cleanDoc}@usuarios.puntarollers.app`
+      const email=`beta-${cleanDoc}@beta.puntarollers.com`
       const {data:auth,error:authError}=await supabase.auth.signUp({email,password,options:{data:{purpose:'puntarollers-staging-beta'}}})
       if(authError||!auth?.user)throw authError||new Error('auth')
       const profileId=`beta-${auth.user.id}`
