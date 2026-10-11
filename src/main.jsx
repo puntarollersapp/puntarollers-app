@@ -16,19 +16,23 @@ ReactDOM.createRoot(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
+    const isPreviewHost = window.location.hostname.endsWith('.vercel.app')
+    if (isPreviewHost) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(registrations.map(registration => registration.unregister()))
+        const cacheKeys = 'caches' in window ? await caches.keys() : []
+        await Promise.all(cacheKeys.filter(key => key.startsWith('punta-rollers-')).map(key => caches.delete(key)))
+      } catch (error) {
+        console.warn('No se pudo limpiar la PWA del preview:', error)
+      }
+      return
+    }
     try {
-      const registration =
-        await navigator.serviceWorker.register('/sw.js')
-
-      console.log(
-        'Punta Rollers PWA activa:',
-        registration.scope
-      )
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      console.log('Punta Rollers PWA activa:', registration.scope)
     } catch (error) {
-      console.error(
-        'No se pudo registrar la PWA:',
-        error
-      )
+      console.error('No se pudo registrar la PWA:', error)
     }
   })
 }
