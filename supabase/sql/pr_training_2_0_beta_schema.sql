@@ -156,3 +156,19 @@ create policy "training_results_self_read"
 -- Intentionally no client-side INSERT/UPDATE/DELETE policies for assignments/incidents.
 -- Assignment generation, review writes and evidence mutations must go through reviewed server-side paths.
 -- Private evidence storage and assignment RPC are the next staging-only migrations.
+
+
+-- Initial approved B1 catalog seed. Safe/idempotent for isolated staging.
+insert into public.pr_training_duties_v2
+(stable_code,version,title,objective,work_spec,delivery_spec,progression,evidence_type,demo_asset_ids,requires_demo,eligibility_rules,active)
+values
+('B1-01',1,'Medio limón · Izquierdo','Practicar el gesto de medio limón con control del lado izquierdo','{"support":"left_skate_right_shoe","amount_mode":"editable"}'::jsonb,'{"type":"video","instruction":"Mostrar una ejecución final clara"}'::jsonb,'B1','video',array['PRT-VID-001'],true,'{}'::jsonb,true),
+('B1-02',1,'Medio limón · Derecho','Practicar el gesto de medio limón con control del lado derecho','{"support":"right_skate_left_shoe","amount_mode":"editable"}'::jsonb,'{"type":"video","instruction":"Mostrar una ejecución final clara"}'::jsonb,'B1','video',array['PRT-VID-002'],true,'{}'::jsonb,true),
+('B1-03',1,'Línea recta · Izquierdo','Practicar línea recta con control del lado izquierdo','{"support":"left_skate_right_shoe","base_short_passes":5,"amount_mode":"editable"}'::jsonb,'{"type":"video","instruction":"Entregar las últimas 2 pasadas o un clip corto"}'::jsonb,'B1','video',array['PRT-VID-003'],true,'{}'::jsonb,true),
+('B1-04',1,'Línea recta · Derecho','Practicar línea recta con control del lado derecho','{"support":"right_skate_left_shoe","base_short_passes":5,"amount_mode":"editable"}'::jsonb,'{"type":"video","instruction":"Entregar las últimas 2 pasadas o un clip corto"}'::jsonb,'B1','video',array['PRT-VID-004'],true,'{}'::jsonb,true)
+on conflict(stable_code,version) do update set
+title=excluded.title, objective=excluded.objective, work_spec=excluded.work_spec,
+delivery_spec=excluded.delivery_spec, progression=excluded.progression,
+evidence_type=excluded.evidence_type, demo_asset_ids=excluded.demo_asset_ids,
+requires_demo=excluded.requires_demo, eligibility_rules=excluded.eligibility_rules,
+active=excluded.active;
