@@ -8,7 +8,7 @@ export function postInsertFromValidated(validated,author){
 }
 export function audienceInsertRows(postId,childIds=[]){
  if(!postId||!Array.isArray(childIds))return []
- return [...new Set(childIds)].map(child_id=>({post_id:postId,child_id}))
+ return [...new Set(childIds)].filter(child_id=>typeof child_id==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(child_id)).map(child_id=>({post_id:postId,child_id}))
 }
 export function publishTransition({post,ready,now}={}){
  if(!ready?.ready||post?.status!=='draft'||!now)return null
