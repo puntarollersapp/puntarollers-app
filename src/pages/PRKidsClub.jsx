@@ -6,6 +6,7 @@ import {validateFamilyApplication} from '../lib/prKidsFamilyValidation'
 import {projectFamilyHome} from '../lib/prKidsFamilyProjection'
 import './PRKidsInscripciones2026.css'
 import PRKidsFamilyDashboard from '../components/PRKidsFamilyDashboard'
+import PRKidsDemoStudio from '../components/PRKidsDemoStudio'
 const features=[['✦','Qué hicimos hoy','Conocé qué practicamos en la clase del sábado.','blue'],['▣','Pasaporte roller','Cada asistencia registrada con el escáner suma un sello para premios.','pink'],['★','Insignias','Descubrí las habilidades y los logros que consiguió.','yellow'],['▧','Fotos y videos','Recuerdos de las clases en una galería privada.','green']]
 const initial={nombre_tutor:'',documento_tutor:'',email_tutor:'',telefono_tutor:'',nombre_nino:'',vinculo:'',es_alumno:null}
 function Input({label,value,onChange,type='text',placeholder,required=true,readOnly=false}){return <label className="full"><span>{label}</span><input required={required} readOnly={readOnly} type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/></label>}
@@ -13,7 +14,8 @@ export default function PRKidsClub(){
  const {user}=useAuth()
  const [params]=useSearchParams()
  const demoMode=params.get('demo')==='1'
- const demoFamily={guardian:{nombre:'Familia de ejemplo'},children:[{id:'demo-1',nombre:'Sofía (ejemplo)'},{id:'demo-2',nombre:'Mateo (ejemplo)'}]}
+ const [demoPosts,setDemoPosts]=useState([])
+ const demoFamily={guardian:{nombre:'Familia de ejemplo'},children:[{id:'demo-1',nombre:'Sofía (ejemplo)',class_posts:demoPosts},{id:'demo-2',nombre:'Mateo (ejemplo)',class_posts:demoPosts}]}
  const [familyHome,setFamilyHome]=useState(null),[familyLoading,setFamilyLoading]=useState(true),[familySession,setFamilySession]=useState(null),[sessionReady,setSessionReady]=useState(false),[guardianAccess,setGuardianAccess]=useState('')
  const visibleFamily=demoMode?demoFamily:familyHome
  const [selectedChild,setSelectedChild]=useState(null),[stage,setStage]=useState('home'),[data,setData]=useState(initial),[hijos,setHijos]=useState([{nombre:''}]),[busy,setBusy]=useState(false),[error,setError]=useState('')
@@ -36,6 +38,7 @@ export default function PRKidsClub(){
  return <main className="prk-shell"><div className="prk-blob prk-blob-a"/><div className="prk-blob prk-blob-b"/>
  <div className="prk-card">{demoMode&&<div role="status" className="mx-4 mt-4 rounded-xl border border-amber-300/50 bg-amber-300/10 p-3 text-center text-xs font-bold text-amber-100">MODO DEMOSTRACIÓN · Datos ficticios · Sin acceso a información real de niños</div>}
   <header className="prk-header"><Link to="/" className="prk-brand"><img src="/logo.png" alt="Punta Rollers"/><div><p>PR KIDS CLUB</p><span>Una aventura sobre ruedas</span></div></Link><span className="prk-badge">ACCESO FAMILIAR</span></header>
+  {demoMode&&<PRKidsDemoStudio onChange={setDemoPosts}/>}
   {visibleFamily?.children?.length>0&&stage==='home'&&<section className="prk-stage"><p className="prk-kicker">MI FAMILIA ROLLER</p><h1>¡HOLA, {visibleFamily.guardian.nombre}!</h1><p className="prk-lead">{demoMode?'Explorá una familia ficticia y recorré cada sección del portal.':'Estos son los perfiles infantiles vinculados y aprobados para tu cuenta.'}</p><div className="prk-quick-grid prk-family-children">{visibleFamily.children.map(child=>{const photo=child.foto_url||child.photo_url||child.avatar_url||null;return <button type="button" key={child.id} className={"prk-child-card "+(selectedChild===child.id?"is-active":"")} onClick={()=>setSelectedChild(child.id)}><span className="prk-child-photo">{photo?<img src={photo} alt={"Foto de "+child.nombre}/>:<span aria-label="Sin foto de perfil">{String(child.nombre||"?").trim()[0]?.toUpperCase()}</span>}</span><span className="prk-child-info"><b>{child.nombre}</b><small>Entrar a su espacio <span aria-hidden="true">→</span></small></span><span className="prk-child-chevron" aria-hidden="true">↗</span></button>})}</div>{selectedChild&&visibleFamily.children.some(child=>child.id===selectedChild)&&<PRKidsFamilyDashboard key={selectedChild} child={visibleFamily.children.find(child=>child.id===selectedChild)} demo={demoMode} onBack={()=>setSelectedChild(null)}/>} </section>}
   {stage==='home'&&!demoMode&&familyLoading&&<section className="prk-stage"><p className="prk-lead">Verificando tu acceso familiar…</p></section>}
   {stage==='home'&&!demoMode&&!familyHome&&!familyLoading&&<section className="prk-stage prk-stage-home">{guardianAccess&&<p role="status" className="mb-5 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-amber-100">{guardianAccess}</p>}
