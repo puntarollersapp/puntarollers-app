@@ -1,4 +1,4 @@
-// Dedicated Beta provisioning. Not deployed until treasury/server isolation is audited.
+// Dedicated Beta provisioning. Deployed with a server-side release gate; creation remains disabled by default.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const cors = {
@@ -38,15 +38,15 @@ Deno.serve(async req => {
   if (!nombre || !/^\d{6,12}$/.test(documento) || password.length < 12 || password.length > 128) {
     return json({ error: 'Nombre, documento válido y contraseña de 12 caracteres como mínimo requeridos' }, 400)
   }
-  const { data: duplicate, error: lookupError } = await admin.from('profiles').select('id').eq('documento', documento).maybeSingle()
-  if (lookupError) return json({ error: 'No se pudo validar el documento' }, 500)
-  if (duplicate) return json({ error: 'Documento ya registrado' }, 409)
-
   // Never mutate a pre-existing student or staff identity.
   // The flag is server-only and defaults to disabled.
   if (Deno.env.get('PR_BETA_PROVISIONING_ENABLED') !== 'true') {
     return json({ error: 'Alta Beta deshabilitada por configuración del servidor' }, 503)
   }
+  const { data: duplicate, error: lookupError } = await admin.from('profiles').select('id').eq('documento', documento).maybeSingle()
+  if (lookupError) return json({ error: 'No se pudo validar el documento' }, 500)
+  if (duplicate) return json({ error: 'Documento ya registrado' }, 409)
+
   const email = `beta-${documento}@usuarios.puntarollers.app`
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email, password, email_confirm: true,
