@@ -34,6 +34,13 @@ export default function BetaUsersPanel() {
       Creación de cuentas Beta pendiente de habilitación segura.
     </p>
     {message && <p role="alert" className="text-red-200 text-sm">{message}</p>}
+    <div className="rounded-2xl border border-violet-300/20 bg-violet-500/5 p-4 space-y-3">
+      <h3 className="font-semibold text-white">Alta de cuentas de prueba</h3>
+      <p className="text-sm text-white/60">El alta independiente se habilitará únicamente después de verificar el aislamiento de Tesorería y la seguridad del servidor. No se convertirán alumnos existentes.</p>
+      <label className="block text-sm text-white/70">Nombre<input disabled placeholder="Nombre del usuario Beta" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3 opacity-60" /></label>
+      <label className="block text-sm text-white/70">Documento<input disabled placeholder="Documento nuevo" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3 opacity-60" /></label>
+      <button disabled type="button" className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white opacity-40">Crear usuario Beta</button>
+    </div>
     <h3 className="text-white font-semibold">Registros Beta (solo lectura)</h3>
     {loading ? <p className="text-white/60 text-sm">Cargando…</p>
       : access.length === 0 ? <p className="text-white/60 text-sm">Sin registros visibles.</p>
