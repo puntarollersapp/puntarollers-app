@@ -34,10 +34,10 @@ test('beta cached session is not trusted before server check', () => {
   assert.match(auth, /if\(profileData\.role==='beta'\)/)
 })
 
-test('beta creation is gated by server release authorization', () => {
+test('beta creation is closed after pilot validation', () => {
   const panel = read('src/components/admin/BetaUsersPanel.jsx')
   const server = read('supabase/functions/pr-beta-admin/index.ts')
-  assert.match(panel, /const provisioningReady = true/)
+  assert.match(panel, /const provisioningReady = false/)
   assert.match(panel, /disabled=\{submitting \|\| !provisioningReady\}/)
   assert.match(server, /PR_BETA_PROVISIONING_ENABLED/)
 })
@@ -101,4 +101,12 @@ test('beta password reset is restricted to admins and beta profiles', () => {
   assert.match(server, /admin\.auth\.admin\.updateUserById\(target\.auth_user_id/)
   assert.match(panel, /Restablecer contraseña/)
   assert.match(panel, /action: 'reset_password'/)
+})
+
+test('server blocks creation after pilot while preserving password resets', () => {
+  const server = read('supabase/functions/pr-beta-admin/index.ts')
+  const reset = server.indexOf("payload.action === 'reset_password'")
+  const close = server.indexOf("Alta Beta cerrada tras la prueba de validación")
+  const create = server.indexOf('auth.admin.createUser')
+  assert.ok(reset > 0 && close > reset && create > close)
 })
