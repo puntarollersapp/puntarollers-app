@@ -10,7 +10,7 @@ export default function BetaLogin() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   if (authLoading) return null
-  if (user) return <Navigate to={user.role === 'beta' ? '/beta' : '/app/perfil'} replace />
+  if (user) return <Navigate to={user.role === 'beta' ? '/app/perfil' : '/app/perfil'} replace />
   async function submit(event) {
     event.preventDefault()
     if (busy) return
@@ -18,7 +18,7 @@ export default function BetaLogin() {
     try {
       const result = await betaLogin(documento,password)
       if (result?.error) setError(result.error)
-      else navigate('/beta',{replace:true})
+      else navigate('/app/perfil',{replace:true})
     } catch { setError('No pudimos iniciar la sesión Beta.') }
     finally { setBusy(false) }
   }
