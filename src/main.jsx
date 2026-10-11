@@ -16,18 +16,28 @@ ReactDOM.createRoot(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
-    const isPreviewHost = window.location.hostname.endsWith('.vercel.app')
-    if (isPreviewHost) {
+    // Beta/preview must never run the production PWA service worker.
+    // A stale SW/cache can serve an old bundle and leave the SPA black.
+    const host = window.location.hostname
+    const isBetaHost = host === 'beta.puntarollers.com'
+    const isPreviewHost = host.endsWith('.vercel.app')
+    const shouldIsolatePwa = isBetaHost || isPreviewHost
+
+    if (shouldIsolatePwa) {
       try {
         const registrations = await navigator.serviceWorker.getRegistrations()
         await Promise.all(registrations.map(registration => registration.unregister()))
-        const cacheKeys = 'caches' in window ? await caches.keys() : []
-        await Promise.all(cacheKeys.filter(key => key.startsWith('punta-rollers-')).map(key => caches.delete(key)))
+
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys()
+          await Promise.all(cacheKeys.map(key => caches.delete(key)))
+        }
       } catch (error) {
-        console.warn('No se pudo limpiar la PWA del preview:', error)
+        console.warn('No se pudo limpiar la PWA del entorno beta:', error)
       }
       return
     }
+
     try {
       const registration = await navigator.serviceWorker.register('/sw.js')
       console.log('Punta Rollers PWA activa:', registration.scope)
