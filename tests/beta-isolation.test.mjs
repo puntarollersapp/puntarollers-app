@@ -39,7 +39,7 @@ test('beta creation remains disabled until release', () => {
   const server = read('supabase/functions/pr-beta-admin/index.ts')
   assert.match(panel, /const provisioningReady = false/)
   assert.match(panel, /disabled=\{submitting \|\| !provisioningReady\}/)
-  assert.match(server, /Alta Beta no habilitada/)
+  assert.match(server, /PR_BETA_PROVISIONING_ENABLED/)
 })
 
 test('beta profiles are excluded from student and payment screens', () => {
@@ -59,4 +59,13 @@ test('beta home clears previous authorization when account changes', () => {
   const home = read('src/pages/BetaHome.jsx')
   assert.match(home, /setAccess\(null\)/)
   assert.match(home, /catch\(\(\) => \{ if \(live\) setAccess\(\{ enabled: false \}\)/)
+})
+
+test('beta provisioning creates separate auth and profile records with rollback', () => {
+  const server = read('supabase/functions/pr-beta-admin/index.ts')
+  assert.match(server, /auth\.admin\.createUser/)
+  assert.match(server, /role: 'beta'/)
+  assert.match(server, /participa_como_alumno: false/)
+  assert.match(server, /es_tesoreria: false/)
+  assert.match(server, /auth\.admin\.deleteUser/)
 })
