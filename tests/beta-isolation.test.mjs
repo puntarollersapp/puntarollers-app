@@ -69,3 +69,10 @@ test('beta provisioning creates separate auth and profile records with rollback'
   assert.match(server, /es_tesoreria: false/)
   assert.match(server, /auth\.admin\.deleteUser/)
 })
+
+test('beta home never displays authorization from a different profile', () => {
+  const home = read('src/pages/BetaHome.jsx')
+  assert.match(home, /profileId: user\.id/)
+  assert.match(home, /access\?\.profileId === user\?\.id/)
+  assert.match(home, /currentAccess\.enabled/)
+})
