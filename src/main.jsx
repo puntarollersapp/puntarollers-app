@@ -8,7 +8,7 @@ const isBetaHost = window.location.hostname === 'beta.puntarollers.com'
 const isBetaPath = window.location.pathname.startsWith('/beta')
 const isBetaEnvironment = isBetaHost || isBetaPath
 
-if (isBetaEnvironment) document.documentElement.dataset.prBetaBoot = 'ready'
+if (isBetaEnvironment) document.documentElement.dataset.prBetaBoot = 'ready' // redeploy after restoring Beta env
 
 function showBetaBootError(error) {
   if (!isBetaEnvironment) return
