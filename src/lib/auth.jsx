@@ -23,11 +23,34 @@ export function AuthProvider({children}){
  async function refreshUserSilently(){if(refreshInFlightRef.current)return refreshInFlightRef.current;const task=(async()=>{const {data:sessionData,error:sessionError}=await supabase.auth.getSession();if(sessionError)return {error:sessionError.message};const authUser=sessionData?.session?.user;if(!authUser)return {skipped:true};const {data:profileData,error}=await supabase.from('profiles').select('*').eq('auth_user_id',authUser.id).maybeSingle();if(error||!profileData)return {error:error?.message||'Perfil no encontrado.'};const userData=normalizeProfile(profileData);saveLocalUser(userData);setUser(userData);return {success:true,user:userData}})();refreshInFlightRef.current=task;try{return await task}finally{refreshInFlightRef.current=null}}
  useEffect(()=>{let active=true;async function bootstrap(){const cached=readLocalUser();if(cached&&active)setUser(cached);try{const {data,error}=await supabase.auth.getSession();if(error)throw error;if(data?.session?.user){const result=await refreshUserSilently();if(!active)return;if(!result?.success&&!cached)setUser(null)}else{clearLocalUser();if(active)setUser(null)}}catch{if(!cached){clearLocalUser();if(active)setUser(null)}}finally{if(active)setLoading(false)}}bootstrap();const {data:listener}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){clearLocalUser();setUser(null);return}if((event==='TOKEN_REFRESHED'||event==='SIGNED_IN'||event==='INITIAL_SESSION')&&session?.user)refreshUserSilently()});const interval=window.setInterval(()=>refreshUserSilently(),AUTO_REFRESH_INTERVAL_MS);const onFocus=()=>refreshUserSilently();const onVisible=()=>{if(document.visibilityState==='visible')refreshUserSilently()};window.addEventListener('focus',onFocus);document.addEventListener('visibilitychange',onVisible);return()=>{active=false;listener?.subscription?.unsubscribe();window.clearInterval(interval);window.removeEventListener('focus',onFocus);document.removeEventListener('visibilitychange',onVisible)}},[])
  async function login(documento,pin){const cleanDoc=String(documento||'').replace(/\D/g,''),cleanPin=String(pin||'').trim();if(!cleanDoc||!cleanPin)return {error:'Ingresá documento y PIN.'};const authPassword=`PR-${cleanPin}-${cleanDoc}`;const authResult=await supabase.auth.signInWithPassword({email:buildAuthEmail(cleanDoc),password:authPassword});const authData=authResult.data;if(authResult.error||!authData?.user)return {error:'Documento o PIN incorrecto.'};const {data:profileData,error:profileError}=await supabase.from('profiles').select('*').eq('auth_user_id',authData.user.id).maybeSingle();if(profileError||!profileData){await supabase.auth.signOut();return {error:'La cuenta existe, pero no encontramos su perfil vinculado.'}}if(String(profileData.documento||'')!==cleanDoc){await supabase.auth.signOut();return {error:'La cuenta segura no coincide con este documento.'}}const loginDate=new Date().toISOString();const {error:updateError}=await supabase.from('profiles').update({ultimo_ingreso:loginDate}).eq('id',profileData.id);if(updateError)console.warn('No se pudo registrar el último ingreso:',updateError);const userData=normalizeProfile({...profileData,ultimo_ingreso:loginDate});saveLocalUser(userData);setUser(userData);return {success:true,user:userData,accessBlocked:!userData.accesoHabilitado}}
+ async function betaLogin(documento,password){
+  const cleanDoc=String(documento||'').replace(/\D/g,'')
+  if(!/^\d{6,12}$/.test(cleanDoc)||!password)return {error:'Ingresá documento y contraseña válidos.'}
+  const {data:authData,error:authError}=await supabase.auth.signInWithPassword({
+    email:`beta-${cleanDoc}@usuarios.puntarollers.app`,password
+  })
+  if(authError||!authData?.user)return {error:'Credenciales Beta incorrectas.'}
+  const {data:profile,error:profileError}=await supabase.from('profiles').select('*')
+    .eq('auth_user_id',authData.user.id).maybeSingle()
+  if(profileError||profile?.role!=='beta'||String(profile.documento)!==cleanDoc){
+    await supabase.auth.signOut()
+    return {error:'La cuenta no está autorizada como Beta.'}
+  }
+  const {data:access,error:accessError}=await supabase.from('pr_beta_access')
+    .select('enabled').eq('profile_id',profile.id).maybeSingle()
+  if(accessError||!access?.enabled){
+    await supabase.auth.signOut()
+    return {error:'El acceso Beta está deshabilitado.'}
+  }
+  const userData=normalizeProfile(profile)
+  saveLocalUser(userData);setUser(userData)
+  return {success:true,user:userData}
+ }
  async function logout(){try{await supabase.auth.signOut()}finally{clearLocalUser();setUser(null)}}
  function updateUser(updates){setUser(currentUser=>{if(!currentUser)return currentUser;const nextUser={...currentUser,...updates};saveLocalUser(nextUser);return nextUser})}
  async function refreshUser(){const result=await refreshUserSilently();if(result?.skipped){clearLocalUser();setUser(null);return {success:false,error:'Sesión finalizada.'}}return result}
  const betaUser=isBetaRole(user)
  const isProfessor=!betaUser&&(Boolean(user?.esProfesor)||user?.role==='profesor'||user?.role==='admin'),isStudent=!betaUser&&(Boolean(user?.participaComoAlumno)||user?.role==='alumno')
- return <AuthContext.Provider value={{user,loading,login,logout,updateUser,refreshUser,isAuthenticated:Boolean(user),isAdmin:!betaUser&&user?.role==='admin',isBeta:betaUser,isProfessor,isStudent,isTreasury:!betaUser&&(Boolean(user?.esTesoreria)||user?.role==='admin'),isPaymentExempt:betaUser||Boolean(user?.exentoMensualidad)||user?.role==='admin'||user?.role==='profesor',hasPrivateAccess:Boolean(user?.accesoHabilitado),professores}}>{children}</AuthContext.Provider>
+ return <AuthContext.Provider value={{user,loading,login,betaLogin,logout,updateUser,refreshUser,isAuthenticated:Boolean(user),isAdmin:!betaUser&&user?.role==='admin',isBeta:betaUser,isProfessor,isStudent,isTreasury:!betaUser&&(Boolean(user?.esTesoreria)||user?.role==='admin'),isPaymentExempt:betaUser||Boolean(user?.exentoMensualidad)||user?.role==='admin'||user?.role==='profesor',hasPrivateAccess:Boolean(user?.accesoHabilitado),professores}}>{children}</AuthContext.Provider>
 }
 export function useAuth(){const context=useContext(AuthContext);if(!context)throw new Error('useAuth debe utilizarse dentro de AuthProvider');return context}
