@@ -47,6 +47,8 @@ Deno.serve(async req => {
     return json({ success: true })
   }
   if (payload.action !== 'create') return json({ error: 'Acción no permitida' }, 400)
+  // Beta pilot closed: existing accounts may sign in or reset passwords; new accounts are blocked.
+  return json({ error: 'Alta Beta cerrada tras la prueba de validación' }, 503)
   const nombre = String(payload.nombre || '').trim().slice(0, 100)
   const apellido = String(payload.apellido || '').trim().slice(0, 100)
   const documento = String(payload.documento || '').replace(/\D/g, '')
