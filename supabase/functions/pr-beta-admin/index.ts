@@ -30,6 +30,22 @@ Deno.serve(async req => {
 
   let payload: Record<string, unknown>
   try { payload = await req.json() } catch { return json({ error: 'Solicitud inválida' }, 400) }
+  if (payload.action === 'reset_password') {
+    const profileId = String(payload.profile_id || '')
+    const newPassword = String(payload.password || '')
+    if (!/^beta-[0-9a-f-]{36}$/i.test(profileId) || newPassword.length < 12 || newPassword.length > 128) {
+      return json({ error: 'Cuenta Beta o contraseña inválida (mínimo 12 caracteres)' }, 400)
+    }
+    const { data: target, error: targetError } = await admin.from('profiles')
+      .select('id,auth_user_id,role').eq('id', profileId).eq('role', 'beta').maybeSingle()
+    if (targetError || !target?.auth_user_id) return json({ error: 'Cuenta Beta no encontrada' }, 404)
+    const { data: access, error: accessError } = await admin.from('pr_beta_access')
+      .select('profile_id').eq('profile_id', target.id).maybeSingle()
+    if (accessError || !access) return json({ error: 'Cuenta sin registro Beta' }, 403)
+    const { error: updateError } = await admin.auth.admin.updateUserById(target.auth_user_id, { password: newPassword })
+    if (updateError) return json({ error: 'No se pudo actualizar la contraseña Beta' }, 500)
+    return json({ success: true })
+  }
   if (payload.action !== 'create') return json({ error: 'Acción no permitida' }, 400)
   const nombre = String(payload.nombre || '').trim().slice(0, 100)
   const apellido = String(payload.apellido || '').trim().slice(0, 100)
