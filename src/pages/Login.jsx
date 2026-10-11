@@ -20,7 +20,7 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
-    navigate(destination, { replace: true })
+    navigate(user.role === 'beta' ? '/beta' : destination, { replace: true })
   }, [authLoading, user, navigate, destination])
 
   async function handleSubmit(event) {
@@ -30,6 +30,7 @@ export default function Login() {
     try {
       const result = await login(documento, pin)
       if (result?.error) { setError(result.error); return }
+      if (result?.user?.role === 'beta') { navigate('/beta', { replace: true }); return }
       if (result?.user?.id && (!['admin','profesor'].includes(result?.user?.role) || result?.user?.documento === '48036677')) {
         const { data: training } = await (await import('../lib/supabase')).supabase
           .from('pr_training_enrollments')

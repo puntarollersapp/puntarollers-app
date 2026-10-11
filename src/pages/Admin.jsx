@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
+import BetaUsersPanel from '../components/admin/BetaUsersPanel'
 import PaymentsPanel from '../components/admin/PaymentsPanel'
 import PrivateLessonsPanel from '../components/admin/PrivateLessonsPanel'
 import ContactsPanel from '../components/admin/ContactsPanel'
@@ -373,6 +374,7 @@ export default function Admin() {
       label: canFullAdmin ? 'Usuarios' : 'Alumnos',
       show: true,
     },
+    { id: 'beta', icon: '', label: 'Usuarios Beta', show: canFullAdmin },
     { id: 'grupos', icon: '', label: 'Grupos', show: canFullAdmin },
     { id: 'pagos', icon: '', label: 'Pagos', show: canFullAdmin },
     {
@@ -492,6 +494,8 @@ export default function Admin() {
             setActionType={setActionType}
           />
         )}
+
+        {!loading && canFullAdmin && section === 'beta' && <BetaUsersPanel />}
 
         {!loading && section === 'usuarios' && (
           <UsersPanel
