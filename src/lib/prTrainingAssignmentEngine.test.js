@@ -94,3 +94,12 @@ test('assignment output has unique stable duty codes',()=>{
   assert.equal(r.ok,true)
   assert.equal(new Set(r.duties.map(x=>x.stableCode)).size,6)
 })
+
+
+test('newest eligible version wins for the same stable duty code',()=>{
+  const catalog=[duty('B3-01','B3',{version:1}),duty('B3-01','B3',{version:2}),...Array.from({length:5},(_,i)=>duty(`B3-${String(i+2).padStart(2,'0')}`,'B3'))]
+  const r=selectMonthlyDuties({...base,progression:'B3',catalog})
+  assert.equal(r.ok,true)
+  const picked=r.duties.find(x=>x.stableCode==='B3-01')
+  assert.equal(picked.version,2)
+})
