@@ -7,6 +7,11 @@ export default function BetaUsersPanel() {
   const [access, setAccess] = useState([])
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [nombre, setNombre] = useState('')
+  const [documento, setDocumento] = useState('')
+  const [apellido, setApellido] = useState('')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -31,16 +36,33 @@ export default function BetaUsersPanel() {
       alumnos, Tesorería ni otros procesos de producción.
     </p>
     <p className="text-amber-200 text-sm" role="status">
-      Creación de cuentas Beta pendiente de habilitación segura.
+      Alta sujeta a autorización y verificación del servidor; no se modifica ninguna cuenta existente.
     </p>
     {message && <p role="alert" className="text-red-200 text-sm">{message}</p>}
-    <div className="rounded-2xl border border-violet-300/20 bg-violet-500/5 p-4 space-y-3">
+    <form onSubmit={async event => {
+      event.preventDefault()
+      if (submitting) return
+      setSubmitting(true);setMessage('')
+      try {
+        const { data, error } = await supabase.functions.invoke('pr-beta-admin', {
+          body: { action: 'create', nombre: nombre.trim(), apellido: apellido.trim(), documento: documento.trim(), password }
+        })
+        if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo crear la cuenta.')
+        setMessage('Cuenta Beta creada correctamente.')
+        setNombre('');setApellido('');setDocumento('');setPassword('')
+        const { data: refreshed } = await supabase.from('pr_beta_access').select('profile_id,enabled,features')
+        if (refreshed) setAccess(refreshed)
+      } catch (err) { setMessage(err.message || 'No se pudo crear la cuenta Beta.') }
+      finally { setSubmitting(false) }
+    }} className="rounded-2xl border border-violet-300/20 bg-violet-500/5 p-4 space-y-3">
       <h3 className="font-semibold text-white">Alta de cuentas de prueba</h3>
-      <p className="text-sm text-white/60">El alta independiente se habilitará únicamente después de verificar el aislamiento de Tesorería y la seguridad del servidor. No se convertirán alumnos existentes.</p>
-      <label className="block text-sm text-white/70">Nombre<input disabled placeholder="Nombre del usuario Beta" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3 opacity-60" /></label>
-      <label className="block text-sm text-white/70">Documento<input disabled placeholder="Documento nuevo" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3 opacity-60" /></label>
-      <button disabled type="button" className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white opacity-40">Crear usuario Beta</button>
-    </div>
+      <p className="text-sm text-white/60">El servidor solo permite crear cuentas Beta cuando el administrador habilita expresamente el alta después de las pruebas de aislamiento.</p>
+      <label className="block text-sm text-white/70">Nombre<input required maxLength={100} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Nombre" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
+      <label className="block text-sm text-white/70">Apellido<input maxLength={100} value={apellido} onChange={e=>setApellido(e.target.value)} placeholder="Apellido" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
+      <label className="block text-sm text-white/70">Documento nuevo<input required inputMode="numeric" pattern="[0-9]{6,12}" value={documento} onChange={e=>setDocumento(e.target.value)} placeholder="Solo números" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
+      <label className="block text-sm text-white/70">Contraseña Beta<input required type="password" minLength={12} maxLength={128} autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
+      <button disabled={submitting} type="submit" className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-40">{submitting?'Creando…':'Crear usuario Beta'}</button>
+    </form>
     <h3 className="text-white font-semibold">Registros Beta (solo lectura)</h3>
     {loading ? <p className="text-white/60 text-sm">Cargando…</p>
       : access.length === 0 ? <p className="text-white/60 text-sm">Sin registros visibles.</p>
