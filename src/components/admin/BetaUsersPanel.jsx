@@ -12,6 +12,9 @@ export default function BetaUsersPanel() {
   const [apellido, setApellido] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [resetTarget, setResetTarget] = useState('')
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetting, setResetting] = useState(false)
   const provisioningReady = true // Explicit release gate; do not enable before server and treasury verification.
 
   useEffect(() => {
@@ -67,7 +70,35 @@ export default function BetaUsersPanel() {
       : access.length === 0 ? <p className="text-white/60 text-sm">Sin registros visibles.</p>
       : <ul className="space-y-2">{access.map(item =>
         <li key={item.profile_id} className="border-t border-white/10 py-3 text-white/70 text-sm">
-          {item.profile_id} — {item.enabled ? 'Activo' : 'Pausado'}
+          <div>{item.profile_id} — {item.enabled ? 'Activo' : 'Pausado'}</div>
+          <button type="button" onClick={() => { setResetTarget(item.profile_id);setResetPassword('');setMessage('') }}
+            className="mt-2 rounded-lg border border-violet-300/30 px-3 py-2 text-violet-200">Restablecer contraseña</button>
+          {resetTarget === item.profile_id && <form className="mt-3 space-y-2" onSubmit={async event => {
+            event.preventDefault()
+            if (resetting || resetPassword.length < 12) return
+            setResetting(true);setMessage('')
+            try {
+              const { data, error } = await supabase.functions.invoke('pr-beta-admin', {
+                body: { action: 'reset_password', profile_id: item.profile_id, password: resetPassword }
+              })
+              if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo actualizar la contraseña.')
+              setMessage('Contraseña Beta actualizada correctamente.')
+              setResetTarget('');setResetPassword('')
+            } catch (err) { setMessage(err.message || 'No se pudo actualizar la contraseña.') }
+            finally { setResetting(false) }
+          }}>
+            <label className="block text-sm text-white/70">Nueva contraseña Beta
+              <input required type="password" minLength={12} maxLength={128} autoComplete="new-password"
+                value={resetPassword} onChange={event => setResetPassword(event.target.value)}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button disabled={resetting || resetPassword.length < 12} type="submit"
+                className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-40">{resetting?'Guardando…':'Guardar nueva contraseña'}</button>
+              <button type="button" onClick={() => { setResetTarget('');setResetPassword('') }}
+                className="rounded-xl border border-white/20 px-4 py-2 text-white/70">Cancelar</button>
+            </div>
+          </form>}
         </li>
       )}</ul>}
   </section>
