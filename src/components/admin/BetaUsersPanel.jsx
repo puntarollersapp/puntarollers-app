@@ -62,7 +62,7 @@ export default function BetaUsersPanel() {
       <label className="block text-sm text-white/70">Nombre<input required maxLength={100} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Nombre" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
       <label className="block text-sm text-white/70">Apellido<input maxLength={100} value={apellido} onChange={e=>setApellido(e.target.value)} placeholder="Apellido" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
       <label className="block text-sm text-white/70">Documento nuevo<input required inputMode="numeric" pattern="[0-9]{6,12}" value={documento} onChange={e=>setDocumento(e.target.value)} placeholder="Solo números" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
-      <label className="block text-sm text-white/70">Contraseña Beta<input required type="password" minLength={12} maxLength={128} autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
+      <label className="block text-sm text-white/70">PIN Beta<input required type="password" inputMode="numeric" pattern="[0-9]{4}" minLength={4} maxLength={4} autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
       <button disabled={submitting || !provisioningReady} type="submit" className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-40">{submitting?'Creando…':'Crear usuario Beta'}</button>
     </form>
     <h3 className="text-white font-semibold">Registros Beta (solo lectura)</h3>
@@ -72,29 +72,29 @@ export default function BetaUsersPanel() {
         <li key={item.profile_id} className="border-t border-white/10 py-3 text-white/70 text-sm">
           <div>{item.profile_id} — {item.enabled ? 'Activo' : 'Pausado'}</div>
           <button type="button" onClick={() => { setResetTarget(item.profile_id);setResetPassword('');setMessage('') }}
-            className="mt-2 rounded-lg border border-violet-300/30 px-3 py-2 text-violet-200">Restablecer contraseña</button>
+            className="mt-2 rounded-lg border border-violet-300/30 px-3 py-2 text-violet-200">Restablecer PIN</button>
           {resetTarget === item.profile_id && <form className="mt-3 space-y-2" onSubmit={async event => {
             event.preventDefault()
-            if (resetting || resetPassword.length < 12) return
+            if (resetting || !/^[0-9]{4}$/.test(resetPassword)) return
             setResetting(true);setMessage('')
             try {
               const { data, error } = await supabase.functions.invoke('pr-beta-admin', {
                 body: { action: 'reset_password', profile_id: item.profile_id, password: resetPassword }
               })
               if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo actualizar la contraseña.')
-              setMessage('Contraseña Beta actualizada correctamente.')
+              setMessage('PIN Beta actualizado correctamente.')
               setResetTarget('');setResetPassword('')
             } catch (err) { setMessage(err.message || 'No se pudo actualizar la contraseña.') }
             finally { setResetting(false) }
           }}>
-            <label className="block text-sm text-white/70">Nueva contraseña Beta
+            <label className="block text-sm text-white/70">Nuevo PIN Beta
               <input required type="password" minLength={12} maxLength={128} autoComplete="new-password"
                 value={resetPassword} onChange={event => setResetPassword(event.target.value)}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" />
             </label>
             <div className="flex flex-wrap gap-2">
               <button disabled={resetting || resetPassword.length < 12} type="submit"
-                className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-40">{resetting?'Guardando…':'Guardar nueva contraseña'}</button>
+                className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-40">{resetting?'Guardando…':'Guardar nuevo PIN'}</button>
               <button type="button" onClick={() => { setResetTarget('');setResetPassword('') }}
                 className="rounded-xl border border-white/20 px-4 py-2 text-white/70">Cancelar</button>
             </div>
