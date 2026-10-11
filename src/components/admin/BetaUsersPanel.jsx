@@ -15,7 +15,7 @@ export default function BetaUsersPanel() {
   const [resetTarget, setResetTarget] = useState('')
   const [resetPassword, setResetPassword] = useState('')
   const [resetting, setResetting] = useState(false)
-  const provisioningReady = true // Explicit release gate; do not enable before server and treasury verification.
+  const provisioningReady = false // Pilot finished; server also rejects new Beta account creation.
 
   useEffect(() => {
     let active = true
