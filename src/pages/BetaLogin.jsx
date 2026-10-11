@@ -33,11 +33,6 @@ export default function BetaLogin() {
       const email=`beta-${cleanDoc}@beta.puntarollers.com`; const authPassword=`PRB-${cleanDoc}-${password}`
       const {data:auth,error:authError}=await supabase.auth.signUp({email,password:authPassword,options:{data:{purpose:'puntarollers-staging-beta'}}})
       if(authError||!auth?.user)throw authError||new Error('auth')
-      const profileId=`beta-${auth.user.id}`
-      const {error:profileError}=await supabase.from('profiles').insert({id:profileId,auth_user_id:auth.user.id,documento:cleanDoc,nombre:'Beta',apellido:'Training 2.0',email,role:'beta',estado:'activo',participa_como_alumno:false,es_profesor:false,es_tesoreria:false,exento_mensualidad:true,acceso_habilitado:false})
-      if(profileError)throw profileError
-      const {error:accessError}=await supabase.from('pr_beta_access').insert({profile_id:profileId,enabled:true,features:{training2:true}})
-      if(accessError)throw accessError
       setError('Cuenta de Staging preparada. Ya podés ingresar.')
       await supabase.auth.signOut()
     }catch(e){setError('No pudimos preparar la cuenta de Staging.')}
