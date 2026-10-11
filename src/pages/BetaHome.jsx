@@ -17,7 +17,7 @@ export default function BetaHome() {
   if (loading) return null
   if (!user) return <Navigate to="/beta/login" replace />
   if (user.role !== 'beta') return <Navigate to="/app/perfil" replace />
-  if (currentAccess?.enabled) return <Navigate to="/app/perfil" replace />
+  if (currentAccess?.enabled) return <Navigate to="/beta/deberes" replace />
   return <main className="min-h-screen bg-[#080a13] px-5 py-14 text-white">
     <section className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-7">
       <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300">Punta Rollers / Beta</p>
