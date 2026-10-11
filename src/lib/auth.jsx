@@ -27,9 +27,9 @@ export function AuthProvider({children}){
  async function login(documento,pin){const cleanDoc=String(documento||'').replace(/\D/g,''),cleanPin=String(pin||'').trim();if(!cleanDoc||!cleanPin)return {error:'Ingresá documento y PIN.'};const authPassword=`PR-${cleanPin}-${cleanDoc}`;const authResult=await supabase.auth.signInWithPassword({email:buildAuthEmail(cleanDoc),password:authPassword});const authData=authResult.data;if(authResult.error||!authData?.user)return {error:'Documento o PIN incorrecto.'};const {data:profileData,error:profileError}=await supabase.from('profiles').select('*').eq('auth_user_id',authData.user.id).maybeSingle();if(profileError||!profileData){await supabase.auth.signOut();return {error:'La cuenta existe, pero no encontramos su perfil vinculado.'}}if(String(profileData.documento||'')!==cleanDoc){await supabase.auth.signOut();return {error:'La cuenta segura no coincide con este documento.'}}const loginDate=new Date().toISOString();const {error:updateError}=await supabase.from('profiles').update({ultimo_ingreso:loginDate}).eq('id',profileData.id);if(updateError)console.warn('No se pudo registrar el último ingreso:',updateError);const userData=normalizeProfile({...profileData,ultimo_ingreso:loginDate});saveLocalUser(userData);setUser(userData);return {success:true,user:userData,accessBlocked:!userData.accesoHabilitado}}
  async function betaLogin(documento,password){
   const cleanDoc=String(documento||'').replace(/\D/g,'')
-  if(!/^\d{6,12}$/.test(cleanDoc)||!password)return {error:'Ingresá documento y contraseña válidos.'}
+  if(!/^\d{6,12}$/.test(cleanDoc)||!/^\d{4}$/.test(password))return {error:'Ingresá documento y PIN Beta de 4 dígitos.'}
   const {data:authData,error:authError}=await supabase.auth.signInWithPassword({
-    email:`beta-${cleanDoc}@beta.puntarollers.com`,password
+    email:`beta-${cleanDoc}@beta.puntarollers.com`,password:`PRB-${cleanDoc}-${password}`
   })
   if(authError||!authData?.user)return {error:'Credenciales Beta incorrectas.'}
   const {data:profile,error:profileError}=await supabase.from('profiles').select('*')

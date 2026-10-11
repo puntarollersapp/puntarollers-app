@@ -27,11 +27,11 @@ export default function BetaLogin() {
   async function createStagingBeta(){
     if(setupBusy)return
     const cleanDoc=String(documento||'').replace(/\D/g,'')
-    if(!/^\d{6,12}$/.test(cleanDoc)||password.length<12){setError('Para preparar la Beta usá un documento de prueba y una contraseña de al menos 12 caracteres.');return}
+    if(!/^\d{6,12}$/.test(cleanDoc)||!/^[0-9]{4}$/.test(password)){setError('Para preparar la Beta usá un documento de prueba y un PIN Beta de 4 dígitos.');return}
     setSetupBusy(true);setError('')
     try{
-      const email=`beta-${cleanDoc}@beta.puntarollers.com`
-      const {data:auth,error:authError}=await supabase.auth.signUp({email,password,options:{data:{purpose:'puntarollers-staging-beta'}}})
+      const email=`beta-${cleanDoc}@beta.puntarollers.com`; const authPassword=`PRB-${cleanDoc}-${password}`
+      const {data:auth,error:authError}=await supabase.auth.signUp({email,password:authPassword,options:{data:{purpose:'puntarollers-staging-beta'}}})
       if(authError||!auth?.user)throw authError||new Error('auth')
       const profileId=`beta-${auth.user.id}`
       const {error:profileError}=await supabase.from('profiles').insert({id:profileId,auth_user_id:auth.user.id,documento:cleanDoc,nombre:'Beta',apellido:'Training 2.0',email,role:'beta',estado:'activo',participa_como_alumno:false,es_profesor:false,es_tesoreria:false,exento_mensualidad:true,acceso_habilitado:false})
