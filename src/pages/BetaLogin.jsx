@@ -54,8 +54,8 @@ export default function BetaLogin() {
           <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)}
             className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
         </label>
-        <label className="block text-sm">Contraseña Beta
-          <input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}
+        <label className="block text-sm">PIN Beta
+          <input required type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}
             className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
         </label>
         {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
