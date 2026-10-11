@@ -8,6 +8,8 @@ const isBetaHost = window.location.hostname === 'beta.puntarollers.com'
 const isBetaPath = window.location.pathname.startsWith('/beta')
 const isBetaEnvironment = isBetaHost || isBetaPath
 
+if (isBetaEnvironment) document.documentElement.dataset.prBetaBoot = 'ready'
+
 function showBetaBootError(error) {
   if (!isBetaEnvironment) return
   const root = document.getElementById('root')
