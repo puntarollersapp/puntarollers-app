@@ -57,7 +57,7 @@ export default function BetaUsersPanel() {
       finally { setSubmitting(false) }
     }} className="rounded-2xl border border-violet-300/20 bg-violet-500/5 p-4 space-y-3">
       <h3 className="font-semibold text-white">Alta de cuentas de prueba</h3>
-      <p className="text-sm text-amber-200">Alta deshabilitada hasta finalizar la auditoría de Tesorería y desplegar el servicio seguro.</p>
+      <p className="text-sm text-amber-200">El servidor verifica que seas administrador antes de autorizar una cuenta Beta.</p>
       <label className="block text-sm text-white/70">Nombre<input required maxLength={100} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Nombre" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
       <label className="block text-sm text-white/70">Apellido<input maxLength={100} value={apellido} onChange={e=>setApellido(e.target.value)} placeholder="Apellido" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
       <label className="block text-sm text-white/70">Documento nuevo<input required inputMode="numeric" pattern="[0-9]{6,12}" value={documento} onChange={e=>setDocumento(e.target.value)} placeholder="Solo números" className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" /></label>
