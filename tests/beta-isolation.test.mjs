@@ -20,7 +20,7 @@ test('beta authentication has independent route and credentials', () => {
   const auth = read('src/lib/auth.jsx')
   assert.match(app, /path="\/beta\/login"/)
   assert.match(app, /path="\/beta"/)
-  assert.match(auth, /beta-\$\{cleanDoc\}@usuarios\.puntarollers\.app/)
+  assert.match(auth, /beta-\$\{cleanDoc\}@beta\.puntarollers\.com/)
   assert.match(auth, /profile\?\.role!=='beta'/)
   assert.match(auth, /!access\?\.enabled/)
 })
