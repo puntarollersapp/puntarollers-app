@@ -8,8 +8,6 @@ const isBetaHost = window.location.hostname === 'beta.puntarollers.com'
 const isBetaPath = window.location.pathname.startsWith('/beta')
 const isBetaEnvironment = isBetaHost || isBetaPath
 
-if (isBetaEnvironment) document.documentElement.dataset.prBetaBoot = 'ready' // redeploy after restoring Beta env
-
 function showBetaBootError(error) {
   if (!isBetaEnvironment) return
   const root = document.getElementById('root')
@@ -61,6 +59,13 @@ class BetaBootBoundary extends React.Component {
   }
 }
 
+function BetaBootReady({ children }) {
+  React.useEffect(() => {
+    document.documentElement.dataset.prBetaBoot = 'ready'
+  }, [])
+  return children
+}
+
 const app = (
   <BrowserRouter>
     <App />
@@ -69,7 +74,7 @@ const app = (
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   isBetaEnvironment
-    ? <BetaBootBoundary>{app}</BetaBootBoundary>
+    ? <BetaBootBoundary><BetaBootReady>{app}</BetaBootReady></BetaBootBoundary>
     : <React.StrictMode>{app}</React.StrictMode>
 )
 
