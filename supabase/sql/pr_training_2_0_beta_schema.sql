@@ -35,23 +35,24 @@ create table if not exists public.pr_training_duties_v2 (
   unique(stable_code,version)
 );
 
--- One persisted assignment set per student/cycle. Created lazily on first eligible access.
 create table if not exists public.pr_training_assignments_v2 (
   id uuid primary key default gen_random_uuid(),
   cycle_id uuid not null references public.pr_training_cycles_v2(id) on delete restrict,
   profile_id text not null references public.profiles(id) on delete restrict,
   progression_snapshot text not null check (progression_snapshot in ('B1','B2','B3','B4')),
+  target_duty_count smallint not null default 6 check (target_duty_count between 1 and 6),
   eligibility_snapshot jsonb not null default '{}'::jsonb,
   rules_snapshot jsonb not null default '{}'::jsonb,
   assigned_at timestamptz not null default now(),
   spin_discovered_at timestamptz,
   spin_reveal_progress smallint not null default 0 check (spin_reveal_progress between 0 and 6),
   assignment_source text not null default 'system',
-  unique(cycle_id,profile_id)
+  unique(cycle_id,profile_id),
+  check (spin_reveal_progress <= target_duty_count)
 );
 
--- Exactly six rows are inserted transactionally by the assignment engine.
--- position is the stable PR SPIN reveal order and never rerandomizes on reload.
+-- Normal production target is 6. Initial B1 catalog has a temporary approved target of 4.
+-- The assignment snapshot stores the target used, so later raising B1 to 6 never rewrites old cycles.
 create table if not exists public.pr_training_assignment_duties_v2 (
   id uuid primary key default gen_random_uuid(),
   assignment_id uuid not null references public.pr_training_assignments_v2(id) on delete restrict,
@@ -80,7 +81,6 @@ create table if not exists public.pr_training_results_v2 (
   updated_at timestamptz not null default now()
 );
 
--- Administrative incidence instead of unsafe fallback when six eligible duties cannot be produced.
 create table if not exists public.pr_training_assignment_incidents_v2 (
   id uuid primary key default gen_random_uuid(),
   cycle_id uuid not null references public.pr_training_cycles_v2(id) on delete restrict,
@@ -91,30 +91,22 @@ create table if not exists public.pr_training_assignment_incidents_v2 (
   created_at timestamptz not null default now()
 );
 
--- First productive cycle. October 2026 is intentionally not created.
-insert into public.pr_training_cycles_v2(
-  cycle_key,title,starts_at,ends_at,activation_at,status,rules_version
-)
-values(
- '2026-11','Noviembre 2026',
- '2026-11-01 00:00:00-03',
- '2026-11-30 23:59:59-03',
- '2026-11-01 15:00:00-03',
- 'draft','v1'
-)
+insert into public.pr_training_cycles_v2(cycle_key,title,starts_at,ends_at,activation_at,status,rules_version)
+values('2026-11','Noviembre 2026','2026-11-01 00:00:00-03','2026-11-30 23:59:59-03',
+       '2026-11-01 15:00:00-03','draft','v1')
 on conflict(cycle_key) do nothing;
 
--- Engine invariants to implement in the transactional RPC/service:
--- 1) eligibility uses existing active/pause/Treasury/email truth; never parallel financial state.
--- 2) assignment is lazy; no access => no six fake duties => history "No iniciado".
--- 3) cumulative pool B1..current progression, plus per-student technique eligibility.
--- 4) mandatory demo missing/invalid => duty ineligible.
--- 5) prefer non-recent duties, then category/technique variety; historical reuse is allowed.
--- 6) fewer than six safe candidates => create incidence and assign nothing.
--- 7) persist assignment + exactly six assignment_duties atomically before PR SPIN.
--- 8) PR SPIN only reveals persisted positions; refresh/skip never rerandomizes.
--- 9) B4-13 (4x500m) occupies ONE of the six duties. Its four Strava activities are subprogress 1/4..4/4.
--- 10) progression changes affect next cycle only; current assignment remains immutable/history-safe.
+-- Engine invariants:
+-- 1) reuse existing active/pause/Treasury/email truth.
+-- 2) lazy assignment; no access => history "No iniciado".
+-- 3) B1 temporary target=4; standard target=6. Never fill B1 with B2.
+-- 4) target_duty_count is snapshotted per assignment so future B1 expansion is history-safe.
+-- 5) mandatory demo unavailable => duty ineligible.
+-- 6) fewer safe candidates than target => incidence; no unsafe fallback.
+-- 7) persist assignment + target count of assignment_duties atomically before PR SPIN.
+-- 8) PR SPIN reveals persisted positions only; refresh/skip never rerandomizes.
+-- 9) B4-13 4x500m occupies ONE duty; its four activities are subprogress 1/4..4/4.
+-- 10) progression changes affect next cycle only.
 
 -- IMPORTANT: RLS/policies, private evidence storage and assignment RPC remain intentionally
--- unapplied until existing profile/Treasury/pause semantics are mapped and reviewed.
+-- unapplied until existing semantics are fully mapped and reviewed.
