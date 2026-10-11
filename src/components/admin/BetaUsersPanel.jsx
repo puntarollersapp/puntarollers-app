@@ -88,12 +88,12 @@ export default function BetaUsersPanel() {
             finally { setResetting(false) }
           }}>
             <label className="block text-sm text-white/70">Nuevo PIN Beta
-              <input required type="password" minLength={12} maxLength={128} autoComplete="new-password"
+              <input required type="password" inputMode="numeric" pattern="[0-9]{4}" minLength={4} maxLength={4} autoComplete="new-password"
                 value={resetPassword} onChange={event => setResetPassword(event.target.value)}
                 className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 p-3" />
             </label>
             <div className="flex flex-wrap gap-2">
-              <button disabled={resetting || resetPassword.length < 12} type="submit"
+              <button disabled={resetting || !/^[0-9]{4}$/.test(resetPassword)} type="submit"
                 className="rounded-xl bg-violet-500 px-4 py-2 font-semibold text-white disabled:opacity-40">{resetting?'Guardando…':'Guardar nuevo PIN'}</button>
               <button type="button" onClick={() => { setResetTarget('');setResetPassword('') }}
                 className="rounded-xl border border-white/20 px-4 py-2 text-white/70">Cancelar</button>
