@@ -4,7 +4,7 @@
 export const PR_KIDS_POST_STATUS=Object.freeze({DRAFT:'draft',PUBLISHED:'published',ARCHIVED:'archived'})
 export function postInsertFromValidated(validated,author){
  if(!validated?.valid||!author?.id||!author?.displayName)return null
- return {...validated.post,teacher_note:String(validated.teacherNote||'').slice(0,500),author_auth_user_id:author.id,author_display_name:String(author.displayName).slice(0,100),status:'draft',published_at:null}
+ return {class_date:validated.post?.class_date,title:validated.post?.title,summary:validated.post?.summary,skills:validated.post?.skills||[],teacher_note:String(validated.teacherNote||'').slice(0,500),author_auth_user_id:author.id,author_display_name:String(author.displayName).slice(0,100),status:'draft',published_at:null}
 }
 export function audienceInsertRows(postId,childIds=[]){
  if(!postId||!Array.isArray(childIds))return []
