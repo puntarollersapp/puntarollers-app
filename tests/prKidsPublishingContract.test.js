@@ -11,7 +11,7 @@ test('draft starts unpublished',()=>{
  assert.equal(row.published_at,null)
 })
 test('audience deduplicates children',()=>{
- assert.equal(audienceInsertRows('post',['child','child']).length,1)
+ assert.equal(audienceInsertRows('post',['12345678-1234-1234-1234-123456789abc','12345678-1234-1234-1234-123456789abc']).length,1)
 })
 test('transitions require review',()=>{
  assert.equal(publishTransition({post:{status:'draft'},ready:{ready:false},now:'today'}),null)
@@ -20,4 +20,8 @@ test('transitions require review',()=>{
 })
 test('audit rejects unsupported actions',()=>{
  assert.equal(classPostAudit({postId:'p',actorId:'a',action:'delete'}),null)
+})
+
+test('invalid child IDs are excluded from audience rows',()=>{
+ assert.equal(audienceInsertRows('post',['invalid','']).length,0)
 })
