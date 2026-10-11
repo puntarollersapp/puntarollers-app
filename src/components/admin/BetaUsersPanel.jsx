@@ -32,9 +32,7 @@ export default function BetaUsersPanel() {
   return <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-5 space-y-4">
     <h2 className="text-2xl font-bold text-white">Usuarios Beta</h2>
     <p className="text-white/60 text-sm">
-      Área de pruebas independiente. El alta y la gestión de accesos permanecerán
-      deshabilitadas hasta verificar que las cuentas de prueba no aparezcan en
-      alumnos, Tesorería ni otros procesos de producción.
+      Área de pruebas independiente. Creá solamente usuarios nuevos de prueba, sin reutilizar documentos ni perfiles de alumnos o personal.
     </p>
     <p className="text-amber-200 text-sm" role="status">
       Alta sujeta a autorización y verificación del servidor; no se modifica ninguna cuenta existente.
