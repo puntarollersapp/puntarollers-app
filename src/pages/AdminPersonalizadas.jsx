@@ -127,7 +127,7 @@ export default function AdminPersonalizadas() {
     const raw = window.prompt(`Email de ${selectedStudent.nombre} (dejá vacío para quitarlo):`, selectedStudent.email || '')
     if (raw === null) return
     const email = raw.trim().toLowerCase()
-    if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return setNotice('Ingresá un email válido.')
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setNotice('Ingresá un email válido.')
     setBusy(true)
     setNotice('')
     try {
@@ -291,7 +291,7 @@ export default function AdminPersonalizadas() {
 
         <section className="rounded-[28px] border border-white/10 bg-white/[.035] p-5"><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">Clases</p><h2 className="mt-1 text-xl font-black">Reservas recientes</h2><div className="mt-4 space-y-3">{reservations.length === 0 && <Empty text="Todavía no hay reservas." />}{reservations.map((r) => { const s = slotMap[r.disponibilidad_id]; const p = studentMap[r.alumno_id]; return <article key={r.id} className="rounded-2xl border border-white/10 bg-black/25 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3"><Avatar student={p} /><div><p className="font-black">{p?.nombre || 'Alumno'} {p?.apellido || ''}</p><p className="mt-1 text-xs text-white/40">{s ? `${day(s.fecha)} · ${hhmm(s.hora_inicio)}–${hhmm(s.hora_fin)}` : 'Turno'}</p>{r.motivo_estado && <p className="mt-2 text-xs text-white/35">{r.motivo_estado}</p>}</div></div><span className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-black uppercase">{r.estado}</span></div>{r.estado === 'reservada' && <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"><button onClick={() => status(r, 'realizada')} className="rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-black text-emerald-200">✓ Realizada</button><button onClick={() => status(r, 'suspendida', 'Lluvia / mal clima')} className="rounded-xl bg-sky-500/15 px-3 py-2 text-xs font-black text-sky-200">☔ Clima</button><button onClick={() => status(r, 'suspendida', 'Imprevisto PR / profesor')} className="rounded-xl bg-amber-500/15 px-3 py-2 text-xs font-black text-amber-100">Imprevisto</button><button onClick={() => status(r, 'cancelada', 'Alumno avisó con tiempo')} className="rounded-xl bg-white/[.06] px-3 py-2 text-xs font-black text-white/65">Avisó</button><button onClick={() => status(r, 'reprogramada', 'Reprogramación acordada')} className="rounded-xl bg-violet-500/15 px-3 py-2 text-xs font-black text-violet-200">Reprogramar</button><button onClick={() => otherReason(r, 'suspendida')} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-white/45">Otro</button></div>}{r.estado === 'realizada' && r.credito_consumido && <button onClick={() => undoCompleted(r)} className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs font-black text-amber-100">Corregir y devolver crédito</button>}</article>})}</div></section>
 
-        {notice && <div className="fixed bottom-5 left-4 right-4 z-50 mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#161616]/95 px-4 py-3 text-sm shadow-2xl">{notice}</div>}
+        {notice && <div className="fixed bottom-28 left-4 right-4 z-[80] mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#161616]/95 px-4 py-3 text-sm shadow-2xl">{notice}</div>}
       </div>
     </div>
   )
