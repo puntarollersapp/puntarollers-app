@@ -108,5 +108,49 @@ on conflict(cycle_key) do nothing;
 -- 9) B4-13 4x500m occupies ONE duty; its four activities are subprogress 1/4..4/4.
 -- 10) progression changes affect next cycle only.
 
--- IMPORTANT: RLS/policies, private evidence storage and assignment RPC remain intentionally
--- unapplied until existing semantics are fully mapped and reviewed.
+-- Staging security baseline. Production remains untouched until reviewed and explicitly approved.
+alter table public.pr_training_cycles_v2 enable row level security;
+alter table public.pr_training_duties_v2 enable row level security;
+alter table public.pr_training_assignments_v2 enable row level security;
+alter table public.pr_training_assignment_duties_v2 enable row level security;
+alter table public.pr_training_results_v2 enable row level security;
+alter table public.pr_training_assignment_incidents_v2 enable row level security;
+
+create policy "training_cycles_authenticated_read"
+  on public.pr_training_cycles_v2 for select to authenticated using (true);
+
+create policy "training_duties_authenticated_read"
+  on public.pr_training_duties_v2 for select to authenticated using (active = true);
+
+create policy "training_assignments_self_read"
+  on public.pr_training_assignments_v2 for select to authenticated
+  using (exists (
+    select 1 from public.profiles p
+    where p.id = pr_training_assignments_v2.profile_id
+      and p.auth_user_id = auth.uid()
+  ));
+
+create policy "training_assignment_duties_self_read"
+  on public.pr_training_assignment_duties_v2 for select to authenticated
+  using (exists (
+    select 1
+    from public.pr_training_assignments_v2 a
+    join public.profiles p on p.id = a.profile_id
+    where a.id = pr_training_assignment_duties_v2.assignment_id
+      and p.auth_user_id = auth.uid()
+  ));
+
+create policy "training_results_self_read"
+  on public.pr_training_results_v2 for select to authenticated
+  using (exists (
+    select 1
+    from public.pr_training_assignment_duties_v2 ad
+    join public.pr_training_assignments_v2 a on a.id = ad.assignment_id
+    join public.profiles p on p.id = a.profile_id
+    where ad.id = pr_training_results_v2.assignment_duty_id
+      and p.auth_user_id = auth.uid()
+  ));
+
+-- Intentionally no client-side INSERT/UPDATE/DELETE policies for assignments/incidents.
+-- Assignment generation, review writes and evidence mutations must go through reviewed server-side paths.
+-- Private evidence storage and assignment RPC are the next staging-only migrations.
