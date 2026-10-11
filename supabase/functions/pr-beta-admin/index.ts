@@ -42,7 +42,8 @@ Deno.serve(async req => {
   if (lookupError) return json({ error: 'No se pudo validar el documento' }, 500)
   if (duplicate) return json({ error: 'Documento ya registrado' }, 409)
 
-  // The existing login derives the password from PIN and document.
-  // Do not create accounts until a dedicated Beta login has been implemented.
-  return json({ error: 'Alta Beta no habilitada: falta inicio de sesión independiente y aislamiento de Tesorería' }, 503)
+  // Dedicated Beta login exists. Keep server provisioning disabled until the
+  // treasury SQL and authorization policies are independently verified.
+  // No writes to auth.users, profiles or pr_beta_access are permitted here.
+  return json({ error: 'Alta Beta no habilitada: pendiente auditoría de Tesorería y permisos del servidor' }, 503)
 })
