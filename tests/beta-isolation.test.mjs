@@ -103,7 +103,7 @@ test('beta password reset is restricted to admins and beta profiles', () => {
   assert.match(server, /payload\.action === 'reset_password'/)
   assert.match(server, /\.eq\('id', profileId\)\.eq\('role', 'beta'\)/)
   assert.match(server, /admin\.auth\.admin\.updateUserById\(target\.auth_user_id/)
-  assert.match(panel, /Restablecer contraseña/)
+  assert.match(panel, /Restablecer PIN/)
   assert.match(panel, /action: 'reset_password'/)
 })
 
