@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -36,9 +36,10 @@ function DutyCard({d,i}){
 export default function PRTraining2Beta(){
  const {user}=useAuth(); const key=user?.id?'pr-training2-beta-spin:'+user.id:'pr-training2-beta-spin'
  const initial=useMemo(()=>{try{return Number(localStorage.getItem(key)||0)}catch{return 0}},[key])
- const [revealed,setRevealed]=useState(Math.min(initial,B1.length)); const [spinning,setSpinning]=useState(false)
+ const [revealed,setRevealed]=useState(Math.min(initial,B1.length)); const [spinning,setSpinning]=useState(false); const [storageReady,setStorageReady]=useState(false)
+ useEffect(()=>{setStorageReady(true)},[])
  if(!user)return <Navigate to="/beta/login" replace/>; if(user.role!=='beta')return <Navigate to="/app/deberes" replace/>
- function spin(){if(spinning||revealed>=B1.length)return;setSpinning(true);window.setTimeout(()=>{setRevealed(v=>{const n=Math.min(v+1,B1.length);localStorage.setItem(key,String(n));return n});setSpinning(false)},1450)}
+ function spin(){if(spinning||revealed>=B1.length)return;setSpinning(true);window.setTimeout(()=>{setRevealed(v=>{const n=Math.min(v+1,B1.length);try{localStorage.setItem(key,String(n))}catch{}return n});setSpinning(false)},1450)}
  const done=revealed===B1.length
  return <main className="min-h-screen bg-[#07070b] text-white"><div className="mx-auto max-w-[520px] px-4 pb-24 pt-6">
   <header className="flex items-center justify-between"><div><p className="text-[9px] font-black uppercase tracking-[.28em] text-violet-300">Punta Rollers · Beta</p><h1 className="mt-1 text-2xl font-black tracking-tight">PR TRAINING <span className="text-violet-400">2.0</span></h1></div><span className="rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-[9px] font-black text-violet-200">B1 · PRUEBA</span></header>
@@ -47,6 +48,6 @@ export default function PRTraining2Beta(){
    <button onClick={spin} disabled={spinning} className="mt-6 w-full rounded-[22px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 py-4 text-sm font-black shadow-[0_12px_35px_rgba(139,92,246,.28)] disabled:opacity-60">{spinning?'DESCUBRIENDO…':revealed?'DESCUBRIR SIGUIENTE':'GIRAR PR SPIN'}</button><p className="mt-3 text-center text-[10px] font-bold text-white/35">{revealed} / 4 descubiertos</p>
   </section>:<section className="mt-6 rounded-[34px] border border-violet-300/15 bg-[radial-gradient(circle_at_90%_0%,rgba(168,85,247,.22),transparent_35%),#101016] p-5"><p className="text-[9px] font-black uppercase tracking-[.25em] text-violet-300">Ciclo descubierto</p><h2 className="mt-2 text-3xl font-black">MIS DEBERES</h2><div className="mt-4 flex items-end justify-between"><p className="text-xs text-white/45">Noviembre · B1</p><p className="text-2xl font-black">0<span className="text-white/25">/4</span></p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-violet-400"/></div></section>}
   {revealed>0&&<section className="mt-4 space-y-3">{B1.slice(0,revealed).map((d,i)=><DutyCard key={d.code} d={d} i={i}/>)}</section>}
-  <footer className="mt-6 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/20">Preview aislada · no publicada</footer>
+  <footer className="mt-6 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/20">Preview aislada · no publicada · datos simulados</footer>
  </div></main>
 }
