@@ -9,8 +9,7 @@ export default function BetaLogin() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  if (authLoading) return null
-  if (user) return <Navigate to={user.role === 'beta' ? '/app/perfil' : '/app/perfil'} replace />
+  if (user) return <Navigate to="/app/perfil" replace />
   async function submit(event) {
     event.preventDefault()
     if (busy) return
@@ -27,6 +26,7 @@ export default function BetaLogin() {
       <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300">Punta Rollers / Beta</p>
       <h1 className="mt-4 text-3xl font-bold">Ingresar a Beta</h1>
       <p className="mt-2 text-sm text-white/60">Acceso exclusivo para cuentas de prueba autorizadas.</p>
+      {authLoading&&<p className="mt-3 text-xs text-violet-200/60">Verificando sesión segura…</p>}
       <form onSubmit={submit} className="mt-7 space-y-4">
         <label className="block text-sm">Documento
           <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)}
@@ -37,7 +37,7 @@ export default function BetaLogin() {
             className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
         </label>
         {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
-        <button type="submit" disabled={busy} className="w-full rounded-xl bg-violet-500 px-4 py-3 font-semibold disabled:opacity-50">{busy?'Ingresando…':'Ingresar'}</button>
+        <button type="submit" disabled={busy||authLoading} className="w-full rounded-xl bg-violet-500 px-4 py-3 font-semibold disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
       </form>
       <Link to="/login" className="mt-6 inline-block text-sm text-white/50 underline">Acceso habitual Punta Rollers</Link>
     </section>
