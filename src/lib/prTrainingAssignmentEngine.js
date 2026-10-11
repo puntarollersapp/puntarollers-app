@@ -48,7 +48,15 @@ export function selectMonthlyDuties({
   const allowed=new Set(allowedProgressions(progression))
   const recent=new Set(recentDutyCodes)
   const context={learnedTechniques,enabledTechniques,prepared10k,brakingEnabled}
-  const eligible=(catalog||[]).filter(d=>d.active!==false&&allowed.has(d.progression)&&requirementMet(d,context))
+  const eligibleRaw=(catalog||[]).filter(d=>d.active!==false&&allowed.has(d.progression)&&requirementMet(d,context))
+  // Stable duty identity is the assignment unit. Catalog versioning may contain more than
+  // one row for the same stable code; only the highest eligible version can participate.
+  const latestByStableCode=new Map()
+  for(const d of eligibleRaw){
+    const current=latestByStableCode.get(d.stableCode)
+    if(!current||Number(d.version||1)>Number(current.version||1))latestByStableCode.set(d.stableCode,d)
+  }
+  const eligible=[...latestByStableCode.values()]
 
   if(eligible.length<targetCount){
     return {ok:false,incident:{
