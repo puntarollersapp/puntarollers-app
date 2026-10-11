@@ -34,20 +34,39 @@ function DutyCard({d,i}){
 }
 
 export default function PRTraining2Beta(){
- const {user}=useAuth(); const key=user?.id?'pr-training2-beta-spin:'+user.id:'pr-training2-beta-spin'
- const initial=useMemo(()=>{try{return Number(localStorage.getItem(key)||0)}catch{return 0}},[key])
- const [revealed,setRevealed]=useState(Math.min(initial,B1.length)); const [spinning,setSpinning]=useState(false); const [storageReady,setStorageReady]=useState(false)
- useEffect(()=>{setStorageReady(true)},[])
+ const {user}=useAuth()
+ const [assignment,setAssignment]=useState(null); const [duties,setDuties]=useState([]); const [revealed,setRevealed]=useState(0); const [spinning,setSpinning]=useState(false); const [loading,setLoading]=useState(true); const [loadError,setLoadError]=useState('')
+ useEffect(()=>{let alive=true;(async()=>{
+   if(!user?.id)return
+   setLoading(true);setLoadError('')
+   const {data:a,error:ae}=await supabase.from('pr_training_assignments_v2').select('id,target_duty_count,spin_reveal_progress,spin_discovered_at,pr_training_cycles_v2!inner(cycle_key,title)').eq('profile_id',user.id).eq('pr_training_cycles_v2.cycle_key','2026-11').maybeSingle()
+   if(!alive)return
+   if(ae||!a){setLoadError('Todavía no hay una asignación preparada para este ciclo.');setLoading(false);return}
+   const {data:rows,error:de}=await supabase.from('pr_training_assignment_duties_v2').select('position,duty_code_snapshot,duty_snapshot').eq('assignment_id',a.id).order('position')
+   if(!alive)return
+   if(de||!rows?.length){setLoadError('No pudimos cargar tus deberes.');setLoading(false);return}
+   setAssignment(a);setDuties(rows.map(r=>({code:r.duty_code_snapshot,title:r.duty_snapshot?.title||r.duty_code_snapshot,type:String(r.duty_snapshot?.evidenceType||'video').toUpperCase(),objective:r.duty_snapshot?.objective||'',work:r.duty_snapshot?.workSpec?.instruction||r.duty_snapshot?.workSpec?.description||'',delivery:r.duty_snapshot?.deliverySpec?.instruction||'',demo:(r.duty_snapshot?.demoAssetIds||[])[0]||'—'})));setRevealed(Math.min(Number(a.spin_reveal_progress||0),rows.length));setLoading(false)
+ })();return()=>{alive=false}},[user?.id])
  if(!user)return <Navigate to="/beta/login" replace/>; if(user.role!=='beta')return <Navigate to="/app/deberes" replace/>
- function spin(){if(spinning||revealed>=B1.length)return;setSpinning(true);window.setTimeout(()=>{setRevealed(v=>{const n=Math.min(v+1,B1.length);try{localStorage.setItem(key,String(n))}catch{}return n});setSpinning(false)},1450)}
- const done=revealed===B1.length
+ async function persistReveal(n){
+   if(!assignment?.id)return false
+   const patch={spin_reveal_progress:n}
+   if(n>=duties.length)patch.spin_discovered_at=new Date().toISOString()
+   const {error}=await supabase.from('pr_training_assignments_v2').update(patch).eq('id',assignment.id)
+   if(error){setLoadError('No pudimos guardar el avance de PR SPIN.');return false}
+   return true
+ }
+ function spin(){if(spinning||revealed>=duties.length)return;setSpinning(true);window.setTimeout(async()=>{const n=Math.min(revealed+1,duties.length);if(await persistReveal(n))setRevealed(n);setSpinning(false)},1450)}
+ const done=duties.length>0&&revealed===duties.length
+ if(loading)return <main className="min-h-screen bg-[#07070b] text-white grid place-items-center"><p className="text-xs font-black tracking-[.2em] text-violet-300">CARGANDO PR TRAINING…</p></main>
+ if(loadError)return <main className="min-h-screen bg-[#07070b] text-white grid place-items-center p-6"><div className="max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6 text-center"><h1 className="font-black">PR TRAINING 2.0</h1><p className="mt-3 text-sm text-white/55">{loadError}</p></div></main>
  return <main className="min-h-screen bg-[#07070b] text-white"><div className="mx-auto max-w-[520px] px-4 pb-24 pt-6">
   <header className="flex items-center justify-between"><div><p className="text-[9px] font-black uppercase tracking-[.28em] text-violet-300">Punta Rollers · Beta</p><h1 className="mt-1 text-2xl font-black tracking-tight">PR TRAINING <span className="text-violet-400">2.0</span></h1></div><span className="rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-[9px] font-black text-violet-200">B1 · PRUEBA</span></header>
   {!done?<section className="mt-6 overflow-hidden rounded-[36px] border border-violet-300/15 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,.26),transparent_38%),linear-gradient(180deg,#12111b,#09090e)] p-5 shadow-2xl">
    <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[.28em] text-white/35">Noviembre 2026</p><h2 className="mt-2 text-3xl font-black leading-none">DESCUBRÍ TUS<br/><span className="text-violet-300">DEBERES.</span></h2><p className="mx-auto mt-3 max-w-xs text-xs leading-5 text-white/45">Este B1 de prueba tiene 4 deberes. PR SPIN mantiene la experiencia mensual aunque este nivel todavía no llegue a seis.</p></div><div className="mt-6"><Wheel spinning={spinning} onSpin={spin}/></div>
-   <button onClick={spin} disabled={spinning} className="mt-6 w-full rounded-[22px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 py-4 text-sm font-black shadow-[0_12px_35px_rgba(139,92,246,.28)] disabled:opacity-60">{spinning?'DESCUBRIENDO…':revealed?'DESCUBRIR SIGUIENTE':'GIRAR PR SPIN'}</button><p className="mt-3 text-center text-[10px] font-bold text-white/35">{revealed} / 4 descubiertos</p>
-  </section>:<section className="mt-6 rounded-[34px] border border-violet-300/15 bg-[radial-gradient(circle_at_90%_0%,rgba(168,85,247,.22),transparent_35%),#101016] p-5"><p className="text-[9px] font-black uppercase tracking-[.25em] text-violet-300">Ciclo descubierto</p><h2 className="mt-2 text-3xl font-black">MIS DEBERES</h2><div className="mt-4 flex items-end justify-between"><p className="text-xs text-white/45">Noviembre · B1</p><p className="text-2xl font-black">0<span className="text-white/25">/4</span></p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-violet-400"/></div></section>}
-  {revealed>0&&<section className="mt-4 space-y-3">{B1.slice(0,revealed).map((d,i)=><DutyCard key={d.code} d={d} i={i}/>)}</section>}
-  <footer className="mt-6 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/20">Preview aislada · no publicada · datos simulados</footer>
+   <button onClick={spin} disabled={spinning} className="mt-6 w-full rounded-[22px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 py-4 text-sm font-black shadow-[0_12px_35px_rgba(139,92,246,.28)] disabled:opacity-60">{spinning?'DESCUBRIENDO…':revealed?'DESCUBRIR SIGUIENTE':'GIRAR PR SPIN'}</button><p className="mt-3 text-center text-[10px] font-bold text-white/35">{revealed} / {duties.length} descubiertos</p>
+  </section>:<section className="mt-6 rounded-[34px] border border-violet-300/15 bg-[radial-gradient(circle_at_90%_0%,rgba(168,85,247,.22),transparent_35%),#101016] p-5"><p className="text-[9px] font-black uppercase tracking-[.25em] text-violet-300">Ciclo descubierto</p><h2 className="mt-2 text-3xl font-black">MIS DEBERES</h2><div className="mt-4 flex items-end justify-between"><p className="text-xs text-white/45">Noviembre · B1</p><p className="text-2xl font-black">0<span className="text-white/25">/{duties.length}</span></p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-violet-400"/></div></section>}
+  {revealed>0&&<section className="mt-4 space-y-3">{duties.slice(0,revealed).map((d,i)=><DutyCard key={d.code} d={d} i={i}/>)}</section>}
+  <footer className="mt-6 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/20">Beta aislada · Staging · asignación persistida</footer>
  </div></main>
 }
