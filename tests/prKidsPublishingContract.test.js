@@ -25,3 +25,11 @@ test('audit rejects unsupported actions',()=>{
 test('invalid child IDs are excluded from audience rows',()=>{
  assert.equal(audienceInsertRows('post',['invalid','']).length,0)
 })
+
+test('privileged client fields cannot be injected into a draft',()=>{
+ const row=postInsertFromValidated({valid:true,post:{title:'Clase',id:'forged',status:'published',published_at:'forged',secret:'private'}},{id:'staff',displayName:'Profesor'})
+ assert.equal(row.id,undefined)
+ assert.equal(row.secret,undefined)
+ assert.equal(row.status,'draft')
+ assert.equal(row.published_at,null)
+})
