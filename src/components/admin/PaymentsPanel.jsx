@@ -136,7 +136,7 @@ export default function PaymentsPanel({
     () =>
       profiles.filter(
         (profile) =>
-          (profile.role === 'alumno' || profile.participa_como_alumno === true)
+          (profile.role !== 'beta' && (profile.role === 'alumno' || profile.participa_como_alumno === true))
       ),
     [profiles]
   )
