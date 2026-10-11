@@ -8,8 +8,9 @@ export default function BetaHome() {
   const [access, setAccess] = useState(null)
   useEffect(() => {
     let live = true
-    if (user?.role !== 'beta') { setAccess(null); return }
-    getBetaAccess(user.id).then(result => { if (live) setAccess(result) })
+    setAccess(null)
+    if (user?.role !== 'beta') return () => { live = false }
+    getBetaAccess(user.id).then(result => { if (live) setAccess(result) }).catch(() => { if (live) setAccess({ enabled: false }) })
     return () => { live = false }
   }, [user?.id, user?.role])
   if (loading) return null
