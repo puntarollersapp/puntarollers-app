@@ -122,6 +122,26 @@ export default function AdminPersonalizadas() {
     }
   }
 
+  const editEmail = async () => {
+    if (!selectedStudent) return
+    const raw = window.prompt(`Email de ${selectedStudent.nombre} (dejá vacío para quitarlo):`, selectedStudent.email || '')
+    if (raw === null) return
+    const email = raw.trim().toLowerCase()
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setNotice('Ingresá un email válido.')
+    setBusy(true)
+    setNotice('')
+    try {
+      const { error } = await supabase.from('profiles').update({ email: email || null }).eq('id', selectedStudent.id)
+      if (error) throw error
+      await load()
+      setNotice(email ? 'Email actualizado correctamente.' : 'Email eliminado correctamente.')
+    } catch (err) {
+      setNotice(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const addSlot = async (e) => {
     e.preventDefault()
     if (!slot.fecha || !slot.hora_inicio) return setNotice('Elegí una fecha y una hora de inicio.')
@@ -262,6 +282,8 @@ export default function AdminPersonalizadas() {
 
           <div className={`mt-5 rounded-2xl border p-4 ${selectedStudent.telefono ? 'border-emerald-300/15 bg-emerald-400/[.06]' : 'border-amber-300/20 bg-amber-300/10'}`}><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Acceso al link de Personalizadas</p><p className="mt-1 text-sm text-white/55">{selectedStudent.telefono ? `Puede identificarse con ${selectedStudent.telefono}.` : 'Necesita un teléfono para poder identificarse desde el link público.'}</p></div><button disabled={busy} onClick={editPhone} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">{selectedStudent.telefono ? 'Editar teléfono' : '+ Agregar teléfono'}</button></div></div>
 
+          <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Email de contacto</p><p className="mt-1 text-sm text-white/55">{selectedStudent.email || 'Sin email cargado · no requiere documento'}</p></div><button disabled={busy} onClick={editEmail} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">{selectedStudent.email ? 'Editar email' : '+ Agregar email'}</button></div></div>
+
           <div className="mt-5 grid gap-3 sm:grid-cols-3"><InfoCard label="Clases disponibles" value={activePass?.clases_disponibles ?? 0} /><InfoCard label="Clases utilizadas" value={activePass?.clases_utilizadas ?? 0} /><InfoCard label="Próxima clase" value={nextReservation && slotMap[nextReservation.disponibilidad_id] ? `${day(slotMap[nextReservation.disponibilidad_id].fecha)} · ${hhmm(slotMap[nextReservation.disponibilidad_id].hora_inicio)}` : 'Sin reserva'} small /></div>
           <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4"><p className="text-xs font-black uppercase tracking-widest text-white/35">Cargar clases</p><div className="mt-3 flex flex-wrap gap-2">{[1,2,4].map((n) => <button key={n} onClick={() => setCreditAmount(n)} className={`rounded-xl border px-4 py-2 text-xs font-black ${creditAmount === n ? 'border-red-400/50 bg-red-500/15 text-red-100' : 'border-white/10 text-white/60'}`}>+{n}</button>)}<input type="number" min="1" value={creditAmount} onChange={(e) => setCreditAmount(Number(e.target.value))} className="w-20 rounded-xl border border-white/10 bg-black/30 px-3 text-sm" /><button disabled={busy} onClick={addCredits} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">Cargar a PR Pass</button></div></div>
           <div className="mt-5 grid gap-5 lg:grid-cols-2"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Cuponeras</p><div className="mt-3 space-y-2">{selectedPasses.length === 0 && <Empty text="Todavía no tiene cuponeras." />}{selectedPasses.map((p) => <div key={p.id} className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center justify-between gap-3"><div><p className="font-black">{p.nombre_cuponera || 'PR Pass'}</p><p className="mt-1 text-xs text-white/35">Creada {dateTime(p.created_at)}</p></div><span className="text-xl font-black">{p.clases_disponibles}</span></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-red-400" style={{ width: `${Math.min(100, Number(p.clases_cargadas) ? (Number(p.clases_utilizadas) / Number(p.clases_cargadas)) * 100 : 0)}%` }} /></div><p className="mt-2 text-[11px] text-white/35">{p.clases_utilizadas} usadas · {p.clases_cargadas} cargadas</p></div>)}</div></div><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Historial</p><div className="mt-3 max-h-80 space-y-2 overflow-auto">{selectedHistory.length === 0 && <Empty text="Todavía no hay movimientos registrados." />}{selectedHistory.map((h) => <div key={h.id} className="rounded-2xl border border-white/10 bg-black/20 p-3"><div className="flex items-center justify-between gap-3"><p className="text-sm font-black capitalize">{h.tipo}</p><span className="text-xs text-white/35">{dateTime(h.created_at)}</span></div><p className="mt-1 text-xs text-white/45">Saldo {h.saldo_anterior} → {h.saldo_despues}{h.observacion ? ` · ${h.observacion}` : ''}</p></div>)}</div></div></div>
@@ -269,7 +291,7 @@ export default function AdminPersonalizadas() {
 
         <section className="rounded-[28px] border border-white/10 bg-white/[.035] p-5"><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/35">Clases</p><h2 className="mt-1 text-xl font-black">Reservas recientes</h2><div className="mt-4 space-y-3">{reservations.length === 0 && <Empty text="Todavía no hay reservas." />}{reservations.map((r) => { const s = slotMap[r.disponibilidad_id]; const p = studentMap[r.alumno_id]; return <article key={r.id} className="rounded-2xl border border-white/10 bg-black/25 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3"><Avatar student={p} /><div><p className="font-black">{p?.nombre || 'Alumno'} {p?.apellido || ''}</p><p className="mt-1 text-xs text-white/40">{s ? `${day(s.fecha)} · ${hhmm(s.hora_inicio)}–${hhmm(s.hora_fin)}` : 'Turno'}</p>{r.motivo_estado && <p className="mt-2 text-xs text-white/35">{r.motivo_estado}</p>}</div></div><span className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-black uppercase">{r.estado}</span></div>{r.estado === 'reservada' && <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"><button onClick={() => status(r, 'realizada')} className="rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-black text-emerald-200">✓ Realizada</button><button onClick={() => status(r, 'suspendida', 'Lluvia / mal clima')} className="rounded-xl bg-sky-500/15 px-3 py-2 text-xs font-black text-sky-200">☔ Clima</button><button onClick={() => status(r, 'suspendida', 'Imprevisto PR / profesor')} className="rounded-xl bg-amber-500/15 px-3 py-2 text-xs font-black text-amber-100">Imprevisto</button><button onClick={() => status(r, 'cancelada', 'Alumno avisó con tiempo')} className="rounded-xl bg-white/[.06] px-3 py-2 text-xs font-black text-white/65">Avisó</button><button onClick={() => status(r, 'reprogramada', 'Reprogramación acordada')} className="rounded-xl bg-violet-500/15 px-3 py-2 text-xs font-black text-violet-200">Reprogramar</button><button onClick={() => otherReason(r, 'suspendida')} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-white/45">Otro</button></div>}{r.estado === 'realizada' && r.credito_consumido && <button onClick={() => undoCompleted(r)} className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs font-black text-amber-100">Corregir y devolver crédito</button>}</article>})}</div></section>
 
-        {notice && <div className="fixed bottom-5 left-4 right-4 z-50 mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#161616]/95 px-4 py-3 text-sm shadow-2xl">{notice}</div>}
+        {notice && <div className="fixed bottom-28 left-4 right-4 z-[80] mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#161616]/95 px-4 py-3 text-sm shadow-2xl">{notice}</div>}
       </div>
     </div>
   )
