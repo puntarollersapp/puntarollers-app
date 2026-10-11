@@ -109,7 +109,7 @@ on conflict(cycle_key) do nothing;
 -- 9) B4-13 4x500m occupies ONE duty; its four activities are subprogress 1/4..4/4.
 -- 10) progression changes affect next cycle only.
 
--- Staging security baseline (VERSIONED, CURRENTLY PENDING APPLICATION IN STAGING).
+-- Staging security baseline (VERSIONED, APPLIED AND VERIFIED IN ISOLATED STAGING ON 2026-10-11).
 -- Production remains untouched until reviewed and explicitly approved.
 alter table public.pr_training_cycles_v2 enable row level security;
 alter table public.pr_training_duties_v2 enable row level security;
@@ -172,3 +172,14 @@ delivery_spec=excluded.delivery_spec, progression=excluded.progression,
 evidence_type=excluded.evidence_type, demo_asset_ids=excluded.demo_asset_ids,
 requires_demo=excluded.requires_demo, eligibility_rules=excluded.eligibility_rules,
 active=excluded.active;
+
+
+-- Staging verified 2026-10-11: browser may persist only its own PR SPIN reveal state.
+drop policy if exists training_assignments_self_update_spin on public.pr_training_assignments_v2;
+create policy training_assignments_self_update_spin on public.pr_training_assignments_v2
+for update to authenticated
+using (exists (select 1 from public.profiles p where p.id=pr_training_assignments_v2.profile_id and p.auth_user_id=auth.uid()))
+with check (exists (select 1 from public.profiles p where p.id=pr_training_assignments_v2.profile_id and p.auth_user_id=auth.uid()));
+revoke insert, delete, truncate, references, trigger, update on public.pr_training_assignments_v2 from authenticated;
+grant select on public.pr_training_assignments_v2 to authenticated;
+grant update (spin_reveal_progress, spin_discovered_at) on public.pr_training_assignments_v2 to authenticated;
