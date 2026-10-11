@@ -26,7 +26,8 @@ export function AuthProvider({children}){
  async function logout(){try{await supabase.auth.signOut()}finally{clearLocalUser();setUser(null)}}
  function updateUser(updates){setUser(currentUser=>{if(!currentUser)return currentUser;const nextUser={...currentUser,...updates};saveLocalUser(nextUser);return nextUser})}
  async function refreshUser(){const result=await refreshUserSilently();if(result?.skipped){clearLocalUser();setUser(null);return {success:false,error:'Sesión finalizada.'}}return result}
- const isProfessor=Boolean(user?.esProfesor)||user?.role==='profesor'||user?.role==='admin',isStudent=Boolean(user?.participaComoAlumno)||user?.role==='alumno'
- return <AuthContext.Provider value={{user,loading,login,logout,updateUser,refreshUser,isAuthenticated:Boolean(user),isAdmin:user?.role==='admin',isProfessor,isStudent,isTreasury:Boolean(user?.esTesoreria)||user?.role==='admin',isPaymentExempt:Boolean(user?.exentoMensualidad)||user?.role==='admin'||user?.role==='profesor',hasPrivateAccess:Boolean(user?.accesoHabilitado),professores}}>{children}</AuthContext.Provider>
+ const betaUser=isBetaRole(user)
+ const isProfessor=!betaUser&&(Boolean(user?.esProfesor)||user?.role==='profesor'||user?.role==='admin'),isStudent=!betaUser&&(Boolean(user?.participaComoAlumno)||user?.role==='alumno')
+ return <AuthContext.Provider value={{user,loading,login,logout,updateUser,refreshUser,isAuthenticated:Boolean(user),isAdmin:!betaUser&&user?.role==='admin',isBeta:betaUser,isProfessor,isStudent,isTreasury:!betaUser&&(Boolean(user?.esTesoreria)||user?.role==='admin'),isPaymentExempt:betaUser||Boolean(user?.exentoMensualidad)||user?.role==='admin'||user?.role==='profesor',hasPrivateAccess:Boolean(user?.accesoHabilitado),professores}}>{children}</AuthContext.Provider>
 }
 export function useAuth(){const context=useContext(AuthContext);if(!context)throw new Error('useAuth debe utilizarse dentro de AuthProvider');return context}
