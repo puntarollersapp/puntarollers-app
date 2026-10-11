@@ -42,8 +42,37 @@ Deno.serve(async req => {
   if (lookupError) return json({ error: 'No se pudo validar el documento' }, 500)
   if (duplicate) return json({ error: 'Documento ya registrado' }, 409)
 
-  // Dedicated Beta login exists. Keep server provisioning disabled until the
-  // treasury SQL and authorization policies are independently verified.
-  // No writes to auth.users, profiles or pr_beta_access are permitted here.
-  return json({ error: 'Alta Beta no habilitada: pendiente auditoría de Tesorería y permisos del servidor' }, 503)
+  // Never mutate a pre-existing student or staff identity.
+  // The flag is server-only and defaults to disabled.
+  if (Deno.env.get('PR_BETA_PROVISIONING_ENABLED') !== 'true') {
+    return json({ error: 'Alta Beta deshabilitada por configuración del servidor' }, 503)
+  }
+  const email = `beta-${documento}@usuarios.puntarollers.app`
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email, password, email_confirm: true,
+    user_metadata: { purpose: 'puntarollers-beta' },
+  })
+  if (createError || !created.user) return json({ error: 'No se pudo crear la identidad Beta' }, 409)
+  const authId = created.user.id
+  const profileId = `beta-${authId}`
+  try {
+    const { error: profileError } = await admin.from('profiles').insert({
+      id: profileId, auth_user_id: authId, documento, nombre, apellido, email,
+      role: 'beta', pin: null, participa_como_alumno: false,
+      es_profesor: false, es_tesoreria: false, exento_mensualidad: true,
+      acceso_habilitado: false, prcard_activa: false, tracking_activo: false,
+    })
+    if (profileError) throw profileError
+    const { error: accessError } = await admin.from('pr_beta_access').insert({
+      profile_id: profileId, enabled: true, features: {},
+    })
+    if (accessError) throw accessError
+    return json({ success: true, profile_id: profileId }, 201)
+  } catch (_error) {
+    // Compensation: remove partial profile/access before removing Auth identity.
+    await admin.from('pr_beta_access').delete().eq('profile_id', profileId)
+    await admin.from('profiles').delete().eq('id', profileId).eq('role', 'beta')
+    await admin.auth.admin.deleteUser(authId)
+    return json({ error: 'No se pudo completar el alta Beta; se intentó revertir la operación' }, 500)
+  }
 })
