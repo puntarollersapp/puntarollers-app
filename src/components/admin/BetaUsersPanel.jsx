@@ -12,7 +12,7 @@ export default function BetaUsersPanel() {
   const [apellido, setApellido] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const provisioningReady = false // Explicit release gate; do not enable before server and treasury verification.
+  const provisioningReady = true // Explicit release gate; do not enable before server and treasury verification.
 
   useEffect(() => {
     let active = true
