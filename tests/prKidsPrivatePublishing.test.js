@@ -10,3 +10,13 @@ test('photo without consent blocks publishing',()=>{
 test('approved recipients and media pass readiness',()=>{
  assert.equal(canPublishPrivatePost({post:{status:'draft',class_date:'2026-10-10'},audience:[{approved_child:true}],media:[{content_type:'image/png',consent_confirmed:true}]}).ready,true)
 })
+
+test('rejects malformed recipient identifiers',()=>{
+ const result=validatePrivatePost({class_date:'2026-10-10',title:'Frenadas',summary:'Practicamos frenadas y giros',audience_child_ids:['not-a-uuid']})
+ assert.equal(result.valid,false)
+})
+test('malformed media and audience cannot pass readiness',()=>{
+ const post={status:'draft',class_date:'2026-10-10'}
+ assert.equal(canPublishPrivatePost({post,media:null,audience:[{approved_child:true}]}).ready,false)
+ assert.equal(canPublishPrivatePost({post,media:[],audience:null}).ready,false)
+})
