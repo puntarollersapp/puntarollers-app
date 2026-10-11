@@ -1,8 +1,8 @@
 // Private PR Kids publication storage adapter.
 // Server-only: pass an authenticated, role-checked database client.
 // No browser imports and no service credentials in this module.
-import {validatePrivatePost} from './prKidsPrivatePublishing.js'
-import {postInsertFromValidated,audienceInsertRows,classPostAudit} from './prKidsPublishingContract.js'
+import {validatePrivatePost} from '../lib/prKidsPrivatePublishing.js'
+import {postInsertFromValidated,audienceInsertRows,classPostAudit} from '../lib/prKidsPublishingContract.js'
 export async function createPrivateClassDraft({db,input,author,authorized=false}={}){
  if(!authorized||!db||!author?.id)return {ok:false,error:'Acceso no autorizado'}
  const validated=validatePrivatePost(input)
