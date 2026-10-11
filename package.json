@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run test:training && vite build",
+    "build": "npm run test:beta && npm run test:training && vite build",
     "preview": "vite preview",
     "test:beta": "node --test tests/beta-isolation.test.mjs",
     "test:training": "node --test src/lib/prTrainingAssignmentEngine.test.js"
