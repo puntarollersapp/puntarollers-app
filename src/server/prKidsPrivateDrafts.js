@@ -14,8 +14,8 @@ export async function createPrivateClassDraft({db,input,author,authorized=false}
  const audience=audienceInsertRows(post.id,input.audience_child_ids)
  const {error:audienceError}=await db.from('pr_kids_class_post_audience').insert(audience)
  if(audienceError){
-  await db.from('pr_kids_class_posts').delete().eq('id',post.id).eq('status','draft')
-  return {ok:false,error:'No se pudieron guardar destinatarios'}
+  const {error:cleanupError}=await db.from('pr_kids_class_posts').delete().eq('id',post.id).eq('status','draft')
+  return {ok:false,error:cleanupError?'Guardado parcial; requiere revisión':'No se pudieron guardar destinatarios'}
  }
  const audit=classPostAudit({postId:post.id,actorId:author.id,action:'created'})
  const {error:auditError}=await db.from('pr_kids_class_post_audit').insert(audit)
