@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { supabase } from '../lib/supabase'
 
 export default function BetaLogin() {
   const { user, loading: authLoading, betaLogin } = useAuth()
@@ -10,8 +9,6 @@ export default function BetaLogin() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [setupBusy,setSetupBusy]=useState(false)
-  const stagingSetup=import.meta.env.DEV||window.location.hostname==='beta.puntarollers.com'
   if (user) return <Navigate to="/app/perfil" replace />
   async function submit(event) {
     event.preventDefault()
@@ -23,20 +20,6 @@ export default function BetaLogin() {
       else navigate('/app/perfil',{replace:true})
     } catch { setError('No pudimos iniciar la sesión Beta.') }
     finally { setBusy(false) }
-  }
-  async function createStagingBeta(){
-    if(setupBusy)return
-    const cleanDoc=String(documento||'').replace(/\D/g,'')
-    if(!/^\d{6,12}$/.test(cleanDoc)||!/^[0-9]{4}$/.test(password)){setError('Para preparar la Beta usá un documento de prueba y un PIN Beta de 4 dígitos.');return}
-    setSetupBusy(true);setError('')
-    try{
-      const email=`beta-${cleanDoc}@beta.puntarollers.com`; const authPassword=`PRB-${cleanDoc}-${password}`
-      const {data:auth,error:authError}=await supabase.auth.signUp({email,password:authPassword,options:{data:{purpose:'puntarollers-staging-beta'}}})
-      if(authError||!auth?.user)throw authError||new Error('auth')
-      setError('Cuenta de Staging preparada. Ya podés ingresar.')
-      await supabase.auth.signOut()
-    }catch(e){setError('No pudimos preparar la cuenta de Staging.')}
-    finally{setSetupBusy(false)}
   }
   return <main className="min-h-screen bg-[#080a13] px-5 py-14 text-white">
     <section className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.04] p-7">
@@ -54,7 +37,6 @@ export default function BetaLogin() {
             className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
         </label>
         {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
-        {stagingSetup&&<button type="button" onClick={createStagingBeta} disabled={setupBusy||busy} className="w-full rounded-xl border border-violet-300/20 bg-violet-400/10 px-4 py-3 text-sm font-semibold text-violet-200 disabled:opacity-50">{setupBusy?'Preparando…':'Preparar cuenta Beta de prueba'}</button>}
         <button type="submit" disabled={busy||authLoading} className="w-full rounded-xl bg-violet-500 px-4 py-3 font-semibold disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
       </form>
       <Link to="/login" className="mt-6 inline-block text-sm text-white/50 underline">Acceso habitual Punta Rollers</Link>
