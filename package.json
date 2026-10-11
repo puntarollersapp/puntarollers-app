@@ -8,9 +8,10 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run test:training && vite build",
     "preview": "vite preview",
-    "test:beta": "node --test tests/beta-isolation.test.mjs"
+    "test:beta": "node --test tests/beta-isolation.test.mjs",
+    "test:training": "node --test src/lib/prTrainingAssignmentEngine.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
