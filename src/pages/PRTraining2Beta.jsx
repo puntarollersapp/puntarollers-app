@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const B1=[
  {code:'B1-01',title:'Medio limón · Izquierdo',type:'VIDEO',objective:'Controlar el impulso con el lado izquierdo.',work:'Patín izquierdo + calzado derecho. Repeticiones según indicación del profe.',delivery:'Enviá una ejecución final clara.',demo:'PRT-VID-001'},
