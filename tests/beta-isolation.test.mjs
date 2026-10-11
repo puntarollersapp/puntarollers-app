@@ -41,3 +41,22 @@ test('beta creation remains disabled until release', () => {
   assert.match(panel, /disabled=\{submitting \|\| !provisioningReady\}/)
   assert.match(server, /Alta Beta no habilitada/)
 })
+
+test('beta profiles are excluded from student and payment screens', () => {
+  const students = read('src/pages/AdminAlumnos.jsx')
+  const payments = read('src/components/admin/PaymentsPanel.jsx')
+  assert.match(students, /p\?\.role!=='beta'/)
+  assert.match(payments, /profile\.role !== 'beta'/)
+})
+
+test('treasury applies a defensive beta exclusion while RPC is audited', () => {
+  const treasury = read('src/components/treasury/TreasuryPanel.jsx')
+  assert.match(treasury, /item\?\.role !== 'beta'/)
+  assert.match(treasury, /obtener_panel_pagos/)
+})
+
+test('beta home clears previous authorization when account changes', () => {
+  const home = read('src/pages/BetaHome.jsx')
+  assert.match(home, /setAccess\(null\)/)
+  assert.match(home, /catch\(\(\) => \{ if \(live\) setAccess\(\{ enabled: false \}\)/)
+})
