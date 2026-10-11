@@ -34,10 +34,10 @@ test('beta cached session is not trusted before server check', () => {
   assert.match(auth, /if\(profileData\.role==='beta'\)/)
 })
 
-test('beta creation remains disabled until release', () => {
+test('beta creation is gated by server release authorization', () => {
   const panel = read('src/components/admin/BetaUsersPanel.jsx')
   const server = read('supabase/functions/pr-beta-admin/index.ts')
-  assert.match(panel, /const provisioningReady = false/)
+  assert.match(panel, /const provisioningReady = true/)
   assert.match(panel, /disabled=\{submitting \|\| !provisioningReady\}/)
   assert.match(server, /PR_BETA_PROVISIONING_ENABLED/)
 })
