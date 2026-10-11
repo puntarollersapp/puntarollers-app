@@ -58,7 +58,7 @@ test('treasury applies a defensive beta exclusion while RPC is audited', () => {
 test('beta home clears previous authorization when account changes', () => {
   const home = read('src/pages/BetaHome.jsx')
   assert.match(home, /setAccess\(null\)/)
-  assert.match(home, /catch\(\(\) => \{ if \(live\) setAccess\(\{ enabled: false \}\)/)
+  assert.match(home, /catch\(\(\) => \{ if \(live\) setAccess\(\{ profileId: user\.id, result: \{ enabled: false \} \}\)/)
 })
 
 test('beta provisioning creates separate auth and profile records with rollback', () => {
