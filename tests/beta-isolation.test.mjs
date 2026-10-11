@@ -76,3 +76,18 @@ test('beta home never displays authorization from a different profile', () => {
   assert.match(home, /access\?\.profileId === user\?\.id/)
   assert.match(home, /currentAccess\.enabled/)
 })
+
+test('server release gate precedes duplicate document lookup and auth creation', () => {
+  const server = read('supabase/functions/pr-beta-admin/index.ts')
+  const gate = server.indexOf("Deno.env.get('PR_BETA_PROVISIONING_ENABLED')")
+  const lookup = server.indexOf("from('profiles').select('id').eq('documento'")
+  const create = server.indexOf('auth.admin.createUser')
+  assert.ok(gate > 0 && lookup > gate && create > lookup)
+})
+
+test('beta service requires caller admin and an authenticated identity', () => {
+  const server = read('supabase/functions/pr-beta-admin/index.ts')
+  assert.match(server, /callerClient\.auth\.getUser\(token\)/)
+  assert.match(server, /caller\?\.role !== 'admin'/)
+  assert.match(server, /password\.length < 12/)
+})
