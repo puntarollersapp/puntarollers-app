@@ -15,7 +15,7 @@ export default function BetaUsersPanel() {
   const [resetTarget, setResetTarget] = useState('')
   const [resetPassword, setResetPassword] = useState('')
   const [resetting, setResetting] = useState(false)
-  const provisioningReady = false // Pilot finished; server also rejects new Beta account creation.
+  const provisioningReady = true // Staging provisioning is enabled for authenticated admins only.
 
   useEffect(() => {
     let active = true
@@ -46,7 +46,7 @@ export default function BetaUsersPanel() {
       if (submitting || !provisioningReady) return
       setSubmitting(true);setMessage('')
       try {
-        const { data, error } = await supabase.functions.invoke('pr-beta-admin', {
+        const { data, error } = await supabase.functions.invoke('pr-staging-beta-admin', {
           body: { action: 'create', nombre: nombre.trim(), apellido: apellido.trim(), documento: documento.trim(), password }
         })
         if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo crear la cuenta.')
