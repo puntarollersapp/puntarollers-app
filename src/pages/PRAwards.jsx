@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAwardsDirectory, getAwardsCategories, getAwardsFinalists, castAwardsVote, submitAwardsNominationBatch, submitAwardsSuggestion } from '../lib/prAwardsApi'
 import { Link } from 'react-router-dom'
+import './prAwardsEffects.css'
 
 const categories = [
   ['Leyenda del Asfalto','Deportivo','Podio histórico de kilómetros válidos registrados en Punta Rollers. Clasificación automática.','automatic'],
@@ -51,7 +52,7 @@ export default function PRAwards(){
    </header>
    <section className="relative overflow-hidden py-16 text-center sm:py-24">
     <div className="pointer-events-none absolute left-1/2 top-16 h-64 w-64 -translate-x-1/2 rounded-full bg-[#a98443]/10 blur-[85px]"/>
-    <div className="relative mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-[30px] border border-[#c8a866]/40 bg-gradient-to-br from-[#3b2d19] to-[#15120e] shadow-[0_15px_60px_#b5913622]"><span aria-hidden="true">★</span></div>
+    <div className="pr-awards-stage relative mx-auto mb-8 flex h-64 max-w-sm items-center justify-center sm:h-80" aria-label="Escenario PR Awards 2026"><div className="pr-awards-aura pointer-events-none absolute inset-8 rounded-full bg-[#c08a31]/20 blur-3xl"/><span aria-hidden="true" className="pr-awards-spark pr-awards-spark-a">✦</span><span aria-hidden="true" className="pr-awards-spark pr-awards-spark-b">✧</span><span aria-hidden="true" className="pr-awards-spark pr-awards-spark-c">✦</span><span aria-hidden="true" className="pr-awards-spark pr-awards-spark-d">✧</span><div className="pr-awards-trophy relative flex h-48 w-48 flex-col items-center justify-center rounded-[38px] border border-[#d5ac60]/50 bg-gradient-to-br from-[#483016] via-[#17130d] to-[#392712] shadow-[0_30px_85px_#c08a3140,inset_0_1px_0_#eac68c55] sm:h-60 sm:w-60"><span className="text-7xl text-[#f3cf82] drop-shadow-[0_0_22px_#e0a94d90]" aria-hidden="true">★</span><span className="mt-3 text-xs font-black tracking-[.25em] text-[#f2d28e]">PR AWARDS</span><span className="mt-1 text-[10px] tracking-[.45em] text-[#c8a66c]">2026</span></div></div>
     <p className="mb-3 text-[11px] font-bold tracking-[.33em] text-[#c7a66d]">PUNTA ROLLERS PRESENTA</p>
     <h1 className="text-5xl font-black tracking-[-.06em] sm:text-7xl">PR <span className="text-[#e4bd73]">AWARDS</span></h1>
     <p className="mt-2 text-lg font-light tracking-[.45em] text-[#c6b08a]">2026</p>
