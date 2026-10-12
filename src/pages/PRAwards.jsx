@@ -46,8 +46,8 @@ export default function PRAwards(){
  const [kmTop,setKmTop]=useState([])
  const [voteCategory,setVoteCategory]=useState(null)
  const [ceremony,setCeremony]=useState(null)
- const [showIntro,setShowIntro]=useState(()=>{try{return !window.sessionStorage.getItem('pr-awards-intro-2026')}catch{return false}})
- useEffect(()=>{if(!showIntro)return;let reduced=false;try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch{}const timer=window.setTimeout(()=>{setShowIntro(false);try{window.sessionStorage.setItem('pr-awards-intro-2026','1')}catch{}},reduced?200:2350);return()=>window.clearTimeout(timer)},[showIntro])
+ const [showIntro,setShowIntro]=useState(true)
+ useEffect(()=>{if(!showIntro)return;let reduced=false;try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch{}const timer=window.setTimeout(()=>{setShowIntro(false)},reduced?200:2350);return()=>window.clearTimeout(timer)},[showIntro])
  const skipIntro=()=>{setShowIntro(false);try{window.sessionStorage.setItem('pr-awards-intro-2026','1')}catch{}}
 
  useEffect(()=>{let active=true;Promise.all([getAwardsDirectory(),getAwardsCategories(),getAwardsFinalists(),getAwardsPublicStatus()]).then(([people,cats,finals,status])=>{if(active){setDirectory(people);setLiveCategories(cats);setFinalists(finals);setPublicStatus(status);setBackendReady(cats.length>0);setDirectoryError(cats.length===0)}}).catch(()=>{if(active){setBackendReady(false);setDirectoryError(true)}});return()=>{active=false}},[])
