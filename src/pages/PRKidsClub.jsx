@@ -4,6 +4,7 @@ import {supabase} from '../lib/supabase'
 import {useAuth} from '../lib/auth'
 import {validateFamilyApplication} from '../lib/prKidsFamilyValidation'
 import {projectFamilyHome} from '../lib/prKidsFamilyProjection'
+import {guardianFlow} from '../lib/prKidsGuardianOnboarding'
 import './PRKidsInscripciones2026.css'
 import PRKidsFamilyDashboard from '../components/PRKidsFamilyDashboard'
 import PRKidsDemoStudio from '../components/PRKidsDemoStudio'
@@ -26,6 +27,7 @@ export default function PRKidsClub(){
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('')
  if(data.es_alumno===null){setError('Elegí si ya tenés cuenta de alumno adulto.');return}
+ if(guardianFlow({hasAdultAccount:Boolean(user?.id),hasApprovedChildren:Boolean(familyHome?.children?.length)})==='request-adult-access'&&data.es_alumno===true){setError('Para vincular a tu hijo con tu cuenta actual, primero ingresá con tu documento y PIN.');return}
  const errors=validateFamilyApplication({adult:data,children:hijos,authenticatedDocument:user?.documento})
  if(errors.length){setError(errors[0]);return}
  setBusy(true)
@@ -61,6 +63,7 @@ export default function PRKidsClub(){
    <form onSubmit={submit}>
     <h2 className="prk-section-label">01 / Tu cuenta como adulto responsable</h2>{user&&<p className="mb-3 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-sm text-emerald-100">Ingresaste como {[user.nombre,user.apellido].filter(Boolean).join(' ')}. Conservás tu cuenta y PIN actuales. Tu cédula se toma de esa cuenta.</p>}<p className="mb-4 text-sm leading-6 text-white/60">Estos datos son del <strong className="text-white">padre, madre o tutor</strong>, NO del niño. El documento del adulto sirve para verificar la identidad. Si ya sos alumno, conservás tu acceso actual; si sos responsable sin perfil de alumno, el acceso se habilitará por separado después de la revisión.</p>
     {!user&&<label className="mb-5 block"><span className="mb-2 block text-sm font-bold">¿Ya tenés cuenta de alumno adulto en Punta Rollers?</span><select required value={data.es_alumno===null?"":String(data.es_alumno)} onChange={e=>set("es_alumno",e.target.value===""?null:e.target.value==="true")} className="w-full rounded-xl border border-white/15 bg-[#171923] p-4 text-white"><option value="">Seleccionar</option><option value="true">Sí, ya tengo documento y PIN</option><option value="false">No, solo soy madre, padre o tutor</option></select>{data.es_alumno===true&&<p className="mt-2 text-xs text-white/70">Conservás tu PIN actual. <Link to="/login?next=%2Fkids%3Fregistro%3D1" className="underline">Ingresar a mi cuenta</Link></p>}{data.es_alumno===false&&<p className="mt-2 text-xs text-white/70">No necesitás ser alumno. Primero verificaremos tu vínculo familiar; después de la aprobación podrás configurar un PIN propio mediante un proceso seguro. No ingreses tu PIN en esta solicitud.</p>}</label>}
+    {!user&&data.es_alumno===true&&<Link to="/login?next=%2Fkids%3Fregistro%3D1" className="mb-5 block rounded-xl border border-sky-300/40 bg-sky-300/10 p-4 text-center text-sm font-bold text-sky-100">INGRESAR CON MI DOCUMENTO Y PIN →</Link>}
     <div className="prk-form-grid">
      <Input label="Nombre y apellido del adulto" value={data.nombre_tutor} onChange={v=>set('nombre_tutor',v)} placeholder="Nombre completo"/>
      <Input label="Cédula del adulto (con esta ingresás a la plataforma)" value={data.documento_tutor} onChange={v=>set('documento_tutor',v.replace(/\D/g,'').slice(0,12))} placeholder="12345678" readOnly={Boolean(user?.documento)}/>
