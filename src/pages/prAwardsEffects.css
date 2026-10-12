@@ -1,0 +1,13 @@
+/* PR Awards — elegant, lightweight motion; no dependency or JS timer. */
+.pr-awards-stage{isolation:isolate;perspective:800px}
+.pr-awards-trophy{transform-origin:50% 65%;animation:prAwardsFloat 6s ease-in-out infinite;will-change:transform}
+.pr-awards-aura{animation:prAwardsGlow 7s ease-in-out infinite}
+.pr-awards-spark{position:absolute;z-index:2;color:#f4d69b;text-shadow:0 0 12px #ffc970aa,0 0 25px #d19b3a88;pointer-events:none;animation:prAwardsTwinkle 4.5s ease-in-out infinite}
+.pr-awards-spark-a{top:7%;left:19%;font-size:25px;animation-delay:-1s}
+.pr-awards-spark-b{top:18%;right:15%;font-size:38px;animation-delay:-3s}
+.pr-awards-spark-c{bottom:22%;left:12%;font-size:29px;animation-delay:-2.2s}
+.pr-awards-spark-d{bottom:11%;right:22%;font-size:21px;animation-delay:-.5s}
+@keyframes prAwardsFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+@keyframes prAwardsGlow{0%,100%{opacity:.55;transform:scale(.95)}50%{opacity:1;transform:scale(1.13)}}
+@keyframes prAwardsTwinkle{0%,100%{opacity:.25;transform:scale(.72) rotate(-12deg)}45%{opacity:1;transform:scale(1.18) rotate(15deg)}75%{opacity:.55;transform:scale(.9) rotate(5deg)}}
+@media (prefers-reduced-motion:reduce){.pr-awards-trophy,.pr-awards-aura,.pr-awards-spark{animation:none!important;transform:none!important}}
