@@ -27,7 +27,8 @@ export default function RollerFeedSeasonal() {
     let live = true
     supabase.auth.getUser().then(({ data }) => { if (live) setUid(data?.user?.id || '') })
     refresh()
-    return () => { live = false }
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 60000)
+    return () => { live = false; window.clearInterval(timer) }
   }, [])
 
   async function vote(pollId, choice) {
