@@ -21,8 +21,10 @@ export default function BetaLogin() {
     } catch { setError('No pudimos iniciar la sesión Beta.') }
     finally { setBusy(false) }
   }
-  return <main className="relative min-h-screen overflow-hidden bg-pr-black px-5 py-14 text-pr-ice">
-    <section className="relative mx-auto max-w-md rounded-[30px] border border-[rgba(239,248,255,.12)] bg-[rgba(18,8,13,.88)] p-7 shadow-[0_24px_80px_rgba(0,0,0,.45)]">
+  return <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-pr-black px-5 py-14 text-pr-ice">
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{background:"radial-gradient(circle at 18% 16%,rgba(22,217,255,.12),transparent 32%),radial-gradient(circle at 82% 78%,rgba(139,92,255,.17),transparent 36%)"}} />
+    <section className="relative mx-auto w-full max-w-md rounded-[30px] border border-[rgba(239,248,255,.12)] bg-[rgba(18,8,13,.88)] p-7 shadow-[0_24px_80px_rgba(0,0,0,.45)]">
+      <img src="/logo.png" alt="Punta Rollers" width="96" height="96" className="mx-auto mb-6 h-20 w-20 object-contain drop-shadow-[0_0_18px_rgba(187,255,31,.12)]" />
       <p className="text-xs font-bold uppercase tracking-[0.25em] text-pr-cyan">Punta Rollers / Beta</p>
       <h1 className="mt-4 text-3xl font-bold">Ingresar a Beta</h1>
       <p className="mt-2 text-sm text-white/60">Acceso exclusivo para cuentas de prueba autorizadas.</p>
