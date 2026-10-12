@@ -2,12 +2,12 @@ import { supabase } from './supabase'
 
 /** All reads are from explicit public-facing awards tables. Never query private profiles here. */
 export async function getAwardsDirectory() {
- const {data,error}=await supabase.from('pr_awards_candidates').select('id,display_name,public_photo_url').eq('is_public',true).order('display_name')
+ const {data,error}=await supabase.from('pr_awards_candidates').select('id,display_name,public_photo_url').order('display_name')
  if(error) throw error
  return data || []
 }
 export async function getAwardsCategories() {
- const {data,error}=await supabase.from('pr_awards_categories').select('id,title,description,section,is_automatic,sort_order').eq('is_active',true).order('sort_order')
+ const {data,error}=await supabase.from('pr_awards_categories').select('id,title,description,section,is_automatic,sort_order').order('sort_order')
  if(error) throw error
  return data || []
 }
