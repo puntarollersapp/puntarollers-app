@@ -1,5 +1,5 @@
 import RollerFeedNewsInteractive from './RollerFeedNewsInteractive'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import '../styles/rollerfeed-news.css'
 import { supabase } from '../lib/supabase'
 
@@ -10,6 +10,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [votes, setVotes] = useState([])
   const [news, setNews] = useState([])
   const [newsLimit, setNewsLimit] = useState(8)
+  const newsLimitRef = useRef(8)
   const [hasMoreNews, setHasMoreNews] = useState(false)
   const [avatars, setAvatars] = useState([])
   const [uid, setUid] = useState('')
@@ -24,9 +25,9 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         .select('id,title,body,image_url,event_at,created_at,kind,allow_rsvp')
         .eq('published', true)
         .order('created_at', { ascending: false })
-        .limit(newsLimit + 1)
+        .limit(newsLimitRef.current + 1)
       if (result.error) setError('No pudimos cargar las novedades. Probá nuevamente.')
-      else { setHasMoreNews((result.data || []).length > newsLimit); setNews((result.data || []).slice(0, newsLimit)); setError('') }
+      else { setHasMoreNews((result.data || []).length > newsLimitRef.current); setNews((result.data || []).slice(0, newsLimitRef.current)); setError('') }
       setLoading(false)
       return
     }
@@ -47,6 +48,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   }
 
   useEffect(() => {
+    newsLimitRef.current = newsLimit
     if (section === 'news' && newsLimit > 8) refresh()
   }, [newsLimit, section])
 
