@@ -63,7 +63,7 @@ export default function AdminFeedNews() {
           const existing = await supabase.from('pr_feed_news_options').select('label').eq('news_id',newsId).order('sort_order')
           if (existing.error) error = existing.error
           else if (JSON.stringify((existing.data||[]).map(x=>x.label)) !== JSON.stringify(labels)) error = {message:'Esta encuesta ya tiene votos. Podés editar el texto, pero no cambiar sus opciones.'}
-          else { if (published) { const pub=await supabase.from('pr_feed_news').update({published:true}).eq('id',newsId);error=pub.error }; if (!error) { setBusy(false);setNotice('Encuesta actualizada sin alterar los votos.');await load();return } }
+          else { if (published) { const pub=await supabase.from('pr_feed_news').update({published:true}).eq('id',newsId);error=pub.error }; if (!error) { setBusy(false);setEditingId('');setKind('news');setOptions(['','']);setTitle('');setBody('');setImage('');setEventAt('');setPublished(false);setNotice('Encuesta actualizada sin alterar los votos.');await load();return } }
         }
         else { const removed = await supabase.from('pr_feed_news_options').delete().eq('news_id',newsId);error = removed.error }
       }
