@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
-const UPDATE_ART='/logo.png'
+const UPDATE_ART='/pr-beta-logo.png'
 
 export default function Login() {
   const [documento, setDocumento] = useState('')
@@ -51,7 +51,7 @@ export default function Login() {
         <div className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(circle at 15% 12%,rgba(22,217,255,.12),transparent 30%),radial-gradient(circle at 85% 78%,rgba(139,92,255,.22),transparent 35%),radial-gradient(circle at 70% 20%,rgba(255,0,85,.08),transparent 22%)'}}/>
         <div className="relative mx-auto flex min-h-[calc(100vh-134px)] max-w-md flex-col justify-center">
           <section className="mb-6 text-center animate-fade-up">
-            <img src={UPDATE_ART} alt="Punta Rollers" className="mx-auto h-auto w-[150px] max-w-[48vw] object-contain drop-shadow-[0_0_26px_rgba(187,255,31,.15)]"/>
+            <img src={UPDATE_ART} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/logo.png' }} alt="Punta Rollers" className="mx-auto h-auto w-[150px] max-w-[48vw] object-contain drop-shadow-[0_0_26px_rgba(187,255,31,.15)]"/>
             <p className="mt-4 font-mono text-[8px] font-black uppercase tracking-[.24em] text-pr-cyan">PR NEXT · NUEVA ERA</p>
             <h1 className="mt-2 font-display text-[38px] leading-none text-white">Tu Punta Rollers.<br/><span className="bg-gradient-to-r from-pr-lime via-pr-cyan to-pr-violet bg-clip-text text-transparent">Más vos que nunca.</span></h1>
             <p className="mx-auto mt-3 max-w-[300px] text-sm leading-5 text-white/40">Entrá a tu perfil, entrenamiento, comunidad y todo lo nuevo de PR.</p>
