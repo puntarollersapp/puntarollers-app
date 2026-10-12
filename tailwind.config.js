@@ -5,14 +5,21 @@ export default {
     extend: {
       colors: {
         pr: {
-          black:   '#050508',
-          dark:    '#09090f',
-          navy:    '#0d0d1a',
-          card:    '#111120',
-          border:  '#1e1e35',
-          gold:    '#C9A84C',
-          'gold-light': '#E8D48E',
-          'gold-dim':   '#8B6B20',
+          black:   'var(--pr-bg)',
+          dark:    'var(--pr-surface)',
+          navy:    'var(--pr-elevated)',
+          card:    'var(--pr-surface)',
+          border:  'var(--pr-line)',
+          text:    'var(--pr-text)',
+          muted:   'var(--pr-muted)',
+          lime:    'var(--pr-lime)',
+          pink:    'var(--pr-pink)',
+          cyan:    'var(--pr-cyan)',
+          violet:  'var(--pr-violet)',
+          ice:     'var(--pr-ice)',
+          gold:    'var(--pr-lime)', // legacy alias; migrate callers incrementally
+          'gold-light': 'var(--pr-gold-soft)',
+          'gold-dim':   'var(--pr-gold-bg)',
           green:   '#1A6B4A',
           'green-light': '#22a370',
         }

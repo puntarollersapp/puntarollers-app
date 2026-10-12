@@ -4,7 +4,7 @@ import AppLayout from '../layouts/AppLayout'
 import ProfileAvatar from '../components/ProfileAvatar'
 import { supabase } from '../lib/supabase'
 
-function isStudent(p){return p?.role==='alumno'||p?.participa_como_alumno===true}
+function isStudent(p){return p?.role!=='beta'&&(p?.role==='alumno'||p?.participa_como_alumno===true)}
 function fullName(p){return [p?.nombre,p?.apellido].filter(Boolean).join(' ')||'Patinador PR'}
 function groupNames(p){return (Array.isArray(p?.grupos_info)?p.grupos_info:[]).map(g=>g?.titulo||g?.nombre).filter(Boolean)}
 

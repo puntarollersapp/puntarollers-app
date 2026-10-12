@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import PRMomentsRail from '../components/PRMomentsRail'
 import RollerFeedComments from '../components/RollerFeedComments'
+import RollerFeedSeasonal from '../components/RollerFeedSeasonal'
+import '../styles/rollerfeed-hero.css'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CommunityPhoto from '../components/community/CommunityPhoto'
@@ -13,8 +14,9 @@ import CommunityPhoto from '../components/community/CommunityPhoto'
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
   { key: 'Entrenamiento', label: 'Entrenos' },
-  { key: 'Cumpleaños', label: 'Cumples' },
   { key: 'Evento', label: 'Eventos' },
+  { key: 'Votaciones', label: 'Votaciones', target: 'rollerfeed-votaciones' },
+  { key: 'Novedades', label: 'Novedades', target: 'rollerfeed-novedades' },
 ]
 
 const REACTION_OPTIONS = [
@@ -704,6 +706,7 @@ export default function Activity() {
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
   const [filter, setFilter] = useState('Todos')
+  const [feedLimit, setFeedLimit] = useState(10)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -1052,7 +1055,6 @@ export default function Activity() {
       normalizeLegacyItem(item, profilesByAnyId)
     )
 
-    const birthdays = buildBirthdayPosts(profiles)
     const eventPosts = events.map(normalizeRollerEvent)
     const momentPosts = moments.map((moment) => {
       const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
@@ -1072,7 +1074,6 @@ export default function Activity() {
     return [
       ...socialPosts.map(post=>({...post,id:`social-${post.id}`,postId:post.id,type:'SocialPost',date:post.created_at})),
       ...momentPosts,
-      ...birthdays,
       ...eventPosts,
       ...trainingPosts,
       ...communityPosts,
@@ -1099,9 +1100,7 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4)
-      const rest = available.filter((item) => item.type !== 'Cumpleaños')
-      return birthdays.length ? [{ id: 'birthday-grid', type: 'BirthdayGroup', date: birthdays[0]?.date, items: birthdays }, ...rest] : rest
+      return available
     }
 
     const filteredItems = feedItems.filter(
@@ -1241,55 +1240,54 @@ export default function Activity() {
   return (
     <AppLayout title="RollerFeed ⚡️">
       <div className="pr-page space-y-5 animate-page-enter">
-        <section className="relative overflow-hidden rounded-[34px] border border-orange-300/20 bg-gradient-to-br from-[#ff5a1f]/25 via-[#16100f] to-[#08080c] p-5 shadow-[0_28px_90px_rgba(249,115,22,0.14)]">
-          <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
-
-          <div className="relative">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5">
-                  <span className="w-2 h-2 rounded-full bg-orange-400" />
-                  <span className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.17em]">
-                    La comunidad está rodando
-                  </span>
-                </div>
-
-                <h1 className="font-display text-[38px] leading-none text-white mt-4">
-                  RollerFeed ⚡️
-                </h1>
-
-                <p className="text-white/48 text-sm mt-3 leading-relaxed max-w-[290px]">
-                  Entrenamientos, logros, eventos y momentos que nos hacen sentir parte de Punta Rollers.
-                </p>
-              </div>
-
-              <div className="w-16 h-16 rounded-[23px] border border-orange-300/25 bg-orange-400/10 grid place-items-center text-3xl shrink-0">
-                🛼
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2.5 mt-5">
-              <HeroStat
-                value={loading ? '—' : communityStats.activities}
-                label="Actividades"
-              />
-              <HeroStat
-                value={loading
-                  ? '—'
-                  : communityStats.kilometers.toLocaleString(
-                      'es-UY',
-                      { maximumFractionDigits: 0 }
-                    )}
-                label="Km rodados"
-                highlight
-              />
-              <HeroStat
-                value={loading ? '—' : communityStats.skaters}
-                label="Patinadores"
-              />
+        <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.08),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.035),transparent_55%)]" />
+          <div aria-hidden="true" className="rf-shine" />
+          {['a','b','c'].map(position => <span key={position} aria-hidden="true" className={`rf-envelope rf-envelope--${position}`}><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3 7 9 7 9-7"/></svg></span>)}
+          <div className="relative z-10">
+            <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#FF0055]/30 bg-[#FF0055]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.13em] text-[#FF79A5]">
+              <span className="rf-heart" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.1 3.4 12.7C-1 8.3 5.1 1.8 10 6.2L12 8l2-1.8c4.9-4.4 11 2.1 6.6 6.5Z"/></svg></span>
+              El corazón de Punta Rollers
+            </p>
+            <h1 className="mt-4 font-display text-[42px] leading-none tracking-tight text-white sm:text-5xl">Roller<span className="text-[#FF0055]">Feed.</span></h1>
+            <svg aria-hidden="true" viewBox="0 0 150 22" className="mx-auto mt-2 h-5 w-36 opacity-80"><path className="rf-pulse" d="M1 11h40l7-5 8 12 8-17 9 20 8-10h68"/></svg>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">Lo que pasa en Punta Rollers, pasa acá. Seguí en vivo lo que están patinando tus compañeros, compartí sus logros y enterate de todas las novedades de nuestra comunidad.</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <HeroStat value={loading ? '—' : communityStats.activities} label="Actividades" />
+              <HeroStat value={loading ? '—' : communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })} label="Km rodados" highlight />
+              <HeroStat value={loading ? '—' : communityStats.skaters} label="Patinadores" />
             </div>
           </div>
         </section>
+
+        <nav aria-label="Explorar RollerFeed" className="w-full min-w-0">
+          <div className="grid w-full grid-cols-5 gap-1 py-1 sm:gap-2">
+            {FEED_FILTERS.map((item) => {
+              const active = !item.target && filter === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-current={active ? 'true' : undefined}
+                  onClick={() => {
+                    if (item.target) {
+                      document.getElementById(item.target)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+                      return
+                    }
+                    setFilter(item.key)
+                    setFeedLimit(10)
+                    document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+                  }}
+                  className={`min-w-0 rounded-xl border px-0.5 py-2.5 text-center text-[9px] font-bold leading-tight transition-colors sm:rounded-full sm:px-3 sm:text-[11px] ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+
+        <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
         {loading && <RollerFeedLoading syncing={syncing} />}
 
@@ -1332,34 +1330,9 @@ export default function Activity() {
           </section>
         )}
 
-        <div>
-          <PRMomentsRail currentProfileId={currentReactionProfileId} />
-        </div>
 
-        <section className="overflow-x-auto -mx-[18px] px-[18px]">
-          <div className="flex gap-2 min-w-max">
-            {FEED_FILTERS.map((item) => {
-              const active = filter === item.key
 
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setFilter(item.key)}
-                  className={`px-4 py-2.5 rounded-full text-xs font-semibold border transition ${
-                    active
-                      ? 'bg-gradient-to-r from-pr-gold to-orange-300 text-black border-pr-gold'
-                      : 'bg-white/[0.03] text-white/45 border-white/[0.07]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
-          </div>
-        </section>
-
-        <section>
+        <section id="rollerfeed-actividades" className="scroll-mt-36">
           <div className="flex items-end justify-between gap-4 mb-3">
             <div>
               <p className="section-label">
@@ -1401,7 +1374,7 @@ export default function Activity() {
             </div>
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
-              {visibleItems.map((item) => (
+              {visibleItems.slice(0, feedLimit).map((item) => (
                 <div key={item.id}>
                   <FeedCard
                     item={item}
@@ -1411,10 +1384,12 @@ export default function Activity() {
                     savingReactionKey={savingReactionKey}
                     onReact={selectReaction}
                     onOpenReactions={() => setReactionModalItem(item)}
+                    commentSlot={item.type === 'Entrenamiento' ? <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} /> : null}
                   />
-                  {!['Moment','SocialPost'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
+                  {!['Moment','SocialPost','Entrenamiento'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
+              {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + 10)} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
             </div>
           ) : (
             <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
@@ -1432,6 +1407,8 @@ export default function Activity() {
             </div>
           )}
         </section>
+
+        <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
 
         {reactionModalItem && (
           <ReactionsModal
@@ -1504,6 +1481,7 @@ function RollerFeedLoading({ syncing }) {
 
 function FeedCard({
   item,
+  commentSlot,
   reactions,
   profilesByAnyId,
   currentProfileId,
@@ -1529,7 +1507,7 @@ function FeedCard({
   }
 
   if (item.type === 'Entrenamiento') {
-    return <TrainingCard item={item} {...reactionProps} />
+    return <TrainingCard item={item} commentSlot={commentSlot} {...reactionProps} />
   }
 
   if (item.type === 'SocialPost') return <SocialPostCard item={item} />
@@ -1613,6 +1591,7 @@ function ProfileAvatar({
 
 function TrainingCard({
   item,
+  commentSlot,
   reactions,
   profilesByAnyId,
   currentProfileId,
@@ -1622,13 +1601,13 @@ function TrainingCard({
 }) {
   return (
     <article
-      className={`relative overflow-hidden rounded-[30px] border bg-gradient-to-br from-[#171217] via-[#101014] to-[#09090d] ${
+      className={`relative overflow-hidden rounded-[23px] border bg-gradient-to-br from-[#18171b] via-[#111115] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
         item.featured
-          ? 'border-pr-gold/30 shadow-[0_22px_65px_rgba(212,175,55,0.09)]'
+          ? 'border-[#BBFF1F]/25 shadow-[0_12px_35px_rgba(187,255,31,.035)]'
           : 'border-white/[0.08]'
       }`}
     >
-      <div className="relative p-4">
+      <div className="relative px-3.5 py-3.5 sm:p-4">
         <div className="flex items-center gap-3">
           <ProfileAvatar
             photo={item.userPhoto}
@@ -1649,28 +1628,28 @@ function TrainingCard({
             </p>
           </div>
 
-          <span className="w-10 h-10 rounded-2xl border border-orange-300/15 bg-orange-400/10 grid place-items-center text-lg">
+          <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
             🛼
           </span>
         </div>
 
-        <div className="mt-4">
-          <p className="section-label text-orange-200">
+        <div className="mt-3">
+          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#BBFF1F]/75">
             Entrenamiento
           </p>
 
-          <h3 className="font-display text-[26px] leading-tight text-white mt-2">
+          <h3 className="font-display text-[21px] leading-tight text-white mt-1.5">
             {item.title}
           </h3>
 
           {item.description && (
-            <p className="text-white/43 text-sm leading-relaxed mt-2">
+            <p className="text-white/40 text-[11px] leading-relaxed mt-1.5">
               {item.description}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-3 gap-1.5 mt-3">
           <Metric
             label="Distancia"
             value={formatDistance(item.distanceMeters)}
@@ -1699,12 +1678,13 @@ function TrainingCard({
               href={item.stravaUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-orange-200 text-[10px] font-bold"
+              className="text-white/65 text-[10px] font-bold hover:text-[#BBFF1F]"
             >
               Ver en Strava →
             </a>
           ) : null}
         />
+        {commentSlot}
       </div>
     </article>
   )

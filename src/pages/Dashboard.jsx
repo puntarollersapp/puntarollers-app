@@ -628,7 +628,7 @@ export default function Dashboard() {
         </section>
 
         <section className="pr-panel overflow-hidden relative">
-          <div className="h-[150px] relative overflow-hidden bg-gradient-to-br from-[#221b0e] via-[#101018] to-[#08080d]">
+          <div className="h-[150px] relative overflow-hidden bg-gradient-to-br from-pr-elevated via-pr-surface to-pr-black">
             {profile.banner ? (
               <img
                 src={profile.banner}
@@ -654,7 +654,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d13] via-transparent to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-pr-black via-transparent to-black/10" />
 
             <span className="absolute top-4 right-4 pr-chip">
               <span
@@ -675,7 +675,7 @@ export default function Dashboard() {
           </div>
 
           <div className="px-5 pb-5 relative">
-            <div className="absolute -top-12 left-5 w-24 h-24 rounded-[28px] overflow-hidden border-[4px] border-[#0d0d13] bg-[#181821] shadow-2xl grid place-items-center">
+            <div className="absolute -top-12 left-5 w-24 h-24 rounded-[28px] overflow-hidden border-[4px] border-pr-black bg-pr-elevated shadow-2xl grid place-items-center">
               {useChibiPhoto ? (
                 <ChibiAvatarPortrait
                   selection={chibiSelection}

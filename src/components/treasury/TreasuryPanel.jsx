@@ -94,7 +94,9 @@ export default function TreasuryPanel({
         throw new Error(error.message)
       }
 
-      setStudents(data || [])
+      // Defense in depth: the RPC must also exclude beta profiles server-side.
+      // Do not treat this client-side filter as a substitute for auditing its SQL.
+      setStudents((data || []).filter(item => item?.role !== 'beta'))
     } catch (error) {
       setMessage?.(
         `No se pudo cargar Tesorería: ${error.message}`

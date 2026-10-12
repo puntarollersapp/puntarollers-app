@@ -80,11 +80,11 @@ function NavItem({ href, label, icon, active, onClick }) {
       href={href}
       onClick={onClick}
       className={`relative flex min-h-[52px] flex-col items-center justify-center gap-1 text-[9px] font-bold transition ${
-        active ? 'text-orange-300' : 'text-white/32'
+        active ? 'text-pr-pink' : 'text-pr-pink/65'
       }`}
     >
       {active && (
-        <span className="absolute -top-2 h-[2px] w-7 bg-orange-400" />
+        <span className="absolute -top-2 h-[2px] w-7 bg-pr-pink shadow-[0_0_12px_rgba(255,0,85,.35)]" />
       )}
       <PublicIcon name={icon} className="h-5 w-5" />
       <span>{label}</span>
