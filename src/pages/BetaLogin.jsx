@@ -21,21 +21,21 @@ export default function BetaLogin() {
     } catch { setError('No pudimos iniciar la sesión Beta.') }
     finally { setBusy(false) }
   }
-  return <main className="min-h-screen bg-[#080a13] px-5 py-14 text-white">
-    <section className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.04] p-7">
-      <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300">Punta Rollers / Beta</p>
+  return <main className="relative min-h-screen overflow-hidden bg-pr-black px-5 py-14 text-pr-ice">
+    <section className="relative mx-auto max-w-md rounded-[30px] border border-[rgba(239,248,255,.12)] bg-[rgba(18,8,13,.88)] p-7 shadow-[0_24px_80px_rgba(0,0,0,.45)]">
+      <p className="text-xs font-bold uppercase tracking-[0.25em] text-pr-cyan">Punta Rollers / Beta</p>
       <h1 className="mt-4 text-3xl font-bold">Ingresar a Beta</h1>
       <p className="mt-2 text-sm text-white/60">Acceso exclusivo para cuentas de prueba autorizadas.</p>
-      {authLoading&&<p className="mt-3 text-xs text-violet-200/60">Verificando sesión segura…</p>}
+      {authLoading&&<p className="mt-3 text-xs text-pr-cyan">Verificando sesión segura…</p>}
       <form onSubmit={submit} className="mt-7 space-y-4">
         <label className="block text-sm">Documento
-          <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
+          <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
         </label>
         <label className="block text-sm">PIN Beta
-          <input required type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
+          <input required type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
         </label>
         {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
-        <button type="submit" disabled={busy||authLoading} className="w-full rounded-xl bg-violet-500 px-4 py-3 font-semibold disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
+        <button type="submit" disabled={busy||authLoading} className="w-full rounded-xl bg-pr-lime px-4 py-3 font-semibold text-pr-black disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
       </form>
       <Link to="/login" className="mt-6 inline-block text-sm text-white/50 underline">Acceso habitual Punta Rollers</Link>
     </section>
