@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const UPDATE_ART='/pr-next-loading.png'
+const UPDATE_ART='/profile-badge.png'
 
 export default function LoadingScreen({onDone}){
   const[leaving,setLeaving]=useState(false)
