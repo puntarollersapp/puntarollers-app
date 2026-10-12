@@ -1369,8 +1369,9 @@ export default function Activity() {
                     savingReactionKey={savingReactionKey}
                     onReact={selectReaction}
                     onOpenReactions={() => setReactionModalItem(item)}
+                    commentSlot={item.type === 'Entrenamiento' ? <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} /> : null}
                   />
-                  {!['Moment','SocialPost'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
+                  {!['Moment','SocialPost','Entrenamiento'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
               {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + 10)} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
@@ -1465,6 +1466,7 @@ function RollerFeedLoading({ syncing }) {
 
 function FeedCard({
   item,
+  commentSlot,
   reactions,
   profilesByAnyId,
   currentProfileId,
@@ -1490,7 +1492,7 @@ function FeedCard({
   }
 
   if (item.type === 'Entrenamiento') {
-    return <TrainingCard item={item} {...reactionProps} />
+    return <TrainingCard item={item} commentSlot={commentSlot} {...reactionProps} />
   }
 
   if (item.type === 'SocialPost') return <SocialPostCard item={item} />
@@ -1574,6 +1576,7 @@ function ProfileAvatar({
 
 function TrainingCard({
   item,
+  commentSlot,
   reactions,
   profilesByAnyId,
   currentProfileId,
@@ -1666,6 +1669,7 @@ function TrainingCard({
             </a>
           ) : null}
         />
+        {commentSlot}
       </div>
     </article>
   )
