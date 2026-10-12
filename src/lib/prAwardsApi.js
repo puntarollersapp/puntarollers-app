@@ -48,7 +48,7 @@ export async function getAwardsPublicStatus() {
 
 /** Public, aggregated, read-only live skating podium; no individual activities exposed. */
 export async function getAwardsKmTop5(){
- const {data,error}=await supabase.rpc('pr_awards_public_km_top5')
+ const {data,error}=await supabase.rpc('pr_awards_public_km_top6')
  if(error) throw error
  return data||[]
 }
