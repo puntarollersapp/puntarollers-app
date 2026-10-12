@@ -22,13 +22,13 @@ export default function BetaLogin() {
     finally { setBusy(false) }
   }
   return <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-pr-black px-5 py-14 text-pr-ice">
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{background:"radial-gradient(circle at 18% 16%,rgba(22,217,255,.12),transparent 32%),radial-gradient(circle at 82% 78%,rgba(139,92,255,.17),transparent 36%)"}} />
-    <section className="relative mx-auto w-full max-w-md rounded-[30px] border border-[rgba(239,248,255,.12)] bg-[rgba(18,8,13,.88)] p-7 shadow-[0_24px_80px_rgba(0,0,0,.45)]">
-      <img src="/pr-beta-logo.png" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/logo.png' }} alt="Punta Rollers" width="192" height="192" className="mx-auto mb-6 h-32 w-32 max-w-[55vw] object-contain drop-shadow-[0_0_22px_rgba(187,255,31,.16)]" />
-      <p className="text-xs font-bold uppercase tracking-[0.25em] text-pr-cyan">Punta Rollers / Beta</p>
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{background:"radial-gradient(circle at 50% 10%,rgba(187,255,31,.065),transparent 38%)"}} />
+    <section className="relative mx-auto w-full max-w-md rounded-[30px] border border-[rgba(239,248,255,.12)] bg-[linear-gradient(160deg,rgba(239,248,255,.065),rgba(13,3,3,.94)_40%)] p-7 shadow-[0_24px_80px_rgba(0,0,0,.55)]">
+      <img src="/pr-beta-logo.png" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/logo.png' }} alt="Punta Rollers" width="192" height="192" className="mx-auto mb-6 h-32 w-32 max-w-[55vw] object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,.55)]" />
+      <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/50">Punta Rollers / Beta</p>
       <h1 className="mt-4 text-3xl font-bold">Ingresar a Beta</h1>
       <p className="mt-2 text-sm text-white/60">Acceso exclusivo para cuentas de prueba autorizadas.</p>
-      {authLoading&&<p className="mt-3 text-xs text-pr-cyan">Verificando sesión segura…</p>}
+      {authLoading&&<p className="mt-3 text-xs text-pr-lime">Verificando sesión segura…</p>}
       <form onSubmit={submit} className="mt-7 space-y-4">
         <label className="block text-sm">Documento
           <input required name="documento" inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
