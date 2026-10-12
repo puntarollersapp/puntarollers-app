@@ -9,6 +9,7 @@ as $$
 $$;
 revoke all on function public.pr_awards_public_finalists_open() from public;
 grant execute on function public.pr_awards_public_finalists_open() to anon,authenticated;
+drop policy if exists "awards public finalists" on public.pr_awards_finalists;
 drop policy if exists "awards finalists visible during public voting" on public.pr_awards_finalists;
 create policy "awards finalists visible during public voting"
 on public.pr_awards_finalists for select to anon,authenticated
