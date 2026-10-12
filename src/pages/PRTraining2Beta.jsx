@@ -34,7 +34,7 @@ function DutyCard({d,i}){
 }
 
 export default function PRTraining2Beta(){
- const {user}=useAuth()
+ const {user,loading:authLoading,logout}=useAuth()
  const [assignment,setAssignment]=useState(null); const [duties,setDuties]=useState([]); const [revealed,setRevealed]=useState(0); const [spinning,setSpinning]=useState(false); const [loading,setLoading]=useState(true); const [loadError,setLoadError]=useState('')
  useEffect(()=>{let alive=true;(async()=>{
    if(!user?.id)return
@@ -47,13 +47,14 @@ export default function PRTraining2Beta(){
    if(de||!rows?.length){setLoadError('No pudimos cargar tus deberes.');setLoading(false);return}
    setAssignment(a);setDuties(rows.map(r=>({code:r.duty_code_snapshot,title:r.duty_snapshot?.title||r.duty_code_snapshot,type:String(r.duty_snapshot?.evidenceType||'video').toUpperCase(),objective:r.duty_snapshot?.objective||'',work:r.duty_snapshot?.workSpec?.instruction||r.duty_snapshot?.workSpec?.description||'',delivery:r.duty_snapshot?.deliverySpec?.instruction||'',demo:(r.duty_snapshot?.demoAssetIds||[])[0]||'—'})));setRevealed(Math.min(Number(a.spin_reveal_progress||0),rows.length));setLoading(false)
  })();return()=>{alive=false}},[user?.id])
+ if(authLoading)return <main className="min-h-screen bg-[#07070b] text-white grid place-items-center"><p className="text-xs font-black tracking-[.2em] text-violet-300">CARGANDO PR TRAINING…</p></main>
  if(!user)return <Navigate to="/beta/login" replace/>; if(user.role!=='beta')return <Navigate to="/app/deberes" replace/>
  async function persistReveal(n){
    if(!assignment?.id)return false
    const patch={spin_reveal_progress:n}
    if(n>=duties.length)patch.spin_discovered_at=new Date().toISOString()
-   const {error}=await supabase.from('pr_training_assignments_v2').update(patch).eq('id',assignment.id)
-   if(error){setLoadError('No pudimos guardar el avance de PR SPIN.');return false}
+   const {data:saved,error}=await supabase.from('pr_training_assignments_v2').update(patch).eq('id',assignment.id).select('spin_reveal_progress').maybeSingle()
+   if(error||!saved||Number(saved.spin_reveal_progress)<n){setLoadError('No pudimos guardar el avance de PR SPIN.');return false}
    return true
  }
  function spin(){if(spinning||revealed>=duties.length)return;setSpinning(true);window.setTimeout(async()=>{const n=Math.min(revealed+1,duties.length);if(await persistReveal(n))setRevealed(n);setSpinning(false)},1450)}
@@ -61,7 +62,7 @@ export default function PRTraining2Beta(){
  if(loading)return <main className="min-h-screen bg-[#07070b] text-white grid place-items-center"><p className="text-xs font-black tracking-[.2em] text-violet-300">CARGANDO PR TRAINING…</p></main>
  if(loadError)return <main className="min-h-screen bg-[#07070b] text-white grid place-items-center p-6"><div className="max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6 text-center"><h1 className="font-black">PR TRAINING 2.0</h1><p className="mt-3 text-sm text-white/55">{loadError}</p></div></main>
  return <main className="min-h-screen bg-[#07070b] text-white"><div className="mx-auto max-w-[520px] px-4 pb-24 pt-6">
-  <header className="flex items-center justify-between"><div><p className="text-[9px] font-black uppercase tracking-[.28em] text-violet-300">Punta Rollers · Beta</p><h1 className="mt-1 text-2xl font-black tracking-tight">PR TRAINING <span className="text-violet-400">2.0</span></h1></div><span className="rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-[9px] font-black text-violet-200">BETA</span></header>
+  <header className="flex items-center justify-between"><div><p className="text-[9px] font-black uppercase tracking-[.28em] text-violet-300">Punta Rollers · Beta</p><h1 className="mt-1 text-2xl font-black tracking-tight">PR TRAINING <span className="text-violet-400">2.0</span></h1></div><div className="flex items-center gap-2"><span className="rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-[9px] font-black text-violet-200">BETA</span><button type="button" onClick={logout} className="rounded-full border border-white/15 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white/60">Salir</button></div></header>
   {!done?<section className="mt-6 overflow-hidden rounded-[36px] border border-violet-300/15 bg-[radial-gradient(circle_at_50%_0%,rgba(139,92,246,.26),transparent_38%),linear-gradient(180deg,#12111b,#09090e)] p-5 shadow-2xl">
    <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[.28em] text-white/35">Noviembre 2026</p><h2 className="mt-2 text-3xl font-black leading-none">DESCUBRÍ TUS<br/><span className="text-violet-300">DEBERES.</span></h2><p className="mx-auto mt-3 max-w-xs text-xs leading-5 text-white/45">Este ciclo de prueba tiene 4 deberes. PR SPIN los revela y mantiene tu selección guardada durante todo el mes.</p></div><div className="mt-6"><Wheel spinning={spinning} onSpin={spin}/></div>
    <button onClick={spin} disabled={spinning} className="mt-6 w-full rounded-[22px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-violet-500 py-4 text-sm font-black shadow-[0_12px_35px_rgba(139,92,246,.28)] disabled:opacity-60">{spinning?'DESCUBRIENDO…':revealed?'DESCUBRIR SIGUIENTE':'GIRAR PR SPIN'}</button><p className="mt-3 text-center text-[10px] font-bold text-white/35">{revealed} / {duties.length} descubiertos</p>
