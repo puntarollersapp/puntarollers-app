@@ -5,16 +5,22 @@
 @tailwind utilities;
 
 :root {
-  --pr-bg: #0a0a0f;
-  --pr-surface: #101016;
-  --pr-elevated: #161622;
-  --pr-line: rgba(255,255,255,.075);
-  --pr-line-strong: rgba(255,255,255,.12);
-  --pr-text: #f4f4f6;
-  --pr-muted: #8b8b98;
-  --pr-gold: #c9a84c;
-  --pr-gold-soft: #e6d58f;
-  --pr-gold-bg: rgba(201,168,76,.11);
+  /* PR NEXT — Neon Luxe */
+  --pr-bg: #0D0303;
+  --pr-surface: #12080d;
+  --pr-elevated: #190b12;
+  --pr-line: rgba(239,248,255,.085);
+  --pr-line-strong: rgba(239,248,255,.15);
+  --pr-text: #EFF8FF;
+  --pr-muted: #8f8b93;
+  --pr-gold: #BBFF1F;
+  --pr-gold-soft: #d8ff7a;
+  --pr-gold-bg: rgba(187,255,31,.10);
+  --pr-lime: #BBFF1F;
+  --pr-pink: #FF0055;
+  --pr-ice: #EFF8FF;
+  --pr-cyan: #16D9FF;
+  --pr-violet: #8B5CFF;
 }
 
 *, *::before, *::after {
@@ -32,7 +38,9 @@ body {
   font-family: 'Inter', sans-serif;
   color: var(--pr-text);
   background:
-    radial-gradient(circle at 50% -20%, rgba(201,168,76,.075), transparent 38%),
+    radial-gradient(circle at 18% -8%, rgba(187,255,31,.09), transparent 30%),
+    radial-gradient(circle at 88% 10%, rgba(255,0,85,.09), transparent 32%),
+    radial-gradient(circle at 50% 42%, rgba(139,92,255,.035), transparent 42%),
     var(--pr-bg);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -62,7 +70,7 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(201,168,76,.24);
+  background: rgba(187,255,31,.30);
   border-radius: 999px;
 }
 
@@ -72,7 +80,7 @@ img {
   min-height: 100vh;
   margin: 0 auto;
   position: relative;
-  background: rgba(10,10,15,.92);
+  background: rgba(13,3,3,.94);
   box-shadow: 0 0 80px rgba(0,0,0,.38);
 }
 
@@ -108,8 +116,8 @@ img {
   padding: 7px 11px;
   border-radius: 999px;
   border: 1px solid rgba(201,168,76,.24);
-  color: var(--pr-gold-soft);
-  background: var(--pr-gold-bg);
+  color: var(--pr-lime);
+  background: rgba(187,255,31,.075);
   font-size: 11px;
   font-weight: 600;
 }
@@ -121,9 +129,9 @@ img {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  color: var(--pr-gold);
-  background: rgba(201,168,76,.09);
-  border: 1px solid rgba(201,168,76,.13);
+  color: var(--pr-lime);
+  background: rgba(187,255,31,.075);
+  border: 1px solid rgba(187,255,31,.16);
 }
 
 .glass {
@@ -133,7 +141,7 @@ img {
 }
 
 .glass-dark {
-  background: rgba(10,10,15,.88);
+  background: rgba(13,3,3,.90);
   backdrop-filter: blur(22px) saturate(140%);
   border: 1px solid rgba(255,255,255,.05);
 }
@@ -213,8 +221,8 @@ h3 {
 }
 
 .input-pr:focus {
-  border-color: rgba(201,168,76,.52);
-  box-shadow: 0 0 0 4px rgba(201,168,76,.075);
+  border-color: rgba(187,255,31,.58);
+  box-shadow: 0 0 0 4px rgba(187,255,31,.075), 0 0 22px rgba(187,255,31,.05);
 }
 
 .input-pr::placeholder {
@@ -251,8 +259,8 @@ h3 {
 }
 
 .nav-active {
-  color: var(--pr-gold);
-  filter: drop-shadow(0 0 8px rgba(201,168,76,.35));
+  color: var(--pr-lime);
+  filter: drop-shadow(0 0 9px rgba(187,255,31,.38));
 }
 
 @keyframes fadeIn {
@@ -737,3 +745,19 @@ h3 {
 .pr-feed-button{animation:prFeedFloat 2.7s ease-in-out infinite}
 .pr-feed-spark{animation:prFeedSpark 1.8s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.pr-feed-button,.pr-feed-spark{animation:none!important}}
+
+
+/* PR NEXT / Neon Luxe — global visual language */
+.pr-next-neon-surface {
+  background: linear-gradient(145deg, rgba(239,248,255,.045), rgba(255,0,85,.018));
+  border: 1px solid rgba(239,248,255,.075);
+}
+.pr-next-neon-accent {
+  background: linear-gradient(100deg, var(--pr-lime), #d9ff74 34%, var(--pr-cyan) 67%, var(--pr-pink));
+}
+.pr-next-neon-text {
+  background: linear-gradient(100deg, var(--pr-lime), var(--pr-cyan) 48%, var(--pr-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+::selection { background: rgba(255,0,85,.45); color: var(--pr-ice); }
