@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAwardsDirectory, getAwardsCategories, getAwardsFinalists, castAwardsVote, submitAwardsNomination, submitAwardsSuggestion } from '../lib/prAwardsApi'
+import { getAwardsDirectory, getAwardsCategories, getAwardsFinalists, castAwardsVote, submitAwardsNominationBatch, submitAwardsSuggestion } from '../lib/prAwardsApi'
 import { Link } from 'react-router-dom'
 
 const categories = [
@@ -38,7 +38,7 @@ export default function PRAwards(){
  const [busy,setBusy]=useState(false)
  const [notice,setNotice]=useState('')
  useEffect(()=>{let active=true;Promise.all([getAwardsDirectory(),getAwardsCategories(),getAwardsFinalists()]).then(([people,cats,finals])=>{if(active){setDirectory(people);setLiveCategories(cats);setFinalists(finals);setBackendReady(true)}}).catch(()=>{if(active)setBackendReady(false)});return()=>{active=false}},[])
- const submitPeople=async(categoryId)=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{for(const id of selected)await submitAwardsNomination(categoryId,id,null);if(manualName.trim())await submitAwardsNomination(categoryId,null,manualName.trim());setNotice('Postulaciones registradas.');setSelected([]);setManualName('');setExpanded(-1)}catch(e){setNotice('No se pudieron registrar todas las postulaciones. Revisá antes de reintentar.')}finally{setBusy(false)}}
+ const submitPeople=async(categoryId)=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{await submitAwardsNominationBatch(categoryId,selected,manualName);setNotice('Postulaciones registradas.');setSelected([]);setManualName('');setExpanded(-1)}catch(e){setNotice('No se pudo guardar la postulación. No se registró ninguna selección de este envío.')}finally{setBusy(false)}}
  const vote=async(finalistId)=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{await castAwardsVote(finalistId);setNotice('Voto registrado. ¡Gracias por participar!')}catch(e){setNotice('No se pudo registrar el voto.')}finally{setBusy(false)}}
  const submitCategory=async()=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{await submitAwardsSuggestion(suggestName.trim(),suggestDescription.trim());setNotice('Propuesta enviada.');setSuggestName('');setSuggestDescription('');setSuggestOpen(false)}catch(e){setNotice('No se pudo guardar la propuesta.')}finally{setBusy(false)}}
   const phase=nowPhase()
