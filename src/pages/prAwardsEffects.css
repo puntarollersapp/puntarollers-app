@@ -11,3 +11,11 @@
 @keyframes prAwardsGlow{0%,100%{opacity:.55;transform:scale(.95)}50%{opacity:1;transform:scale(1.13)}}
 @keyframes prAwardsTwinkle{0%,100%{opacity:.25;transform:scale(.72) rotate(-12deg)}45%{opacity:1;transform:scale(1.18) rotate(15deg)}75%{opacity:.55;transform:scale(.9) rotate(5deg)}}
 @media (prefers-reduced-motion:reduce){.pr-awards-trophy,.pr-awards-aura,.pr-awards-spark{animation:none!important;transform:none!important}}
+
+/* Award cards: premium interactive sheen, keyboard-friendly focus. */
+.pr-awards-category{position:relative;transition:border-color .3s ease,transform .3s ease,box-shadow .3s ease}
+.pr-awards-category::before{content:'';position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,#f3d79a88,transparent);opacity:.25;pointer-events:none;transition:opacity .3s ease}
+.pr-awards-category:hover,.pr-awards-category:focus-within{border-color:#d9b66b88;box-shadow:0 16px 45px #0005,0 0 0 1px #b28d4630;transform:translateY(-2px)}
+.pr-awards-category:hover::before,.pr-awards-category:focus-within::before{opacity:1}
+.pr-awards-category button:focus-visible{outline:2px solid #f3d79a;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.pr-awards-category{transition:none!important}.pr-awards-category:hover,.pr-awards-category:focus-within{transform:none}}
