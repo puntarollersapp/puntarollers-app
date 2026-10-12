@@ -19,3 +19,20 @@
 .pr-awards-category:hover::before,.pr-awards-category:focus-within::before{opacity:1}
 .pr-awards-category button:focus-visible{outline:2px solid #f3d79a;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.pr-awards-category{transition:none!important}.pr-awards-category:hover,.pr-awards-category:focus-within{transform:none}}
+
+/* PR Awards 2026 — cinematic but lightweight mobile presentation */
+.pr-awards-step:before{content:'✦';position:absolute;right:12px;top:8px;font-size:30px;color:#d7b46b26;animation:pr-awards-float 5s ease-in-out infinite}
+.pr-awards-step:nth-child(2):before{content:'✧';animation-delay:-1.5s}
+.pr-awards-step:nth-child(3):before{content:'★';animation-delay:-3s}
+.pr-awards-category{position:relative;transition:transform .25s ease,border-color .25s ease;isolation:isolate}
+.pr-awards-category:hover{transform:translateY(-3px);border-color:#d9b66b99}
+.pr-awards-category:nth-child(3n+1):before{content:'✦  ✧';position:absolute;right:12px;top:8px;color:#dfc27a40;font-size:18px;pointer-events:none;animation:pr-awards-float 6s ease-in-out infinite}
+.pr-awards-category:nth-child(3n+2):before{content:'⚡';position:absolute;right:15px;top:8px;color:#dfc27a45;font-size:20px;pointer-events:none;animation:pr-awards-glint 5s ease-in-out infinite}
+.pr-awards-category:nth-child(3n):before{content:'✧';position:absolute;right:15px;top:8px;color:#dfc27a55;font-size:25px;pointer-events:none;animation:pr-awards-float 4s ease-in-out infinite reverse}
+.pr-awards-podium{box-shadow:0 0 65px #b88c3522,inset 0 1px 0 #f1d39422}
+.pr-awards-podium-person:first-child{background:linear-gradient(155deg,#62451e,#251b10);box-shadow:0 0 28px #e1ad4933;animation:pr-awards-glint 5s ease-in-out infinite}
+.pr-awards-podium-person{transition:transform .25s ease}
+.pr-awards-podium-person:hover{transform:translateY(-5px)}
+@keyframes pr-awards-float{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(10px);opacity:.95}}
+@keyframes pr-awards-glint{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
+@media(prefers-reduced-motion:reduce){.pr-awards-step:before,.pr-awards-category:before,.pr-awards-podium-person:first-child{animation:none}}
