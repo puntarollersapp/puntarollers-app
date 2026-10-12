@@ -4,7 +4,7 @@ import {supabase} from '../lib/supabase'
 import {useAuth} from '../lib/auth'
 import {validateFamilyApplication} from '../lib/prKidsFamilyValidation'
 import {projectFamilyHome} from '../lib/prKidsFamilyProjection'
-import {guardianFlow} from '../lib/prKidsGuardianOnboarding'
+import {existingGuardianNeedsLogin} from '../lib/prKidsGuardianOnboarding'
 import './PRKidsInscripciones2026.css'
 import PRKidsFamilyDashboard from '../components/PRKidsFamilyDashboard'
 import PRKidsDemoStudio from '../components/PRKidsDemoStudio'
@@ -27,7 +27,7 @@ export default function PRKidsClub(){
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('')
  if(data.es_alumno===null){setError('Elegí si ya tenés cuenta de alumno adulto.');return}
- if(guardianFlow({hasAdultAccount:Boolean(user?.id),hasApprovedChildren:Boolean(familyHome?.children?.length)})==='request-adult-access'&&data.es_alumno===true){setError('Para vincular a tu hijo con tu cuenta actual, primero ingresá con tu documento y PIN.');return}
+ if(existingGuardianNeedsLogin({claimsExistingAccount:data.es_alumno===true,authenticatedAdultId:user?.id})){setError('Para vincular a tu hijo con tu cuenta actual, primero ingresá con tu documento y PIN.');return}
  const errors=validateFamilyApplication({adult:data,children:hijos,authenticatedDocument:user?.documento})
  if(errors.length){setError(errors[0]);return}
  setBusy(true)
