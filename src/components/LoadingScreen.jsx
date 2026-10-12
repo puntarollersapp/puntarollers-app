@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const UPDATE_ART='/pr-beta-logo.png'
+const UPDATE_ART='/pr-loading-navidad.png'
 
 export default function LoadingScreen({onDone}){
   const[leaving,setLeaving]=useState(false)
@@ -11,9 +11,9 @@ export default function LoadingScreen({onDone}){
     <div className="relative z-10 flex w-full max-w-sm flex-col items-center px-7 text-center">
       <div className="mb-7 w-64 max-w-[74vw]">
         <div className="h-[7px] overflow-hidden rounded-full border border-[rgba(187,255,31,.2)] bg-white/[.055] p-[1px] shadow-[0_0_30px_rgba(187,255,31,.10)]"><div className="h-full w-full origin-left rounded-full bg-pr-lime" style={{animation:'prNextLoader 2.35s cubic-bezier(.2,.8,.2,1) both',boxShadow:'0 0 16px rgba(187,255,31,.22)'}}/></div>
-        <div className="mt-3 flex items-center justify-between font-mono text-[7px] font-black uppercase tracking-[.22em] text-white/30"><span>PR NEXT</span><span>CARGANDO</span></div>
+        <div className="mt-3 flex items-center justify-between font-mono text-[7px] font-black uppercase tracking-[.22em] text-white/30"><span>CARGANDO</span><span>PR TEMPORADA NAVIDEÑA</span></div>
       </div>
-      <img src={UPDATE_ART} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/logo.png' }} width="210" height="210" alt="Punta Rollers" className="block h-auto w-[210px] max-w-[64vw] object-contain" style={{filter:'drop-shadow(0 16px 24px rgba(0,0,0,.55))'}}/>
+      <img src={UPDATE_ART} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/pr-beta-logo.png' }} width="210" height="210" alt="Punta Rollers" className="block h-auto w-[210px] max-w-[64vw] object-contain" style={{filter:'drop-shadow(0 16px 24px rgba(0,0,0,.55))'}}/>
     </div>
     <style>{`@keyframes prNextLoader{0%{transform:scaleX(.025);opacity:.5}65%{transform:scaleX(.76);opacity:1}100%{transform:scaleX(1)}}`}</style>
   </div>
