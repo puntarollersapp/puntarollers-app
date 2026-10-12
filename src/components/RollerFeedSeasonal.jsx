@@ -15,7 +15,7 @@ export default function RollerFeedSeasonal() {
   async function refresh() {
     const [pollResult, voteResult, newsResult] = await Promise.all([
       supabase.from('pr_feed_polls').select('id,title,sort_order').eq('active', true).order('sort_order'),
-      supabase.from('pr_feed_poll_votes').select('poll_id,voter_uid,choice'),
+      supabase.from('pr_feed_poll_votes').select('poll_id,voter_uid,choice,gala_choice'),
       supabase.from('pr_feed_news').select('id,title,body,image_url,event_at,created_at').eq('published', true).order('created_at', { ascending: false }).limit(8),
     ])
     if (pollResult.error || voteResult.error || newsResult.error) setError('No pudimos cargar las encuestas o novedades. Probá nuevamente.')
@@ -31,13 +31,13 @@ export default function RollerFeedSeasonal() {
     return () => { live = false; window.clearInterval(timer) }
   }, [])
 
-  async function vote(pollId, choice) {
+  async function vote(pollId, choice, galaChoice = null) {
     if (!uid || busy) return
     setBusy(pollId)
     const existing = votes.some(v => v.poll_id === pollId && v.voter_uid === uid)
     const query = existing
-      ? supabase.from('pr_feed_poll_votes').update({ choice }).eq('poll_id', pollId).eq('voter_uid', uid)
-      : supabase.from('pr_feed_poll_votes').insert({ poll_id: pollId, voter_uid: uid, choice })
+      ? supabase.from('pr_feed_poll_votes').update({ choice, gala_choice: choice === 'yes' ? galaChoice : null }).eq('poll_id', pollId).eq('voter_uid', uid)
+      : supabase.from('pr_feed_poll_votes').insert({ poll_id: pollId, voter_uid: uid, choice, gala_choice: choice === 'yes' ? galaChoice : null })
     const { error: voteError } = await query
     if (voteError) setError('No se pudo guardar tu voto. Intentá de nuevo.')
     else await refresh()
