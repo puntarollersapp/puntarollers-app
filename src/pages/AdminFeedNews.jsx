@@ -25,7 +25,7 @@ export default function AdminFeedNews() {
     const { data, error } = await supabase.from('pr_feed_news').select('*').order('created_at', { ascending: false })
     setLoadError(Boolean(error))
     if (error) setNotice('No se pudieron cargar las novedades.')
-    else { setItems(data || []); setNotice('') }
+    else { setItems(data || []) }
   }
   useEffect(() => { if (user?.role === 'admin') load() }, [user?.role])
   async function uploadImage(e) {
@@ -55,9 +55,16 @@ export default function AdminFeedNews() {
     if (!error && kind === 'poll') {
       const newsId = result.data.id
       const oldOptions = editingId ? await supabase.from('pr_feed_news_options').select('id').eq('news_id',newsId) : {data:[]}
-      if (oldOptions.data?.length) {
+      if (oldOptions.error) error = oldOptions.error
+      if (!error && oldOptions.data?.length) {
         const used = await supabase.from('pr_feed_news_responses').select('news_id').eq('news_id',newsId).limit(1)
-        if (used.data?.length) error = {message:'Esta encuesta ya tiene votos y no se pueden reemplazar sus opciones.'}
+        if (used.error) error = used.error
+        else if (used.data?.length) {
+          const existing = await supabase.from('pr_feed_news_options').select('label').eq('news_id',newsId).order('sort_order')
+          if (existing.error) error = existing.error
+          else if (JSON.stringify((existing.data||[]).map(x=>x.label)) !== JSON.stringify(labels)) error = {message:'Esta encuesta ya tiene votos. Podés editar el texto, pero no cambiar sus opciones.'}
+          else { if (published) { const pub=await supabase.from('pr_feed_news').update({published:true}).eq('id',newsId);error=pub.error }; if (!error) { setBusy(false);setNotice('Encuesta actualizada sin alterar los votos.');await load();return } }
+        }
         else { const removed = await supabase.from('pr_feed_news_options').delete().eq('news_id',newsId);error = removed.error }
       }
       if (!error) { const inserted = await supabase.from('pr_feed_news_options').insert(labels.map((label,i)=>({news_id:newsId,label,sort_order:i})));error=inserted.error }
