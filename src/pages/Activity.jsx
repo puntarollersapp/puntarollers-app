@@ -1241,52 +1241,16 @@ export default function Activity() {
   return (
     <AppLayout title="RollerFeed ⚡️">
       <div className="pr-page space-y-5 animate-page-enter">
-        <section className="relative overflow-hidden rounded-[34px] border border-orange-300/20 bg-gradient-to-br from-[#ff5a1f]/25 via-[#16100f] to-[#08080c] p-5 shadow-[0_28px_90px_rgba(249,115,22,0.14)]">
-          <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-orange-500/20 blur-3xl pointer-events-none" />
-
+        <section className="relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] p-5 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.14),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.045),transparent_55%)]" />
           <div className="relative">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1.5">
-                  <span className="w-2 h-2 rounded-full bg-orange-400" />
-                  <span className="text-orange-200 text-[9px] font-bold uppercase tracking-[0.17em]">
-                    La comunidad está rodando
-                  </span>
-                </div>
-
-                <h1 className="font-display text-[38px] leading-none text-white mt-4">
-                  RollerFeed ⚡️
-                </h1>
-
-                <p className="text-white/48 text-sm mt-3 leading-relaxed max-w-[290px]">
-                  Entrenamientos, logros, eventos y momentos que nos hacen sentir parte de Punta Rollers.
-                </p>
-              </div>
-
-              <div className="w-16 h-16 rounded-[23px] border border-orange-300/25 bg-orange-400/10 grid place-items-center text-3xl shrink-0">
-                🛼
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2.5 mt-5">
-              <HeroStat
-                value={loading ? '—' : communityStats.activities}
-                label="Actividades"
-              />
-              <HeroStat
-                value={loading
-                  ? '—'
-                  : communityStats.kilometers.toLocaleString(
-                      'es-UY',
-                      { maximumFractionDigits: 0 }
-                    )}
-                label="Km rodados"
-                highlight
-              />
-              <HeroStat
-                value={loading ? '—' : communityStats.skaters}
-                label="Patinadores"
-              />
+            <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#FF0055]/30 bg-[#FF0055]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-[#FF6B9B]"><span className="h-1.5 w-1.5 rounded-full bg-[#FF0055] shadow-[0_0_10px_#FF0055]" /> El corazón de Punta Rollers</p>
+            <h1 className="mt-4 font-display text-[42px] leading-none tracking-tight text-white sm:text-5xl">Roller<span className="text-[#FF0055]">Feed.</span></h1>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/65">Donde todo se mueve. Actividades de Strava, logros, novedades y los acontecimientos que compartimos como comunidad.</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <HeroStat value={loading ? '—' : communityStats.activities} label="Actividades" />
+              <HeroStat value={loading ? '—' : communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })} label="Km rodados" highlight />
+              <HeroStat value={loading ? '—' : communityStats.skaters} label="Patinadores" />
             </div>
           </div>
         </section>
