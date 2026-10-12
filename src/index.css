@@ -724,10 +724,16 @@ h3 {
 }
 
 /* PR NEXT · primary Tasks action */
-@keyframes prTasksDock{0%,100%{transform:translateX(-50%) translateY(8px)}50%{transform:translateX(-50%) translateY(4px)}}
+@keyframes prTasksDock{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.025)}}
 @keyframes prTasksGlow{0%,100%{filter:drop-shadow(0 0 0 rgba(34,211,238,0))}50%{filter:drop-shadow(0 0 8px rgba(34,211,238,.55))}}
 @keyframes prTasksSpark{0%,100%{opacity:.45;transform:scale(.85) rotate(0deg)}50%{opacity:1;transform:scale(1.2) rotate(18deg)}}
 .pr-tasks-tab{animation:prTasksDock 3s ease-in-out infinite}
 .pr-tasks-hero-icon{animation:prTasksGlow 2.1s ease-in-out infinite}
 .pr-tasks-spark{animation:prTasksSpark 1.7s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.pr-tasks-tab,.pr-tasks-hero-icon,.pr-tasks-spark{animation:none!important}}
+
+@keyframes prFeedFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes prFeedSpark{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+.pr-feed-button{animation:prFeedFloat 2.7s ease-in-out infinite}
+.pr-feed-spark{animation:prFeedSpark 1.8s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.pr-feed-button,.pr-feed-spark{animation:none!important}}
