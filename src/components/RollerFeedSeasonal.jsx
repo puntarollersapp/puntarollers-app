@@ -26,9 +26,14 @@ export default function RollerFeedSeasonal() {
   useEffect(() => {
     let live = true
     supabase.auth.getUser().then(({ data }) => { if (live) setUid(data?.user?.id || '') })
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!live) return
+      setUid(session?.user?.id || '')
+      if (session?.user?.id) window.setTimeout(() => { if (live) refresh() }, 0)
+    })
     refresh()
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 60000)
-    return () => { live = false; window.clearInterval(timer) }
+    return () => { live = false; window.clearInterval(timer); listener.subscription.unsubscribe() }
   }, [])
 
   async function vote(pollId, choice, galaChoice = null) {
