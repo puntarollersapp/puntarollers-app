@@ -1586,13 +1586,13 @@ function TrainingCard({
 }) {
   return (
     <article
-      className={`relative overflow-hidden rounded-[30px] border bg-gradient-to-br from-[#171217] via-[#101014] to-[#09090d] ${
+      className={`relative overflow-hidden rounded-[23px] border bg-gradient-to-br from-[#18171b] via-[#111115] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
         item.featured
-          ? 'border-pr-gold/30 shadow-[0_22px_65px_rgba(212,175,55,0.09)]'
+          ? 'border-[#BBFF1F]/25 shadow-[0_12px_35px_rgba(187,255,31,.035)]'
           : 'border-white/[0.08]'
       }`}
     >
-      <div className="relative p-4">
+      <div className="relative px-3.5 py-3.5 sm:p-4">
         <div className="flex items-center gap-3">
           <ProfileAvatar
             photo={item.userPhoto}
@@ -1613,28 +1613,28 @@ function TrainingCard({
             </p>
           </div>
 
-          <span className="w-10 h-10 rounded-2xl border border-orange-300/15 bg-orange-400/10 grid place-items-center text-lg">
+          <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
             🛼
           </span>
         </div>
 
-        <div className="mt-4">
-          <p className="section-label text-orange-200">
+        <div className="mt-3">
+          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#BBFF1F]/75">
             Entrenamiento
           </p>
 
-          <h3 className="font-display text-[26px] leading-tight text-white mt-2">
+          <h3 className="font-display text-[21px] leading-tight text-white mt-1.5">
             {item.title}
           </h3>
 
           {item.description && (
-            <p className="text-white/43 text-sm leading-relaxed mt-2">
+            <p className="text-white/40 text-[11px] leading-relaxed mt-1.5">
               {item.description}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-3 gap-1.5 mt-3">
           <Metric
             label="Distancia"
             value={formatDistance(item.distanceMeters)}
@@ -1663,7 +1663,7 @@ function TrainingCard({
               href={item.stravaUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-orange-200 text-[10px] font-bold"
+              className="text-white/65 text-[10px] font-bold hover:text-[#BBFF1F]"
             >
               Ver en Strava →
             </a>
