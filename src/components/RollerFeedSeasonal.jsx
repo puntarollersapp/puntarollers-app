@@ -1,3 +1,4 @@
+import RollerFeedNewsInteractive from './RollerFeedNewsInteractive'
 import { useEffect, useState } from 'react'
 import '../styles/rollerfeed-news.css'
 import { supabase } from '../lib/supabase'
@@ -13,11 +14,12 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [lightbox, setLightbox] = useState(null)
 
   async function refresh() {
     if (section === 'news') {
       const result = await supabase.from('pr_feed_news')
-        .select('id,title,body,image_url,event_at,created_at')
+        .select('id,title,body,image_url,event_at,created_at,kind,allow_rsvp')
         .eq('published', true)
         .order('created_at', { ascending: false })
         .limit(8)
@@ -139,9 +141,10 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         <p className="mt-2 text-[11px] text-white/50"><span className="rf-news-indicator mr-2 align-middle" aria-hidden="true" /> Noticias, anuncios y lo último de nuestra comunidad</p>
       </div>
       <div className="relative z-10">
-      {loading ? <p role="status" className="mt-4 rounded-2xl border border-white/10 bg-white/[.025] p-4 text-center text-xs text-white/50">Cargando novedades…</p> : error ? <div role="alert" className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-center"><p className="text-xs text-amber-100/85">{error}</p><button type="button" onClick={() => { setLoading(true); refresh() }} className="mt-3 rounded-xl border border-[#BBFF1F]/35 px-4 py-2 text-xs font-bold text-[#BBFF1F]">Reintentar</button></div> : news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <article key={item.id} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[.035]">{item.image_url && <img src={item.image_url} alt="" loading="lazy" className="max-h-48 w-full object-cover" />}<div className="p-4"><h3 className="font-bold text-white">{item.title}</h3>{item.body && <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-white/60">{item.body}</p>}{item.event_at && <p className="mt-3 text-[11px] font-bold text-[#BBFF1F]">{new Date(item.event_at).toLocaleDateString('es-UY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}</div></article>)}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Pronto vas a encontrar acá noticias, anuncios y novedades de Punta Rollers.</p>}
+      {loading ? <p role="status" className="mt-4 rounded-2xl border border-white/10 bg-white/[.025] p-4 text-center text-xs text-white/50">Cargando novedades…</p> : error ? <div role="alert" className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-center"><p className="text-xs text-amber-100/85">{error}</p><button type="button" onClick={() => { setLoading(true); refresh() }} className="mt-3 rounded-xl border border-[#BBFF1F]/35 px-4 py-2 text-xs font-bold text-[#BBFF1F]">Reintentar</button></div> : news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <RollerFeedNewsInteractive key={item.id} item={item} uid={uid} onImage={(url,title)=>setLightbox({url,title})} />)}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Pronto vas a encontrar acá noticias, anuncios y novedades de Punta Rollers.</p>}
       </div>
     </section>
+    {lightbox && <div role="dialog" aria-modal="true" aria-label={'Imagen ampliada: '+lightbox.title} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4" onClick={()=>setLightbox(null)}><button type="button" onClick={()=>setLightbox(null)} aria-label="Cerrar imagen" className="absolute right-4 top-4 rounded-xl border border-white/30 bg-black/60 px-4 py-2 text-sm text-white">Cerrar ✕</button><img src={lightbox.url} alt={lightbox.title} className="max-h-[85vh] max-w-full object-contain" onClick={e=>e.stopPropagation()} /></div>}
     </>}
   </div>
 }
