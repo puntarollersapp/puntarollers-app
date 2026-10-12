@@ -316,7 +316,7 @@ export default function PRPerformance() {
 
       <main className="min-h-screen bg-pr-black px-4 pb-24 pt-5 text-white">
         <div className="mx-auto max-w-6xl space-y-5">
-          <section className="no-print rounded-[34px] border border-pr-lime/20 bg-[radial-gradient(circle_at_90%_0%,rgba(124,58,237,.24),transparent_38%),linear-gradient(135deg,#2c1702,#0b0c10_50%,#0c0715)] p-6">
+          <section className="no-print rounded-[34px] border border-[rgba(187,255,31,.2)] bg-[radial-gradient(circle_at_90%_0%,rgba(124,58,237,.24),transparent_38%),linear-gradient(135deg,#2c1702,#0b0c10_50%,#0c0715)] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[.24em] text-pr-lime">
@@ -380,10 +380,10 @@ export default function PRPerformance() {
             </div>
 
             <div className="mt-2 flex justify-end gap-2">
-              <button onClick={exportGroupCsv} className="rounded-2xl border border-pr-violet/20 bg-pr-violet/[.08] px-4 py-2.5 text-[10px] font-black text-pr-ice">
+              <button onClick={exportGroupCsv} className="rounded-2xl border border-[rgba(139,92,255,.2)] bg-[rgba(139,92,255,.08)] px-4 py-2.5 text-[10px] font-black text-pr-ice">
                 CSV EQUIPO
               </button>
-              <button onClick={() => print('group')} className="rounded-2xl border border-pr-violet/20 bg-pr-violet px-4 py-2.5 text-[10px] font-black text-black">
+              <button onClick={() => print('group')} className="rounded-2xl border border-[rgba(139,92,255,.2)] bg-pr-violet px-4 py-2.5 text-[10px] font-black text-black">
                 PDF EQUIPO
               </button>
             </div>
