@@ -48,6 +48,17 @@ export default function AdminFeedNews() {
     if (busy || uploading || !title.trim()) return
     const labels = options.map(x=>x.trim()).filter(Boolean)
     if (kind === 'poll' && (labels.length < 2 || new Set(labels.map(x=>x.toLowerCase())).size !== labels.length)) { setNotice('La votación necesita al menos dos opciones diferentes.'); return }
+    if (editingId && kind === 'poll') {
+      const { data: priorVotes, error: voteError } = await supabase.from('pr_feed_news_responses').select('news_id').eq('news_id', editingId).limit(1)
+      if (voteError) { setNotice('No se pudo comprobar si la encuesta tiene votos. No se guardaron cambios.'); return }
+      if (priorVotes?.length) {
+        const { data: previousOptions, error: optionError } = await supabase.from('pr_feed_news_options').select('label').eq('news_id', editingId).order('sort_order')
+        if (optionError || JSON.stringify((previousOptions||[]).map(x=>x.label)) !== JSON.stringify(labels)) {
+          setNotice('La encuesta ya recibió votos: podés corregir el texto, pero no cambiar sus opciones.')
+          return
+        }
+      }
+    }
     setBusy(true)
     const payload = { title: title.trim(), body: body.trim(), image_url: image.trim() || null, event_at: eventAt ? new Date(eventAt).toISOString() : null, published: kind === 'poll' ? false : published, kind, allow_rsvp: kind === 'event' && allowRsvp }
     const result = editingId
