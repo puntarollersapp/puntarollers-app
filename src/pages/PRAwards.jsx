@@ -22,7 +22,7 @@ const categories = [
   ['DJ sobre Ruedas','Divertido','La persona que siempre tiene la música indicada.'],
 ]
 const sections=['Todas','Deportivo','Comunidad','Divertido']
-const nowPhase=()=>{const t=Date.now();if(t<Date.parse('2026-11-01T00:00:00-03:00'))return 'upcoming';if(t<Date.parse('2026-12-01T00:00:00-03:00'))return 'nominate';if(t<Date.parse('2026-12-21T00:00:00-03:00'))return 'vote';return 'closed'}
+const nowPhase=()=>{const t=Date.now();if(t<Date.parse('2026-12-01T00:00:00-03:00'))return 'nominate';if(t<Date.parse('2026-12-21T00:00:00-03:00'))return 'vote';return 'closed'}
 export default function PRAwards(){
  const [filter,setFilter]=useState('Todas')
  const [expanded,setExpanded]=useState(-1)
@@ -59,12 +59,12 @@ export default function PRAwards(){
     <h1 className="text-5xl font-black tracking-[-.06em] sm:text-7xl">PR <span className="text-[#e4bd73]">AWARDS</span></h1>
     <p className="mt-2 text-lg font-light tracking-[.45em] text-[#c6b08a]">2026</p>
     <p className="mx-auto mt-8 max-w-lg text-sm leading-7 text-[#d0c6b7]">Una temporada. Una comunidad. Sus protagonistas. Reconocemos a quienes hicieron de Punta Rollers algo más que una escuela de patinaje.</p>
-    <div className="mx-auto mt-7 inline-flex items-center gap-2 rounded-full border border-[#d2b478]/30 bg-[#d2b478]/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#ebc88a]">{phase==='upcoming'?'Postulaciones desde el 1 de noviembre':phase==='nominate'?'Etapa de postulaciones':phase==='vote'?'Etapa de votaciones': 'Ganadores por anunciar'}</div>
+    <div className="mx-auto mt-7 inline-flex items-center gap-2 rounded-full border border-[#d2b478]/30 bg-[#d2b478]/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#ebc88a]">{phase==='nominate'?'Etapa de postulaciones':phase==='vote'?'Etapa de votaciones': 'Ganadores por anunciar'}</div>
    </section>
    {directoryError&&<p role="status" className="mb-4 rounded-xl border border-[#bda478]/35 bg-[#2b2115] p-4 text-sm text-[#e4c58d]">El registro todavía no está disponible. Podés explorar las categorías, pero no se están aceptando postulaciones ni votos.</p>}
    {notice&&<p role="status" className="mb-4 rounded-xl border border-[#bda478]/40 p-4 text-sm text-[#e4c58d]">{notice}</p>}
    <section className="grid gap-3 sm:grid-cols-3">
-    {[['01','NOVIEMBRE','1 al 30 de noviembre','Postulá compañeros y proponé nuevas categorías.'],['02','DICIEMBRE','1 al 20 de diciembre','Votá por los tres nominados oficiales de cada premio.'],['03','GRAN GALA','Fiesta de fin de año','Los ganadores se anuncian en vivo, con sobres y premios.']].map(s=><div key={s[0]} className="rounded-2xl border border-[#bda478]/20 bg-[#1b1915] p-5"><span className="text-3xl font-black text-[#e1be79]">{s[0]}</span><p className="mt-4 text-[11px] font-black tracking-[.18em] text-[#d6b87e]">{s[1]}</p><p className="mt-2 font-semibold">{s[2]}</p><p className="mt-2 text-sm leading-6 text-[#bdb3a4]">{s[3]}</p></div>)}
+    {[['01','POSTULACIONES','Hasta el 30 de noviembre','Postulá compañeros y proponé nuevas categorías.'],['02','DICIEMBRE','1 al 20 de diciembre','Votá por los tres nominados oficiales de cada premio.'],['03','GRAN GALA','Fiesta de fin de año','Los ganadores se anuncian en vivo, con sobres y premios.']].map(s=><div key={s[0]} className="rounded-2xl border border-[#bda478]/20 bg-[#1b1915] p-5"><span className="text-3xl font-black text-[#e1be79]">{s[0]}</span><p className="mt-4 text-[11px] font-black tracking-[.18em] text-[#d6b87e]">{s[1]}</p><p className="mt-2 font-semibold">{s[2]}</p><p className="mt-2 text-sm leading-6 text-[#bdb3a4]">{s[3]}</p></div>)}
    </section>
    <section className="mt-14">
     <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-[11px] font-black tracking-[.2em] text-[#d3af71]">LOS PREMIOS</p><h2 className="mt-2 text-3xl font-black tracking-tight">16 categorías iniciales</h2><p className="mt-2 max-w-xl text-sm leading-6 text-[#bdb3a4]">La comunidad podrá proponer otras cuatro para completar los 20 premios. Cada categoría tendrá tres finalistas oficiales en diciembre.</p></div><span className="rounded-full border border-[#bda478]/25 px-4 py-2 text-xs text-[#d5bc90]">16 + 4 de la comunidad</span></div>
