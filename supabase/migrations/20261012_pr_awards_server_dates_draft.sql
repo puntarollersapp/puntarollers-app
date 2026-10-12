@@ -1,12 +1,11 @@
 -- Apply after the base awards schema and the public-status migration.
--- Server-side time limits prevent manual toggles from opening awards early.
+-- Nominations may be enabled early for invited testers. November 1 is public launch, not technical activation.
 create or replace function public.pr_awards_nominations_open()
 returns boolean language sql stable security definer set search_path=''
 as $$
  select exists(
   select 1 from public.pr_awards_settings s
   where s.singleton and s.nomination_open
-  and now() >= timestamptz '2026-11-01 00:00:00-03'
   and now() < timestamptz '2026-12-01 00:00:00-03'
   and (s.nominations_close_at is null or now()<s.nominations_close_at)
  )
