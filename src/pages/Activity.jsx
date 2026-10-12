@@ -1249,7 +1249,7 @@ export default function Activity() {
             </p>
             <h1 className="mt-4 font-display text-[42px] leading-none tracking-tight text-white sm:text-5xl">Roller<span className="text-[#FF0055]">Feed.</span></h1>
             <svg aria-hidden="true" viewBox="0 0 150 22" className="mx-auto mt-2 h-5 w-36 opacity-80"><path className="rf-pulse" d="M1 11h40l7-5 8 12 8-17 9 20 8-10h68"/></svg>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">Donde todo se mueve. Actividades de Strava, logros, novedades y los acontecimientos que compartimos como comunidad.</p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">Lo que pasa en Punta Rollers, pasa acá. Seguí en vivo lo que están patinando tus compañeros, compartí sus logros y enterate de todas las novedades de nuestra comunidad.</p>
             <div className="mt-5 grid grid-cols-3 gap-2">
               <HeroStat value={loading ? '—' : communityStats.activities} label="Actividades" />
               <HeroStat value={loading ? '—' : communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })} label="Km rodados" highlight />
