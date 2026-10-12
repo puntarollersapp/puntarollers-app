@@ -36,3 +36,8 @@
 @keyframes pr-awards-float{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(10px);opacity:.95}}
 @keyframes pr-awards-glint{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
 @media(prefers-reduced-motion:reduce){.pr-awards-step:before,.pr-awards-category:before,.pr-awards-podium-person:first-child{animation:none}}
+
+/* Mobile-safe nomination selector: the entire expanded award card becomes a readable overlay. */
+.pr-awards-expanded-card{position:fixed!important;z-index:90;top:50%;left:50%;width:min(94vw,540px);max-height:88dvh;overflow-y:auto;transform:translate(-50%,-50%);border-color:#d8b675!important;box-shadow:0 0 0 100vmax #000c,0 25px 90px #000a;overscroll-behavior:contain}
+.pr-awards-expanded-card .pr-awards-category-symbol{font-size:2rem}
+@media(max-width:600px){.pr-awards-expanded-card{width:calc(100vw - 24px);max-height:calc(100dvh - 35px)}.pr-awards-expanded-card input{min-width:0}}
