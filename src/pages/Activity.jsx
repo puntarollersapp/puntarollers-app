@@ -13,7 +13,6 @@ import CommunityPhoto from '../components/community/CommunityPhoto'
 const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
   { key: 'Entrenamiento', label: 'Entrenos' },
-  { key: 'Cumpleaños', label: 'Cumples' },
   { key: 'Evento', label: 'Eventos' },
 ]
 
@@ -1052,7 +1051,6 @@ export default function Activity() {
       normalizeLegacyItem(item, profilesByAnyId)
     )
 
-    const birthdays = buildBirthdayPosts(profiles)
     const eventPosts = events.map(normalizeRollerEvent)
     const momentPosts = moments.map((moment) => {
       const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
@@ -1072,7 +1070,6 @@ export default function Activity() {
     return [
       ...socialPosts.map(post=>({...post,id:`social-${post.id}`,postId:post.id,type:'SocialPost',date:post.created_at})),
       ...momentPosts,
-      ...birthdays,
       ...eventPosts,
       ...trainingPosts,
       ...communityPosts,
@@ -1099,9 +1096,7 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      const birthdays = available.filter((item) => item.type === 'Cumpleaños').sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4)
-      const rest = available.filter((item) => item.type !== 'Cumpleaños')
-      return birthdays.length ? [{ id: 'birthday-grid', type: 'BirthdayGroup', date: birthdays[0]?.date, items: birthdays }, ...rest] : rest
+      return available
     }
 
     const filteredItems = feedItems.filter(
