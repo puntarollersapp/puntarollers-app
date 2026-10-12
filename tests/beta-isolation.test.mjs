@@ -38,12 +38,11 @@ test('beta cached session is not trusted before server check', () => {
   assert.match(auth, /if\(profileData\.role==='beta'\)/)
 })
 
-test('staging beta creation is enabled only through the isolated admin panel', () => {
+test('staging beta creation uses the isolated v2 admin endpoint', () => {
   const panel = read('src/components/admin/BetaUsersPanel.jsx')
-  const server = read('supabase/functions/pr-beta-admin/index.ts')
-  assert.match(panel, /const provisioningReady = true/)
-  assert.match(panel, /disabled=\{submitting \|\| !provisioningReady\}/)
-  assert.match(server, /PR_BETA_PROVISIONING_ENABLED/)
+  assert.match(panel, /pr-staging-beta-admin-v2/)
+  assert.match(panel, /action: 'create'/)
+  assert.match(panel, /disabled=\{submitting/)
 })
 
 test('beta profiles are excluded from student and payment screens', () => {
