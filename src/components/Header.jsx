@@ -38,7 +38,7 @@ export default function Header({ title, showBack = false, onBack }) {
         </Link>
       </div>
     </div>
-    {rollerween&&<div className="border-t border-violet-300/[.06] bg-violet-500/[.035] px-4 py-1 text-center font-mono text-[6px] font-black uppercase tracking-[.22em] text-violet-200/38">ROLLERWEEN // SEASON 2026 · OCT 01—31</div>}
+    {rollerween&&<div className="border-t border-violet-300/[.06] bg-violet-500/[.035] px-4 py-1 text-center font-mono text-[6px] font-black uppercase tracking-[.22em] text-violet-200/38">ROLLER SEASON NAVIDEÑA // DESDE 01 NOVIEMBRE</div>}
     {title && <div className="pointer-events-none border-t border-white/[0.035] px-4 py-1.5 text-center text-[9px] font-black uppercase tracking-[.18em] text-white/24">{title}</div>}
   </header>
 }
