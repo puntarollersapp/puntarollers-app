@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import PRMomentsRail from '../components/PRMomentsRail'
 import RollerFeedComments from '../components/RollerFeedComments'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
@@ -1295,10 +1294,6 @@ export default function Activity() {
             </div>
           </section>
         )}
-
-        <div>
-          <PRMomentsRail currentProfileId={currentReactionProfileId} />
-        </div>
 
         <section className="overflow-x-auto -mx-[18px] px-[18px]">
           <div className="flex gap-2 min-w-max">
