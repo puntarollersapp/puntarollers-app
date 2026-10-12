@@ -722,3 +722,10 @@ h3 {
     animation: none !important;
   }
 }
+
+/* PR NEXT · primary Tasks action */
+@keyframes prTasksFloat{0%,100%{transform:translate(-50%,-50%) translateY(0);box-shadow:0 0 0 5px rgba(34,211,238,.07),0 12px 38px rgba(0,155,190,.28)}50%{transform:translate(-50%,-50%) translateY(-3px);box-shadow:0 0 0 7px rgba(34,211,238,.055),0 16px 46px rgba(0,195,205,.38)}}
+@keyframes prTasksPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.pr-tasks-hero{animation:prTasksFloat 2.8s ease-in-out infinite}
+.pr-tasks-hero-icon{animation:prTasksPulse 1.9s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.pr-tasks-hero,.pr-tasks-hero-icon{animation:none!important}}
