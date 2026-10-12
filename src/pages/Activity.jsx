@@ -703,6 +703,7 @@ export default function Activity() {
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
   const [filter, setFilter] = useState('Todos')
+  const [feedLimit, setFeedLimit] = useState(10)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -1250,7 +1251,7 @@ export default function Activity() {
           </div>
         </section>
 
-        <RollerFeedSeasonal />
+        <RollerFeedSeasonal section="polls" />
 
         {loading && <RollerFeedLoading syncing={syncing} />}
 
@@ -1302,7 +1303,7 @@ export default function Activity() {
                 <button
                   key={item.key}
                   type="button"
-                  onClick={() => setFilter(item.key)}
+                  onClick={() => { setFilter(item.key); setFeedLimit(10) }}
                   className={`px-4 py-2.5 rounded-full text-xs font-semibold border transition ${
                     active
                       ? 'bg-gradient-to-r from-pr-gold to-orange-300 text-black border-pr-gold'
@@ -1358,7 +1359,7 @@ export default function Activity() {
             </div>
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
-              {visibleItems.map((item) => (
+              {visibleItems.slice(0, feedLimit).map((item) => (
                 <div key={item.id}>
                   <FeedCard
                     item={item}
@@ -1372,6 +1373,7 @@ export default function Activity() {
                   {!['Moment','SocialPost'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
+              {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + 10)} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
             </div>
           ) : (
             <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
@@ -1389,6 +1391,8 @@ export default function Activity() {
             </div>
           )}
         </section>
+
+        <RollerFeedSeasonal section="news" />
 
         {reactionModalItem && (
           <ReactionsModal
