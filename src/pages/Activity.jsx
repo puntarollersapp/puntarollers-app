@@ -15,6 +15,8 @@ const FEED_FILTERS = [
   { key: 'Todos', label: 'Todo' },
   { key: 'Entrenamiento', label: 'Entrenos' },
   { key: 'Evento', label: 'Eventos' },
+  { key: 'Votaciones', label: 'Votaciones', target: 'rollerfeed-votaciones' },
+  { key: 'Novedades', label: 'Novedades', target: 'rollerfeed-novedades' },
 ]
 
 const REACTION_OPTIONS = [
@@ -1258,7 +1260,7 @@ export default function Activity() {
           </div>
         </section>
 
-                <RollerFeedSeasonal section="polls" />
+        <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
         {loading && <RollerFeedLoading syncing={syncing} />}
 
@@ -1301,30 +1303,34 @@ export default function Activity() {
           </section>
         )}
 
-        <section className="overflow-x-auto -mx-[18px] px-[18px]">
-          <div className="flex gap-2 min-w-max">
+        <nav aria-label="Explorar RollerFeed" className="-mx-[18px] overflow-x-auto px-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto flex w-max min-w-full justify-center gap-2 py-1">
             {FEED_FILTERS.map((item) => {
-              const active = filter === item.key
-
+              const active = !item.target && filter === item.key
               return (
                 <button
                   key={item.key}
                   type="button"
-                  onClick={() => { setFilter(item.key); setFeedLimit(10) }}
-                  className={`px-4 py-2.5 rounded-full text-xs font-semibold border transition ${
-                    active
-                      ? 'bg-gradient-to-r from-pr-gold to-orange-300 text-black border-pr-gold'
-                      : 'bg-white/[0.03] text-white/45 border-white/[0.07]'
-                  }`}
+                  aria-current={active ? 'true' : undefined}
+                  onClick={() => {
+                    if (item.target) {
+                      document.getElementById(item.target)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+                      return
+                    }
+                    setFilter(item.key)
+                    setFeedLimit(10)
+                    document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+                  }}
+                  className={`shrink-0 rounded-full border px-3.5 py-2.5 text-[11px] font-bold transition-colors ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
                 >
                   {item.label}
                 </button>
               )
             })}
           </div>
-        </section>
+        </nav>
 
-        <section>
+        <section id="rollerfeed-actividades" className="scroll-mt-36">
           <div className="flex items-end justify-between gap-4 mb-3">
             <div>
               <p className="section-label">
@@ -1400,7 +1406,7 @@ export default function Activity() {
           )}
         </section>
 
-        <RollerFeedSeasonal section="news" />
+        <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
 
         {reactionModalItem && (
           <ReactionsModal
