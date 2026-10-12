@@ -31,3 +31,10 @@ export async function castAwardsVote(finalistId) {
  if(error) throw error
  return data
 }
+
+/** Atomic nomination batch: saves every selected person or none. */
+export async function submitAwardsNominationBatch(categoryId,candidateIds=[],manualName=null) {
+ const {data,error}=await supabase.rpc('pr_awards_submit_nomination_batch',{p_category:categoryId,p_candidates:[...new Set(candidateIds)],p_manual_name:manualName?.trim()||null})
+ if(error) throw error
+ return data
+}
