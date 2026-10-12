@@ -314,7 +314,7 @@ export default function PRPerformance() {
     <AppLayout>
       <style>{'@media print {.no-print{display:none!important}.print-only{display:block!important}body{background:white!important}.pr-print{color:#111!important;background:white!important;padding:24px!important}.pr-print *{box-shadow:none!important}}'}</style>
 
-      <main className="min-h-screen bg-[#050508] px-4 pb-24 pt-5 text-white">
+      <main className="min-h-screen bg-pr-black px-4 pb-24 pt-5 text-white">
         <div className="mx-auto max-w-6xl space-y-5">
           <section className="no-print rounded-[34px] border border-orange-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(124,58,237,.24),transparent_38%),linear-gradient(135deg,#2c1702,#0b0c10_50%,#0c0715)] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
