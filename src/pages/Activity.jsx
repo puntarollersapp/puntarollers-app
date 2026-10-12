@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import RollerFeedComments from '../components/RollerFeedComments'
 import RollerFeedSeasonal from '../components/RollerFeedSeasonal'
+import '../styles/rollerfeed-hero.css'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CommunityPhoto from '../components/community/CommunityPhoto'
@@ -1237,12 +1238,18 @@ export default function Activity() {
   return (
     <AppLayout title="RollerFeed ⚡️">
       <div className="pr-page space-y-5 animate-page-enter">
-        <section className="relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] p-5 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.14),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.045),transparent_55%)]" />
-          <div className="relative">
-            <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#FF0055]/30 bg-[#FF0055]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.18em] text-[#FF6B9B]"><span className="h-1.5 w-1.5 rounded-full bg-[#FF0055] shadow-[0_0_10px_#FF0055]" /> El corazón de Punta Rollers</p>
+        <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.08),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.035),transparent_55%)]" />
+          <div aria-hidden="true" className="rf-shine" />
+          {['a','b','c'].map(position => <span key={position} aria-hidden="true" className={`rf-envelope rf-envelope--${position}`}><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3 7 9 7 9-7"/></svg></span>)}
+          <div className="relative z-10">
+            <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#FF0055]/30 bg-[#FF0055]/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.13em] text-[#FF79A5]">
+              <span className="rf-heart" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.1 3.4 12.7C-1 8.3 5.1 1.8 10 6.2L12 8l2-1.8c4.9-4.4 11 2.1 6.6 6.5Z"/></svg></span>
+              El corazón de Punta Rollers
+            </p>
             <h1 className="mt-4 font-display text-[42px] leading-none tracking-tight text-white sm:text-5xl">Roller<span className="text-[#FF0055]">Feed.</span></h1>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/65">Donde todo se mueve. Actividades de Strava, logros, novedades y los acontecimientos que compartimos como comunidad.</p>
+            <svg aria-hidden="true" viewBox="0 0 150 22" className="mx-auto mt-2 h-5 w-36 opacity-80"><path className="rf-pulse" d="M1 11h40l7-5 8 12 8-17 9 20 8-10h68"/></svg>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">Donde todo se mueve. Actividades de Strava, logros, novedades y los acontecimientos que compartimos como comunidad.</p>
             <div className="mt-5 grid grid-cols-3 gap-2">
               <HeroStat value={loading ? '—' : communityStats.activities} label="Actividades" />
               <HeroStat value={loading ? '—' : communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })} label="Km rodados" highlight />
@@ -1251,7 +1258,7 @@ export default function Activity() {
           </div>
         </section>
 
-        <RollerFeedSeasonal section="polls" />
+                <RollerFeedSeasonal section="polls" />
 
         {loading && <RollerFeedLoading syncing={syncing} />}
 
