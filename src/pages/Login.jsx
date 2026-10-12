@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
-const UPDATE_ART='/pr-next-loading.png'
+const UPDATE_ART='/profile-badge.png'
 
 export default function Login() {
   const [documento, setDocumento] = useState('')
