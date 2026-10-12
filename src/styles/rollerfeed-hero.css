@@ -1,0 +1,18 @@
+/* RollerFeed hero: subtle editorial motion, never blocks interaction. */
+.rf-hero{isolation:isolate}
+.rf-hero::before{content:"";position:absolute;inset:-35%;pointer-events:none;background:radial-gradient(ellipse at 46% 38%,rgba(255,0,85,.14),transparent 45%);animation:rf-ambient 9s ease-in-out infinite alternate}
+.rf-heart{display:inline-flex;align-items:center;justify-content:center;color:#FF0055;filter:drop-shadow(0 0 8px rgba(255,0,85,.4));animation:rf-heartbeat 2.3s ease-in-out infinite;transform-origin:center}
+.rf-heart svg{width:18px;height:18px}
+.rf-pulse{stroke:#FF0055;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:90;stroke-dashoffset:90;animation:rf-trace 4.6s ease-in-out infinite}
+.rf-envelope{position:absolute;z-index:0;opacity:0;color:rgba(255,255,255,.17);pointer-events:none;animation:rf-letter 12s linear infinite}
+.rf-envelope svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.4}
+.rf-envelope--a{top:-8%;left:12%;animation-delay:-1s}
+.rf-envelope--b{top:-9%;right:13%;animation-delay:-6s}
+.rf-envelope--c{top:-9%;left:72%;animation-delay:-10s}
+.rf-shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 37%,rgba(255,255,255,.025) 50%,transparent 63%);background-size:230% 100%;animation:rf-shimmer 12s ease-in-out infinite}
+@keyframes rf-heartbeat{0%,32%,55%,100%{transform:scale(1)}40%{transform:scale(1.2)}48%{transform:scale(1.08)}}
+@keyframes rf-trace{0%,8%{stroke-dashoffset:90;opacity:.2}35%,70%{stroke-dashoffset:0;opacity:1}85%,100%{stroke-dashoffset:-90;opacity:.2}}
+@keyframes rf-letter{0%{transform:translate3d(0,-12px,0) rotate(-12deg);opacity:0}15%{opacity:.3}65%{opacity:.16}90%,100%{transform:translate3d(24px,390px,0) rotate(16deg);opacity:0}}
+@keyframes rf-ambient{from{transform:translate3d(-3%,0,0) scale(.96)}to{transform:translate3d(4%,2%,0) scale(1.08)}}
+@keyframes rf-shimmer{0%,65%{background-position:120% 0}100%{background-position:-130% 0}}
+@media(prefers-reduced-motion:reduce){.rf-hero::before,.rf-heart,.rf-pulse,.rf-envelope,.rf-shine{animation:none!important}.rf-pulse{stroke-dashoffset:0}.rf-envelope{display:none}}
