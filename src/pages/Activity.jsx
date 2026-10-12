@@ -5,6 +5,7 @@ import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import RollerFeedComments from '../components/RollerFeedComments'
+import RollerFeedSeasonal from '../components/RollerFeedSeasonal'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CommunityPhoto from '../components/community/CommunityPhoto'
@@ -1253,6 +1254,8 @@ export default function Activity() {
             </div>
           </div>
         </section>
+
+        <RollerFeedSeasonal />
 
         {loading && <RollerFeedLoading syncing={syncing} />}
 
