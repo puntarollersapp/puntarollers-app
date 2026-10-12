@@ -1,0 +1,14 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../lib/auth'
+import { supabase } from '../../lib/supabase'
+const EVENT='shifter-marathon-2026'
+const KEY='pr_shifter_2026_close_seen'
+const CLOSE_AT=new Date('2026-11-01T18:00:00.000Z').getTime()
+export default function ShifterClosureModal(){
+ const{user}=useAuth();const[open,setOpen]=useState(false)
+ useEffect(()=>{let alive=true;(async()=>{if(Date.now()<CLOSE_AT||!user?.id||window.localStorage.getItem(KEY)==='1')return;const{data,error}=await supabase.from('pr_training_enrollments').select('category,active').eq('profile_id',user.id).eq('event_slug',EVENT).maybeSingle();if(!error&&alive&&data?.category&&data.category!=='NO')setOpen(true)})();return()=>{alive=false}},[user?.id])
+ function close(){window.localStorage.setItem(KEY,'1');setOpen(false)}
+ if(!open)return null
+ return <div className="fixed inset-0 z-[120] grid place-items-end bg-black/75 p-3 backdrop-blur-sm sm:place-items-center"><section className="w-full max-w-[560px] overflow-hidden rounded-[34px] border border-amber-200/20 bg-[#0d0b09] shadow-[0_30px_120px_rgba(0,0,0,.7)]"><div className="h-1 bg-gradient-to-r from-violet-400 via-amber-300 to-cyan-300"/><div className="p-6"><p className="text-[8px] font-black tracking-[.24em] text-amber-200/65">CIERRE · SHIFTER 2026</p><h2 className="mt-3 text-[30px] font-black leading-[.98] tracking-[-.04em]">La carrera terminó.<br/><span className="text-white/45">Tu progreso no.</span></h2><div className="mt-5 space-y-3 text-[11px] leading-5 text-white/48"><p>Durante estas semanas hubo cansancio, días buenos, días difíciles, entrenamientos que salieron como esperábamos y otros que costaron bastante más.</p><p>Gracias por confiar en nosotros, pero sobre todo por confiar en vos mismo y animarte a superarte semana a semana.</p><p>Para mí y David fue un orgullo acompañarte en este proceso.</p><p className="font-black text-white">La carrera terminó. Tu progreso no.</p><p>Espero que confíes tanto en vos como nosotros confiamos desde el día 1.</p><p className="pt-1 font-black text-white/75">Claudio & David<br/><span className="font-medium text-white/35">Punta Rollers</span></p></div><div className="mt-6 grid gap-2 sm:grid-cols-2"><Link to="/app/historia/shifter-2026" onClick={close} className="rounded-[17px] bg-amber-200 px-4 py-3 text-center text-[9px] font-black text-black">VER MI SHIFTER 2026</Link><button onClick={close} className="rounded-[17px] border border-white/10 bg-white/[.04] px-4 py-3 text-[9px] font-black text-white/65">DESCUBRIR LA NUEVA ETAPA</button></div></div></section></div>
+}
