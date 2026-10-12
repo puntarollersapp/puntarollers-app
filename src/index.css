@@ -21,6 +21,12 @@
   --pr-ice: #EFF8FF;
   --pr-cyan: #16D9FF;
   --pr-violet: #8B5CFF;
+  --pr-border: var(--pr-line);
+  --pr-surface-raised: var(--pr-elevated);
+  --pr-focus: rgba(187,255,31,.45);
+  --pr-glow: 0 0 24px rgba(187,255,31,.12);
+  --pr-danger: #FF4D65;
+  --pr-success: #BBFF1F;
 }
 
 *, *::before, *::after {
@@ -115,7 +121,7 @@ img {
   gap: 7px;
   padding: 7px 11px;
   border-radius: 999px;
-  border: 1px solid rgba(201,168,76,.24);
+  border: 1px solid rgba(187,255,31,.24);
   color: var(--pr-lime);
   background: rgba(187,255,31,.075);
   font-size: 11px;
@@ -170,7 +176,7 @@ h3 {
   font-weight: 600;
   letter-spacing: .17em;
   text-transform: uppercase;
-  color: rgba(244,244,246,.34);
+  color: var(--pr-muted);
 }
 
 .btn-gold {
@@ -182,10 +188,10 @@ h3 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #b98e2f, #e0c468);
-  color: #0a0a0f;
+  background: var(--pr-lime);
+  color: var(--pr-bg);
   font-weight: 700;
-  box-shadow: 0 10px 30px rgba(201,168,76,.14);
+  box-shadow: 0 10px 30px rgba(187,255,31,.12);
   transition: transform .16s ease, filter .2s ease;
 }
 
@@ -202,7 +208,7 @@ h3 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: rgba(244,244,246,.82);
+  color: var(--pr-text);
   font-weight: 600;
   background: rgba(255,255,255,.035);
   border: 1px solid var(--pr-line);
@@ -211,7 +217,7 @@ h3 {
 .input-pr {
   width: 100%;
   min-height: 50px;
-  color: #fff;
+  color: var(--pr-text);
   background: rgba(255,255,255,.035);
   border: 1px solid rgba(255,255,255,.09);
   border-radius: 15px;
@@ -300,11 +306,11 @@ h3 {
 @keyframes softPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 rgba(201,168,76,0);
+    box-shadow: 0 0 0 rgba(187,255,31,0);
   }
 
   50% {
-    box-shadow: 0 0 0 8px rgba(201,168,76,.04);
+    box-shadow: 0 0 0 8px rgba(187,255,31,.04);
   }
 }
 
