@@ -316,10 +316,10 @@ export default function PRPerformance() {
 
       <main className="min-h-screen bg-pr-black px-4 pb-24 pt-5 text-white">
         <div className="mx-auto max-w-6xl space-y-5">
-          <section className="no-print rounded-[34px] border border-orange-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(124,58,237,.24),transparent_38%),linear-gradient(135deg,#2c1702,#0b0c10_50%,#0c0715)] p-6">
+          <section className="no-print rounded-[34px] border border-pr-lime/20 bg-[radial-gradient(circle_at_90%_0%,rgba(124,58,237,.24),transparent_38%),linear-gradient(135deg,#2c1702,#0b0c10_50%,#0c0715)] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[.24em] text-orange-300">
+                <p className="text-[10px] font-black uppercase tracking-[.24em] text-pr-lime">
                   PR PERFORMANCE · CENTRO DE RENDIMIENTO
                 </p>
                 <h1 className="mt-2 text-4xl font-black tracking-[-.045em]">
@@ -373,17 +373,17 @@ export default function PRPerformance() {
                 <button onClick={exportStudentCsv} className="rounded-2xl border border-white/10 bg-white/[.05] px-2 py-3 text-[10px] font-black">
                   CSV ALUMNO
                 </button>
-                <button onClick={() => print('student')} className="rounded-2xl bg-orange-300 px-2 py-3 text-[10px] font-black text-black">
+                <button onClick={() => print('student')} className="rounded-2xl bg-pr-lime px-2 py-3 text-[10px] font-black text-black">
                   PDF ALUMNO
                 </button>
               </div>
             </div>
 
             <div className="mt-2 flex justify-end gap-2">
-              <button onClick={exportGroupCsv} className="rounded-2xl border border-violet-300/20 bg-violet-400/[.08] px-4 py-2.5 text-[10px] font-black text-violet-200">
+              <button onClick={exportGroupCsv} className="rounded-2xl border border-pr-violet/20 bg-pr-violet/[.08] px-4 py-2.5 text-[10px] font-black text-pr-ice">
                 CSV EQUIPO
               </button>
-              <button onClick={() => print('group')} className="rounded-2xl border border-violet-300/20 bg-violet-300 px-4 py-2.5 text-[10px] font-black text-black">
+              <button onClick={() => print('group')} className="rounded-2xl border border-pr-violet/20 bg-pr-violet px-4 py-2.5 text-[10px] font-black text-black">
                 PDF EQUIPO
               </button>
             </div>
@@ -480,7 +480,7 @@ export default function PRPerformance() {
                       className={
                         'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left ' +
                         (selected?.id === profile.id
-                          ? 'bg-orange-300 text-black'
+                          ? 'bg-pr-lime text-black'
                           : 'hover:bg-white/[.04]')
                       }
                     >
@@ -515,12 +515,12 @@ export default function PRPerformance() {
                       {selected.foto ? (
                         <img src={selected.foto} alt="" className="h-20 w-20 rounded-full object-cover" />
                       ) : (
-                        <div className="grid h-20 w-20 place-items-center rounded-full bg-orange-300 text-xl font-black text-black">
+                        <div className="grid h-20 w-20 place-items-center rounded-full bg-pr-lime text-xl font-black text-black">
                           {profileName(selected).slice(0, 2).toUpperCase()}
                         </div>
                       )}
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">
+                        <p className="text-[9px] font-black uppercase tracking-[.18em] text-pr-lime">
                           EXPEDIENTE DEPORTIVO
                         </p>
                         <h2 className="mt-1 text-3xl font-black">{profileName(selected)}</h2>
@@ -599,7 +599,7 @@ export default function PRPerformance() {
                   <article className="rounded-[28px] border border-white/10 bg-white/[.025] p-5">
                     <div className="flex items-end justify-between">
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-[.18em] text-orange-300">SESIONES INLINE SKATE</p>
+                        <p className="text-[9px] font-black uppercase tracking-[.18em] text-pr-lime">SESIONES INLINE SKATE</p>
                         <h3 className="mt-1 text-xl font-black">Historial técnico</h3>
                       </div>
                       <p className="text-xs text-white/30">{selectedActivities.length} sesiones</p>
@@ -618,7 +618,7 @@ export default function PRPerformance() {
                                   {fmtDate(activity.fecha_inicio)} · {fmtDuration(activity.tiempo_movimiento_segundos)}
                                 </p>
                               </div>
-                              <p className="text-lg font-black text-orange-300">
+                              <p className="text-lg font-black text-pr-lime">
                                 {fmtKm((Number(activity.distancia_metros) || 0) / 1000)} km
                               </p>
                             </div>
