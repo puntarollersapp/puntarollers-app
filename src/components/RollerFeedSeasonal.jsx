@@ -9,6 +9,8 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [polls, setPolls] = useState([])
   const [votes, setVotes] = useState([])
   const [news, setNews] = useState([])
+  const [newsLimit, setNewsLimit] = useState(8)
+  const [hasMoreNews, setHasMoreNews] = useState(false)
   const [avatars, setAvatars] = useState([])
   const [uid, setUid] = useState('')
   const [busy, setBusy] = useState('')
@@ -22,9 +24,9 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         .select('id,title,body,image_url,event_at,created_at,kind,allow_rsvp')
         .eq('published', true)
         .order('created_at', { ascending: false })
-        .limit(8)
+        .limit(newsLimit + 1)
       if (result.error) setError('No pudimos cargar las novedades. Probá nuevamente.')
-      else { setNews(result.data || []); setError('') }
+      else { setHasMoreNews((result.data || []).length > newsLimit); setNews((result.data || []).slice(0, newsLimit)); setError('') }
       setLoading(false)
       return
     }
@@ -43,6 +45,10 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (section === 'news' && newsLimit > 8) refresh()
+  }, [newsLimit, section])
 
   useEffect(() => {
     let live = true
@@ -141,7 +147,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         <p className="mt-2 text-[11px] text-white/50"><span className="rf-news-indicator mr-2 align-middle" aria-hidden="true" /> Noticias, anuncios y lo último de nuestra comunidad</p>
       </div>
       <div className="relative z-10">
-      {loading ? <p role="status" className="mt-4 rounded-2xl border border-white/10 bg-white/[.025] p-4 text-center text-xs text-white/50">Cargando novedades…</p> : error ? <div role="alert" className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-center"><p className="text-xs text-amber-100/85">{error}</p><button type="button" onClick={() => { setLoading(true); refresh() }} className="mt-3 rounded-xl border border-[#BBFF1F]/35 px-4 py-2 text-xs font-bold text-[#BBFF1F]">Reintentar</button></div> : news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <RollerFeedNewsInteractive key={item.id} item={item} uid={uid} onImage={(url,title)=>setLightbox({url,title})} />)}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Pronto vas a encontrar acá noticias, anuncios y novedades de Punta Rollers.</p>}
+      {loading ? <p role="status" className="mt-4 rounded-2xl border border-white/10 bg-white/[.025] p-4 text-center text-xs text-white/50">Cargando novedades…</p> : error ? <div role="alert" className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-center"><p className="text-xs text-amber-100/85">{error}</p><button type="button" onClick={() => { setLoading(true); refresh() }} className="mt-3 rounded-xl border border-[#BBFF1F]/35 px-4 py-2 text-xs font-bold text-[#BBFF1F]">Reintentar</button></div> : news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <RollerFeedNewsInteractive key={item.id} item={item} uid={uid} onImage={(url,title)=>setLightbox({url,title})} />)}{hasMoreNews && <button type="button" onClick={()=>setNewsLimit(n=>n+8)} className="rounded-xl border border-white/15 bg-white/[.035] px-4 py-3 text-xs font-bold text-[#BBFF1F] sm:col-span-2">Ver más novedades ↓</button>}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Pronto vas a encontrar acá noticias, anuncios y novedades de Punta Rollers.</p>}
       </div>
     </section>
     {lightbox && <div role="dialog" aria-modal="true" aria-label={'Imagen ampliada: '+lightbox.title} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4" onClick={()=>setLightbox(null)}><button type="button" onClick={()=>setLightbox(null)} aria-label="Cerrar imagen" className="absolute right-4 top-4 rounded-xl border border-white/30 bg-black/60 px-4 py-2 text-sm text-white">Cerrar ✕</button><img src={lightbox.url} alt={lightbox.title} className="max-h-[85vh] max-w-full object-contain" onClick={e=>e.stopPropagation()} /></div>}
