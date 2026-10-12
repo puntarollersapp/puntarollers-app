@@ -51,21 +51,41 @@ export default function RollerFeedSeasonal() {
         <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-[#FF77A3]">Tu opinión cuenta</p>
         <h2 className="mx-auto mt-2 max-w-[320px] text-center font-display text-[27px] leading-tight text-white">Vos también decidís <span className="text-[#FF0055]">cómo cerramos el año.</span></h2>
         <p className="mt-2 text-center text-xs text-white/45">Participá en las tres votaciones.</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          {polls.map((poll, index) => {
+        <div className="mt-4 space-y-3">
+          {polls.filter(p => p.sort_order === 1).map(poll => {
             const own = votes.find(v => v.poll_id === poll.id && v.voter_uid === uid)
             const all = votes.filter(v => v.poll_id === poll.id)
             const yes = all.filter(v => v.choice === 'yes').length
-            return <article key={poll.id} className="rounded-[22px] border border-white/10 bg-white/[.045] p-4 transition-colors hover:border-[#FF0055]/35">
-              <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#FF77A3]">Votación 0{index + 1}</p>
-              <h3 className="mt-2 min-h-11 text-[15px] font-bold leading-snug text-white">{poll.title}</h3>
-              <div className="mt-3 flex gap-2">
-                {CHOICES.map(option => <button key={option.value} type="button" disabled={!uid || busy === poll.id} onClick={() => vote(poll.id, option.value)} aria-pressed={own?.choice === option.value} className={`flex-1 rounded-xl border px-2 py-2.5 text-[11px] font-bold transition-all disabled:opacity-45 ${own?.choice === option.value ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/15 bg-black/35 text-white/75 hover:border-[#FF0055]/60'}`}>{option.label}</button>)}
+            return <article key={poll.id} className="rounded-[22px] border border-[#FF0055]/35 bg-[#FF0055]/[.055] p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#FF78A5]">Encuesta principal</p>
+              <h3 className="mt-2 font-display text-[24px] text-white">🥂 Fiesta de Fin de Año</h3>
+              <p className="mt-1 text-xs text-white/60">¿Organizamos una fiesta para despedir el año juntos?</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" disabled={!uid || busy === poll.id} aria-pressed={own?.choice === 'yes'} onClick={() => vote(poll.id, 'yes', own?.gala_choice || null)} className={`rounded-xl border px-2 py-3 text-[11px] font-bold disabled:opacity-45 ${own?.choice === 'yes' ? 'border-[#FF0055] bg-[#FF0055] text-white' : 'border-[#FF0055]/30 bg-[#FF0055]/10 text-white'}`}>¡Sí, queremos fiesta!</button>
+                <button type="button" disabled={!uid || busy === poll.id} aria-pressed={own?.choice === 'no'} onClick={() => vote(poll.id, 'no')} className={`rounded-xl border px-2 py-3 text-[11px] font-bold disabled:opacity-45 ${own?.choice === 'no' ? 'border-[#FF0055] bg-[#FF0055] text-white' : 'border-white/15 bg-white/[.04] text-white/65'}`}>Esta vez no</button>
               </div>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#FF0055] transition-all duration-500" style={{ width: `${all.length ? yes / all.length * 100 : 0}%` }} /></div>
-              <p className="mt-2 text-[10px] text-white/45">{all.length} {all.length === 1 ? 'voto' : 'votos'} · {all.length ? Math.round(yes / all.length * 100) : 0}% se suma</p>
+              <p className="mt-3 text-[11px] font-bold text-white">Si hacemos fiesta, ¿qué estilo preferís?</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button type="button" disabled={!uid || busy === poll.id || own?.choice !== 'yes'} aria-pressed={own?.gala_choice === 'gala'} onClick={() => vote(poll.id, 'yes', 'gala')} className={`rounded-xl border p-3 text-left disabled:opacity-40 ${own?.gala_choice === 'gala' ? 'border-[#FF0055] bg-[#FF0055]/15' : 'border-white/10 bg-black/25'}`}><span className="block text-[11px] font-bold text-white">Noche de gala</span><span className="mt-1 block text-[10px] leading-4 text-white/55">Vestimenta elegante y formal, con looks de gala.</span></button>
+                <button type="button" disabled={!uid || busy === poll.id || own?.choice !== 'yes'} aria-pressed={own?.gala_choice === 'casual'} onClick={() => vote(poll.id, 'yes', 'casual')} className={`rounded-xl border p-3 text-left disabled:opacity-40 ${own?.gala_choice === 'casual' ? 'border-[#FF0055] bg-[#FF0055]/15' : 'border-white/10 bg-black/25'}`}><span className="block text-[11px] font-bold text-white">Noche sin gala</span><span className="mt-1 block text-[10px] leading-4 text-white/55">Ambiente relajado, sin código de vestimenta formal.</span></button>
+              </div>
+              <p className="mt-3 text-[10px] text-white/45">{all.length} votos · {yes} quieren fiesta · {all.filter(v=>v.gala_choice==='gala').length} gala · {all.filter(v=>v.gala_choice==='casual').length} sin gala</p>
             </article>
           })}
+          <div className="grid grid-cols-2 gap-2">
+            {polls.filter(p => p.sort_order !== 1).map(poll => {
+              const own = votes.find(v => v.poll_id === poll.id && v.voter_uid === uid)
+              const all = votes.filter(v => v.poll_id === poll.id)
+              const yes = all.filter(v => v.choice === 'yes').length
+              return <article key={poll.id} className="min-w-0 rounded-[20px] border border-[#BBFF1F]/25 bg-[#BBFF1F]/[.045] p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-[#BBFF1F]">{poll.sort_order === 2 ? 'Navidad' : 'Fin de año'}</p>
+                <h3 className="mt-1 min-h-10 text-[12px] font-bold leading-snug text-white">{poll.sort_order === 2 ? '🎅 Rolleada navideña' : '🎆 Rolleada de fin de año'}</h3>
+                <div className="mt-2 grid grid-cols-2 gap-1.5">{CHOICES.map(option => <button key={option.value} type="button" disabled={!uid || busy === poll.id} aria-pressed={own?.choice === option.value} onClick={() => vote(poll.id, option.value)} className={`rounded-lg border px-1 py-2 text-[10px] font-bold disabled:opacity-45 ${own?.choice === option.value ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-[#BBFF1F]/20 bg-black/25 text-white/75'}`}>{option.value === 'yes' ? 'Sí' : 'No'}</button>)}</div>
+                <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#BBFF1F]" style={{width:`${all.length ? yes / all.length * 100 : 0}%`}} /></div>
+                <p className="mt-1.5 text-[10px] text-white/45">{all.length} votos · {yes} sí</p>
+              </article>
+            })}
+          </div>
         </div>
         {!uid && !loading && <p className="mt-3 text-center text-xs text-white/50">Iniciá sesión para participar.</p>}
         {loading && <p className="mt-4 text-center text-xs text-white/50">Cargando encuestas…</p>}
