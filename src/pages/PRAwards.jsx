@@ -34,11 +34,12 @@ export default function PRAwards(){
  const [liveCategories,setLiveCategories]=useState([])
  const [finalists,setFinalists]=useState([])
  const [backendReady,setBackendReady]=useState(false)
+ const [directoryError,setDirectoryError]=useState(false)
  const [selected,setSelected]=useState([])
  const [manualName,setManualName]=useState('')
  const [busy,setBusy]=useState(false)
  const [notice,setNotice]=useState('')
- useEffect(()=>{let active=true;Promise.all([getAwardsDirectory(),getAwardsCategories(),getAwardsFinalists()]).then(([people,cats,finals])=>{if(active){setDirectory(people);setLiveCategories(cats);setFinalists(finals);setBackendReady(true)}}).catch(()=>{if(active)setBackendReady(false)});return()=>{active=false}},[])
+ useEffect(()=>{let active=true;Promise.all([getAwardsDirectory(),getAwardsCategories(),getAwardsFinalists()]).then(([people,cats,finals])=>{if(active){setDirectory(people);setLiveCategories(cats);setFinalists(finals);setBackendReady(cats.length>0);setDirectoryError(cats.length===0)}}).catch(()=>{if(active){setBackendReady(false);setDirectoryError(true)}});return()=>{active=false}},[])
  const submitPeople=async(categoryId)=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{await submitAwardsNominationBatch(categoryId,selected,manualName);setNotice('Postulaciones registradas.');setSelected([]);setManualName('');setExpanded(-1)}catch(e){setNotice('No se pudo guardar la postulación. No se registró ninguna selección de este envío.')}finally{setBusy(false)}}
  const vote=async(finalistId)=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{await castAwardsVote(finalistId);setNotice('Voto registrado. ¡Gracias por participar!')}catch(e){setNotice('No se pudo registrar el voto.')}finally{setBusy(false)}}
  const submitCategory=async()=>{if(!backendReady||busy)return;setBusy(true);setNotice('');try{await submitAwardsSuggestion(suggestName.trim(),suggestDescription.trim());setNotice('Propuesta enviada.');setSuggestName('');setSuggestDescription('');setSuggestOpen(false)}catch(e){setNotice('No se pudo guardar la propuesta.')}finally{setBusy(false)}}
@@ -59,6 +60,7 @@ export default function PRAwards(){
     <p className="mx-auto mt-8 max-w-lg text-sm leading-7 text-[#d0c6b7]">Una temporada. Una comunidad. Sus protagonistas. Reconocemos a quienes hicieron de Punta Rollers algo más que una escuela de patinaje.</p>
     <div className="mx-auto mt-7 inline-flex items-center gap-2 rounded-full border border-[#d2b478]/30 bg-[#d2b478]/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#ebc88a]">{phase==='nominate'?'Etapa de postulaciones':phase==='vote'?'Etapa de votaciones': 'Ganadores por anunciar'}</div>
    </section>
+   {directoryError&&<p role="status" className="mb-4 rounded-xl border border-[#bda478]/35 bg-[#2b2115] p-4 text-sm text-[#e4c58d]">El registro todavía no está disponible. Podés explorar las categorías, pero no se están aceptando postulaciones ni votos.</p>}
    {notice&&<p role="status" className="mb-4 rounded-xl border border-[#bda478]/40 p-4 text-sm text-[#e4c58d]">{notice}</p>}
    <section className="grid gap-3 sm:grid-cols-3">
     {[['01','NOVIEMBRE','1 al 30 de noviembre','Postulá compañeros y proponé nuevas categorías.'],['02','DICIEMBRE','1 al 20 de diciembre','Votá por los tres nominados oficiales de cada premio.'],['03','GRAN GALA','Fiesta de fin de año','Los ganadores se anuncian en vivo, con sobres y premios.']].map(s=><div key={s[0]} className="rounded-2xl border border-[#bda478]/20 bg-[#1b1915] p-5"><span className="text-3xl font-black text-[#e1be79]">{s[0]}</span><p className="mt-4 text-[11px] font-black tracking-[.18em] text-[#d6b87e]">{s[1]}</p><p className="mt-2 font-semibold">{s[2]}</p><p className="mt-2 text-sm leading-6 text-[#bdb3a4]">{s[3]}</p></div>)}
