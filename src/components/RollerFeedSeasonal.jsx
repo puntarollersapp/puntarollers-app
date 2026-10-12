@@ -15,14 +15,30 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [loading, setLoading] = useState(true)
 
   async function refresh() {
-    const [pollResult, voteResult, newsResult, avatarResult] = await Promise.all([
+    if (section === 'news') {
+      const result = await supabase.from('pr_feed_news')
+        .select('id,title,body,image_url,event_at,created_at')
+        .eq('published', true)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (result.error) setError('No pudimos cargar las novedades. Probá nuevamente.')
+      else { setNews(result.data || []); setError('') }
+      setLoading(false)
+      return
+    }
+
+    const [pollResult, voteResult, avatarResult] = await Promise.all([
       supabase.from('pr_feed_polls').select('id,title,sort_order').eq('active', true).order('sort_order'),
       supabase.from('pr_feed_poll_votes').select('poll_id,voter_uid,choice,gala_choice'),
-      supabase.from('pr_feed_news').select('id,title,body,image_url,event_at,created_at').eq('published', true).order('created_at', { ascending: false }).limit(8),
       supabase.rpc('pr_feed_poll_avatars'),
     ])
-    if (pollResult.error || voteResult.error || newsResult.error) setError('No pudimos cargar las encuestas o novedades. Probá nuevamente.')
-    else { setPolls(pollResult.data || []); setVotes(voteResult.data || []); setNews(newsResult.data || []); setAvatars(avatarResult.error ? [] : avatarResult.data || []); setError('') }
+    if (pollResult.error || voteResult.error) setError('No pudimos cargar las encuestas. Probá nuevamente.')
+    else {
+      setPolls(pollResult.data || [])
+      setVotes(voteResult.data || [])
+      setAvatars(avatarResult.error ? [] : avatarResult.data || [])
+      setError('')
+    }
     setLoading(false)
   }
 
