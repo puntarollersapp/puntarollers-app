@@ -162,9 +162,9 @@ h3 {
 .text-gold-gradient {
   background: linear-gradient(
     135deg,
-    #aa8123,
-    #f0dfa1 55%,
-    #c9a84c
+    var(--pr-lime),
+    var(--pr-ice) 55%,
+    var(--pr-cyan)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
