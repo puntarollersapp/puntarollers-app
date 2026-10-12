@@ -60,7 +60,7 @@ export default function AdminFeedNews() {
       }
     }
     setBusy(true)
-    const payload = { title: title.trim(), body: body.trim(), image_url: image.trim() || null, event_at: eventAt ? new Date(eventAt).toISOString() : null, published: kind === 'poll' ? false : published, kind, allow_rsvp: kind === 'event' && allowRsvp }
+    const payload = { title: title.trim(), body: body.trim(), image_url: image.trim() || null, event_at: eventAt ? new Date(eventAt).toISOString() : null, published: kind === 'poll' && !editingId ? false : published, kind, allow_rsvp: kind === 'event' && allowRsvp }
     const result = editingId
       ? await supabase.from('pr_feed_news').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editingId).select('id').single()
       : await supabase.from('pr_feed_news').insert(payload).select('id').single()
