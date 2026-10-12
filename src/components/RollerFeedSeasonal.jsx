@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const CHOICES = [{ value: 'yes', label: 'Me sumo' }, { value: 'no', label: 'Esta vez no' }]
 
-export default function RollerFeedSeasonal() {
+export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [polls, setPolls] = useState([])
   const [votes, setVotes] = useState([])
   const [news, setNews] = useState([])
@@ -61,6 +61,7 @@ export default function RollerFeedSeasonal() {
   }
 
   return <div className="space-y-5">
+    {section === 'polls' && <>
     <section className="relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] p-4 shadow-[0_16px_45px_rgba(0,0,0,.35)] sm:p-5">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_100%_0%,rgba(255,0,85,.13),transparent_60%)]" />
       <div className="relative">
@@ -110,9 +111,12 @@ export default function RollerFeedSeasonal() {
         {error && <p role="alert" className="mt-3 text-center text-xs text-red-300">{error}</p>}
       </div>
     </section>
+    </>}
+    {section === 'news' && <>
     <section className="rounded-[30px] border border-[#BBFF1F]/20 bg-[#0D0303] p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#BBFF1F]">Desde Punta Rollers</p><h2 className="mt-1 font-display text-[30px] text-white">Novedades<span className="text-[#BBFF1F]">.</span></h2></div><span className="h-2 w-2 rounded-full bg-[#BBFF1F] shadow-[0_0_14px_rgba(187,255,31,.55)]" /></div>
       {news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <article key={item.id} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[.035]">{item.image_url && <img src={item.image_url} alt="" loading="lazy" className="max-h-48 w-full object-cover" />}<div className="p-4"><h3 className="font-bold text-white">{item.title}</h3>{item.body && <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-white/60">{item.body}</p>}{item.event_at && <p className="mt-3 text-[11px] font-bold text-[#BBFF1F]">{new Date(item.event_at).toLocaleDateString('es-UY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}</div></article>)}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Las próximas novedades de PR van a aparecer acá.</p>}
     </section>
+    </>}
   </div>
 }
