@@ -29,13 +29,13 @@ export default function BetaLogin() {
       {authLoading&&<p className="mt-3 text-xs text-pr-cyan">Verificando sesión segura…</p>}
       <form onSubmit={submit} className="mt-7 space-y-4">
         <label className="block text-sm">Documento
-          <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
+          <input required name="documento" inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
         </label>
         <label className="block text-sm">PIN Beta
-          <input required type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
+          <input required name="pin-beta" type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white outline-none transition focus:border-[rgba(187,255,31,.5)]" />
         </label>
         {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
-        <button type="submit" disabled={busy||authLoading} className="w-full rounded-xl bg-pr-lime px-4 py-3 font-semibold text-pr-black disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
+        <button type="submit" disabled={busy||authLoading} aria-busy={busy||authLoading} className="w-full rounded-xl bg-pr-lime px-4 py-3 font-semibold text-pr-black disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
       </form>
       <Link to="/login" className="mt-6 inline-block text-sm text-white/50 underline">Acceso habitual Punta Rollers</Link>
     </section>
