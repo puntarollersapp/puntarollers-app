@@ -7,19 +7,21 @@ export default function RollerFeedSeasonal() {
   const [polls, setPolls] = useState([])
   const [votes, setVotes] = useState([])
   const [news, setNews] = useState([])
+  const [avatars, setAvatars] = useState([])
   const [uid, setUid] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   async function refresh() {
-    const [pollResult, voteResult, newsResult] = await Promise.all([
+    const [pollResult, voteResult, newsResult, avatarResult] = await Promise.all([
       supabase.from('pr_feed_polls').select('id,title,sort_order').eq('active', true).order('sort_order'),
       supabase.from('pr_feed_poll_votes').select('poll_id,voter_uid,choice,gala_choice'),
       supabase.from('pr_feed_news').select('id,title,body,image_url,event_at,created_at').eq('published', true).order('created_at', { ascending: false }).limit(8),
+      supabase.rpc('pr_feed_poll_avatars'),
     ])
     if (pollResult.error || voteResult.error || newsResult.error) setError('No pudimos cargar las encuestas o novedades. Probá nuevamente.')
-    else { setPolls(pollResult.data || []); setVotes(voteResult.data || []); setNews(newsResult.data || []); setError('') }
+    else { setPolls(pollResult.data || []); setVotes(voteResult.data || []); setNews(newsResult.data || []); setAvatars(avatarResult.error ? [] : avatarResult.data || []); setError('') }
     setLoading(false)
   }
 
@@ -35,6 +37,15 @@ export default function RollerFeedSeasonal() {
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 60000)
     return () => { live = false; window.clearInterval(timer); listener.subscription.unsubscribe() }
   }, [])
+
+  function voterAvatars(pollId) {
+    const people = avatars.filter(a => a.poll_id === pollId).slice(0, 7)
+    if (!people.length) return null
+    return <div className="mt-2 flex items-center gap-1.5" aria-label="Participantes que habilitaron su foto en encuestas">
+      <div className="flex -space-x-2">{people.map((person, index) => <img key={index} src={person.photo_url} alt={person.display_name || 'Participante'} title={person.display_name || 'Participante'} loading="lazy" className="h-7 w-7 rounded-full border-2 border-[#0D0303] bg-[#191919] object-cover" />)}</div>
+      <span className="text-[10px] text-white/40">Participantes</span>
+    </div>
+  }
 
   async function vote(pollId, choice, galaChoice = null) {
     if (!uid || busy) return
@@ -75,6 +86,7 @@ export default function RollerFeedSeasonal() {
                 <button type="button" disabled={!uid || busy === poll.id || own?.choice !== 'yes'} aria-pressed={own?.gala_choice === 'casual'} onClick={() => vote(poll.id, 'yes', 'casual')} className={`rounded-xl border p-3 text-left disabled:opacity-40 ${own?.gala_choice === 'casual' ? 'border-[#FF0055] bg-[#FF0055]/15' : 'border-white/10 bg-black/25'}`}><span className="block text-[11px] font-bold text-white">Noche sin gala</span><span className="mt-1 block text-[10px] leading-4 text-white/55">Ambiente relajado, sin código de vestimenta formal.</span></button>
               </div>
               <p className="mt-3 text-[10px] text-white/45">{all.length} votos · {yes} quieren fiesta · {all.filter(v=>v.gala_choice==='gala').length} gala · {all.filter(v=>v.gala_choice==='casual').length} sin gala</p>
+              {voterAvatars(poll.id)}
             </article>
           })}
           <div className="grid grid-cols-2 gap-2">
@@ -88,6 +100,7 @@ export default function RollerFeedSeasonal() {
                 <div className="mt-2 grid grid-cols-2 gap-1.5">{CHOICES.map(option => <button key={option.value} type="button" disabled={!uid || busy === poll.id} aria-pressed={own?.choice === option.value} onClick={() => vote(poll.id, option.value)} className={`rounded-lg border px-1 py-2 text-[10px] font-bold disabled:opacity-45 ${own?.choice === option.value ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-[#BBFF1F]/20 bg-black/25 text-white/75'}`}>{option.value === 'yes' ? 'Sí' : 'No'}</button>)}</div>
                 <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#BBFF1F]" style={{width:`${all.length ? yes / all.length * 100 : 0}%`}} /></div>
                 <p className="mt-1.5 text-[10px] text-white/45">{all.length} votos · {yes} sí</p>
+                {voterAvatars(poll.id)}
               </article>
             })}
           </div>
