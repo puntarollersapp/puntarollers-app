@@ -9,7 +9,7 @@ export default function BetaLogin() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  if (user) return <Navigate to="/app/perfil" replace />
+  if (user) return <Navigate to={user.role === 'beta' ? '/beta/deberes' : '/app/perfil'} replace />
   async function submit(event) {
     event.preventDefault()
     if (busy) return
@@ -17,7 +17,7 @@ export default function BetaLogin() {
     try {
       const result = await betaLogin(documento,password)
       if (result?.error) setError(result.error)
-      else navigate('/app/perfil',{replace:true})
+      else navigate('/beta/deberes',{replace:true})
     } catch { setError('No pudimos iniciar la sesión Beta.') }
     finally { setBusy(false) }
   }
@@ -29,12 +29,10 @@ export default function BetaLogin() {
       {authLoading&&<p className="mt-3 text-xs text-violet-200/60">Verificando sesión segura…</p>}
       <form onSubmit={submit} className="mt-7 space-y-4">
         <label className="block text-sm">Documento
-          <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)}
-            className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
+          <input required inputMode="numeric" autoComplete="username" value={documento} onChange={e=>setDocumento(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
         </label>
         <label className="block text-sm">PIN Beta
-          <input required type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}
-            className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
+          <input required type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-black/40 p-3 text-white" />
         </label>
         {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
         <button type="submit" disabled={busy||authLoading} className="w-full rounded-xl bg-violet-500 px-4 py-3 font-semibold disabled:opacity-50">{busy?'Ingresando…':authLoading?'Verificando…':'Ingresar'}</button>
