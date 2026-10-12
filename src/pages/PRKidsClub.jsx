@@ -15,7 +15,7 @@ export default function PRKidsClub(){
  const [params]=useSearchParams()
  const demoMode=params.get('demo')==='1'
  const [demoPosts,setDemoPosts]=useState([])
- const demoFamily={guardian:{nombre:'Familia de ejemplo'},children:[{id:'demo-1',nombre:'Sofía (ejemplo)',class_posts:demoPosts},{id:'demo-2',nombre:'Mateo (ejemplo)',class_posts:demoPosts}]}
+ const demoFamily={guardian:{nombre:'Familia de ejemplo'},children:[{id:'demo-1',nombre:'Sofía (ejemplo)',class_posts:demoPosts.filter(p=>p.audience_child_ids?.includes('demo-1'))},{id:'demo-2',nombre:'Mateo (ejemplo)',class_posts:demoPosts.filter(p=>p.audience_child_ids?.includes('demo-2'))}]}
  const [familyHome,setFamilyHome]=useState(null),[familyLoading,setFamilyLoading]=useState(true),[familySession,setFamilySession]=useState(null),[sessionReady,setSessionReady]=useState(false),[guardianAccess,setGuardianAccess]=useState('')
  const visibleFamily=demoMode?demoFamily:familyHome
  const [selectedChild,setSelectedChild]=useState(null),[stage,setStage]=useState('home'),[data,setData]=useState(initial),[hijos,setHijos]=useState([{nombre:''}]),[busy,setBusy]=useState(false),[error,setError]=useState('')
