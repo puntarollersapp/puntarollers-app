@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import '../styles/rollerfeed-news.css'
 import { supabase } from '../lib/supabase'
 
 const CHOICES = [{ value: 'yes', label: 'Me sumo' }, { value: 'no', label: 'Esta vez no' }]
@@ -113,9 +114,17 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
     </section>
     </>}
     {section === 'news' && <>
-    <section className="rounded-[30px] border border-[#BBFF1F]/20 bg-[#0D0303] p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#BBFF1F]">Desde Punta Rollers</p><h2 className="mt-1 font-display text-[30px] text-white">Novedades<span className="text-[#BBFF1F]">.</span></h2></div><span className="h-2 w-2 rounded-full bg-[#BBFF1F] shadow-[0_0_14px_rgba(187,255,31,.55)]" /></div>
-      {news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <article key={item.id} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[.035]">{item.image_url && <img src={item.image_url} alt="" loading="lazy" className="max-h-48 w-full object-cover" />}<div className="p-4"><h3 className="font-bold text-white">{item.title}</h3>{item.body && <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-white/60">{item.body}</p>}{item.event_at && <p className="mt-3 text-[11px] font-bold text-[#BBFF1F]">{new Date(item.event_at).toLocaleDateString('es-UY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}</div></article>)}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Las próximas novedades de PR van a aparecer acá.</p>}
+    <section className="rf-news-shell rounded-[28px] border border-[#BBFF1F]/20 bg-[#0D0303] p-4 shadow-[0_16px_45px_rgba(0,0,0,.2)] sm:p-5">
+      <div aria-hidden="true" className="rf-news-glow" />
+      <div className="relative z-10 text-center">
+        <div className="rf-news-signal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v4l3 1.5L18 19V5L8 8.5 5 10Z"/><path d="M8 15.5 9 20h3l-1.5-4"/><path d="M20 9a4 4 0 0 1 0 6"/></svg></div>
+        <h2 className="mt-1 font-display text-[31px] leading-none text-white">Novedades<span className="text-[#BBFF1F]">.</span></h2>
+        <div className="rf-news-line" aria-hidden="true" />
+        <p className="mt-2 text-[11px] text-white/50"><span className="rf-news-indicator mr-2 align-middle" aria-hidden="true" /> Noticias, anuncios y lo último de nuestra comunidad</p>
+      </div>
+      <div className="relative z-10">
+      {news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <article key={item.id} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[.035]">{item.image_url && <img src={item.image_url} alt="" loading="lazy" className="max-h-48 w-full object-cover" />}<div className="p-4"><h3 className="font-bold text-white">{item.title}</h3>{item.body && <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-white/60">{item.body}</p>}{item.event_at && <p className="mt-3 text-[11px] font-bold text-[#BBFF1F]">{new Date(item.event_at).toLocaleDateString('es-UY', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}</div></article>)}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Pronto vas a encontrar acá noticias, anuncios y novedades de Punta Rollers.</p>}
+      </div>
     </section>
     </>}
   </div>
