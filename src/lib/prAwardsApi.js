@@ -38,3 +38,10 @@ export async function submitAwardsNominationBatch(categoryId,candidateIds=[],man
  if(error) throw error
  return data
 }
+
+/** Public server-verified phase flags; never expose private awards settings. */
+export async function getAwardsPublicStatus() {
+ const {data,error}=await supabase.rpc('pr_awards_public_status')
+ if(error) throw error
+ return Array.isArray(data)?(data[0]||null):data
+}
