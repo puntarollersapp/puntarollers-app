@@ -35,6 +35,7 @@ export default function AdminFeedNews() {
     if (!file) return
     if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { setNotice('Elegí una imagen JPG, PNG o WebP de hasta 5 MB.'); return }
     setUploading(true)
+    setNotice('')
     const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
     const path = `${crypto.randomUUID()}.${ext}`
     const result = await supabase.storage.from('pr-feed-news-beta').upload(path,file,{contentType:file.type,upsert:false})
@@ -46,6 +47,7 @@ export default function AdminFeedNews() {
   async function create(e) {
     e.preventDefault()
     if (busy || uploading || !title.trim()) return
+    setNotice('')
     const labels = options.map(x=>x.trim()).filter(Boolean)
     if (kind === 'poll' && (labels.length < 2 || new Set(labels.map(x=>x.toLowerCase())).size !== labels.length)) { setNotice('La votación necesita al menos dos opciones diferentes.'); return }
     if (editingId && kind === 'poll') {
@@ -90,6 +92,7 @@ export default function AdminFeedNews() {
   async function edit(item) { setEditingId(item.id); setTitle(item.title || ''); setBody(item.body || ''); setImage(item.image_url || ''); setEventAt(item.event_at ? new Date(new Date(item.event_at).getTime() - new Date(item.event_at).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''); setPublished(Boolean(item.published));setKind(item.kind || 'news');setAllowRsvp(Boolean(item.allow_rsvp)); if(item.kind==='poll'){const {data}=await supabase.from('pr_feed_news_options').select('label').eq('news_id',item.id).order('sort_order');setOptions((data||[]).map(x=>x.label))}else setOptions(['','']); setNotice('Editando novedad.'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   function cancelEdit() { setEditingId(''); setKind('news'); setAllowRsvp(false); setOptions(['','']); setTitle(''); setBody(''); setImage(''); setEventAt(''); setPublished(false); setNotice('Edición cancelada.') }
   async function toggle(item) {
+    setNotice('')
     const { error } = await supabase.from('pr_feed_news').update({ published: !item.published, updated_at: new Date().toISOString() }).eq('id', item.id)
     if (error) setNotice('No se pudo cambiar el estado de la publicación.')
     else { setNotice('Estado actualizado.'); await load() }
