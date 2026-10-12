@@ -1260,6 +1260,33 @@ export default function Activity() {
           </div>
         </section>
 
+        <nav aria-label="Explorar RollerFeed" className="-mx-[18px] overflow-x-auto px-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto flex w-max min-w-full justify-center gap-2 py-1">
+            {FEED_FILTERS.map((item) => {
+              const active = !item.target && filter === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-current={active ? 'true' : undefined}
+                  onClick={() => {
+                    if (item.target) {
+                      document.getElementById(item.target)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+                      return
+                    }
+                    setFilter(item.key)
+                    setFeedLimit(10)
+                    document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+                  }}
+                  className={`shrink-0 rounded-full border px-3.5 py-2.5 text-[11px] font-bold transition-colors ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+
         <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
         {loading && <RollerFeedLoading syncing={syncing} />}
@@ -1303,32 +1330,7 @@ export default function Activity() {
           </section>
         )}
 
-        <nav aria-label="Explorar RollerFeed" className="-mx-[18px] overflow-x-auto px-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="mx-auto flex w-max min-w-full justify-center gap-2 py-1">
-            {FEED_FILTERS.map((item) => {
-              const active = !item.target && filter === item.key
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  aria-current={active ? 'true' : undefined}
-                  onClick={() => {
-                    if (item.target) {
-                      document.getElementById(item.target)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
-                      return
-                    }
-                    setFilter(item.key)
-                    setFeedLimit(10)
-                    document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
-                  }}
-                  className={`shrink-0 rounded-full border px-3.5 py-2.5 text-[11px] font-bold transition-colors ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
-          </div>
-        </nav>
+
 
         <section id="rollerfeed-actividades" className="scroll-mt-36">
           <div className="flex items-end justify-between gap-4 mb-3">
