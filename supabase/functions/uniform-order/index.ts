@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   const size = string("size", 50);
   const notes = string("notes", 500);
   const quantity = Number(body.quantity);
-  if (!/^[0-9a-f-]{36}$/i.test(productId) || name.length < 3 || !validEmail.test(email) ||
+  if (!productId || name.length < 3 || !validEmail.test(email) ||
       phone.length < 6 || !size || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
     return jsonResponse({ error: "invalid_order" }, 400, headers);
   }
