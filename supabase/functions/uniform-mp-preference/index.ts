@@ -35,6 +35,8 @@ Deno.serve(async (req) => {
     payer: { name: order.buyer_name, email: order.buyer_email },
     external_reference: order.id,
     notification_url: webhookBase,
+    back_urls: { success: `${origin}/uniformes?payment=return`, failure: `${origin}/uniformes?payment=return`, pending: `${origin}/uniformes?payment=return` },
+    auto_return: "approved",
     expires: true,
     expiration_date_from: new Date().toISOString(),
     expiration_date_to: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
