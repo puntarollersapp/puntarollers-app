@@ -2,7 +2,7 @@
 create table if not exists public.pr_uniform_orders (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
-  product_id uuid not null,
+  product_id text not null,
   product_name text not null,
   model text,
   color text,
