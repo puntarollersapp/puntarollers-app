@@ -26,8 +26,10 @@ Deno.serve(async (req) => {
   if (error || !order) return jsonResponse({ error: "order_not_found" }, 404, headers);
   if (order.payment_status !== "pending") return jsonResponse({ error: "order_not_payable" }, 409, headers);
   if (order.provider_preference_id) return jsonResponse({ error: "payment_already_started" }, 409, headers);
-  const webhookBase = Deno.env.get("UNIFORM_MP_WEBHOOK_URL");
+  const supabaseBase = Deno.env.get("SUPABASE_URL");
+  const webhookBase = Deno.env.get("UNIFORM_MP_WEBHOOK_URL") || (supabaseBase ? `${supabaseBase}/functions/v1/uniform-mp-webhook` : "");
   if (!webhookBase || !webhookBase.startsWith("https://")) return jsonResponse({ error: "payment_not_configured" }, 503, headers);
+  if (!Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")) return jsonResponse({ error: "mercadopago_credentials_missing" }, 503, headers);
   const preference = {
     items: [{ id: order.product_id, title: order.product_name, description: [order.model, order.color, order.size].filter(Boolean).join(" / "), quantity: order.quantity, currency_id: "UYU", unit_price: Number(order.unit_price) }],
     payer: { name: order.buyer_name, email: order.buyer_email },
