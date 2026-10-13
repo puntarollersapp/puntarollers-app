@@ -1,5 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { adminClient, corsHeaders, isAllowedBrowserOrigin, jsonResponse } from "../_shared/mercadopago.ts";
+import { adminClient, jsonResponse } from "../_shared/mercadopago.ts";
+
+const allowedPreview = /^https:\/\/puntarollers-[a-z0-9-]+-puntarollersapps-projects\.vercel\.app$/;
+function isAllowedBrowserOrigin(origin: string | null): boolean {
+  return !!origin && (origin === "https://puntarollers.com" || origin === "https://www.puntarollers.com" || allowedPreview.test(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+}
+function corsHeaders(origin: string | null): Record<string,string> {
+  return { "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS", "Vary": "Origin", ...(isAllowedBrowserOrigin(origin) ? { "Access-Control-Allow-Origin": origin! } : {}) };
+}
 
 const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 Deno.serve(async (req) => {
