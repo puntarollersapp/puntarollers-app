@@ -27,9 +27,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invalid_order" }, 400, headers);
   }
   const db = adminClient();
-  const { data: previous } = await db.from("pr_uniform_orders").select("id,total,buyer_email,product_id").eq("request_key",requestKey).maybeSingle();
+  const { data: previous } = await db.from("pr_uniform_orders").select("id,total,buyer_email,product_id,model,color,size,quantity,buyer_name,buyer_phone,notes").eq("request_key",requestKey).maybeSingle();
+  const sameOrder = (item: Record<string, unknown>) => item.buyer_email === email && item.product_id === productId && item.model === (model || null) && item.color === (color || null) && item.size === size && Number(item.quantity) === quantity && item.buyer_name === name && item.buyer_phone === phone && item.notes === (notes || null);
   if (previous) {
-    if (previous.buyer_email !== email || previous.product_id !== productId) return jsonResponse({ error: "request_key_conflict" }, 409, headers);
+    if (!sameOrder(previous)) return jsonResponse({ error: "request_key_conflict" }, 409, headers);
     return jsonResponse({ orderId: previous.id, amount: previous.total, paymentStatus: "pending" }, 200, headers);
   }
   const { data: product, error } = await db.from("productos_pr").select("*").eq("id", productId).eq("activo", true).maybeSingle();
@@ -49,8 +50,8 @@ Deno.serve(async (req) => {
     payment_method: "transfer", payment_status: "pending",
   }).select("id,total").single();
   if (insertError?.code === "23505") {
-    const { data: existing } = await db.from("pr_uniform_orders").select("id,total,buyer_email,product_id").eq("request_key",requestKey).maybeSingle();
-    if (existing && existing.buyer_email === email && existing.product_id === productId) return jsonResponse({ orderId: existing.id, amount: existing.total, paymentStatus: "pending" }, 200, headers);
+    const { data: existing } = await db.from("pr_uniform_orders").select("id,total,buyer_email,product_id,model,color,size,quantity,buyer_name,buyer_phone,notes").eq("request_key",requestKey).maybeSingle();
+    if (existing && sameOrder(existing)) return jsonResponse({ orderId: existing.id, amount: existing.total, paymentStatus: "pending" }, 200, headers);
     return jsonResponse({ error: "request_key_conflict" }, 409, headers);
   }
   if (insertError || !order) return jsonResponse({ error: "could_not_save_order" }, 500, headers);
