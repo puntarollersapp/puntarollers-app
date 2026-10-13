@@ -16,6 +16,7 @@ export default function PRCheckAdmin(){
  useEffect(()=>{if(!user||!isStaff(user)){setReady(true);return}let alive=true;(async()=>{const {data,error}=await supabase.rpc('pr_check_staff');if(!alive)return;if(error||!data){setMessage('Sin autorización para PR Check.');setReady(true);return}setAuthorized(true);try{await loadClasses()}catch(e){setMessage(e.message)}finally{if(alive)setReady(true)}})();return()=>{alive=false}},[user?.id])
  useEffect(()=>{if(!authorized)return;loadRows(selected).catch(e=>setMessage(e.message));const t=setInterval(()=>loadRows(selected).catch(()=>{}),12000);return()=>clearInterval(t)},[authorized,selected])
  useEffect(()=>{if(authorized)loadStats(month).catch(e=>setMessage(e.message))},[authorized,month])
+ useEffect(()=>{if(!scanning||!video.current||!stream.current)return;const element=video.current;element.srcObject=stream.current;element.play().catch(()=>setMessage('La cámara necesita permiso para reproducir video. Cerrá y volvé a abrir el lector.'));return()=>{element.srcObject=null}},[scanning])
  const stop=()=>{detecting.current=false;lastRead.current={value:'',at:0};if(interval.current)clearInterval(interval.current);interval.current=null;stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;setScanning(false)}
  useEffect(()=>()=>stop(),[])
  const resolve=async()=>{const {data,error}=await supabase.rpc('pr_check_resolve_class');if(error)throw error;setActiveAuto(data);setSelected(data.id);await loadClasses();return data.id}
@@ -29,9 +30,8 @@ export default function PRCheckAdmin(){
    stream.current=camera
    setScanning(true)
    setMessage('Lector listo. Presentá los QR uno por uno; la cámara seguirá abierta.')
-   setTimeout(()=>{if(video.current){video.current.srcObject=camera;video.current.play().catch(()=>{})}},100)
    interval.current=setInterval(async()=>{
-    if(!video.current||video.current.readyState<2||locked.current||detecting.current)return
+    if(!stream.current?.active){stop();setMessage('La cámara se desconectó. Volvé a abrir el lector.');return}if(!video.current||video.current.readyState<2||locked.current||detecting.current)return
     detecting.current=true
     try{
      const found=await detector.detect(video.current)
