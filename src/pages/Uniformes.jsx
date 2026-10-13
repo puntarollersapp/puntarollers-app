@@ -305,7 +305,27 @@ export default function Uniformes() {
                 />
               </label>
 
-              {!order ? <button type="button" disabled={saving} onClick={sendOrder} className="btn-gold w-full">{saving ? 'Guardando pedido…' : 'Continuar a transferencia'}</button> : <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3"><p className="text-pr-gold font-bold">Pedido registrado · Pendiente de pago</p><p>Importe: <strong>{formatPrice(order.amount)}</strong></p><p>Prex · Claudio Facelli</p><p>Cuenta Prex: <strong>70658</strong></p><p className="text-xs text-white/60">Referencia: {order.orderId}. El pago se verificará antes de confirmar el pedido.</p><a className="btn-gold block text-center" href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola, adjunto comprobante del pedido de uniformes ${order.orderId}, por ${formatPrice(order.amount)}.`)}`} target="_blank" rel="noreferrer">Enviar comprobante por WhatsApp</a></div>
+              {!order ? (
+                <button type="button" disabled={saving} onClick={sendOrder} className="btn-gold w-full">
+                  {saving ? 'Guardando pedido…' : 'Continuar a transferencia'}
+                </button>
+              ) : (
+                <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3 text-white">
+                  <p className="text-pr-gold font-bold">Pedido registrado · Pendiente de pago</p>
+                  <p>Importe: <strong>{formatPrice(order.amount)}</strong></p>
+                  <p>Prex · Claudio Facelli</p>
+                  <p>Cuenta Prex: <strong>70658</strong></p>
+                  <p className="text-xs text-white/60">Referencia: {order.orderId}. El pago se verificará antes de confirmar el pedido.</p>
+                  <a
+                    className="btn-gold block text-center"
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola, adjunto comprobante del pedido de uniformes ' + order.orderId + ', por ' + formatPrice(order.amount) + '.')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Enviar comprobante por WhatsApp
+                  </a>
+                </div>
+              )}
             </>
           )}
         </section>
