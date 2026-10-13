@@ -11,18 +11,18 @@ Deno.serve(async (req) => {
   if (Number(req.headers.get("content-length") || 0) > 8000) return jsonResponse({ error: "too_large" }, 413, headers);
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return jsonResponse({ error: "invalid_json" }, 400, headers); }
-  const string = (key: string, max = 160) => typeof body[key] === "string" ? String(body[key]).trim().slice(0, max) : "";
-  const productId = string("productId", 40);
-  const name = string("name", 120);
-  const email = string("email", 254).toLowerCase();
-  const phone = string("phone", 35);
-  const model = string("model", 100);
-  const color = string("color", 100);
-  const size = string("size", 50);
-  const notes = string("notes", 500);
+  const string = (key: string) => typeof body[key] === "string" ? String(body[key]).trim() : "";
+  const productId = string("productId");
+  const name = string("name");
+  const email = string("email").toLowerCase();
+  const phone = string("phone");
+  const model = string("model");
+  const color = string("color");
+  const size = string("size");
+  const notes = string("notes");
   const quantity = Number(body.quantity);
-  if (!productId || name.length < 3 || !validEmail.test(email) ||
-      phone.length < 6 || !size || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+  if (!productId || productId.length > 100 || name.length < 3 || name.length > 120 || !validEmail.test(email) || email.length > 254 ||
+      phone.length < 6 || phone.length > 35 || model.length > 100 || color.length > 100 || size.length > 50 || notes.length > 500 || !size || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
     return jsonResponse({ error: "invalid_order" }, 400, headers);
   }
   const db = adminClient();
