@@ -23,35 +23,35 @@ export default function PRCheckAdmin(){
  const register=async raw=>{if(locked.current)return;const token=String(raw||'').trim().replace(/^PRCHECK:/i,'');if(!autoMode&&!selected){setMessage('Seleccioná una clase.');return}if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(token)){setMessage('El código no es válido.');return}locked.current=true;setBusy(true);try{const classId=autoMode?await resolve():selected;const {data,error}=await supabase.rpc('pr_check_register',{p_class:classId,p_token:token,p_method:'qr'});if(error)throw error;setMessage((data.already_registered?'Ya estaba registrado: ':'Asistencia registrada: ')+(data.student_name||'Alumno')+' · '+localTime(data.scanned_at));setManual('');await loadRows(classId);await loadStats(month)}catch(e){setMessage('No se registró: '+e.message)}finally{setBusy(false);setTimeout(()=>{locked.current=false},450)}}
  const scan=async()=>{
   if(!autoMode&&!selected){setMessage('Seleccioná una clase.');return}
-  if(!('BarcodeDetector' in window)){setMessage('Este navegador no permite leer QR con la cámara. Probá Chrome actualizado.');return}
   try{
-   const detector=new window.BarcodeDetector({formats:['qr_code']})
+   let detector=null,decodeFrame=null
+   if('BarcodeDetector' in window){try{detector=new window.BarcodeDetector({formats:['qr_code']})}catch(e){detector=null}}
+   if(!detector){
+    const {default:jsQR}=await import('jsqr')
+    const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true})
+    if(!ctx)throw new Error('Este dispositivo no permite procesar la imagen de la cámara.')
+    decodeFrame=(element)=>{const w=element.videoWidth,h=element.videoHeight;if(!w||!h)return null;const scale=Math.min(1,960/Math.max(w,h));canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);ctx.drawImage(element,0,0,canvas.width,canvas.height);const frame=ctx.getImageData(0,0,canvas.width,canvas.height);return jsQR(frame.data,frame.width,frame.height,{inversionAttempts:'attemptBoth'})?.data||null}
+   }
    const camera=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})
    stream.current=camera
    setScanning(true)
    setMessage('Lector listo. Presentá los QR uno por uno; la cámara seguirá abierta.')
    interval.current=setInterval(async()=>{
-    if(!stream.current?.active){stop();setMessage('La cámara se desconectó. Volvé a abrir el lector.');return}if(!video.current||video.current.readyState<2||locked.current||detecting.current)return
+    if(!stream.current?.active){stop();setMessage('La cámara se desconectó. Volvé a abrir el lector.');return}
+    if(!video.current||video.current.readyState<2||locked.current||detecting.current)return
     detecting.current=true
     try{
-     const found=await detector.detect(video.current)
-     const value=found[0]?.rawValue
-     if(value){
-      const now=Date.now()
-      if(lastRead.current.value!==value||now-lastRead.current.at>4500){
-       lastRead.current={value,at:now}
-       await register(value)
-      }
-     }
-    }catch(e){/* transient camera frame error: keep scanning */}
+     const value=detector?(await detector.detect(video.current))[0]?.rawValue:decodeFrame(video.current)
+     if(value){const now=Date.now();if(lastRead.current.value!==value||now-lastRead.current.at>4500){lastRead.current={value,at:now};await register(value)}}
+    }catch(e){/* Error de un fotograma: continuar el escaneo. */}
     finally{detecting.current=false}
    },400)
-  }catch(e){stop();setMessage('No se pudo abrir la cámara: '+e.message)}
+  }catch(e){stop();setMessage('No se pudo abrir el lector: '+e.message)}
  }
  const classify=async()=>{if(!activeAuto?.id||!extraTitle.trim())return;setBusy(true);try{const {error}=await supabase.rpc('pr_check_classify',{p_class:activeAuto.id,p_title:extraTitle.trim(),p_venue:extraVenue,p_audience:extraAudience});if(error)throw error;setActiveAuto(prev=>({...prev,title:extraTitle.trim(),classification_pending:false,venue:extraVenue,audience:extraAudience}));setMessage('Actividad extraordinaria clasificada. Las asistencias se conservaron.');await loadClasses();await loadStats(month)}catch(e){setMessage('No se pudo clasificar: '+e.message)}finally{setBusy(false)}}
  const createClass=async()=>{if(!name.trim()||!when)return;setBusy(true);try{const {data,error}=await supabase.rpc('pr_check_create_class',{p_title:name.trim(),p_starts_at:new Date(when).toISOString(),p_ends_at:new Date(new Date(when).getTime()+3600000).toISOString()});if(error)throw error;setMessage('Clase de prueba creada. No contará en las estadísticas oficiales.');setName('');await loadClasses();setSelected(data)}catch(e){setMessage(e.message)}finally{setBusy(false)}}
  const changeStatus=async status=>{if(!selected)return;setBusy(true);try{const {error}=await supabase.rpc('pr_check_set_class_status',{p_class:selected,p_status:status});if(error)throw error;setMessage('Estado actualizado: '+status);await loadClasses();await loadStats(month)}catch(e){setMessage(e.message)}finally{setBusy(false)}}
- const roster=async()=>{setBusy(true);try{const {data,error}=await supabase.rpc('pr_check_kids_roster');if(error)throw error;const QR=await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm');const result=await Promise.all((data||[]).map(async k=>({...k,qr:await QR.toDataURL('PRCHECK:'+k.qr_token,{width:240,margin:2})})));setKids(result);setMessage(result.length+' credenciales infantiles listas para imprimir.')}catch(e){setMessage(e.message)}finally{setBusy(false)}}
+ const roster=async()=>{setBusy(true);try{const {data,error}=await supabase.rpc('pr_check_kids_roster');if(error)throw error;const QR=await import('qrcode');const result=await Promise.all((data||[]).map(async k=>({...k,qr:await QR.toDataURL('PRCHECK:'+k.qr_token,{width:240,margin:2})})));setKids(result);setMessage(result.length+' credenciales infantiles listas para imprimir.')}catch(e){setMessage(e.message)}finally{setBusy(false)}}
  if(loading||!ready)return <AppLayout title="PR Check"><p className="p-6">Comprobando acceso…</p></AppLayout>
  if(!isStaff(user))return <Navigate to="/app/mi-pr" replace/>
  if(!authorized)return <AppLayout title="PR Check"><p className="p-6">{message||'Acceso no autorizado.'}</p></AppLayout>
