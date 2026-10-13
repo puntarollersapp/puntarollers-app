@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import PublicLayout from '../layouts/PublicLayout'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAnonKey, supabaseUrl } from '../lib/supabase'
 
 const WHATSAPP_NUMBER = '59898971505'
 
@@ -29,6 +29,11 @@ export default function Uniformes() {
   const [talle, setTalle] = useState('')
   const [nombre, setNombre] = useState('')
   const [observacion, setObservacion] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [order, setOrder] = useState(null)
+  const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -67,6 +72,7 @@ export default function Uniformes() {
     setModelo(product.modelos[0] || '')
     setColor(product.colores[0] || '')
     setTalle('')
+    setOrder(null)
 
     setTimeout(() => {
       document
@@ -78,53 +84,31 @@ export default function Uniformes() {
     }, 150)
   }
 
-  function sendOrder() {
-    if (!selected) {
-      window.alert('Elegí primero el uniforme que querés solicitar.')
+  async function sendOrder() {
+    if (!selected || !nombre.trim() || !email.trim() || !phone.trim() || !talle ||
+        (selected.modelos.length > 0 && !modelo) || (selected.colores.length > 0 && !color)) {
+      setErrorMsg('Completá producto, talle, nombre, correo y teléfono para continuar.')
       return
     }
-
-    if (!nombre.trim()) {
-      window.alert('Ingresá tu nombre para continuar.')
-      return
+    setSaving(true)
+    setErrorMsg('')
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/uniform-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+        body: JSON.stringify({
+          productId: selected.id, model: modelo, color, size: talle, quantity,
+          name: nombre.trim(), email: email.trim(), phone: phone.trim(), notes: observacion.trim(),
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.orderId) throw new Error('No pudimos guardar el pedido. Probá nuevamente.')
+      setOrder(result)
+    } catch (error) {
+      setErrorMsg(error.message || 'No pudimos guardar el pedido.')
+    } finally {
+      setSaving(false)
     }
-
-    if (selected.modelos.length > 0 && !modelo) {
-      window.alert('Seleccioná el modelo.')
-      return
-    }
-
-    if (selected.colores.length > 0 && !color) {
-      window.alert('Seleccioná el color.')
-      return
-    }
-
-    if (!talle) {
-      window.alert('Seleccioná el talle.')
-      return
-    }
-
-    const lines = [
-      'Hola, quiero solicitar un uniforme de Punta Rollers.',
-      '',
-      `Producto: ${selected.nombre}`,
-      `Precio: ${formatPrice(selected.precio)}`,
-      modelo ? `Modelo: ${modelo}` : '',
-      color ? `Color: ${color}` : '',
-      `Talle: ${talle}`,
-      `Nombre: ${nombre.trim()}`,
-      observacion.trim()
-        ? `Observaciones: ${observacion.trim()}`
-        : '',
-      '',
-      'Entiendo que el pedido debe abonarse para confirmarlo y que recibiré los datos de transferencia por este medio.',
-    ].filter(Boolean)
-
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-      lines.join('\n')
-    )}`
-
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -136,8 +120,7 @@ export default function Uniformes() {
             👕 Uniformes PR
           </h1>
           <p className="text-gray-400 text-sm max-w-sm mx-auto">
-            Elegí tu uniforme oficial de Punta Rollers y envianos el
-            pedido directamente por WhatsApp.
+            Elegí tu uniforme oficial y registrá tu pedido sin iniciar sesión.
           </p>
         </section>
 
@@ -157,9 +140,7 @@ export default function Uniformes() {
               Pedidos con pago previo
             </p>
             <p className="text-white/45 text-xs mt-1 leading-relaxed">
-              Después de enviar el pedido por WhatsApp recibirás los
-              datos de transferencia. El uniforme se encarga una vez
-              confirmado el pago.
+              Al finalizar verás los datos de transferencia. El pedido queda pendiente hasta verificar el pago.
             </p>
           </div>
         </section>
@@ -307,6 +288,10 @@ export default function Uniformes() {
                 />
               </label>
 
+              <label className="block"><span className="text-white/40 text-xs">Correo electrónico</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Teléfono</span><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Cantidad</span><input type="number" min="1" max="20" value={quantity} onChange={e => setQuantity(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <p className="text-pr-gold font-bold">Total: {formatPrice(Number(selected.precio) * quantity)}</p>
               <label className="block">
                 <span className="text-white/40 text-xs">
                   Observaciones
@@ -322,13 +307,7 @@ export default function Uniformes() {
                 />
               </label>
 
-              <button
-                type="button"
-                onClick={sendOrder}
-                className="btn-gold w-full"
-              >
-                Solicitar por WhatsApp
-              </button>
+              {!order ? <button type="button" disabled={saving} onClick={sendOrder} className="btn-gold w-full">{saving ? 'Guardando pedido…' : 'Continuar a transferencia'}</button> : <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3"><p className="text-pr-gold font-bold">Pedido registrado · Pendiente de pago</p><p>Importe: <strong>{formatPrice(order.amount)}</strong></p><p>Prex · Claudio Facelli</p><p>Cuenta Prex: <strong>70658</strong></p><p className="text-xs text-white/60">Referencia: {order.orderId}. El pago se verificará antes de confirmar el pedido.</p><a className="btn-gold block text-center" href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola, adjunto comprobante del pedido de uniformes ${order.orderId}, por ${formatPrice(order.amount)}.`)}`} target="_blank" rel="noreferrer">Enviar comprobante por WhatsApp</a></div>
             </>
           )}
         </section>
