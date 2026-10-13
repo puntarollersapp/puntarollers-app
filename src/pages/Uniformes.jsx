@@ -38,6 +38,7 @@ export default function Uniformes() {
   const [startingPayment, setStartingPayment] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
+  const [paymentReturned, setPaymentReturned] = useState(false)
 
   async function loadProducts() {
     setLoading(true)
@@ -62,6 +63,8 @@ export default function Uniformes() {
 
   useEffect(() => {
     loadProducts()
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') === 'return') setPaymentReturned(true)
   }, [])
 
   const selected = useMemo(
@@ -177,6 +180,14 @@ export default function Uniformes() {
         {loading && (
           <div className="glass rounded-2xl p-4 text-white/45 text-sm">
             Cargando uniformes...
+          </div>
+        )}
+
+        {paymentReturned && (
+          <div className="rounded-2xl border border-pr-gold/30 p-4 text-sm text-white space-y-2">
+            <p className="font-semibold text-pr-gold">Volviste de Mercado Pago</p>
+            <p>El pago todavía debe confirmarse automáticamente. No hagas una segunda transferencia ni un nuevo pedido hasta verificarlo con Punta Rollers.</p>
+            <a className="underline" href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola, quiero consultar la confirmación de mi pago de uniformes.')}`} target="_blank" rel="noreferrer">Consultar estado por WhatsApp</a>
           </div>
         )}
 
@@ -334,7 +345,7 @@ export default function Uniformes() {
 
               {!order ? (
                 <button type="button" disabled={saving} onClick={sendOrder} className="btn-gold w-full">
-                  {saving ? 'Guardando pedido…' : 'Continuar a transferencia'}
+                  {saving ? 'Guardando pedido…' : 'Registrar pedido y elegir pago'}
                 </button>
               ) : (
                 <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3 text-white">
