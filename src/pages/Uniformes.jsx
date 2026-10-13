@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import PublicLayout from '../layouts/PublicLayout'
 import { supabase, supabaseAnonKey, supabaseUrl } from '../lib/supabase'
 
@@ -22,6 +22,7 @@ function normalizeProduct(product) {
 }
 
 export default function Uniformes() {
+  const requestRef = useRef({ fingerprint: '', key: '' })
   const [productos, setProductos] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [modelo, setModelo] = useState('')
@@ -95,13 +96,18 @@ export default function Uniformes() {
     setSaving(true)
     setErrorMsg('')
     try {
+      const payload = {
+        productId: selected.id, model: modelo, color, size: talle, quantity,
+        name: nombre.trim(), email: email.trim(), phone: phone.trim(), notes: observacion.trim(),
+      }
+      const fingerprint = JSON.stringify(payload)
+      if (requestRef.current.fingerprint !== fingerprint) {
+        requestRef.current = { fingerprint, key: crypto.randomUUID() }
+      }
       const response = await fetch(`${supabaseUrl}/functions/v1/uniform-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
-        body: JSON.stringify({
-          productId: selected.id, model: modelo, color, size: talle, quantity,
-          name: nombre.trim(), email: email.trim(), phone: phone.trim(), notes: observacion.trim(),
-        }),
+        body: JSON.stringify({ ...payload, requestKey: requestRef.current.key }),
       })
       const result = await response.json()
       if (!response.ok || !result.orderId) throw new Error('No pudimos guardar el pedido. Probá nuevamente.')
