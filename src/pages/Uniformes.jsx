@@ -35,6 +35,7 @@ export default function Uniformes() {
   const [quantity, setQuantity] = useState(1)
   const [order, setOrder] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [startingPayment, setStartingPayment] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -116,6 +117,26 @@ export default function Uniformes() {
       setErrorMsg(error.message || 'No pudimos guardar el pedido.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function startMercadoPago() {
+    if (!order?.orderId || startingPayment) return
+    setStartingPayment(true)
+    setErrorMsg('')
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/uniform-mp-preference`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+        body: JSON.stringify({ orderId: order.orderId, requestKey: requestRef.current.key }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.checkoutUrl) throw new Error('Mercado Pago no está disponible para este pedido. Contactanos antes de volver a intentar.')
+      window.location.assign(result.checkoutUrl)
+    } catch (error) {
+      setErrorMsg(error.message || 'No se pudo iniciar el pago.')
+    } finally {
+      setStartingPayment(false)
     }
   }
 
@@ -319,6 +340,10 @@ export default function Uniformes() {
                 <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3 text-white">
                   <p className="text-pr-gold font-bold">Pedido registrado · Pendiente de pago</p>
                   <p>Importe: <strong>{formatPrice(order.amount)}</strong></p>
+                  <button type="button" disabled={startingPayment} onClick={startMercadoPago} className="btn-gold w-full">
+                    {startingPayment ? 'Conectando con Mercado Pago…' : 'Pagar con Mercado Pago'}
+                  </button>
+                  <p className="text-xs text-white/60">O realizá una transferencia:</p>
                   <p>Prex · Claudio Facelli</p>
                   <p>Cuenta Prex: <strong>70658</strong></p>
                   <p className="text-xs text-white/60">Referencia: {order.orderId}. El pago se verificará antes de confirmar el pedido.</p>
