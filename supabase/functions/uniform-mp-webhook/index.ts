@@ -20,7 +20,7 @@ async function signed(id: string, requestId: string, header: string, secret: str
 Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
   const url = new URL(req.url);
-  const paymentId = url.searchParams.get("data.id");
+  const paymentId = url.searchParams.get("data.id") || url.searchParams.get("id");
   const type = url.searchParams.get("type");
   if (type && type !== "payment") return jsonResponse({ ok: true, ignored: true });
   if (!paymentId || !/^\d{1,30}$/.test(paymentId)) return jsonResponse({ error: "invalid_payment_id" }, 400);
@@ -45,10 +45,12 @@ Deno.serve(async (req) => {
   const { data: order, error } = await db.from("pr_uniform_orders").select("*").eq("id", ref).maybeSingle();
   if (error) return jsonResponse({ error: "order_lookup_failed" }, 500);
   if (!order || !order.provider_preference_id) return jsonResponse({ ok: true, ignored: true });
+  if (order.provider_payment_id && String(order.provider_payment_id) !== String(payment.id)) return jsonResponse({ error: "different_payment_for_order" }, 409);
   if (payment.currency_id !== "UYU" || Math.abs(Number(payment.transaction_amount) - Number(order.total)) >= 0.01) return jsonResponse({ error: "payment_mismatch" }, 409);
   const status = payment.status;
   if (!["approved", "rejected", "refunded"].includes(String(status))) return jsonResponse({ ok: true, pending: true });
   if (order.payment_status === "approved" && status !== "refunded") return jsonResponse({ ok: true, alreadyProcessed: true });
+  if (order.payment_status === "refunded") return jsonResponse({ ok: true, alreadyProcessed: true });
   const { error: updateError } = await db.from("pr_uniform_orders").update({
     payment_status: status,
     provider_payment_id: String(payment.id),
