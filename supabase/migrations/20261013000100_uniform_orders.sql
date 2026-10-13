@@ -19,7 +19,7 @@ create table if not exists public.pr_uniform_orders (
   provider_payment_id text unique,
   provider_preference_id text,
   paid_at timestamptz,
-  constraint pr_uniform_orders_total_check check (total = unit_price * quantity)
+  check (total = unit_price * quantity)
 );
 create index if not exists pr_uniform_orders_created_idx on public.pr_uniform_orders (created_at desc);
 create index if not exists pr_uniform_orders_status_idx on public.pr_uniform_orders (payment_status);
