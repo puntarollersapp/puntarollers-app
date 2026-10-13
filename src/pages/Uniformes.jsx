@@ -73,6 +73,8 @@ export default function Uniformes() {
     setColor(product.colores[0] || '')
     setTalle('')
     setOrder(null)
+    setErrorMsg('')
+    setQuantity(1)
 
     setTimeout(() => {
       document
@@ -157,7 +159,7 @@ export default function Uniformes() {
           </div>
         )}
 
-        {!loading && !errorMsg && (
+        {!loading && (
           <section className="space-y-4">
             <p className="section-label">
               Elegí el producto
@@ -254,7 +256,7 @@ export default function Uniformes() {
                   label="Modelo"
                   options={selected.modelos}
                   value={modelo}
-                  onChange={setModelo}
+                  onChange={(value) => { setModelo(value); setOrder(null) }}
                 />
               )}
 
@@ -263,7 +265,7 @@ export default function Uniformes() {
                   label="Color"
                   options={selected.colores}
                   value={color}
-                  onChange={setColor}
+                  onChange={(value) => { setColor(value); setOrder(null) }}
                 />
               )}
 
@@ -271,7 +273,7 @@ export default function Uniformes() {
                 label="Talle"
                 options={selected.talles}
                 value={talle}
-                onChange={setTalle}
+                onChange={(value) => { setTalle(value); setOrder(null) }}
               />
 
               <label className="block">
@@ -280,17 +282,15 @@ export default function Uniformes() {
                 </span>
                 <input
                   value={nombre}
-                  onChange={(event) =>
-                    setNombre(event.target.value)
-                  }
+                  onChange={(event) => { setNombre(event.target.value); setOrder(null) }}
                   className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none"
                   placeholder="Tu nombre"
                 />
               </label>
 
-              <label className="block"><span className="text-white/40 text-xs">Correo electrónico</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
-              <label className="block"><span className="text-white/40 text-xs">Teléfono</span><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
-              <label className="block"><span className="text-white/40 text-xs">Cantidad</span><input type="number" min="1" max="20" value={quantity} onChange={e => setQuantity(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Correo electrónico</span><input type="email" value={email} onChange={e => { setEmail(e.target.value); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Teléfono</span><input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Cantidad</span><input type="number" min="1" max="20" value={quantity} onChange={e => { setQuantity(Math.max(1, Math.min(20, Number(e.target.value) || 1))); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
               <p className="text-pr-gold font-bold">Total: {formatPrice(Number(selected.precio) * quantity)}</p>
               <label className="block">
                 <span className="text-white/40 text-xs">
@@ -298,9 +298,7 @@ export default function Uniformes() {
                 </span>
                 <textarea
                   value={observacion}
-                  onChange={(event) =>
-                    setObservacion(event.target.value)
-                  }
+                  onChange={(event) => { setObservacion(event.target.value); setOrder(null) }}
                   rows="3"
                   className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none resize-none"
                   placeholder="Alguna consulta o detalle del pedido"
