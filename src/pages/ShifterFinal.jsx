@@ -14,6 +14,7 @@ export default function ShifterFinal() {
   const { user } = useAuth()
   const [coaches, setCoaches] = useState([])
   const [takes, setTakes] = useState([])
+  const [feedback, setFeedback] = useState([])
   const [tasks, setTasks] = useState([])
   const [results, setResults] = useState([])
   const [enrollment, setEnrollment] = useState(null)
@@ -31,11 +32,13 @@ export default function ShifterFinal() {
         supabase.from('pr_training_tasks').select('*').eq('event_slug', event).eq('active', true),
         supabase.from('pr_training_task_results').select('*').eq('profile_id', user.id),
         supabase.from('pr_inline_skate_activities').select('distancia_metros').eq('alumno_id', user.id).eq('fuente', 'strava').eq('eliminada', false).limit(1000),
+        supabase.from('pr_performance_notes').select('id,body,visibility,created_at').eq('profile_id', user.id).eq('visibility', 'student').order('created_at', { ascending: false }),
       ])
       if (!alive) return
       if (queries.some(x => x.error)) setError('Algunos datos no están disponibles. No se modificó ningún registro.')
       setTakes(queries[0].data || [])
-      const coachResponse = await supabase.from('profiles').select('id,nombre,apellido,foto_url,avatar_url,role,es_profesor').or('nombre.ilike.%Claudio%,nombre.ilike.%David%').limit(30)
+      setFeedback(queries[5].data || [])
+      const coachResponse = await supabase.from('profiles').select('id,nombre,apellido,foto,role,es_profesor').or('nombre.ilike.%Claudio%,nombre.ilike.%David%').limit(30)
       if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['Claudio','David'].some(name => String(p.nombre || '').toLowerCase() === name.toLowerCase()) && (p.es_profesor || ['admin','profesor'].includes(p.role))))
       setEnrollment(queries[1].data || null)
       setTasks(queries[2].data || [])
@@ -84,6 +87,14 @@ export default function ShifterFinal() {
       </> : <p className="mt-3 text-sm text-white/50">Todavía no hay tomas registradas para esta distancia.</p>}
       <p className="mt-4 text-sm leading-6 text-white/75">{report.message}</p>
     </section>)}
+    <section className="rounded-[28px] border border-orange-300/20 bg-[#171116] p-5">
+      <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">Tus devoluciones</p>
+      <h2 className="mt-2 text-xl font-black">Lo que fuimos observando</h2>
+      {takes.filter(t => t.devolucion && t.eliminado !== true).length === 0 && feedback.length === 0 ? <p className="mt-3 text-sm text-white/55">Todavía no hay devoluciones registradas en tu perfil.</p> : <div className="mt-4 space-y-3">
+        {takes.filter(t => t.devolucion && t.eliminado !== true).map((t,i) => <div key={t.id || i} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[10px] font-bold text-orange-200">Toma {t.numero_toma || i+1}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">{t.devolucion}</p></div>)}
+        {feedback.map(n => <div key={n.id} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[10px] font-bold text-violet-300">Devolución del entrenador</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">{n.body}</p></div>)}
+      </div>}
+    </section>
     <section className="rounded-[28px] border border-emerald-400/20 bg-[#0b1916] p-5">
       <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Deberes de preparación</p>
       <h2 className="mt-2 text-2xl font-black">{assigned.length ? `${completed} de ${assigned.length} completados` : 'Sin deberes asignados'}</h2>
