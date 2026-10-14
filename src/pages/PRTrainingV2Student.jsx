@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import PRTrainingV2Evidence from '../components/training/PRTrainingV2Evidence'
+import PRTrainingV2Spin from '../components/training/PRTrainingV2Spin'
 
 const monthNow = () => {
  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date())
@@ -24,10 +25,12 @@ export default function PRTrainingV2Student({profileId}) {
  }
  useEffect(()=>{load()},[])
  async function discover(){
+  if(discovering)return
   setDiscovering(true)
   const {data,error:e}=await supabase.rpc('pr_training_v2_discover_spin',{p_month:monthNow()})
-  if(e){setError(e.message);setDiscovering(false);return}
-  if(data?.spin_discovered){setDone(true);await load()}
+  if(e)setError(e.message)
+  else if(data?.spin_discovered){setDone(true);await load()}
+  else setError('No se pudo guardar el descubrimiento.')
   setDiscovering(false)
  }
  const duties=cycle?.duties||[]
@@ -37,7 +40,7 @@ export default function PRTrainingV2Student({profileId}) {
   <h2 className="text-2xl font-black">Mis deberes</h2>
   {cycle?.status==='ready'&&<p className="mt-2 text-sm text-[#BBFF1F]">{submitted} de 6 enviados · {approved} aprobados</p>}
   {loading?<p className="mt-3 text-sm">Cargando…</p>:error?<p role="alert" className="mt-3 text-sm text-[#FF0055]">{error}</p>:cycle?.status==='ready'?<>
-   {!cycle.spin_discovered&&!done?<div className="mt-5 rounded-2xl bg-white/5 p-5"><p className="text-sm">Tus seis deberes del mes ya están preparados.</p><button type="button" onClick={discover} disabled={discovering} className="mt-3 rounded-full bg-[#BBFF1F] px-5 py-3 font-bold text-[#0D0303]">{discovering?'Preparando…':'Descubrir mis deberes'}</button></div>:<div className="mt-4 space-y-3">{duties.map(d=><article key={d.slot} className="rounded-2xl border border-white/10 p-4"><button type="button" onClick={()=>setExpanded(expanded===d.slot?null:d.slot)} className="flex w-full items-center justify-between text-left font-bold"><span>{d.slot}. {d.title} {d.latest_status==='approved'?'✓':d.latest_status==='returned'?'· Corregir':d.latest_status?'· Enviado':''}</span><span>{expanded===d.slot?'−':'+'}</span></button>{expanded===d.slot&&<div className="mt-4"><p className="whitespace-pre-line text-sm text-white/70">{d.instructions}</p>{d.evidence_type==='strava'?<p className="mt-4 text-xs text-white/50">Este deber se verifica con Strava.</p> :d.assignment_duty_id?<PRTrainingV2Evidence profileId={profileId} assignmentDutyId={d.assignment_duty_id} onSubmitted={load}/>:<p className="mt-4 text-xs text-white/50">El envío estará disponible cuando se complete la conexión con la asignación.</p>}</div>}</article>)}</div>}
+   {!cycle.spin_discovered&&!done?<PRTrainingV2Spin duties={duties} onComplete={discover}/>:<div className="mt-4 space-y-3">{duties.map(d=><article key={d.slot} className="rounded-2xl border border-white/10 p-4"><button type="button" onClick={()=>setExpanded(expanded===d.slot?null:d.slot)} className="flex w-full items-center justify-between text-left font-bold"><span>{d.slot}. {d.title} {d.latest_status==='approved'?'✓':d.latest_status==='returned'?'· Corregir':d.latest_status?'· Enviado':''}</span><span>{expanded===d.slot?'−':'+'}</span></button>{expanded===d.slot&&<div className="mt-4"><p className="whitespace-pre-line text-sm text-white/70">{d.instructions}</p>{d.evidence_type==='strava'?<p className="mt-4 text-xs text-white/50">Este deber se verifica con Strava.</p> :d.assignment_duty_id?<PRTrainingV2Evidence profileId={profileId} assignmentDutyId={d.assignment_duty_id} onSubmitted={load}/>:<p className="mt-4 text-xs text-white/50">El envío estará disponible cuando se complete la conexión con la asignación.</p>}</div>}</article>)}</div>}
   </>:<p className="mt-4 text-sm text-white/60">{cycle?.status==='needs_review'?'Estamos preparando tus deberes.':'Todavía no hay un ciclo disponible.'}</p>}
  </section>
 }
