@@ -147,12 +147,24 @@ export default function Uniformes() {
   return (
     <PublicLayout>
       <div className="px-4 py-6 space-y-8">
-        <section className="text-center space-y-3">
-          <p className="section-label">Tienda oficial</p>
+        <style>{`
+          @keyframes uniformGlow { 0%,100% { transform: translate3d(-5%,0,0) scale(1); opacity:.46 } 50% { transform:translate3d(9%,4%,0) scale(1.14); opacity:.72 } }
+          @keyframes uniformReveal { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+          .uniform-hero { position:relative; overflow:hidden; isolation:isolate; background:linear-gradient(135deg,#15131c 0%,#0c0c10 60%,#1d0b2d 100%); border:1px solid rgba(129,22,224,.34); border-radius:28px; padding:32px 18px; animation:uniformReveal .65s ease both }
+          .uniform-hero::before { content:''; position:absolute; z-index:-1; width:70%; aspect-ratio:1; right:-20%; top:-100%; background:radial-gradient(circle,#8116e0 0%,transparent 68%); filter:blur(24px); animation:uniformGlow 8s ease-in-out infinite alternate; pointer-events:none }
+          .uniform-accent { color:#d0ff00 }
+          .uniform-product { transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease }
+          .uniform-product:active { transform:scale(.985) }
+          .uniform-product:focus-visible { outline:2px solid #d0ff00; outline-offset:3px }
+          .uniform-order-panel { border:1px solid rgba(129,22,224,.3); background:linear-gradient(145deg,rgba(129,22,224,.075),rgba(13,13,17,.95) 45%) }
+          @media (prefers-reduced-motion:reduce) { .uniform-hero,.uniform-hero::before { animation:none!important } .uniform-product { transition:none } }
+        `}</style>
+        <section className="uniform-hero text-center space-y-3">
+          <p className="section-label uniform-accent">PUNTA ROLLERS / TIENDA OFICIAL</p>
           <h1 className="text-3xl font-bold text-white">
-            👕 Uniformes PR
+            Uniformes <span className="uniform-accent">PR</span>
           </h1>
-          <p className="text-gray-400 text-sm max-w-sm mx-auto">
+          <p className="text-gray-300 text-sm max-w-sm mx-auto">
             Elegí tu uniforme oficial y registrá tu pedido sin iniciar sesión.
           </p>
         </section>
@@ -213,7 +225,7 @@ export default function Uniformes() {
                     key={product.id}
                     type="button"
                     onClick={() => selectProduct(product)}
-                    className={`w-full glass rounded-3xl overflow-hidden text-left border transition-all ${
+                    className={`uniform-product w-full glass rounded-3xl overflow-hidden text-left border transition-all ${
                       active
                         ? 'border-pr-gold shadow-[0_0_0_1px_rgba(201,168,76,0.2)]'
                         : 'border-white/10'
@@ -261,7 +273,7 @@ export default function Uniformes() {
 
         <section
           id="formulario-pedido"
-          className="glass rounded-3xl p-5 space-y-4 scroll-mt-24"
+          className="uniform-order-panel rounded-3xl p-5 space-y-4 scroll-mt-24"
         >
           <div>
             <p className="section-label">
