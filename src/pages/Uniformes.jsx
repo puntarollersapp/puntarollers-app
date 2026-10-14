@@ -209,6 +209,13 @@ export default function Uniformes() {
           </div>
         )}
 
+        {!selected && (
+          <section className="uniform-order-panel rounded-3xl px-5 py-5 text-center space-y-2">
+            <p className="text-[#d0ff00] text-[11px] font-bold tracking-[.18em]">TU PEDIDO</p>
+            <h2 className="text-white text-xl font-bold">Seleccioná un uniforme</h2>
+            <p className="text-white/60 text-sm leading-relaxed max-w-sm mx-auto">Elegí una prenda para ver los talles y completar tu pedido.</p>
+          </section>
+        )}
         {!loading && (
           <section className="space-y-5">
             <div className="flex items-end justify-between gap-3">
@@ -229,7 +236,7 @@ export default function Uniformes() {
           </section>
         )}
 
-        <section
+        {selected && <section
           id="formulario-pedido"
           className="uniform-order-panel rounded-3xl p-5 space-y-4 scroll-mt-24"
         >
@@ -341,23 +348,23 @@ export default function Uniformes() {
               )}
             </>
           )}
-        </section>
+        </section>}
 
-        <section className="grid grid-cols-1 gap-3">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Benefit
-            icon="🔥"
-            title="Identidad"
-            text="Representás a Punta Rollers dentro y fuera de la pista."
+            icon="✦"
+            title="Somos PR"
+            text="Una misma comunidad, dentro y fuera de la pista."
           />
           <Benefit
-            icon="🛼"
-            title="Comodidad"
-            text="Prendas pensadas para acompañarte en los entrenamientos."
+            icon="↗"
+            title="Para moverte"
+            text="Elegí tu prenda para entrenar y salir a patinar."
           />
           <Benefit
-            icon="📸"
-            title="Presencia"
-            text="Uniformes oficiales para fotos, eventos y salidas."
+            icon="◈"
+            title="Estilo PR"
+            text="Los colores de nuestra escuela, también fuera de clase."
           />
         </section>
       </div>
@@ -412,13 +419,10 @@ function OptionGroup({ label, options, value, onChange }) {
 
 function Benefit({ icon, title, text }) {
   return (
-    <div className="glass p-4 rounded-2xl">
-      <p className="text-white font-semibold">
-        {icon} {title}
-      </p>
-      <p className="text-gray-400 text-xs mt-1">
-        {text}
-      </p>
+    <div className="rounded-2xl border border-[#8116e0]/30 bg-gradient-to-b from-[#8116e0]/10 to-[#0d0b12] px-4 py-5 text-center flex flex-col items-center gap-2">
+      <span aria-hidden="true" className="text-[#d0ff00] text-2xl leading-none">{icon}</span>
+      <p className="text-white font-bold text-base">{title}</p>
+      <p className="text-white/60 text-xs leading-relaxed max-w-[220px]">{text}</p>
     </div>
   )
 }
