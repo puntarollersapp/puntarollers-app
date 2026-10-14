@@ -19,6 +19,7 @@ export default function ShifterFinal() {
   const [results, setResults] = useState([])
   const [enrollment, setEnrollment] = useState(null)
   const [activity, setActivity] = useState([])
+  const [feedback, setFeedback] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function ShifterFinal() {
         supabase.from('pr_training_tasks').select('*').eq('event_slug', event).eq('active', true),
         supabase.from('pr_training_task_results').select('*').eq('profile_id', user.id),
         supabase.from('pr_inline_skate_activities').select('distancia_metros').eq('alumno_id', user.id).eq('fuente', 'strava').eq('eliminada', false).limit(1000),
+        supabase.from('pr_performance_notes').select('id,body,visibility,created_at').eq('profile_id', user.id).eq('visibility','student').order('created_at',{ascending:false}).limit(100),
         supabase.from('pr_performance_notes').select('id,body,visibility,created_at').eq('profile_id', user.id).eq('visibility', 'student').order('created_at', { ascending: false }),
       ])
       if (!alive) return
@@ -44,6 +46,7 @@ export default function ShifterFinal() {
       setTasks(queries[2].data || [])
       setResults(queries[3].data || [])
       setActivity(queries[4].data || [])
+      setFeedback(queries[5].data || [])
       setLoading(false)
     }
     load()
@@ -83,10 +86,18 @@ export default function ShifterFinal() {
       {report.count ? <><div className="mt-4 space-y-3">{report.rows.map((row, i) => <div key={row.id || i} className="flex items-center justify-between border-b border-white/10 pb-2 text-sm"><span className="text-white/60">{row.date || 'Sin fecha'} · Toma {row.takeNumber || i + 1}</span><strong>{row.formattedTime}</strong></div>)}</div>
       <div className="mt-4 flex h-28 items-end gap-2" aria-label="Gráfica de tiempos por toma">{report.rows.map((row,i) => {const values=report.rows.map(r=>r.seconds), min=Math.min(...values),max=Math.max(...values);return <div key={row.id||i} className="flex flex-1 flex-col items-center gap-1"><span className="text-[9px] text-white/50">{row.formattedTime}</span><div className="w-full rounded-t-md bg-gradient-to-t from-violet-700 to-orange-400" style={{height:`${25+((row.seconds-min)/(max-min||1))*55}px`}}/><span className="text-[9px] text-white/50">T{i+1}</span></div>})}</div>
       <p className="mt-3 text-xs text-white/55">Mejor marca: {report.bestSeconds == null ? '—' : report.rows.find(r=>r.seconds===report.bestSeconds)?.formattedTime} · {report.finalRecorded ? 'Toma final registrada' : 'Esperando la toma final'}</p>
-      {report.hasComparison && <p className="mt-1 text-xs text-orange-200">Variación primera–última: {report.changePercent.toFixed(1)}%</p>}
+      {report.hasComparison && <p className="mt-1 text-xs text-orange-200">{report.differenceSeconds > 0 ? 'Mejoraste respecto a tu primera toma' : report.differenceSeconds < 0 ? 'Diferencia respecto a tu primera toma' : 'Misma marca que tu primera toma'}: {Math.abs(report.changePercent).toFixed(1)}%</p>}
       </> : <p className="mt-3 text-sm text-white/50">Todavía no hay tomas registradas para esta distancia.</p>}
       <p className="mt-4 text-sm leading-6 text-white/75">{report.message}</p>
     </section>)}
+    <section className="rounded-[28px] border border-orange-300/20 bg-[#171116] p-5">
+      <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">Tus devoluciones</p>
+      <h2 className="mt-2 text-xl font-black">Lo que fuimos observando</h2>
+      {takes.filter(t => t.devolucion && t.eliminado !== true).length === 0 && feedback.length === 0 ? <p className="mt-3 text-sm text-white/55">Todavía no hay devoluciones registradas en tu perfil.</p> : <div className="mt-4 space-y-3">
+        {takes.filter(t => t.devolucion && t.eliminado !== true).map((t,i) => <div key={t.id || i} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[10px] font-bold text-orange-200">Toma {t.numero_toma || i+1}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">{t.devolucion}</p></div>)}
+        {feedback.map(n => <div key={n.id} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[10px] font-bold text-violet-300">Devolución del entrenador</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">{n.body}</p></div>)}
+      </div>}
+    </section>
     <section className="rounded-[28px] border border-orange-300/20 bg-[#171116] p-5">
       <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">Tus devoluciones</p>
       <h2 className="mt-2 text-xl font-black">Lo que fuimos observando</h2>
