@@ -77,7 +77,7 @@ function SpinWheel() {
 }
 function TrainingAdminControls(){
  const [overview,setOverview]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(false)
- const [profileId,setProfileId]=useState(''),[level,setLevel]=useState('B1'),[message,setMessage]=useState('')
+ const [profileId,setProfileId]=useState(''),[level,setLevel]=useState('B1'),[message,setMessage]=useState(''),[dutyMessage,setDutyMessage]=useState('')
  async function refresh(){
   setLoading(true);setError('')
   const {data,error:e}=await supabase.rpc('pr_training_v2_admin_overview')
@@ -85,6 +85,18 @@ function TrainingAdminControls(){
   setLoading(false)
  }
  useEffect(()=>{refresh()},[])
+ async function updateDuty(d, field){
+  setDutyMessage('')
+  const nextDemo=field==='demo'? !d.demo_ready : d.demo_ready
+  const nextActive=field==='active'? !d.active : d.active
+  if(nextActive&&!nextDemo&&(d.requires_demo!==false)){
+   setDutyMessage('Verificá el video demostrativo antes de activar el deber.')
+   return
+  }
+  const {error:e}=await supabase.rpc('pr_training_v2_admin_set_duty_readiness',{p_code:d.code,p_demo_ready:nextDemo,p_active:nextActive})
+  if(e)setDutyMessage(e.message)
+  else refresh()
+ }
  async function saveLevel(e){
   e.preventDefault();setMessage('')
   if(!profileId.trim())return
@@ -97,7 +109,8 @@ function TrainingAdminControls(){
   {error&&<p role="alert" className="mt-4 text-sm text-[#FF8DAF]">{error}</p>}
   {overview&&<><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Deberes',overview.catalog?.length||0],['Videos listos',overview.catalog?.filter(d=>d.demo_ready).length||0],['Incidencias',overview.incidents?.length||0],['Niveles asignados',overview.levels?.length||0]].map(([label,value])=><div key={label} className="rounded-xl bg-white/5 p-3"><p className="text-2xl font-black text-[#BBFF1F]">{value}</p><p className="text-xs text-white/50">{label}</p></div>)}</div>
   <div className="mt-4 space-y-2">{overview.cycles?.map(c=><div key={c.month} className="flex justify-between gap-3 rounded-xl bg-white/5 p-3 text-sm"><span>{c.month}</span><span className={c.visible&&c.assignments_enabled?'text-[#BBFF1F]':'text-white/50'}>{c.visible&&c.assignments_enabled?'Habilitado':'Oculto / bloqueado'}</span></div>)}</div>
-  <h3 className="mt-5 text-sm font-black">Catálogo real</h3><div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-white/10">{overview.catalog?.map(d=><div key={d.code} className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 text-xs"><span><b className="text-[#BBFF1F]">{d.code}</b> · {d.title}</span><span className="shrink-0 text-white/45">{d.active?'Activo':'Pendiente'}</span></div>)}</div>
+  <h3 className="mt-5 text-sm font-black">Catálogo real</h3><div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-white/10">{overview.catalog?.map(d=><div key={d.code} className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 text-xs"><span><b className="text-[#BBFF1F]">{d.code}</b> · {d.title}</span><span className="flex shrink-0 gap-1"><button type="button" onClick={()=>updateDuty(d,'demo')} className={`rounded-md border px-2 py-1 ${d.demo_ready?'border-[#BBFF1F] text-[#BBFF1F]':'border-white/20 text-white/50'}`} title="Confirmar que el video demostrativo está cargado y validado">{d.demo_ready?'Demo ✓':'Demo pendiente'}</button><button type="button" onClick={()=>updateDuty(d,'active')} className={`rounded-md border px-2 py-1 ${d.active?'border-[#BBFF1F] text-[#BBFF1F]':'border-white/20 text-white/50'}`}>{d.active?'Activo':'Inactivo'}</button></span></div>)}</div>
+  {dutyMessage&&<p role="alert" className="mt-2 text-xs text-[#FF8DAF]">{dutyMessage}</p>}
   {overview.incidents?.length>0&&<div className="mt-4"><h3 className="text-sm font-black text-[#FF8DAF]">Incidencias</h3>{overview.incidents.map(i=><p key={i.id} className="mt-2 text-xs text-white/65">{i.profile_id} · {i.code}</p>)}</div>}
   <form onSubmit={saveLevel} className="mt-5 space-y-3 rounded-xl bg-white/5 p-4"><h3 className="text-sm font-black">Asignar nivel a un alumno</h3><p className="text-xs text-white/50">Para alumnos nuevos el nivel inicial es B1. Este cambio solo afecta futuras asignaciones; no modifica deberes ya guardados.</p><input value={profileId} onChange={e=>setProfileId(e.target.value)} placeholder="ID exacto del perfil" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-3 text-sm text-white" required/><select value={level} onChange={e=>setLevel(e.target.value)} className="w-full rounded-lg border border-white/15 bg-[#222328] px-3 py-3 text-sm">{['B1','B2','B3'].map(v=><option key={v} value={v}>{v}</option>)}</select><button className="rounded-full bg-[#BBFF1F] px-5 py-3 text-xs font-black text-[#0D0303]">Guardar nivel</button>{message&&<p role="status" className="text-xs">{message}</p>}</form></>}
  </section>
