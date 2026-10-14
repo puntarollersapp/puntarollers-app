@@ -1,0 +1,60 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+
+const tasks=[
+ ['Control y equilibrio','Dominio del patín y estabilidad','TÉCNICA'],
+ ['Frenada en T','10 repeticiones · grabar las últimas 2','CONTROL'],
+ ['Técnica de giro','Giros controlados y postura','TÉCNICA'],
+ ['Resistencia','Entrenamiento registrado','FONDO'],
+ ['Patinaje hacia atrás','Control y desplazamiento','HABILIDAD'],
+ ['Precisión y postura','Trabajo de coordinación','CONTROL'],
+]
+const tones=['#C4FF24','#45E8CE','#FF3C81','#C4FF24','#45E8CE','#FF3C81']
+const panel={background:'linear-gradient(145deg,#27262E,#1A1A21)',border:'1px solid rgba(255,255,255,.12)'}
+const days=['L','M','M','J','V','S','D']
+function Donut(){return <div className="relative grid h-[132px] w-[132px] shrink-0 place-items-center rounded-full p-[9px]" style={{background:'conic-gradient(#BFFF24 0deg,#51515B 0deg)'}}><div className="grid h-full w-full place-items-center rounded-full bg-[#222229]"><div className="text-center"><div className="text-[39px] font-black tracking-tighter text-white">0<span className="text-xl text-[#BFFF24]">%</span></div><div className="text-[9px] font-bold tracking-widest text-white/55">COMPLETADO</div></div></div></div>}
+function Calendar(){return <div className="grid grid-cols-7 gap-1.5">{days.map((d,i)=><div key={i} className="pb-2 text-center text-[10px] font-black text-white/50">{d}</div>)}{Array.from({length:35},(_,i)=>i-5).map((n,i)=><div key={i} className={`grid aspect-square place-items-center rounded-xl text-xs font-bold ${n<1||n>30?'text-transparent':'bg-white/[.055] text-white/80'}`}>{n>0&&n<31?n:''}</div>)}</div>}
+function Wheel({count,onCount,onDone}){
+ const [turn,setTurn]=useState(0),[busy,setBusy]=useState(false)
+ const timer=useRef(null)
+ useEffect(()=>()=>clearTimeout(timer.current),[])
+ const spin=()=>{if(busy||count>=6)return;setBusy(true);setTurn(v=>v+1765+count*52);timer.current=setTimeout(()=>{onCount(count+1);setBusy(false)},1900)}
+ return <div className="mx-auto max-w-[430px] text-center">
+  <div className="relative mx-auto mt-5 w-full max-w-[315px] aspect-square rounded-full p-[10px]" style={{background:'radial-gradient(circle,rgba(198,255,35,.22),transparent 72%)'}}>
+   <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 text-[27px] text-white drop-shadow-lg">▼</div>
+   <div className="h-full w-full rounded-full border-[7px] border-[#303038] shadow-[0_12px_35px_rgba(0,0,0,.35),0_0_35px_rgba(185,255,25,.15)]" style={{background:'conic-gradient(#BFFF24 0deg 45deg,#36DFC9 45deg 90deg,#FF3681 90deg 135deg,#9E7BF0 135deg 180deg,#BFFF24 180deg 225deg,#36DFC9 225deg 270deg,#FF3681 270deg 315deg,#9E7BF0 315deg 360deg)',transform:`rotate(${turn}deg)`,transition:'transform 1.9s cubic-bezier(.13,.78,.12,1)'}}/>
+   <div className="absolute inset-[32%] grid place-items-center rounded-full border-[5px] border-[#1D1D24] bg-[#C4FF24] text-[32px] font-black italic tracking-tighter text-[#111117] shadow-xl">PR</div>
+  </div>
+  <p className="mt-5 text-xs font-bold uppercase tracking-[.18em] text-white/60">{count===6?'Revelación completa':`${count} de 6 desafíos descubiertos`}</p>
+  <div className="mt-4 grid grid-cols-6 gap-1.5">{tasks.map((t,i)=><div key={i} className="grid h-11 place-items-center rounded-xl border text-sm font-black" style={{background:i<count?'#C4FF24':'#292932',color:i<count?'#101015':'#9999A5',borderColor:i<count?'#C4FF24':'#44444C'}}>{i<count?'✓':i+1}</div>)}</div>
+  {count>0&&<div className="mt-4 rounded-2xl border border-white/10 bg-white/[.07] p-3 text-sm font-semibold text-white">Último desafío: <span className="text-[#C4FF24]">{tasks[count-1][0]}</span></div>}
+  <button type="button" onClick={count===6?onDone:spin} disabled={busy} className="mt-5 w-full rounded-[19px] px-5 py-[18px] text-[15px] font-black uppercase tracking-wide text-[#121319] shadow-[0_12px_28px_rgba(120,255,115,.19)] disabled:opacity-60" style={{background:'linear-gradient(110deg,#C4FF24,#7AF68B 55%,#39E2DA)'}}>{count===6?'VER MIS DESAFÍOS →':busy?'GIRANDO…':`GIRAR · ${count+1} DE 6`}</button>
+ </div>
+}
+export default function TrainingStudio({user}){
+ const key=`pr-training-studio-${user?.id||'staff'}-2026-11`
+ const [count,setCount]=useState(0),[page,setPage]=useState('spin'),[open,setOpen]=useState(null)
+ useEffect(()=>{try{const n=Math.min(6,Math.max(0,Number(localStorage.getItem(key)||0)));setCount(n);if(n===6)setPage('home')}catch{}},[key])
+ const onCount=n=>{setCount(n);try{localStorage.setItem(key,String(n))}catch{}}
+ const nav=[['home','Entrenar'],['progress','Progreso'],['activity','Actividad']]
+ return <div className="min-h-screen overflow-x-hidden pb-28 text-white" style={{background:'linear-gradient(180deg,#14141B 0%,#1C1B24 40%,#111116 100%)'}}>
+ <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-7">
+  <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-extrabold uppercase tracking-[.25em] text-[#BFFF24]">PUNTA ROLLERS <span className="text-white/45">/ TRAINING</span></p><p className="mt-1 text-[13px] font-semibold text-white/65">Tu entrenamiento. Tu evolución.</p></div><div className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-[11px] font-bold text-white/80">PR 2.0</div></div>
+  {page==='spin'?<section className="relative mt-6 overflow-hidden rounded-[30px] border border-[#BFFF24]/25 px-5 pb-7 pt-7 sm:px-9" style={{background:'radial-gradient(ellipse at 85% 0%,rgba(187,255,31,.25),transparent 50%),linear-gradient(140deg,#29232A,#18171E 70%)'}}>
+   <p className="text-xs font-black tracking-[.22em] text-[#BFFF24]">TU NUEVO CICLO</p><h1 className="mt-2 text-[clamp(42px,10vw,76px)] font-black italic leading-[.91] tracking-[-.075em]">DESCUBRÍ<br/><span className="text-[#BFFF24]">TU RETO.</span></h1><p className="mt-4 max-w-sm text-sm leading-relaxed text-white/75">Seis giros. Seis ejercicios seleccionados por el <Link to="/app/comunidad/perfil/admin-claudio" className="font-bold text-white underline decoration-[#BFFF24] underline-offset-4">Profe Claudio</Link> según tu nivel.</p>
+   <Wheel count={count} onCount={onCount} onDone={()=>setPage('home')}/><p className="mt-4 text-center text-[11px] text-white/50">Simulación privada · ejercicios ilustrativos</p>
+  </section>:<>
+   <div className="relative mt-6 overflow-hidden rounded-[30px] border border-white/10 px-6 pb-7 pt-7 sm:px-9" style={{background:'radial-gradient(ellipse at 95% 20%,rgba(198,255,34,.26),transparent 46%),radial-gradient(ellipse at 5% 90%,rgba(48,227,211,.14),transparent 50%),linear-gradient(120deg,#323039,#1D1C24)'}}>
+    <div className="flex items-center justify-between"><p className="text-[11px] font-black tracking-[.21em] text-[#C4FF24]">NEW SEASON / 2026</p><span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold">0 / 6</span></div>
+    <h1 className="mt-5 text-[clamp(46px,10vw,88px)] font-black italic leading-[.88] tracking-[-.075em]">{page==='progress'?<>TU<br/><span className="text-[#C4FF24]">PROGRESO.</span></>:page==='activity'?<>CADA<br/><span className="text-[#4EE8CE]">PASO.</span></>:<>MODO<br/><span className="text-[#C4FF24]">ENTRENO.</span></>}</h1>
+    <p className="mt-5 max-w-md text-sm font-medium leading-relaxed text-white/75">{page==='progress'?'Tus avances, tu constancia y el camino que vas construyendo.':page==='activity'?'Tus entregas y revisiones, en un solo lugar.':'Seis desafíos. Un ciclo para superarte a tu ritmo.'}</p>
+    <div className="pointer-events-none absolute -bottom-8 -right-3 text-[145px] font-black italic leading-none tracking-[-.1em] text-white/[.045] sm:text-[220px]">PR</div>
+   </div>
+   <nav className="mt-4 grid grid-cols-3 gap-2" aria-label="Secciones de entrenamiento">{nav.map(([id,label])=><button key={id} type="button" onClick={()=>{setPage(id);setOpen(null)}} className={`rounded-[16px] border px-2 py-3.5 text-xs font-extrabold transition ${page===id?'border-[#BFFF24] bg-[#C4FF24] text-[#141419] shadow-[0_7px_20px_rgba(190,255,36,.14)]':'border-white/15 bg-[#292830] text-white/75'}`}>{label}</button>)}</nav>
+   {page==='home'&&<section className="mt-7"><div className="mb-4 flex items-end justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[.2em] text-[#4EE8CE]">TU PLAN / NOVIEMBRE</p><h2 className="mt-1 text-[29px] font-black tracking-tight">Los seis desafíos</h2></div><span className="text-xs font-bold text-white/60">0% hecho</span></div><div className="grid gap-3 md:grid-cols-2">{tasks.map((t,i)=><button key={i} onClick={()=>setOpen(open===i?null:i)} className="relative overflow-hidden rounded-[24px] border border-white/10 p-5 text-left transition hover:border-white/30" style={panel}><div className="flex items-start justify-between gap-3"><span className="text-[48px] font-black italic leading-none tracking-[-.09em]" style={{color:tones[i]}}>{String(i+1).padStart(2,'0')}</span><span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-black text-white/65">{t[2]}</span></div><h3 className="mt-5 text-xl font-black tracking-tight">{t[0]}</h3><p className="mt-1.5 text-xs leading-relaxed text-white/60">{t[1]}</p><div className="mt-5 flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-bold text-white/65"><span>PENDIENTE</span><span style={{color:tones[i]}}>{open===i?'CERRAR −':'EXPLORAR ↗'}</span></div>{open===i&&<p className="mt-4 rounded-xl bg-white/10 p-3 text-xs leading-relaxed text-white/75">Vista de diseño. El envío de evidencias se habilitará cuando esté conectado el catálogo real.</p>}</button>)}</div></section>}
+   {page==='progress'&&<div className="mt-5 grid gap-4 lg:grid-cols-2"><section className="rounded-[28px] p-6" style={panel}><p className="text-[11px] font-black tracking-widest text-[#C4FF24]">RENDIMIENTO</p><div className="mt-5 flex items-center justify-between gap-3"><div><p className="text-[49px] font-black italic leading-none">0<span className="text-xl text-white/55">/6</span></p><p className="mt-3 text-sm text-white/70">Desafíos completados</p></div><Donut/></div><div className="mt-7 h-2 rounded-full bg-white/15"/><p className="mt-3 text-xs text-white/50">Vista de diseño · Sin datos reales</p></section><section className="rounded-[28px] p-6" style={panel}><div className="flex items-center justify-between"><div><p className="text-[11px] font-black tracking-widest text-[#4EE8CE]">CONSTANCIA</p><h2 className="mt-1 text-2xl font-black">Calendario</h2></div><span className="text-xs font-bold text-white/60">NOV 2026</span></div><p className="mb-5 mt-2 text-xs text-white/55">Sin asistencias ni entregas de muestra</p><Calendar/><div className="mt-5 flex flex-wrap gap-3 text-[11px] text-white/70"><span>🟢 Deber</span><span>● <span className="text-pink-400">Clase</span></span><span>◐ Ambos</span></div></section></div>}
+   {page==='activity'&&<div className="mt-5 grid gap-4 lg:grid-cols-2"><section className="rounded-[28px] p-6" style={panel}><p className="text-[11px] font-black tracking-widest text-[#4EE8CE]">ACTIVIDAD PERSONAL</p><p className="mt-5 text-[64px] font-black italic leading-none">00</p><h2 className="mt-3 text-2xl font-black">Entregas registradas</h2><p className="mt-2 text-sm text-white/65">Tu historial aparecerá acá cuando empieces a enviar evidencias.</p></section><section className="rounded-[28px] p-6" style={panel}><p className="text-[11px] font-black tracking-widest text-[#FF3C81]">CÓMO AVANZÁS</p>{[['01','ENVIÁS','Foto, video o Strava'],['02','REVISAMOS','Claudio o David comprueban'],['03','AVANZÁS','Tu progreso se actualiza']].map(([n,t,d],i)=><div key={n} className="mt-6 flex items-center gap-4 border-b border-white/10 pb-5"><span className="text-[34px] font-black italic" style={{color:tones[i]}}>{n}</span><div><h3 className="text-base font-black">{t}</h3><p className="mt-1 text-xs text-white/60">{d}</p></div></div>)}</section></div>}
+  </>}
+  <p className="mt-8 text-center text-[10px] font-semibold tracking-wide text-white/40">PR TRAINING · LABORATORIO PRIVADO · SIN DATOS REALES</p>
+ </div></div>
+}
