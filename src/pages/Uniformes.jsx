@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import PublicLayout from '../layouts/PublicLayout'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseAnonKey, supabaseUrl } from '../lib/supabase'
 
 const WHATSAPP_NUMBER = '59898971505'
 
@@ -22,6 +22,7 @@ function normalizeProduct(product) {
 }
 
 export default function Uniformes() {
+  const requestRef = useRef({ fingerprint: '', key: '' })
   const [productos, setProductos] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [modelo, setModelo] = useState('')
@@ -29,8 +30,16 @@ export default function Uniformes() {
   const [talle, setTalle] = useState('')
   const [nombre, setNombre] = useState('')
   const [observacion, setObservacion] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [order, setOrder] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [startingPayment, setStartingPayment] = useState(false)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
+  const [paymentReturned, setPaymentReturned] = useState(false)
+  const transferOnly = true
 
   async function loadProducts() {
     setLoading(true)
@@ -55,6 +64,8 @@ export default function Uniformes() {
 
   useEffect(() => {
     loadProducts()
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') === 'return') setPaymentReturned(true)
   }, [])
 
   const selected = useMemo(
@@ -67,6 +78,9 @@ export default function Uniformes() {
     setModelo(product.modelos[0] || '')
     setColor(product.colores[0] || '')
     setTalle('')
+    setOrder(null)
+    setErrorMsg('')
+    setQuantity(1)
 
     setTimeout(() => {
       document
@@ -78,53 +92,56 @@ export default function Uniformes() {
     }, 150)
   }
 
-  function sendOrder() {
-    if (!selected) {
-      window.alert('Elegí primero el uniforme que querés solicitar.')
+  async function sendOrder() {
+    if (!selected || !nombre.trim() || !email.trim() || !phone.trim() || !talle ||
+        (selected.modelos.length > 0 && !modelo) || (selected.colores.length > 0 && !color)) {
+      setErrorMsg('Completá producto, talle, nombre, correo y teléfono para continuar.')
       return
     }
-
-    if (!nombre.trim()) {
-      window.alert('Ingresá tu nombre para continuar.')
-      return
+    setSaving(true)
+    setErrorMsg('')
+    try {
+      const payload = {
+        productId: selected.id, model: modelo, color, size: talle, quantity,
+        name: nombre.trim(), email: email.trim(), phone: phone.trim(), notes: observacion.trim(),
+      }
+      const fingerprint = JSON.stringify(payload)
+      if (requestRef.current.fingerprint !== fingerprint) {
+        requestRef.current = { fingerprint, key: crypto.randomUUID() }
+      }
+      const response = await fetch(`${supabaseUrl}/functions/v1/uniform-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+        body: JSON.stringify({ ...payload, requestKey: requestRef.current.key }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.orderId) throw new Error('No pudimos guardar el pedido. Probá nuevamente.')
+      setOrder(result)
+    } catch (error) {
+      setErrorMsg(error.message || 'No pudimos guardar el pedido.')
+    } finally {
+      setSaving(false)
     }
+  }
 
-    if (selected.modelos.length > 0 && !modelo) {
-      window.alert('Seleccioná el modelo.')
-      return
+  async function startMercadoPago() {
+    if (!order?.orderId || startingPayment) return
+    setStartingPayment(true)
+    setErrorMsg('')
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/uniform-mp-preference`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+        body: JSON.stringify({ orderId: order.orderId, requestKey: requestRef.current.key }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.checkoutUrl) throw new Error('Mercado Pago no está disponible para este pedido. Contactanos antes de volver a intentar.')
+      window.location.assign(result.checkoutUrl)
+    } catch (error) {
+      setErrorMsg(error.message || 'No se pudo iniciar el pago.')
+    } finally {
+      setStartingPayment(false)
     }
-
-    if (selected.colores.length > 0 && !color) {
-      window.alert('Seleccioná el color.')
-      return
-    }
-
-    if (!talle) {
-      window.alert('Seleccioná el talle.')
-      return
-    }
-
-    const lines = [
-      'Hola, quiero solicitar un uniforme de Punta Rollers.',
-      '',
-      `Producto: ${selected.nombre}`,
-      `Precio: ${formatPrice(selected.precio)}`,
-      modelo ? `Modelo: ${modelo}` : '',
-      color ? `Color: ${color}` : '',
-      `Talle: ${talle}`,
-      `Nombre: ${nombre.trim()}`,
-      observacion.trim()
-        ? `Observaciones: ${observacion.trim()}`
-        : '',
-      '',
-      'Entiendo que el pedido debe abonarse para confirmarlo y que recibiré los datos de transferencia por este medio.',
-    ].filter(Boolean)
-
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-      lines.join('\n')
-    )}`
-
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -136,8 +153,7 @@ export default function Uniformes() {
             👕 Uniformes PR
           </h1>
           <p className="text-gray-400 text-sm max-w-sm mx-auto">
-            Elegí tu uniforme oficial de Punta Rollers y envianos el
-            pedido directamente por WhatsApp.
+            Elegí tu uniforme oficial y registrá tu pedido sin iniciar sesión.
           </p>
         </section>
 
@@ -157,9 +173,7 @@ export default function Uniformes() {
               Pedidos con pago previo
             </p>
             <p className="text-white/45 text-xs mt-1 leading-relaxed">
-              Después de enviar el pedido por WhatsApp recibirás los
-              datos de transferencia. El uniforme se encarga una vez
-              confirmado el pago.
+              Al finalizar verás los datos de transferencia. El pedido queda pendiente hasta verificar el pago.
             </p>
           </div>
         </section>
@@ -170,13 +184,21 @@ export default function Uniformes() {
           </div>
         )}
 
+        {paymentReturned && (
+          <div className="rounded-2xl border border-pr-gold/30 p-4 text-sm text-white space-y-2">
+            <p className="font-semibold text-pr-gold">Volviste de Mercado Pago</p>
+            <p>El pago todavía debe confirmarse automáticamente. No hagas una segunda transferencia ni un nuevo pedido hasta verificarlo con Punta Rollers.</p>
+            <a className="underline" href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola, quiero consultar la confirmación de mi pago de uniformes.')}`} target="_blank" rel="noreferrer">Consultar estado por WhatsApp</a>
+          </div>
+        )}
+
         {errorMsg && (
           <div className="rounded-2xl border border-red-400/20 bg-red-400/[0.08] p-4 text-red-200 text-sm">
             {errorMsg}
           </div>
         )}
 
-        {!loading && !errorMsg && (
+        {!loading && (
           <section className="space-y-4">
             <p className="section-label">
               Elegí el producto
@@ -273,7 +295,7 @@ export default function Uniformes() {
                   label="Modelo"
                   options={selected.modelos}
                   value={modelo}
-                  onChange={setModelo}
+                  onChange={(value) => { setModelo(value); setOrder(null) }}
                 />
               )}
 
@@ -282,7 +304,7 @@ export default function Uniformes() {
                   label="Color"
                   options={selected.colores}
                   value={color}
-                  onChange={setColor}
+                  onChange={(value) => { setColor(value); setOrder(null) }}
                 />
               )}
 
@@ -290,7 +312,7 @@ export default function Uniformes() {
                 label="Talle"
                 options={selected.talles}
                 value={talle}
-                onChange={setTalle}
+                onChange={(value) => { setTalle(value); setOrder(null) }}
               />
 
               <label className="block">
@@ -299,36 +321,54 @@ export default function Uniformes() {
                 </span>
                 <input
                   value={nombre}
-                  onChange={(event) =>
-                    setNombre(event.target.value)
-                  }
+                  onChange={(event) => { setNombre(event.target.value); setOrder(null) }}
                   className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none"
                   placeholder="Tu nombre"
                 />
               </label>
 
+              <label className="block"><span className="text-white/40 text-xs">Correo electrónico</span><input type="email" value={email} onChange={e => { setEmail(e.target.value); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Teléfono</span><input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <label className="block"><span className="text-white/40 text-xs">Cantidad</span><input type="number" min="1" max="20" value={quantity} onChange={e => { setQuantity(Math.max(1, Math.min(20, Number(e.target.value) || 1))); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
+              <p className="text-pr-gold font-bold">Total: {formatPrice(Number(selected.precio) * quantity)}</p>
               <label className="block">
                 <span className="text-white/40 text-xs">
                   Observaciones
                 </span>
                 <textarea
                   value={observacion}
-                  onChange={(event) =>
-                    setObservacion(event.target.value)
-                  }
+                  onChange={(event) => { setObservacion(event.target.value); setOrder(null) }}
                   rows="3"
                   className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none resize-none"
                   placeholder="Alguna consulta o detalle del pedido"
                 />
               </label>
 
-              <button
-                type="button"
-                onClick={sendOrder}
-                className="btn-gold w-full"
-              >
-                Solicitar por WhatsApp
-              </button>
+              {!order ? (
+                <button type="button" disabled={saving} onClick={sendOrder} className="btn-gold w-full">
+                  {saving ? 'Guardando pedido…' : 'Registrar pedido y elegir pago'}
+                </button>
+              ) : (
+                <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3 text-white">
+                  <p className="text-pr-gold font-bold">Pedido registrado · Pendiente de pago</p>
+                  <p>Importe: <strong>{formatPrice(order.amount)}</strong></p>
+                  {!transferOnly && <button type="button" disabled={startingPayment} onClick={startMercadoPago} className="btn-gold w-full">
+                    {startingPayment ? 'Conectando con Mercado Pago…' : 'Pagar con Mercado Pago'}
+                  </button>}
+                  <p className="text-xs text-white/60">Realizá una transferencia para confirmar tu pedido:</p>
+                  <p>Prex · Claudio Facelli</p>
+                  <p>Cuenta Prex: <strong>70658</strong></p>
+                  <p className="text-xs text-white/60">Referencia: {order.orderId}. El pago se verificará antes de confirmar el pedido.</p>
+                  <a
+                    className="btn-gold block text-center"
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola, adjunto comprobante del pedido de uniformes ' + order.orderId + ', por ' + formatPrice(order.amount) + '.')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Enviar comprobante por WhatsApp
+                  </a>
+                </div>
+              )}
             </>
           )}
         </section>
