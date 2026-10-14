@@ -39,6 +39,7 @@ export default function Uniformes() {
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   const [paymentReturned, setPaymentReturned] = useState(false)
+  const transferOnly = true
 
   async function loadProducts() {
     setLoading(true)
@@ -351,10 +352,10 @@ export default function Uniformes() {
                 <div className="rounded-2xl border border-pr-gold/30 p-4 space-y-3 text-white">
                   <p className="text-pr-gold font-bold">Pedido registrado · Pendiente de pago</p>
                   <p>Importe: <strong>{formatPrice(order.amount)}</strong></p>
-                  <button type="button" disabled={startingPayment} onClick={startMercadoPago} className="btn-gold w-full">
+                  {!transferOnly && <button type="button" disabled={startingPayment} onClick={startMercadoPago} className="btn-gold w-full">
                     {startingPayment ? 'Conectando con Mercado Pago…' : 'Pagar con Mercado Pago'}
-                  </button>
-                  <p className="text-xs text-white/60">O realizá una transferencia:</p>
+                  </button>}
+                  <p className="text-xs text-white/60">Realizá una transferencia para confirmar tu pedido:</p>
                   <p>Prex · Claudio Facelli</p>
                   <p>Cuenta Prex: <strong>70658</strong></p>
                   <p className="text-xs text-white/60">Referencia: {order.orderId}. El pago se verificará antes de confirmar el pedido.</p>
