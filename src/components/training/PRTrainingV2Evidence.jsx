@@ -31,7 +31,8 @@ export default function PRTrainingV2Evidence({ profileId, assignmentDutyId, onSu
  return <form onSubmit={submit} className="rounded-2xl border border-white/15 p-5">
   <h3 className="text-lg font-bold">Enviar evidencia</h3>
   <p className="mt-2 text-sm opacity-70">Adjuntá de una a tres fotos o videos para que el profesor los revise.</p>
-  <input type="file" multiple accept={accepted.join(',')} disabled={busy} onChange={e=>setFiles(Array.from(e.target.files||[]))} className="mt-4 block w-full text-sm" aria-label="Seleccionar evidencias"/>
+  <input type="file" multiple accept={accepted.join(',')} disabled={busy} onChange={e=>{setFiles(Array.from(e.target.files||[]));setMessage('')}} className="mt-4 block w-full text-sm" aria-label="Seleccionar evidencias"/>
+  {files.length>0&&<p className="mt-2 text-xs opacity-70">{files.length} archivo{files.length===1?'':'s'} seleccionado{files.length===1?'':'s'}</p>}
   <button type="submit" disabled={busy||files.length===0} className="mt-4 rounded-full bg-[#BBFF1F] px-5 py-3 font-bold text-[#0D0303] disabled:opacity-40">{busy?'Enviando…':'Enviar evidencia'}</button>
   {message&&<p role="status" className="mt-3 text-sm">{message}</p>}
  </form>
