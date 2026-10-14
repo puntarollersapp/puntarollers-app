@@ -29,7 +29,7 @@ function rankHash(seed, code) {
  */
 export function selectSixDuties({ catalog=[], level, profileId, month, recentCodes=[], excludedCodes=[], enabledCodes=[] }) {
   if (!LEVELS.includes(level)) return { ok:false, duties:[], reason:'LEVEL_NOT_CONFIGURED' }
-  if (!profileId || !/^\\d{4}-\\d{2}$/.test(month || '')) return { ok:false, duties:[], reason:'INVALID_CONTEXT' }
+  if (!profileId || !/^\d{4}-\d{2}$/.test(month || '')) return { ok:false, duties:[], reason:'INVALID_CONTEXT' }
   const allowed = new Set(LEVELS.slice(0, LEVELS.indexOf(level)+1))
   const recent = new Set(recentCodes)
   const excluded = new Set(excludedCodes)
@@ -38,7 +38,7 @@ export function selectSixDuties({ catalog=[], level, profileId, month, recentCod
   const compatible = catalog.filter(d => {
     if (!d || !d.active || !allowed.has(d.level_code) || excluded.has(d.duty_code)) return false
     const demos = d.metadata?.demo_ids || []
-    if (d.evidence_type === 'video' && demos.length && d.demo_ready !== true) return false
+    if (demos.length && d.demo_ready !== true) return false
     if (d.requires_explicit_enable && !enabled.has(d.duty_code)) return false
     return true
   })
