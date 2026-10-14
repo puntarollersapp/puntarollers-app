@@ -28,7 +28,7 @@ export default function PRTrainingV2Student({profileId}) {
  useEffect(()=>{load()},[])
  async function discover(){
   if(discovering)return
-  setDiscovering(true)
+  setDiscovering(true);setError('')
   const {data,error:e}=await supabase.rpc('pr_training_v2_discover_spin',{p_month:monthNow()})
   if(e)setError(e.message)
   else if(data?.spin_discovered){setDone(true);await load()}
@@ -41,7 +41,7 @@ export default function PRTrainingV2Student({profileId}) {
  const approved=duties.filter(d=>d.latest_status==='approved').length
  return <section className="rounded-[28px] border border-white/10 bg-[#151518] p-4 shadow-2xl sm:p-7 text-[#EFF8FF]">
   <div className="mb-5 flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#BBFF1F]">Punta Rollers · Training 2.0</p><h2 className="mt-2 text-3xl font-black tracking-tight">Mis deberes<span className="text-[#BBFF1F]">.</span></h2><p className="mt-1 text-xs text-white/45">Seis desafíos. Tu ritmo. Tu progreso.</p></div><div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-[#BBFF1F]/30 bg-[#BBFF1F]/10 text-xl font-black text-[#BBFF1F]">{submitted}/6</div></div>
-  {cycle?.status==='ready'&&<p className="mt-2 text-sm text-[#BBFF1F]">{submitted} de 6 entregados · {approved} aprobados{corrections>0?' · '+corrections+' para corregir':''}</p>}
+  {cycle?.status==='ready'&&cycle.spin_discovered&&<p className="mt-2 text-sm text-[#BBFF1F]">{submitted} de 6 entregados · {approved} aprobados{corrections>0?' · '+corrections+' para corregir':''}</p>}
   {cycle?.status==='ready'&&cycle.spin_discovered&&<div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#BBFF1F] transition-all" style={{width:(submitted/6*100)+'%'}}/></div>}
   {cycle?.status==='ready'&&cycle.spin_discovered&&corrections>0&&<p className="mt-3 rounded-xl border border-[#FF0055]/30 bg-[#FF0055]/10 p-3 text-sm text-[#EFF8FF]">{corrections===1?'Tenés una entrega para corregir.':'Tenés '+corrections+' entregas para corregir.'} Abrí el deber para volver a enviarla.</p>}
   {loading?<p role="status" className="mt-3 animate-pulse text-sm text-white/60">Preparando tus deberes…</p>:error?<div role="alert" className="mt-3 rounded-2xl border border-[#FF0055]/30 bg-[#FF0055]/10 p-4"><p className="text-sm text-[#EFF8FF]">No pudimos cargar tus deberes. {error}</p><button type="button" onClick={load} className="mt-3 rounded-full bg-[#EFF8FF] px-4 py-2 text-sm font-bold text-[#0D0303]">Volver a intentar</button></div>:cycle?.status==='ready'?<>
