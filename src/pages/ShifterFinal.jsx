@@ -4,7 +4,7 @@ import AppLayout from '../layouts/AppLayout'
 import ProfileAvatar from '../components/ProfileAvatar'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { buildShifterFinalReport, SHIFTER_FINAL_LABEL } from '../lib/shifterFinalReport'
+import { buildShifterFinalReport } from '../lib/shifterFinalReport'
 
 const RACE_DATE = new Date('2026-11-01T08:00:00-03:00')
 function timeUntilRace() { return Math.max(0, Math.floor((RACE_DATE.getTime() - Date.now()) / 1000)) }
@@ -99,8 +99,8 @@ export default function ShifterFinal() {
     <section className="rounded-[30px] border border-orange-400/25 bg-gradient-to-br from-[#381806] via-[#15101c] to-[#09090e] p-6">
       <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Punta Rollers · Shifter Marathon 2026</p>
       <h1 className="mt-3 text-4xl font-black leading-tight">Tu camino<br/>hasta acá.</h1>
-      <p className="mt-3 text-sm leading-6 text-white/65">La última toma cierra la etapa de mediciones. Los entrenamientos y deberes pendientes continúan hasta la carrera.</p>
-      <p className="mt-4 text-[10px] font-bold tracking-wide text-orange-200">{SHIFTER_FINAL_LABEL}</p>
+      <p className="mt-3 text-sm leading-6 text-white/65">Seguimos preparando cada detalle. Tus tomas, tus entrenamientos y tus deberes forman parte del camino hacia la carrera.</p>
+      <p className="mt-4 text-[10px] font-bold tracking-wide text-orange-200">Tu preparación continúa</p>
     </section>
     {loading && <p className="text-sm text-white/60">Cargando tus registros reales…</p>}
     {error && <p role="alert" className="rounded-xl border border-amber-500/30 p-3 text-sm text-amber-200">{error}</p>}
@@ -111,8 +111,7 @@ export default function ShifterFinal() {
     {reports.map(report => <section key={report.distanceKm} className="rounded-[28px] border border-violet-400/20 bg-[#14111c] p-5">
       <p className="text-[10px] font-bold uppercase tracking-widest text-violet-300">Evolución · {report.distanceKm} km</p>
       <h2 className="mt-2 text-xl font-black">{report.title}</h2>
-      {report.count ? <><div className="mt-4 space-y-3">{report.rows.map((row, i) => <div key={row.id || i} className="flex items-center justify-between border-b border-white/10 pb-2 text-sm"><span className="text-white/60">{row.date || 'Sin fecha'} · Toma {row.takeNumber || i + 1}</span><strong>{row.formattedTime}</strong></div>)}</div>
-      <ProgressComparison report={report}/>
+      {report.count ? <><ProgressComparison report={report}/>
       <p className="mt-3 text-xs text-white/55">Mejor marca: {report.bestSeconds == null ? '—' : report.rows.find(r=>r.seconds===report.bestSeconds)?.formattedTime} · {report.finalRecorded ? 'Toma final registrada' : 'Esperando la toma final'}</p>
       {report.hasComparison && <p className="mt-1 text-xs text-orange-200">{report.differenceSeconds > 0 ? 'Mejoraste respecto a tu primera toma' : report.differenceSeconds < 0 ? 'Diferencia respecto a tu primera toma' : 'Misma marca que tu primera toma'}: {Math.abs(report.changePercent).toFixed(1)}%</p>}
       </> : <p className="mt-3 text-sm text-white/50">Todavía no hay tomas registradas para esta distancia.</p>}
@@ -132,6 +131,6 @@ export default function ShifterFinal() {
       {assigned.length > 0 && <><div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-400" style={{width:`${completed/assigned.length*100}%`}}/></div><p className="mt-3 text-sm text-white/65">{completed===assigned.length ? 'Todos los deberes registrados están completos.' : `Todavía quedan ${assigned.length-completed} deberes pendientes. Podés seguir completándolos.`}</p></>}
       <Link to="/app/deberes" className="mt-4 inline-block rounded-xl border border-white/20 px-4 py-3 text-sm font-bold">Ver mis deberes</Link>
     </section>
-    <section className="rounded-[28px] border border-white/10 p-5"><h2 className="text-xl font-black">Nos vemos en la Shifter.</h2><p className="mt-3 text-sm leading-6 text-white/60">Los números cuentan parte de tu historia. Lo que entrenaste, aprendiste y compartiste también forma parte de este camino. Ahora toca cuidarse y disfrutar la carrera.</p><p className="mt-3 text-xs text-orange-300">No es solo patinar, es pertenecer.</p></section></>}
+    <section className="rounded-[28px] border border-white/10 p-5"><h2 className="text-xl font-black">Cada entrenamiento cuenta.</h2><p className="mt-3 text-sm leading-6 text-white/60">Los números cuentan parte de tu historia. Lo que entrenaste, aprendiste y compartiste también forma parte de este camino. Todavía tenemos clases, clínica y momentos para seguir aprendiendo antes de la carrera.</p><p className="mt-3 text-xs text-orange-300">No es solo patinar, es pertenecer.</p></section></>}
   </div></AppLayout>
 }
