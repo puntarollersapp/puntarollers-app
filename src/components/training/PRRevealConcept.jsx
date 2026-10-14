@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { supabase } from '../../lib/supabase'
 
 /** Staff-only exploration of two visual systems. Never writes assignments. */
 const previewDuties=[
@@ -36,6 +37,47 @@ export default function PRRevealConcept(){
  const [mode,setMode]=useState('path')
  const [revealed,setRevealed]=useState(0)
  const [selected,setSelected]=useState(null)
+ const [live,setLive]=useState({loading:true,error:'',items:[],cycle:null})
+ useEffect(()=>{
+  let active=true
+  async function load(){
+   try{
+    const {data:session,error:sessionError}=await supabase.auth.getUser()
+    if(sessionError)throw sessionError
+    const uid=session?.user?.id
+    if(!uid)throw new Error('No se encontró una sesión autenticada.')
+    const {data:cycles,error:cycleError}=await supabase.from('pr_training_v2_cycles').select('id,cycle_month,is_visible').order('cycle_month',{ascending:false}).limit(6)
+    if(cycleError)throw cycleError
+    const cycle=(cycles||[]).find(x=>x.cycle_month==='2026-11')||cycles?.[0]
+    if(!cycle){if(active)setLive({loading:false,error:'',items:[],cycle:null});return}
+    const {data:assignments,error:assignmentError}=await supabase.from('pr_training_v2_assignments').select('id,profile_id,level_code,cycle_id').eq('cycle_id',cycle.id).eq('profile_id',uid).limit(1)
+    if(assignmentError)throw assignmentError
+    const assignment=assignments?.[0]
+    if(!assignment){if(active)setLive({loading:false,error:'',items:[],cycle});return}
+    const {data:slots,error:slotError}=await supabase.from('pr_training_v2_assignment_duties').select('id,duty_id,slot,duty_snapshot').eq('assignment_id',assignment.id).order('slot',{ascending:true})
+    if(slotError)throw slotError
+    const dutyIds=(slots||[]).map(s=>s.duty_id)
+    const [duties,submissions]=await Promise.all([
+     dutyIds.length?supabase.from('pr_training_v2_duties').select('id,title,instructions,evidence_type').in('id',dutyIds):Promise.resolve({data:[],error:null}),
+     (slots||[]).length?supabase.from('pr_training_v2_submissions').select('assignment_duty_id,status,reviewer_note,submitted_at').eq('profile_id',uid).in('assignment_duty_id',slots.map(s=>s.id)).order('submitted_at',{ascending:false}):Promise.resolve({data:[],error:null})
+    ])
+    if(duties.error)throw duties.error
+    if(submissions.error)throw submissions.error
+    const catalog=new Map((duties.data||[]).map(d=>[d.id,d]))
+    const latest=new Map()
+    for(const s of submissions.data||[])if(!latest.has(s.assignment_duty_id))latest.set(s.assignment_duty_id,s)
+    const items=(slots||[]).map(s=>{
+      const d=catalog.get(s.duty_id)
+      const snapshot=s.duty_snapshot&&typeof s.duty_snapshot==='object'?s.duty_snapshot:{}
+      const review=latest.get(s.id)
+      return {id:s.id,title:d?.title||snapshot.title||'Actividad asignada',desc:d?.instructions||snapshot.instructions||'Consultá las indicaciones de tu profesor.',kind:d?.evidence_type||'PRÁCTICA',status:review?.status||'pending',note:review?.reviewer_note||''}
+    })
+    if(active)setLive({loading:false,error:'',items,cycle,level:assignment.level_code})
+   }catch(e){if(active)setLive({loading:false,error:e.message||'Error de consulta',items:[],cycle:null})}
+  }
+  load();return()=>{active=false}
+ },[])
+ const realTasks=live.items
  const timer=useRef(null)
  useEffect(()=>()=>clearTimeout(timer.current),[])
  const next=()=>{if(revealed>=previewDuties.length)return;setSelected(revealed);setRevealed(n=>n+1)}
@@ -61,8 +103,9 @@ export default function PRRevealConcept(){
  </div>:<div className="mt-5 rounded-[30px] border border-white/15 bg-[#23242B] p-5 sm:p-8">
  <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-[11px] font-black tracking-[.2em] text-[#57E7DA]">PR PATH / MI RECORRIDO</p><h2 className="mt-2 text-3xl font-black italic tracking-tight">CADA PRÁCTICA CUENTA.</h2></div><span className="rounded-full bg-white/10 px-3 py-2 text-xs font-bold">Vista conceptual</span></div>
  <p className="mt-4 text-sm leading-relaxed text-white/65">Este será tu mapa de práctica: abrí cada tarea para entender qué vas a entrenar. Cuando el sistema esté conectado también verás tus entregas y las devoluciones del profesor.</p>
- <div className="mt-7 space-y-3">{previewDuties.map((d,i)=><button type="button" key={d.title} onClick={()=>setSelected(selected===i?null:i)} className="group relative flex w-full items-center gap-4 rounded-[22px] border border-white/10 bg-[#17181E] p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-white/30"><div className="absolute bottom-0 left-[35px] top-0 w-[2px] bg-white/10"/><div className="relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 bg-[#282932] text-sm font-black" style={{borderColor:palette[i],color:palette[i]}}>{String(i+1).padStart(2,'0')}</div><div className="min-w-0 flex-1"><span className="text-[10px] font-black tracking-widest" style={{color:palette[i]}}>{d.kind}</span><h3 className="mt-1 text-base font-black">{d.title}</h3><p className="mt-1 text-xs text-white/50">{selected===i?d.desc:'Tocá para ver el objetivo'}</p></div><span className="text-xl text-white/50">{selected===i?'−':'+'}</span></button>)}</div>
- <p className="mt-5 text-xs text-white/45">Los estados de aprobación y las fechas se conectarán a las asignaciones reales. No hay resultados ficticios.</p>
+ <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-3 text-xs leading-relaxed text-white/65">{live.loading?'Consultando tus asignaciones reales…':live.error?'No se pudo cargar tu plan real: '+live.error:realTasks.length?'Tus tareas asignadas están disponibles debajo. Los estados corresponden a las entregas visibles para tu cuenta.':'No hay tareas asignadas visibles para tu cuenta en el ciclo consultado. Los ejercicios siguientes son solamente ejemplos.'}</div>
+ <div className="mt-7 space-y-3">{(realTasks.length?realTasks:previewDuties).map((d,i)=><button type="button" key={d.id||d.title} onClick={()=>setSelected(selected===i?null:i)} className="group relative flex w-full items-center gap-4 rounded-[22px] border border-white/10 bg-[#17181E] p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-white/30"><div className="absolute bottom-0 left-[35px] top-0 w-[2px] bg-white/10"/><div className="relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 bg-[#282932] text-sm font-black" style={{borderColor:palette[i],color:palette[i]}}>{String(i+1).padStart(2,'0')}</div><div className="min-w-0 flex-1"><span className="text-[10px] font-black tracking-widest" style={{color:palette[i]}}>{String(d.kind||'PRÁCTICA').toUpperCase()}</span><h3 className="mt-1 text-base font-black">{d.title}</h3><p className="mt-1 text-xs text-white/50">{selected===i?d.desc:'Tocá para ver el objetivo'}</p></div>{realTasks.length&&<span className="shrink-0 rounded-full border border-white/15 px-2 py-1 text-[10px] font-bold text-white/70">{d.status==='approved'?'Aprobado':d.status==='rejected'?'Para corregir':d.status==='pending'?'Sin entregar':'En revisión'}</span>}<span className="text-xl text-white/50">{selected===i?'−':'+'}</span></button>)}</div>
+ <p className="mt-5 text-xs text-white/45">Las tareas reales se muestran únicamente cuando existe una asignación visible para la sesión actual. Los ejemplos no representan progreso.</p>
  </div>}
  </div></section>
 }
