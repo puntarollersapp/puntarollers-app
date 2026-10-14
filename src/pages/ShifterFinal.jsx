@@ -26,12 +26,12 @@ function ProgressComparison({ report }) {
     {difference !== null && <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/[.06] px-4 py-3 text-sm text-emerald-100">{difference > 0 ? `Ganaste ${Math.round(difference)} segundos desde tu primera toma. ¡Es un avance real!` : difference === 0 ? 'Mantuviste tu primera marca: la regularidad también es parte del entrenamiento.' : `Tu mejor marca sigue siendo parte de tu recorrido. La última toma varió ${Math.abs(Math.round(difference))} segundos respecto a la primera; cada sesión aporta experiencia.`}</div>}
     <div className="rounded-2xl border border-white/10 bg-black/25 p-3">
       <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/50">Tu evolución · menos tiempo es mejor</p>
-      <svg viewBox="0 0 320 170" className="w-full overflow-visible" role="img" aria-label={`Evolución de ${rows.length} tomas de ${report.distanceKm} kilómetros`}>
+      <div className="overflow-x-auto pb-1"><svg viewBox="0 0 320 170" style={{minWidth:`${Math.max(280,rows.length*76)}px`}} className="w-full overflow-visible" role="img" aria-label={`Evolución de ${rows.length} tomas de ${report.distanceKm} kilómetros`}>
         <defs><linearGradient id={`shifter-line-${report.distanceKm}`} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#a78bfa"/><stop offset="1" stopColor="#fb923c"/></linearGradient></defs>
         {[40,85,130].map(y => <line key={y} x1="14" y1={y} x2="306" y2={y} stroke="white" strokeOpacity=".09" strokeDasharray="3 6"/>)}
         <path d={line} fill="none" stroke={`url(#shifter-line-${report.distanceKm})`} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-700"/>
         {points.map((p,i) => <g key={rows[i].id || i}><circle cx={p.x} cy={p.y} r="7" fill="#18101f" stroke={i===points.length-1 ? '#fb923c' : '#a78bfa'} strokeWidth="3"/><text x={p.x} y={Math.max(12,p.y-13)} textAnchor="middle" fontSize="10" fill="#fff" fontWeight="700">{rows[i].formattedTime}</text><text x={p.x} y="166" textAnchor="middle" fontSize="10" fill="#b6a9c8">T{i+1}</text></g>)}
-      </svg>
+      </svg></div>
     </div>
     <div className="overflow-hidden rounded-2xl border border-white/10"><table className="w-full text-left text-xs"><thead className="bg-white/[.07] text-white/65"><tr><th className="p-3">Toma</th><th className="p-3">Fecha</th><th className="p-3 text-right">Tiempo</th></tr></thead><tbody>{rows.map((row,i) => <tr key={row.id||i} className="border-t border-white/10"><td className="p-3 font-semibold text-violet-200">{row.takeNumber || i+1}</td><td className="p-3 text-white/55">{String(row.date||'—').slice(0,10)}</td><td className="p-3 text-right font-bold tabular-nums">{row.formattedTime}{row.seconds === report.bestSeconds ? <span className="ml-1 text-emerald-300" title="Mejor marca">★</span> : null}</td></tr>)}</tbody></table></div>
   </div>
@@ -68,6 +68,7 @@ export default function ShifterFinal() {
       setTakes(queries[0].data || [])
       const coachResponse = await supabase.rpc('shifter_coach_profiles')
       if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['admin-claudio','profe-david'].includes(p.id)))
+      if (alive && coachResponse.error) setError('No se pudieron cargar las fotos de los entrenadores. El resto de tus datos sigue disponible.')
       setEnrollment(queries[1].data || null)
       setTasks(queries[2].data || [])
       setResults(queries[3].data || [])
