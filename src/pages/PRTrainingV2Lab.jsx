@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
@@ -10,6 +10,70 @@ const levels = [
   { code: 'B4', label: 'Rendimiento', detail: 'Desafíos de mayor exigencia' },
 ]
 const sampleSteps = ['Descubrí tus deberes', 'Entrená a tu ritmo', 'Enviá tu evidencia', 'Recibí la revisión']
+const wheelColors = ['#BBFF1F','#0D0303','#FF0055','#EFF8FF','#BBFF1F','#0D0303','#FF0055','#EFF8FF']
+const demoTasks = ['Control y equilibrio','Frenada en T','Técnica de giro','Resistencia','Patinaje hacia atrás','Precisión y postura']
+function SpinWheel() {
+  const [stage,setStage]=useState('idle')
+  const [revealed,setRevealed]=useState([])
+  const [angle,setAngle]=useState(0)
+  const timer=useRef(null)
+  const run=useRef(false)
+  useEffect(()=>()=>{run.current=false;if(timer.current)clearTimeout(timer.current)},[])
+  function start(){
+    if(run.current||stage==='done')return
+    run.current=true
+    setRevealed([])
+    setStage('spinning')
+    const reveal=(index,rotation)=>{
+      if(!run.current)return
+      if(index>=6){run.current=false;setStage('done');return}
+      const sector=(index*3+1)%8
+      const next=rotation+1800+((360-(rotation%360))%360)+((8-sector)%8)*45
+      setAngle(next)
+      timer.current=setTimeout(()=>{
+        if(!run.current)return
+        setRevealed(prev=>[...prev,demoTasks[index]])
+        timer.current=setTimeout(()=>reveal(index+1,next),620)
+      },1950)
+    }
+    reveal(0,angle)
+  }
+  const segments=wheelColors.map((color,i)=>{
+    const a=(-90+i*45)*Math.PI/180,b=(-90+(i+1)*45)*Math.PI/180
+    const x=t=>180+145*Math.cos(t),y=t=>180+145*Math.sin(t)
+    return <path key={i} d={`M 180 180 L ${x(a)} ${y(a)} A 145 145 0 0 1 ${x(b)} ${y(b)} Z`} fill={color} stroke="#0B0B0B" strokeWidth="8"/>
+  })
+  return <div className="w-full">
+    <div className="relative mx-auto w-full max-w-[390px]">
+      <svg viewBox="0 0 360 370" className="w-full overflow-visible" role="img" aria-label="Ruleta PR SPIN de ocho segmentos, verde lima, negro, rosa eléctrico y blanco hielo">
+        <defs>
+          <radialGradient id="prSpinGloss"><stop offset="35%" stopColor="#FFFFFF" stopOpacity="0"/><stop offset="83%" stopColor="#FFFFFF" stopOpacity=".10"/><stop offset="100%" stopColor="#000000" stopOpacity=".30"/></radialGradient>
+          <filter id="prSpinGlow"><feGaussianBlur stdDeviation="8"/></filter>
+          <linearGradient id="prSpinHub" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#EFF8FF"/><stop offset="1" stopColor="#AEB6BC"/></linearGradient>
+        </defs>
+        <circle cx="180" cy="180" r="151" fill="#BBFF1F" opacity=".16" filter="url(#prSpinGlow)"/>
+        <g style={{transform:`rotate(${angle}deg)`,transformOrigin:'180px 180px',transition:'transform 1.95s cubic-bezier(.12,.72,.15,1)'}}>
+          {segments}
+          <circle cx="180" cy="180" r="141" fill="url(#prSpinGloss)" pointerEvents="none"/>
+          {wheelColors.map((color,i)=>{
+            const a=(-67.5+i*45)*Math.PI/180
+            const x=180+101*Math.cos(a),y=180+101*Math.sin(a)
+            const light=color==='#EFF8FF'||color==='#BBFF1F'
+            return <g key={i} transform={`translate(${x} ${y})`}><circle r="21" fill={light?'#0D0303':'#EFF8FF'} opacity=".14"/><circle r="15" fill={light?'#0D0303':'#EFF8FF'} opacity=".86"/><text y="5" textAnchor="middle" fontSize="13" fontWeight="900" fill={light?'#EFF8FF':'#0D0303'}>{['✦','01','✧','02','✦','03','✧','04'][i]}</text></g>
+          })}
+        </g>
+        <circle cx="180" cy="180" r="65" fill="#0D0303" stroke="#0D0303" strokeWidth="8"/>
+        <circle cx="180" cy="180" r="56" fill="url(#prSpinHub)" stroke="#EFF8FF" strokeWidth="2"/>
+        <text x="180" y="193" textAnchor="middle" fontWeight="1000" fontSize="47" letterSpacing="-4" fill="#0D0303">PR</text>
+        <path d="M 165 13 Q 180 7 195 13 L 180 42 Z" fill="#BBFF1F" stroke="#EFF8FF" strokeWidth="2"/>
+      </svg>
+    </div>
+    <p className="mt-1 text-center text-xs font-semibold uppercase tracking-[.18em] text-white/50">{stage==='done'?'Revelación de muestra completa':stage==='spinning'?'Revelando desafíos…':'Diseño interactivo · vista de prueba'}</p>
+    <div className="mt-5 grid grid-cols-3 gap-2" aria-live="polite">{Array.from({length:6},(_,i)=><div key={i} className={`min-h-[64px] rounded-xl border p-3 text-center ${revealed[i]?'border-[#BBFF1F]/50 bg-[#BBFF1F]/10':'border-white/10 bg-white/5'}`}><p className="text-[10px] font-black text-[#BBFF1F]">{String(i+1).padStart(2,'0')}</p><p className="mt-1 text-xs font-semibold leading-tight text-white">{revealed[i]||'Por revelar'}</p></div>)}</div>
+    <button type="button" onClick={start} disabled={stage==='spinning'} className="mt-5 w-full rounded-full bg-[#BBFF1F] px-5 py-4 text-sm font-black uppercase tracking-wider text-[#0D0303] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">{stage==='done'?'Revelación completada':stage==='spinning'?'Girando…':'Probar animación'}</button>
+    <p className="mt-3 text-center text-xs leading-5 text-white/50">Simulación de diseño: los deberes mostrados son ejemplos. No se asignan ni guardan tareas reales.</p>
+  </div>
+}
 const staffIds = new Set(['admin-claudio', 'profe-david', 'alumno-48812609'])
 
 export default function PRTrainingV2Lab() {
@@ -50,11 +114,9 @@ export default function PRTrainingV2Lab() {
       {section==='experiencia' && <section className="mt-6 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
         <div className="rounded-[26px] border border-violet-400/20 bg-[#17142c] p-7 sm:p-10">
           <p className="text-xs font-bold uppercase tracking-[.24em] text-violet-300">PR SPIN</p>
-          <div className="mx-auto my-9 flex h-56 w-56 items-center justify-center rounded-full border-[13px] border-violet-500/35 bg-[conic-gradient(from_15deg,#6d28d9,#312e81,#a21caf,#6d28d9)] p-3 shadow-[0_0_65px_rgba(139,92,246,.2)] sm:h-64 sm:w-64">
-            <div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-white/30 bg-[#141125]/90 text-center"><span className="text-5xl font-black">PR</span><span className="text-xl font-black tracking-[.4em] text-violet-200">SPIN</span></div>
-          </div>
+          <div className="my-7"><SpinWheel/></div>
           <h2 className="text-xl font-bold">Tu mes empieza acá.</h2>
-          <p className="mt-2 text-sm leading-6 text-white/60">La animación revelará los seis deberes uno por uno y se mostrará una sola vez por ciclo. Esta es una vista de diseño: la asignación y el giro todavía no están activos.</p>
+          <p className="mt-2 text-sm leading-6 text-white/60">La ruleta visual tiene ocho segmentos amplios, pero el ciclo revela seis deberes. La animación ya puede probarse aquí; la asignación real todavía no está habilitada.</p>
         </div>
         <div className="rounded-[26px] border border-white/10 bg-[#141421] p-7">
           <p className="text-xs font-bold uppercase tracking-[.2em] text-white/50">Así funciona</p>
