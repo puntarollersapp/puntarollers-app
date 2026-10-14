@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
+import ProfileAvatar from '../components/ProfileAvatar'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildShifterFinalReport, SHIFTER_FINAL_LABEL } from '../lib/shifterFinalReport'
 
 export default function ShifterFinal() {
   const { user } = useAuth()
+  const [coaches, setCoaches] = useState([])
   const [takes, setTakes] = useState([])
   const [tasks, setTasks] = useState([])
   const [results, setResults] = useState([])
@@ -29,6 +31,8 @@ export default function ShifterFinal() {
       if (!alive) return
       if (queries.some(x => x.error)) setError('Algunos datos no están disponibles. No se modificó ningún registro.')
       setTakes(queries[0].data || [])
+      const coachResponse = await supabase.from('profiles').select('id,nombre,apellido,foto_url,avatar_url,role,es_profesor').or('nombre.ilike.%Claudio%,nombre.ilike.%David%').limit(30)
+      if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['Claudio','David'].some(name => String(p.nombre || '').toLowerCase() === name.toLowerCase()) && (p.es_profesor || ['admin','profesor'].includes(p.role))))
       setEnrollment(queries[1].data || null)
       setTasks(queries[2].data || [])
       setResults(queries[3].data || [])
@@ -43,6 +47,16 @@ export default function ShifterFinal() {
   const completed = assigned.filter(t => results.some(r => r.task_id === t.id && r.status === 'completed')).length
   const kilometers = activity.reduce((sum, a) => sum + (Number(a.distancia_metros) || 0) / 1000, 0)
   return <AppLayout title="Shifter 2026" showBack><div className="mx-auto max-w-xl space-y-4 px-4 pb-28 pt-5 text-white">
+    <section className="rounded-[30px] border border-violet-300/20 bg-gradient-to-br from-[#261829] via-[#17111d] to-[#0d0a10] p-6 text-center shadow-[0_16px_50px_rgba(80,35,115,.15)]">
+      <div className="mb-5 flex justify-center gap-4">{['Claudio','David'].map(name => { const coach = coaches.find(p => String(p.nombre || '').toLowerCase() === name.toLowerCase()); return <div key={name} className="flex flex-col items-center gap-2">{coach ? <ProfileAvatar profile={coach} className="h-[74px] w-[74px]" badge={false}/> : <div className="grid h-[74px] w-[74px] place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-black text-white/50">{name.slice(0,1)}</div>}<span className="text-xs font-semibold text-white/70">{name}</span></div> })}</div>
+      <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Un mensaje de tus entrenadores</p>
+      <h2 className="mt-3 text-[27px] font-black leading-tight">Estamos orgullosos de vos.</h2>
+      <p className="mt-4 text-sm leading-7 text-white/75">Queremos felicitarte por todo el empeño que pusiste en este camino. Por tu energía, tu esfuerzo, tu constancia y las ganas de superarte en cada entrenamiento.</p>
+      <p className="mt-3 text-sm leading-7 text-white/75">Para nosotros fue una alegría acompañarte durante esta preparación. Esperamos que disfrutes de tu primera carrera tanto como nosotros disfrutamos de verte llegar hasta acá.</p>
+      <p className="mt-4 text-sm font-bold text-white">Ahora te toca vivirlo. ¡Nos vemos en la Shifter!</p>
+      <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">Claudio y David · Punta Rollers</p>
+      <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-orange-300">No es solo patinar, es pertenecer.</p>
+    </section>
     <section className="rounded-[30px] border border-orange-400/25 bg-gradient-to-br from-[#381806] via-[#15101c] to-[#09090e] p-6">
       <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Punta Rollers · Shifter Marathon 2026</p>
       <h1 className="mt-3 text-4xl font-black leading-tight">Tu camino<br/>hasta acá.</h1>
