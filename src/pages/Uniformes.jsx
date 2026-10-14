@@ -211,62 +211,21 @@ export default function Uniformes() {
         )}
 
         {!loading && (
-          <section className="space-y-4">
-            <p className="section-label">
-              Elegí el producto
-            </p>
-
-            <div className="space-y-4">
-              {productos.map((product) => {
-                const active = selectedId === product.id
-
-                return (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => selectProduct(product)}
-                    className={`uniform-product w-full glass rounded-3xl overflow-hidden text-left border transition-all ${
-                      active
-                        ? 'border-pr-gold shadow-[0_0_0_1px_rgba(201,168,76,0.2)]'
-                        : 'border-white/10'
-                    }`}
-                  >
-                    <img
-                      src={product.imagen}
-                      alt={product.nombre}
-                      className="w-full aspect-square object-cover bg-white"
-                    />
-
-                    <div className="p-4 flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-white font-semibold text-lg">
-                          {product.nombre}
-                        </p>
-
-                        <p className="text-pr-gold font-bold mt-1">
-                          {formatPrice(product.precio)}
-                        </p>
-
-                        {product.descripcion && (
-                          <p className="text-white/40 text-xs mt-2">
-                            {product.descripcion}
-                          </p>
-                        )}
-                      </div>
-
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
-                          active
-                            ? 'bg-pr-gold text-black'
-                            : 'bg-white/[0.05] text-white/45'
-                        }`}
-                      >
-                        {active ? 'Elegido' : 'Elegir'}
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
+          <section className="space-y-5">
+            <div className="flex items-end justify-between gap-3">
+              <div><p className="section-label uniform-accent">COLECCIÓN PR</p><h2 className="text-white text-2xl font-black tracking-tight mt-1">Elegí tu uniforme</h2></div>
+              <span className="text-white/50 text-xs">{productos.length} productos</span>
+            </div>
+            {productos.length === 0 && <p className="text-white/60 text-sm">No hay uniformes disponibles en este momento.</p>}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              {productos.filter(p => !/hoodie|buzo/i.test(p.id + ' ' + p.nombre)).map(product => (
+                <UniformCard key={product.id} product={product} active={selectedId === product.id} onSelect={() => selectProduct(product)} compact />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {productos.filter(p => /hoodie|buzo/i.test(p.id + ' ' + p.nombre)).map(product => (
+                <UniformCard key={product.id} product={product} active={selectedId === product.id} onSelect={() => selectProduct(product)} />
+              ))}
             </div>
           </section>
         )}
@@ -404,6 +363,24 @@ export default function Uniformes() {
         </section>
       </div>
     </PublicLayout>
+  )
+}
+
+function UniformCard({ product, active, onSelect, compact = false }) {
+  return (
+    <button type="button" onClick={onSelect} aria-pressed={active}
+      className={`uniform-product group relative min-w-0 overflow-hidden rounded-2xl sm:rounded-3xl border text-left flex flex-col bg-[#17121f] ${active ? 'border-[#d0ff00] shadow-[0_0_24px_rgba(129,22,224,.35)]' : 'border-white/15 hover:border-[#8116e0]'}`}>
+      <div className="relative aspect-[4/5] overflow-hidden bg-white">
+        <img src={product.imagen} alt={product.nombre} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        {active && <span className="absolute top-2 right-2 rounded-full bg-[#d0ff00] text-black text-[10px] font-black px-2 py-1">✓</span>}
+      </div>
+      <div className={`w-full min-w-0 flex-1 flex flex-col ${compact ? 'p-2.5 sm:p-4 gap-1' : 'p-3 sm:p-5 gap-2'}`}>
+        <p className={`font-bold text-white leading-snug break-words ${compact ? 'text-xs sm:text-base' : 'text-sm sm:text-lg'}`}>{product.nombre}</p>
+        <p className={`font-black text-[#d0ff00] mt-auto pt-1 ${compact ? 'text-xs sm:text-base' : 'text-base sm:text-xl'}`}>{formatPrice(product.precio)}</p>
+        {!compact && product.descripcion && <p className="text-white/60 text-xs leading-relaxed break-words">{product.descripcion}</p>}
+        <span className={`block w-full rounded-xl py-2 text-center font-bold text-xs sm:text-sm ${active ? 'bg-[#d0ff00] text-black' : 'bg-[#8116e0] text-white'}`}>{active ? 'Seleccionado' : 'Elegir'}</span>
+      </div>
+    </button>
   )
 }
 
