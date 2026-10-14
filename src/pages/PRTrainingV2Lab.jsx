@@ -137,6 +137,7 @@ function TrainingAdminControls(){
  useEffect(()=>{refresh()},[])
  async function updateDuty(d, field){
   setDutyMessage('')
+  if(field==='demo'&&!d.demo_ready&&!d.demo_video_path){setDutyMessage('Primero hay que subir el video demostrativo del ejercicio.');return}
   const nextDemo=field==='demo'? !d.demo_ready : d.demo_ready
   const nextActive=field==='active'? !d.active : d.active
   if(nextActive&&!nextDemo&&(d.requires_demo!==false)){
