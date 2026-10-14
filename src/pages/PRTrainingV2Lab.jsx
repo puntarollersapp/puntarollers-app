@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import TrainingStudio from '../components/training/TrainingStudio'
 
 const levels = [
   { code: 'B1', label: 'Fundamentos', detail: 'Control, equilibrio y frenadas' },
@@ -204,35 +205,10 @@ export default function PRTrainingV2Lab(){
  if(!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
  const name=user.nombre||'Equipo'
  return <AppLayout>
- <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#09090E] px-3 pb-28 pt-5 text-[#EFF8FF] sm:px-6">
+ <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#14141B] text-[#EFF8FF]">
  <div className="mx-auto w-full min-w-0 max-w-5xl">
-  {adminView?<TrainingDailyControl/>:<>
-  <div className="mb-3 flex items-center justify-between gap-3 px-1"><div><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-white/45">Punta Rollers / Training</p><h1 className="mt-1 text-[25px] font-black leading-tight tracking-tight text-[#EFF8FF]">{spinCompleted?'Mis deberes':'Descubrí tus deberes'}</h1></div><div className="shrink-0 rounded-full border border-[#BFFF27]/25 bg-[#C4FF25]/10 px-3 py-2 text-xs font-semibold text-white/85">{spinCompleted?'0 de 6':'PR SPIN'}</div></div>
-  {spinCompleted&&<nav className="mt-4 grid grid-cols-3 gap-1 rounded-2xl border border-white/10 bg-[#18171F] p-1.5" aria-label="Secciones de PR Training">{tabs.filter(([key])=>key!=='spin').map(([key,label])=><button key={key} type="button" onClick={()=>{setSection(key);setSelected(null)}} className={`min-w-0 px-1 py-2.5 text-xs font-semibold transition ${section===key?'rounded-xl bg-gradient-to-r from-lime-300 via-green-300 to-cyan-300 text-[#111016] shadow-[0_4px_20px_rgba(151,255,57,.15)]':'rounded-xl text-white/65 hover:text-white'}`}>{label}</button>)}</nav>}
-  {spinCompleted&&section==='inicio'&&<div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
-   <div className="space-y-4">
-    <section className="relative overflow-hidden rounded-[28px] border border-[#BFFF27]/20 p-6 sm:p-7" style={{background:'radial-gradient(circle at 100% 0%,rgba(190,255,36,.20),transparent 49%),linear-gradient(135deg,#252329,#17171D)'}}>
-     <p className="text-[11px] font-bold uppercase tracking-[.18em] text-lime-300">TU RENDIMIENTO</p>
-     <div className="mt-5 flex items-center justify-between gap-4"><div className="min-w-0"><h2 className="text-[28px] font-black leading-tight tracking-tight text-white">Cada avance<br/><span className="text-lime-300">cuenta.</span></h2><p className="mt-3 text-sm text-white/65">Noviembre · 6 desafíos</p></div><Ring value={0} size={112}/></div>
-     <div className="mt-7 flex items-center justify-between text-xs font-semibold text-white/70"><span>Ejercicios completados</span><span className="text-white">0 / 6</span></div>
-     <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full w-0 rounded-full bg-lime-300"/></div>
-     <p className="mt-3 text-[11px] text-white/50">Vista de diseño · Sin datos reales</p>
-    </section>
-    <section className="rounded-[26px] border border-white/10 bg-[#19191F] p-5 sm:p-6"><div className="flex items-center justify-between gap-2"><div><p className="text-[10px] font-bold uppercase tracking-widest text-[#4EE8CE]">EN ACCIÓN</p><h2 className="mt-1 text-xl font-black">Próximos desafíos</h2></div><button onClick={()=>setSection('deberes')} className="rounded-full border border-white/20 px-3 py-2 text-xs font-bold text-white">Ver los 6 ↗</button></div><div className="mt-4 space-y-2.5">{sample.slice(0,2).map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>{setSection('deberes');setSelected(i)}}/>)}</div></section>
-   </div>
-   <section className="self-start rounded-[26px] border border-white/10 bg-[#1B1A22] p-5 sm:p-6"><div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-widest text-[#4EE8CE]">CONSTANCIA</p><h2 className="mt-1 text-xl font-black">Tu calendario</h2></div><span className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/75">NOV 2026</span></div><p className="mb-5 mt-2 text-xs text-white/55">Ejemplo visual · Sin asistencias registradas</p><MonthPreview/><div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-white/70"><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-lime-300"/>Deber</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-pink-500"/>Clase</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-lime-300 to-pink-500"/>Ambos</span></div></section>
-  </div>}
-  {spinCompleted&&section==='deberes'&&<section className="mt-2 w-full min-w-0 max-w-full overflow-hidden bg-transparent px-0 py-3 sm:p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-widest text-[#BFFF27]">NOVIEMBRE / 2026</p><h2 className="mt-1 text-[26px] font-black tracking-tight">Tus seis ejercicios</h2><p className="mt-2 text-xs text-white/55">Ejercicios de muestra · Vista privada</p></div><span className="rounded-full border border-[#BFFF27]/25 bg-lime-300/10 px-3 py-2 text-xs font-bold">0 / 6</span></div><div className="mt-4 grid min-w-0 grid-cols-1 gap-2.5 md:grid-cols-2">{sample.map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>setSelected(selected===i?null:i)}/>)}</div>{selected!==null&&<div className="mt-5 rounded-2xl border border-[#BBFF1F]/35 bg-[#BBFF1F]/[.07] p-5"><p className="text-xs font-bold uppercase text-[#BBFF1F]">Vista del deber {sample[selected].n}</p><h3 className="mt-2 text-xl font-black">{sample[selected].title}</h3><p className="mt-2 text-sm text-white/60">{sample[selected].detail}</p><p className="mt-4 text-xs text-white/45">El envío de evidencia se habilitará cuando estén conectados el catálogo real y la revisión docente.</p></div>}</section>}
-  {spinCompleted&&section==='actividad'&&<div className="mt-5 grid gap-4 lg:grid-cols-2">
-   <section className="relative overflow-hidden rounded-[28px] border border-white/10 p-6" style={{background:'radial-gradient(circle at 100% 0%,rgba(69,232,204,.18),transparent 60%),linear-gradient(145deg,#23232B,#15151C)'}}>
-    <p className="text-[11px] font-bold uppercase tracking-[.18em] text-[#4EE8CE]">TU ACTIVIDAD</p><h2 className="mt-2 text-[28px] font-black leading-tight tracking-tight">Entrenar también<br/>es avanzar.</h2>
-    <div className="mt-7 flex items-center gap-6"><Ring value={0} size={112}/><div><p className="text-[38px] font-black leading-none tracking-tight">0<span className="ml-1 text-base text-white/50">/ 6</span></p><p className="mt-2 text-sm text-white/65">Desafíos completados</p><span className="mt-3 inline-block rounded-full bg-[#4EE8CE]/10 px-3 py-1.5 text-[11px] font-bold text-[#4EE8CE]">Esperando tu primera entrega</span></div></div>
-    <p className="mt-6 text-xs text-white/45">Datos ilustrativos de la vista privada</p>
-   </section>
-   <section className="rounded-[28px] border border-white/10 bg-[#1B1A22] p-6"><p className="text-[11px] font-bold uppercase tracking-[.18em] text-pink-400">SEGUIMIENTO</p><h2 className="mt-2 text-2xl font-black">De tu práctica<br/>a tu progreso.</h2><div className="relative mt-6 space-y-5">{[['01','Enviás','Foto, video o Strava','#4EE8CE'],['02','Revisamos','Claudio o David comprueban la evidencia','#FF3D83'],['03','Avanzás','Se actualiza tu progreso','#BFFF2B']].map(([n,title,desc,color],i)=><div key={n} className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-black text-[#101015]" style={{background:color}}>{n}</span><div className="min-w-0 pt-0.5"><p className="font-extrabold text-white">{title}</p><p className="mt-1 text-xs leading-relaxed text-white/60">{desc}</p></div></div>)}</div></section>
-  </div>}
-  {!spinCompleted&&section==='spin'&&<section className="mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-[28px] border border-[#BFFF27]/30 bg-[#21151A] px-4 py-6 sm:p-8"><div className="text-center"><p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PUNTA ROLLERS · PR TRAINING</p><h2 className="mt-2 text-4xl font-black tracking-tight">PR SPIN</h2><p className="mt-2 text-sm text-white/45">Seis giros, seis deberes. Tocá GIRAR para descubrirlos de a uno.</p><p className="mx-auto mt-2 max-w-md text-xs leading-5 text-white/55">Cada ejercicio fue preparado por el Profe Claudio para acompañar tu progreso. Esta ruleta es una demostración visual.</p></div><div className="mx-auto mt-5 max-w-[450px]"><SpinWheel initialRevealed={spinCount} onReveal={rememberSpin} onViewDuties={()=>{setSpinCompleted(true);setSection('deberes')}}/></div></section>}
-  </>}
-  <footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR Training 2.0 · Laboratorio privado · Contenido de demostración sin escritura de datos</footer>
+  {adminView?<TrainingDailyControl/>:<TrainingStudio user={user}/>}
+
+  {adminView&&<footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR Training 2.0 · Laboratorio privado</footer>}
  </div></main></AppLayout>
 }
