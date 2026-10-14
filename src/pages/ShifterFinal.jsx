@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { buildShifterFinalReport } from '../lib/shifterFinalReport'
+import { buildShifterFinalReport, SHIFTER_FINAL_LABEL } from '../lib/shifterFinalReport'
 
 const RACE_DATE = new Date('2026-11-01T08:00:00-03:00')
 function timeUntilRace() { return Math.max(0, Math.floor((RACE_DATE.getTime() - Date.now()) / 1000)) }
@@ -37,6 +37,29 @@ function ProgressComparison({ report }) {
   </div>
 }
 
+
+function Ring({value,label}) {
+  const safe=Math.max(0,Math.min(100,Number(value)||0)), radius=35, circumference=2*Math.PI*radius
+  return <div className="relative flex flex-col items-center justify-center"><svg viewBox="0 0 100 100" className="h-28 w-28 -rotate-90" role="img" aria-label={`${label}: ${safe.toFixed(0)} por ciento`}><circle cx="50" cy="50" r={radius} fill="none" stroke="#ffffff19" strokeWidth="8"/><circle cx="50" cy="50" r={radius} fill="none" stroke="#fb923c" strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference*(1-safe/100)} className="transition-all duration-700"/></svg><span className="absolute top-9 text-2xl font-black tabular-nums">{safe.toFixed(0)}%</span><span className="text-xs text-white/60">{label}</span></div>
+}
+function SportRadar({metrics,title,subtitle}) {
+  const center=150,radius=104,count=metrics.length
+  const point=(i,factor)=>{const angle=-Math.PI/2+2*Math.PI*i/count;return [center+Math.cos(angle)*radius*factor,center+Math.sin(angle)*radius*factor]}
+  const polygon=(factor)=>metrics.map((_,i)=>point(i,factor).map(n=>n.toFixed(1)).join(',')).join(' ')
+  const shape=metrics.map((m,i)=>point(i,Math.max(.05,Math.min(1,m.value/100))).map(n=>n.toFixed(1)).join(',')).join(' ')
+  return <section className="overflow-hidden rounded-[28px] border border-orange-300/20 bg-gradient-to-b from-[#23192c] to-[#100e17] p-5">
+    <p className="text-[10px] font-black uppercase tracking-[.18em] text-orange-300">Índice deportivo</p>
+    <h2 className="mt-2 text-2xl font-black">{title}</h2><p className="mt-2 text-xs leading-5 text-white/55">{subtitle}</p>
+    <svg viewBox="0 0 300 300" className="mx-auto mt-2 w-full max-w-[340px]" role="img" aria-label={metrics.map(m=>`${m.label}: ${m.value}%`).join('; ')}>
+      {[.25,.5,.75,1].map(f=><polygon key={f} points={polygon(f)} fill="none" stroke="#c4b5fd" strokeOpacity=".24" strokeWidth="1.2"/>)}
+      {metrics.map((_,i)=><line key={i} x1={center} y1={center} x2={point(i,1)[0]} y2={point(i,1)[1]} stroke="#c4b5fd" strokeOpacity=".16"/>)}
+      <polygon points={shape} fill="#fb923c" fillOpacity=".27" stroke="#fb923c" strokeWidth="2.6" strokeLinejoin="round"/>
+      {metrics.map((m,i)=>{const [x,y]=point(i,Math.max(.05,Math.min(1,m.value/100))),[lx,ly]=point(i,1.23);return <g key={m.label}><circle cx={x} cy={y} r="4.5" fill="#fb923c" stroke="#fff" strokeWidth="1.4"/><text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#e9def5" fontWeight="600">{m.label}</text></g>})}
+    </svg>
+    <p className="text-center text-[11px] leading-5 text-white/45">Indicadores de preparación, no una evaluación médica ni una comparación entre alumnos.</p>
+  </section>
+}
+
 export default function ShifterFinal() {
   const [remaining, setRemaining] = useState(timeUntilRace)
   useEffect(() => { const timer = window.setInterval(() => setRemaining(timeUntilRace()), 1000); return () => window.clearInterval(timer) }, [])
@@ -48,6 +71,8 @@ export default function ShifterFinal() {
   const [results, setResults] = useState([])
   const [enrollment, setEnrollment] = useState(null)
   const [activity, setActivity] = useState([])
+  const [groupIndex,setGroupIndex] = useState(null)
+  const [copied,setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -60,13 +85,14 @@ export default function ShifterFinal() {
         supabase.from('pr_training_enrollments').select('*').eq('profile_id', user.id).eq('event_slug', event).maybeSingle(),
         supabase.from('pr_training_tasks').select('*').eq('event_slug', event).eq('active', true),
         supabase.from('pr_training_task_results').select('*').eq('profile_id', user.id),
-        supabase.from('pr_inline_skate_activities').select('distancia_metros').eq('alumno_id', user.id).eq('fuente', 'strava').eq('eliminada', false).limit(1000),
+        supabase.from('pr_inline_skate_activities').select('nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos').eq('alumno_id', user.id).eq('fuente', 'strava').eq('eliminada', false).limit(1000),
         supabase.from('pr_performance_notes').select('id,body,visibility,created_at').eq('profile_id', user.id).eq('visibility','student').order('created_at',{ascending:false}).limit(100),
       ])
       if (!alive) return
       if (queries.some(x => x.error)) setError('Algunos datos no están disponibles. No se modificó ningún registro.')
       setTakes(queries[0].data || [])
-      const coachResponse = await supabase.rpc('shifter_coach_profiles')
+      const [coachResponse,groupResponse] = await Promise.all([supabase.rpc('shifter_coach_profiles'),supabase.rpc('shifter_group_index')])
+      if(alive && !groupResponse.error) setGroupIndex(groupResponse.data)
       if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['admin-claudio','profe-david'].includes(p.id)))
       if (alive && coachResponse.error) setError('No se pudieron cargar las fotos de los entrenadores. El resto de tus datos sigue disponible.')
       setEnrollment(queries[1].data || null)
@@ -82,6 +108,20 @@ export default function ShifterFinal() {
   const reports = useMemo(() => buildShifterFinalReport(takes), [takes])
   const assigned = tasks.filter(t => enrollment?.category && enrollment.category !== 'NO' && (t.category === 'ALL' || t.category === enrollment.category))
   const completed = assigned.filter(t => results.some(r => r.task_id === t.id && r.status === 'completed')).length
+  const finalActivity = activity.filter(a=>String(a.nombre||'').trim().toUpperCase()===SHIFTER_FINAL_LABEL)
+  const latestFinal = [...finalActivity].sort((a,b)=>new Date(b.fecha_inicio||0)-new Date(a.fecha_inicio||0))[0]
+  const finalKm=latestFinal?Number(latestFinal.distancia_metros||0)/1000:0
+  const finalDistance=finalKm>=5&&finalKm<=7?6:finalKm>=10.76&&finalKm<=13.5?12:null
+  const finalReport=reports.find(r=>r.distanceKm===finalDistance&&r.count>0)
+  const finalSeconds=Number(latestFinal?.tiempo_movimiento_segundos||0)
+  const finalDifference=finalReport&&finalSeconds>0?finalReport.firstSeconds-finalSeconds:null
+  const metrics = [
+    {label:'Tomas',value:Math.min(100,reports.reduce((s,r)=>s+r.count,0)*20)},
+    {label:'Deberes',value:assigned.length?Math.round(completed/assigned.length*100):0},
+    {label:'Actividad',value:Math.min(100,activity.length*10)},
+    {label:'Distancias',value:Math.round(reports.filter(r=>r.count>0).length/2*100)},
+    {label:'Evolución',value:reports.some(r=>r.hasComparison)?Math.round(reports.filter(r=>r.hasComparison&&r.differenceSeconds>0).length/Math.max(1,reports.filter(r=>r.hasComparison).length)*100):0},
+  ]
   const kilometers = activity.reduce((sum, a) => sum + (Number(a.distancia_metros) || 0) / 1000, 0)
   return <AppLayout title="Shifter 2026" showBack><div className="mx-auto max-w-xl space-y-4 px-4 pb-28 pt-5 text-white">
     <section className="rounded-[30px] border border-violet-300/20 relative isolate overflow-hidden bg-gradient-to-br from-[#301a39] via-[#1c1427] to-[#0d0a15] p-6 text-center shadow-[0_20px_65px_rgba(126,65,190,.25)]">
@@ -144,6 +184,18 @@ export default function ShifterFinal() {
       {assigned.length > 0 && <><div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-400" style={{width:`${completed/assigned.length*100}%`}}/></div><p className="mt-3 text-sm text-white/65">{completed===assigned.length ? 'Todos los deberes registrados están completos.' : `Todavía quedan ${assigned.length-completed} deberes pendientes. Podés seguir completándolos.`}</p></>}
       <Link to="/app/deberes" className="mt-4 inline-block rounded-xl border border-white/20 px-4 py-3 text-sm font-bold">Ver mis deberes</Link>
     </section>
+    <section className="rounded-[28px] border border-orange-300/20 bg-[#17131d] p-5"><h2 className="text-xl font-black">Tu preparación, de un vistazo</h2><div className="mt-4 grid grid-cols-2 gap-3"><Ring value={assigned.length?completed/assigned.length*100:0} label="Deberes"/><Ring value={Math.min(100,reports.reduce((s,r)=>s+r.count,0)*20)} label="Tomas"/></div><p className="mt-3 text-center text-xs text-white/45">Los anillos reflejan registros de preparación, no un porcentaje de condición física.</p></section>
+    <SportRadar metrics={metrics} title="Tu huella deportiva" subtitle="Cinco señales calculadas con tus tomas, deberes y actividades registradas. La escala representa avance de preparación, no capacidad física ni un diagnóstico."/>
+    <section className="rounded-[28px] border border-orange-400/25 bg-[#1b1414] p-5">
+      <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">Toma final · Strava</p>
+      <h2 className="mt-2 text-xl font-black">Tu último registro, conectado.</h2>
+      <p className="mt-2 text-sm leading-6 text-white/65">Usá este nombre exacto para la actividad final de patín en Strava. Cuando se sincronice, Shifter podrá reconocerla automáticamente.</p>
+      <div className="mt-4 break-all rounded-xl border border-white/10 bg-black/30 p-3 font-mono text-sm font-bold text-white">{SHIFTER_FINAL_LABEL}</div>
+      <button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(SHIFTER_FINAL_LABEL);setCopied(true)}catch{setCopied(false)}}} className="mt-3 w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-black text-black">{copied?'Nombre copiado':'Copiar nombre para Strava'}</button>
+      {latestFinal?<p className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">Actividad final detectada en Strava · {Number(latestFinal.distancia_metros/1000).toFixed(2)} km · {latestFinal.fecha_inicio?String(latestFinal.fecha_inicio).slice(0,10):'Fecha no disponible'}. El tiempo proviene de Strava y se muestra por separado de las tomas validadas.</p>:<p className="mt-4 text-xs text-orange-200/70">Pendiente de sincronización. Tu progreso anterior se conserva intacto.</p>}
+      {finalDifference!==null&&<div className="mt-3 rounded-xl border border-orange-300/20 bg-orange-400/[.06] p-4"><p className="text-xs font-bold uppercase tracking-wide text-orange-200">Comparativa provisional · {finalDistance}K</p><p className="mt-2 text-sm text-white/80">Primera toma: {finalReport.rows[0].formattedTime} · Actividad Strava: {Math.floor(finalSeconds/60)}:{String(Math.round(finalSeconds%60)).padStart(2,'0')}</p><p className="mt-2 text-sm font-bold">{finalDifference>0?`${Math.round(finalDifference)} segundos más rápido que la primera toma`:finalDifference===0?'Mismo tiempo que tu primera toma':`${Math.abs(Math.round(finalDifference))} segundos por encima de tu primera toma`}</p><p className="mt-2 text-xs text-white/55">Comparación informativa con el tiempo en movimiento de Strava. No reemplaza la devolución técnica del entrenador.</p></div>}
+    </section>
+    {groupIndex?.participants>=5&&<SportRadar title="Índice deportivo grupal" subtitle={`Panorama colectivo de ${groupIndex.participants} participantes. Solo indicadores agregados, sin tiempos ni datos personales de compañeros.`} metrics={[{label:'Tomas',value:groupIndex.takes_coverage||0},{label:'Deberes',value:groupIndex.task_coverage||0},{label:'Actividad',value:groupIndex.activity_coverage||0},{label:'6K',value:groupIndex.six_k_coverage||0},{label:'12K',value:groupIndex.twelve_k_coverage||0}]}/>}
     <section className="rounded-[28px] border border-white/10 p-5"><h2 className="text-xl font-black">Cada entrenamiento cuenta.</h2><p className="mt-3 text-sm leading-6 text-white/60">Los números cuentan parte de tu historia. Lo que entrenaste, aprendiste y compartiste también forma parte de este camino. Todavía tenemos clases, clínica y momentos para seguir aprendiendo antes de la carrera.</p><p className="mt-3 text-xs text-orange-300">No es solo patinar, es pertenecer.</p></section></>}
   </div></AppLayout>
 }
