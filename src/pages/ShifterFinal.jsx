@@ -6,7 +6,11 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildShifterFinalReport, SHIFTER_FINAL_LABEL } from '../lib/shifterFinalReport'
 
+const RACE_DATE = new Date('2026-11-01T08:00:00-03:00')
+function timeUntilRace() { return Math.max(0, Math.floor((RACE_DATE.getTime() - Date.now()) / 1000)) }
 export default function ShifterFinal() {
+  const [remaining, setRemaining] = useState(timeUntilRace)
+  useEffect(() => { const timer = window.setInterval(() => setRemaining(timeUntilRace()), 1000); return () => window.clearInterval(timer) }, [])
   const { user } = useAuth()
   const [coaches, setCoaches] = useState([])
   const [takes, setTakes] = useState([])
@@ -50,12 +54,13 @@ export default function ShifterFinal() {
     <section className="rounded-[30px] border border-violet-300/20 bg-gradient-to-br from-[#261829] via-[#17111d] to-[#0d0a10] p-6 text-center shadow-[0_16px_50px_rgba(80,35,115,.15)]">
       <div className="mb-5 flex justify-center gap-4">{['Claudio','David'].map(name => { const coach = coaches.find(p => String(p.nombre || '').toLowerCase() === name.toLowerCase()); return <div key={name} className="flex flex-col items-center gap-2">{coach ? <ProfileAvatar profile={coach} className="h-[74px] w-[74px]" badge={false}/> : <div className="grid h-[74px] w-[74px] place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-black text-white/50">{name.slice(0,1)}</div>}<span className="text-xs font-semibold text-white/70">{name}</span></div> })}</div>
       <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Un mensaje de tus entrenadores</p>
-      <h2 className="mt-3 text-[27px] font-black leading-tight">Estamos orgullosos de vos.</h2>
-      <p className="mt-4 text-sm leading-7 text-white/75">Queremos felicitarte por todo el empeño que pusiste en este camino. Por tu energía, tu esfuerzo, tu constancia y las ganas de superarte en cada entrenamiento.</p>
-      <p className="mt-3 text-sm leading-7 text-white/75">Para nosotros fue una alegría acompañarte durante esta preparación. Esperamos que disfrutes de tu primera carrera tanto como nosotros disfrutamos de verte llegar hasta acá.</p>
-      <p className="mt-4 text-sm font-bold text-white">Ahora te toca vivirlo. ¡Nos vemos en la Shifter!</p>
-      <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">Claudio y David · Punta Rollers</p>
+      <h2 className="mt-3 text-[27px] font-black leading-tight">Estás en la recta final.</h2>
+      <p className="mt-4 text-sm leading-7 text-white/75">Queremos felicitarte por todo lo que venís construyendo. Por tu esfuerzo, tu constancia y las ganas que le pusiste a cada entrenamiento.</p>
+      <p className="mt-3 text-sm leading-7 text-white/75">Estamos orgullosos de vos, y todavía nos quedan momentos para compartir: las últimas clases, la clínica y esos pequeños detalles que nos van a ayudar a llegar de la mejor manera.</p>
+      <p className="mt-4 text-sm font-bold text-white">Disfrutá estos últimos días. La carrera está cada vez más cerca y lo mejor de esta experiencia todavía está por vivirse.</p>
+      <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/60">Claudio y David · Tus entrenadores</p>
       <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-orange-300">No es solo patinar, es pertenecer.</p>
+      <div className="mt-5 rounded-2xl border border-orange-300/20 bg-black/25 px-3 py-4" aria-label="Cuenta regresiva hasta Shifter Marathon 2026"><p className="mb-3 text-[10px] font-black uppercase tracking-[.15em] text-orange-300">Falta para Shifter</p><div className="grid grid-cols-4 gap-2">{[[Math.floor(remaining/86400),'días'],[Math.floor(remaining%86400/3600),'horas'],[Math.floor(remaining%3600/60),'min'],[remaining%60,'seg']].map(([value,label]) => <div key={label}><p className="font-mono text-xl font-black tabular-nums text-white">{String(value).padStart(2,'0')}</p><p className="text-[10px] text-white/50">{label}</p></div>)}</div></div>
     </section>
     <section className="rounded-[30px] border border-orange-400/25 bg-gradient-to-br from-[#381806] via-[#15101c] to-[#09090e] p-6">
       <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Punta Rollers · Shifter Marathon 2026</p>
