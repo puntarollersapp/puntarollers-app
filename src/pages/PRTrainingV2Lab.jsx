@@ -13,9 +13,9 @@ const levels = [
 const sampleSteps = ['Descubrí tus deberes', 'Entrená a tu ritmo', 'Enviá tu evidencia', 'Recibí la revisión']
 const wheelColors = ['#BBFF1F','#0D0303','#FF0055','#EFF8FF','#BBFF1F','#0D0303','#FF0055','#EFF8FF']
 const demoTasks = ['Control y equilibrio','Frenada en T','Técnica de giro','Resistencia','Patinaje hacia atrás','Precisión y postura']
-function SpinWheel({onViewDuties}) {
-  const [stage,setStage]=useState('idle')
-  const [revealed,setRevealed]=useState([])
+function SpinWheel({onViewDuties, initialRevealed=0, onReveal}) {
+  const [stage,setStage]=useState(initialRevealed===6?'done':'idle')
+  const [revealed,setRevealed]=useState(()=>demoTasks.slice(0,initialRevealed))
   const [angle,setAngle]=useState(0)
   const timer=useRef(null)
   const run=useRef(false)
@@ -30,6 +30,7 @@ function SpinWheel({onViewDuties}) {
     timer.current=setTimeout(()=>{
       if(!run.current)return
       setRevealed(prev=>[...prev,demoTasks[index]])
+      onReveal?.(index+1)
       setStage(index===5?'done':'idle')
       run.current=false
     },1950)
@@ -171,7 +172,7 @@ function Ring({value=0,size=110}){
  return <div className="relative grid shrink-0 place-items-center rounded-full" style={{width:size,height:size,background:`conic-gradient(#BBFF1F ${value}%,#33343B 0)`}}><div className="absolute inset-[9px] grid place-items-center rounded-full bg-[#202126]"><span className="text-2xl font-black text-[#EFF8FF]">{value}%</span></div></div>
 }
 function TaskCard({task,index,onClick}){
- return <button type="button" onClick={onClick} className="group flex w-full items-center gap-4 rounded-[22px] border border-white/[.07] bg-[#232429] p-4 text-left transition hover:border-[#BBFF1F]/50 hover:bg-[#292A30]"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-black" style={{background:task.color,color:'#0D0303'}}>{task.n}</span><span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-bold text-[#EFF8FF]">{task.title}</span><span className="mt-1 block truncate text-xs text-white/45">{task.detail}</span></span><span className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-bold uppercase text-white/60">{task.type}</span><span className="text-xl text-white/40">›</span></button>
+ return <button type="button" onClick={onClick} className="group flex w-full min-w-0 max-w-full items-center gap-2.5 overflow-hidden rounded-[18px] border border-white/[.07] bg-[#232429] p-3 text-left transition hover:border-[#BBFF1F]/50 hover:bg-[#292A30]"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-black" style={{background:task.color,color:'#0D0303'}}>{task.n}</span><span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-bold text-[#EFF8FF]">{task.title}</span><span className="mt-1 block truncate text-xs text-white/45">{task.detail}</span></span><span className="hidden shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-bold uppercase text-white/60 sm:inline">{task.type}</span><span className="shrink-0 text-xl text-white/40">›</span></button>
 }
 export default function PRTrainingV2Lab(){
  const {user,loading}=useAuth()
@@ -179,6 +180,18 @@ export default function PRTrainingV2Lab(){
  const [adminView,setAdminView]=useState(false)
  const [selected,setSelected]=useState(null)
  const [spinCompleted,setSpinCompleted]=useState(false)
+ const [spinCount,setSpinCount]=useState(0)
+ useEffect(()=>{
+  try {
+   const count=Math.min(6,Math.max(0,Number(window.localStorage.getItem('pr-training-v2-preview-spin-count')||0)))
+   setSpinCount(count)
+   if(count===6){setSpinCompleted(true);setSection('deberes')}
+  } catch { /* Storage may be disabled; the preview remains usable. */ }
+ },[])
+ function rememberSpin(count){
+  setSpinCount(count)
+  try {window.localStorage.setItem('pr-training-v2-preview-spin-count',String(count))} catch { /* Preview-only storage */ }
+ }
  if(loading)return <AppLayout><div className="p-10 text-white">Cargando…</div></AppLayout>
  if(!user)return <Navigate to="/login" replace/>
  if(!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
@@ -194,7 +207,7 @@ export default function PRTrainingV2Lab(){
   {spinCompleted&&section==='inicio'&&<div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_.9fr]"><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Mi progreso</p><h2 className="mt-2 text-2xl font-black">Ciclo de noviembre</h2><p className="mt-2 text-xs text-white/45">Seis deberes · Vista de diseño</p></div><Ring value={0}/></div><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-[#BBFF1F]"/></div><div className="mt-3 flex justify-between text-xs text-white/50"><span>0 de 6 completados</span><span>Aún no iniciado</span></div></section><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Mis desafíos</h2><button onClick={()=>setSection('deberes')} className="text-xs font-bold text-[#BBFF1F]">Ver todos ↗</button></div><div className="mt-5 space-y-3">{sample.slice(0,3).map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>{setSection('deberes');setSelected(i)}}/>)}</div></section></div><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Calendario</h2><span className="text-xs text-white/40">NOV / 2026</span></div><p className="mb-5 mt-1 text-xs text-white/45">Vista ilustrativa de actividad</p><MonthPreview/><div className="mt-5 flex flex-wrap gap-4 text-[11px] text-white/55"><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#BBFF1F]"/>Deber realizado</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#FF0055]"/>Clase asistida</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-[#BBFF1F] to-[#FF0055]"/>Ambas actividades</span></div></section><section className="rounded-[27px] bg-[#BBFF1F] p-6 text-[#0D0303]"><p className="text-xs font-black uppercase tracking-widest">PR SPIN</p><h2 className="mt-3 text-2xl font-black">6 desafíos.<br/>Una revelación.</h2><p className="mt-3 text-sm opacity-70">Una experiencia que vuelve cada mes.</p><button onClick={()=>setSection('spin')} className="mt-5 rounded-full bg-[#0D0303] px-5 py-3 text-xs font-bold text-[#EFF8FF]">Ver ruleta →</button></section></div></div>}
   {spinCompleted&&section==='deberes'&&<section className="mt-4 w-full min-w-0 max-w-full overflow-hidden rounded-[22px] bg-[#222328] p-4 sm:p-8"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-[#BBFF1F]">NOVIEMBRE / 2026</p><h2 className="mt-2 text-3xl font-black">Mis seis deberes</h2><p className="mt-2 text-sm text-white/45">Tarjetas de diseño · No son asignaciones reales</p></div><span className="rounded-full bg-[#35363C] px-4 py-2 text-xs font-bold">0 / 6</span></div><div className="mt-5 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">{sample.map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>setSelected(selected===i?null:i)}/>)}</div>{selected!==null&&<div className="mt-5 rounded-2xl border border-[#BBFF1F]/35 bg-[#BBFF1F]/[.07] p-5"><p className="text-xs font-bold uppercase text-[#BBFF1F]">Vista del deber {sample[selected].n}</p><h3 className="mt-2 text-xl font-black">{sample[selected].title}</h3><p className="mt-2 text-sm text-white/60">{sample[selected].detail}</p><p className="mt-4 text-xs text-white/45">El envío de evidencia se habilitará cuando estén conectados el catálogo real y la revisión docente.</p></div>}</section>}
   {spinCompleted&&section==='actividad'&&<div className="mt-4 grid gap-4 lg:grid-cols-2"><section className="rounded-[27px] bg-[#222328] p-6"><p className="text-xs font-bold uppercase tracking-widest text-white/40">Estadísticas</p><h2 className="mt-2 text-2xl font-black">Tu evolución</h2><div className="mt-7 flex items-center gap-5"><Ring value={0} size={125}/><div><p className="text-3xl font-black">0 <span className="text-sm text-white/40">/ 6</span></p><p className="mt-2 text-sm text-white/50">Tareas del próximo ciclo</p><p className="mt-3 text-xs text-[#BBFF1F]">Tu progreso se actualizará con las entregas</p></div></div></section><section className="rounded-[27px] bg-[#222328] p-6"><h2 className="text-2xl font-black">Cómo se valida</h2><div className="mt-5 space-y-4">{[['01','Enviado','Foto, video o Strava'],['02','En revisión','Claudio o David comprueban la evidencia'],['03','Aprobado','Tu progreso se actualiza']].map(([n,title,desc])=><div key={n} className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#FF0055] font-black">{n}</span><div><p className="font-bold">{title}</p><p className="mt-1 text-xs text-white/50">{desc}</p></div></div>)}</div></section></div>}
-  {!spinCompleted&&section==='spin'&&<section className="mt-4 w-full min-w-0 max-w-full overflow-hidden rounded-[22px] bg-[#222328] p-4 sm:p-8"><div className="text-center"><p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PUNTA ROLLERS · PR TRAINING</p><h2 className="mt-2 text-4xl font-black">PR SPIN</h2><p className="mt-2 text-sm text-white/45">Seis giros, seis deberes. Tocá GIRAR para descubrirlos de a uno.</p><p className="mx-auto mt-2 max-w-md text-xs leading-5 text-white/55">Cada ejercicio fue preparado por el Profe Claudio para acompañar tu progreso. Esta ruleta es una demostración visual.</p></div><div className="mx-auto mt-5 max-w-[450px]"><SpinWheel onViewDuties={()=>{setSpinCompleted(true);setSection('deberes')}}/></div></section>}
+  {!spinCompleted&&section==='spin'&&<section className="mt-4 w-full min-w-0 max-w-full overflow-hidden rounded-[22px] bg-[#222328] p-4 sm:p-8"><div className="text-center"><p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PUNTA ROLLERS · PR TRAINING</p><h2 className="mt-2 text-4xl font-black">PR SPIN</h2><p className="mt-2 text-sm text-white/45">Seis giros, seis deberes. Tocá GIRAR para descubrirlos de a uno.</p><p className="mx-auto mt-2 max-w-md text-xs leading-5 text-white/55">Cada ejercicio fue preparado por el Profe Claudio para acompañar tu progreso. Esta ruleta es una demostración visual.</p></div><div className="mx-auto mt-5 max-w-[450px]"><SpinWheel initialRevealed={spinCount} onReveal={rememberSpin} onViewDuties={()=>{setSpinCompleted(true);setSection('deberes')}}/></div></section>}
   </>}
   <footer className="mt-8 px-2 text-center text-xs leading-5 text-white/35">PR Training 2.0 · Laboratorio privado · Contenido de demostración sin escritura de datos</footer>
  </div></main></AppLayout>
