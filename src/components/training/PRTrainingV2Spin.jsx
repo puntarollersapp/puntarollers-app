@@ -30,7 +30,7 @@ export default function PRTrainingV2Spin({duties=[],onComplete}){
  return <div className="mx-auto max-w-lg text-center">
   <p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PR SPIN</p>
   <h3 className="mt-2 text-2xl font-black">Descubrí tus seis deberes</h3>
-  <p className="mt-2 text-sm text-white/50">Tocá el botón para girar la ruleta y descubrir un deber. Cuando termine, volvé a tocarlo para descubrir el siguiente. Son seis giros, uno por cada ejercicio.</p>
+  <p className="mt-2 text-sm text-white/50">Cada ejercicio fue diseñado y preparado por el equipo de Punta Rollers, pensando en tu aprendizaje, tu nivel y tu progreso sobre los patines. Tus seis deberes ya están seleccionados: PR SPIN te permite descubrirlos, uno por uno. Tocá GIRAR seis veces para conocerlos todos.</p>
   <p className="mt-2 text-xs leading-5 text-white/60">Los deberes quedan guardados. No tenés que hacerlos todos hoy: podés completarlos durante el mes, a tu ritmo.</p>
   <svg viewBox="0 0 300 310" className="mx-auto mt-3 w-full max-w-[310px]" role="img" aria-label="Ruleta de ocho sectores">
    <g style={{transformOrigin:'150px 150px',transform:`rotate(${angle}deg)`,transition:'transform 1.2s cubic-bezier(.1,.75,.12,1)'}}>{sectors}<circle cx="150" cy="150" r="43" fill="#0D0303" stroke="#EFF8FF" strokeWidth="3"/><text x="150" y="159" fill="#BBFF1F" textAnchor="middle" fontSize="28" fontWeight="900">PR</text></g>
