@@ -2,13 +2,13 @@
 import { getValidTakes, groupTakesByDistance, formatDuration } from './prEngine'
 
 export const SHIFTER_FINAL_LABEL = 'SHIFTER 2026 | TOMA FINAL'
-export const SHIFTER_FINAL_DATE = '2026-10-14'
+export const SHIFTER_FINAL_DATE = null
 
 export function buildShifterFinalReport(takes = [], { finalDate = SHIFTER_FINAL_DATE } = {}) {
   const grouped = groupTakesByDistance(getValidTakes(takes))
   return [6, 12].map((distance) => {
     const all = grouped[String(distance)] || []
-    const dated = all.filter((take) => String(take.fecha || '').slice(0, 10) <= finalDate)
+    const dated = finalDate ? all.filter((take) => String(take.fecha || '').slice(0, 10) <= finalDate) : all
     const rows = dated.map((take) => ({
       id: take.id,
       date: take.fecha,
@@ -47,8 +47,8 @@ export function buildShifterFinalReport(takes = [], { finalDate = SHIFTER_FINAL_
       differenceSeconds: difference, changePercent: percent,
       hasComparison: rows.length >= 2,
       title, message,
-      // No marcar cierre si la última toma no corresponde al día final.
-      finalRecorded: Boolean(last && String(last.fecha || '').slice(0, 10) === finalDate),
+      // La fecha por sí sola no identifica una toma final: puede reprogramarse.
+      finalRecorded: Boolean(last && /SHIFTER.*TOMA FINAL|TOMA FINAL.*SHIFTER/i.test([last.nombre,last.titulo,last.descripcion,last.etiqueta,last.observaciones].filter(Boolean).join(' '))),
     }
   })
 }
