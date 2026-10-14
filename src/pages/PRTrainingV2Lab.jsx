@@ -81,10 +81,32 @@ function TrainingDailyControl(){
  return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/30 bg-[#17191D] p-4 sm:p-6">
   <div className="mb-4"><p className="text-xs font-bold tracking-[.16em] text-[#BBFF1F]">CENTRO DE CONTROL</p><h2 className="mt-1 text-2xl font-black">PR Training</h2><p className="mt-1 text-xs text-white/50">Todo lo importante, en un solo lugar.</p></div>
   <div role="tablist" aria-label="Administración de PR Training" className="grid grid-cols-3 gap-2">{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
-  <div role="tabpanel">{tab==='hoy'?<TrainingReviewQueue/>:<TrainingAdminControls/>}</div>
+  <div role="tabpanel">{tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
   {tab==='alumnos'&&<p className="mt-3 text-xs text-white/45">Asignación de nivel B1, B2 o B3. La búsqueda por nombre se incorpora en la siguiente conexión.</p>}
   {tab==='contenido'&&<p className="mt-3 text-xs text-white/45">Catálogo y videos demostrativos: los archivos se podrán incorporar posteriormente.</p>}
  </section>
+}
+
+function TrainingStudentSearch(){
+ const [query,setQuery]=useState('')
+ const [items,setItems]=useState([])
+ const [message,setMessage]=useState('')
+ async function search(e){
+  e.preventDefault()
+  const {data,error}=await supabase.rpc('pr_training_v2_admin_search_students',{p_query:query.trim()})
+  if(error)setMessage(error.message);else {setItems(data||[]);setMessage('')}
+ }
+ async function setLevel(id,level){
+  const {error}=await supabase.rpc('pr_training_v2_admin_set_level',{p_profile_id:id,p_level:level})
+  if(error)setMessage(error.message);else setItems(rows=>rows.map(r=>r.id===id?{...r,level}:r))
+ }
+ return <div className="mt-4 rounded-2xl bg-[#222328] p-4">
+  <h3 className="text-lg font-black">Buscar alumnos</h3>
+  <p className="mt-1 text-xs text-white/50">Los alumnos nuevos empiezan en B1. Cambiá su nivel desde acá.</p>
+  <form onSubmit={search} className="mt-4 flex gap-2"><input value={query} onChange={e=>setQuery(e.target.value)} minLength={2} required placeholder="Nombre del alumno" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm"/><button className="rounded-xl bg-[#BBFF1F] px-4 font-bold text-[#0D0303]">Buscar</button></form>
+  {message&&<p role="status" className="mt-3 text-xs">{message}</p>}
+  <div className="mt-4 space-y-2">{items.map(p=><div key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-white/5 p-3"><div><p className="text-sm font-bold">{p.name}</p><p className="text-xs text-white/40">{p.level}</p></div><select value={p.level} onChange={e=>setLevel(p.id,e.target.value)} aria-label={'Nivel de '+p.name} className="rounded-lg bg-[#303238] p-2 text-sm">{['B1','B2','B3'].map(l=><option key={l}>{l}</option>)}</select></div>)}</div>
+ </div>
 }
 
 function TrainingReviewQueue(){
