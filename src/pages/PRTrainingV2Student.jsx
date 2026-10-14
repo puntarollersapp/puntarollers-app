@@ -21,7 +21,7 @@ export default function PRTrainingV2Student({profileId}) {
   const {data,error:e}=await supabase.rpc('pr_training_v2_my_cycle',{p_month:monthNow()})
   if(e)setError(e.message);else if(data?.status==='ready'||data?.status==='existing'||data?.assignment_id){
    const details=await supabase.rpc('pr_training_v2_student_assignments',{p_month:monthNow()})
-   if(details.error)setError(details.error.message);else setCycle(details.data)
+   if(details.error)setError(details.error.message);else if(details.data?.status==='ready'&&details.data?.duties?.length===6)setCycle(details.data);else setError('La asignación todavía no está completa. Avisá al equipo de Punta Rollers.')
   }else setCycle(data)
   setLoading(false)
  }
