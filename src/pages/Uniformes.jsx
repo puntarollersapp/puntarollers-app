@@ -153,13 +153,20 @@ export default function Uniformes() {
           .uniform-hero { position:relative; overflow:hidden; isolation:isolate; background:linear-gradient(135deg,#15131c 0%,#0c0c10 60%,#1d0b2d 100%); border:1px solid rgba(129,22,224,.34); border-radius:28px; padding:32px 18px; animation:uniformReveal .65s ease both }
           .uniform-hero::before { content:''; position:absolute; z-index:-1; width:70%; aspect-ratio:1; right:-20%; top:-100%; background:radial-gradient(circle,#8116e0 0%,transparent 68%); filter:blur(24px); animation:uniformGlow 8s ease-in-out infinite alternate; pointer-events:none }
           .uniform-accent { color:#d0ff00 }
+          @keyframes uniformFloat { 0% { transform:translate3d(0,-25px,0) rotate(-18deg);opacity:0 } 15% { opacity:.3 } 80% { opacity:.3 } 100% { transform:translate3d(18px,180px,0) rotate(24deg);opacity:0 } }
+          .uniform-float { position:absolute; top:0; pointer-events:none; opacity:0; animation:uniformFloat 9s linear infinite; filter:drop-shadow(0 0 8px rgba(129,22,224,.5)); font-size:22px }
+          .uniform-hero::after { content:''; position:absolute; inset:0; border-radius:inherit; border:1px solid rgba(208,255,0,.17); pointer-events:none; box-shadow:inset 0 0 30px rgba(129,22,224,.10) }
+          .uniform-intro { text-align:center; border:1px solid rgba(129,22,224,.24); background:linear-gradient(160deg,rgba(129,22,224,.09),rgba(10,10,15,.8)); border-radius:22px; padding:20px 18px }
           .uniform-product { transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease }
           .uniform-product:active { transform:scale(.985) }
           .uniform-product:focus-visible { outline:2px solid #d0ff00; outline-offset:3px }
           .uniform-order-panel { border:1px solid rgba(129,22,224,.3); background:linear-gradient(145deg,rgba(129,22,224,.075),rgba(13,13,17,.95) 45%) }
-          @media (prefers-reduced-motion:reduce) { .uniform-hero,.uniform-hero::before { animation:none!important } .uniform-product { transition:none } }
+          @media (prefers-reduced-motion:reduce) { .uniform-hero,.uniform-hero::before,.uniform-float { animation:none!important } .uniform-product { transition:none } }
         `}</style>
         <section className="uniform-hero text-center space-y-3">
+          <span aria-hidden="true" className="uniform-float" style={{left:"9%",animationDelay:"-2s"}}>👕</span>
+          <span aria-hidden="true" className="uniform-float" style={{left:"78%",animationDelay:"-5s",fontSize:17}}>👕</span>
+          <span aria-hidden="true" className="uniform-float" style={{left:"45%",animationDelay:"-7s",fontSize:15}}>✦</span>
           <p className="section-label uniform-accent">PUNTA ROLLERS / TIENDA OFICIAL</p>
           <h1 className="text-3xl font-bold text-white">
             Uniformes <span className="uniform-accent">PR</span>
@@ -169,23 +176,15 @@ export default function Uniformes() {
           </p>
         </section>
 
-        <section className="glass p-5 rounded-2xl space-y-3">
-          <p className="text-white font-semibold">
-            Diseño oficial de la comunidad
+        <section className="uniform-intro space-y-2">
+          <p className="text-white text-base font-bold tracking-tight">La colección de Punta Rollers</p>
+          <p className="text-white/65 text-sm leading-relaxed max-w-sm mx-auto">
+            Remeras PR Kids y adultos, y buzos para acompañarte dentro y fuera de la pista.
           </p>
-
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Remeras para PR Kids, modelos para adultos y hoodies
-            unisex pensados para entrenar, participar en eventos y
-            representar a Punta Rollers.
-          </p>
-
-          <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/[0.07] p-4">
-            <p className="text-pr-gold text-sm font-semibold">
-              Pedidos con pago previo
-            </p>
-            <p className="text-white/45 text-xs mt-1 leading-relaxed">
-              Al finalizar verás los datos de transferencia. El pedido queda pendiente hasta verificar el pago.
+          <div className="pt-3 mt-3 border-t border-white/10">
+            <p className="text-[#d0ff00] text-xs font-bold">PEDIDOS CON PAGO PREVIO</p>
+            <p className="text-white/55 text-xs leading-relaxed mt-1 max-w-sm mx-auto">
+              Registrá tu pedido y transferí a Prex. Confirmamos el pedido al verificar el comprobante.
             </p>
           </div>
         </section>
