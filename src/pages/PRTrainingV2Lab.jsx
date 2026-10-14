@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const levels = [
   { code: 'B1', label: 'Fundamentos', detail: 'Control, equilibrio y frenadas' },
@@ -12,7 +13,7 @@ const levels = [
 const sampleSteps = ['Descubrí tus deberes', 'Entrená a tu ritmo', 'Enviá tu evidencia', 'Recibí la revisión']
 const wheelColors = ['#BBFF1F','#0D0303','#FF0055','#EFF8FF','#BBFF1F','#0D0303','#FF0055','#EFF8FF']
 const demoTasks = ['Control y equilibrio','Frenada en T','Técnica de giro','Resistencia','Patinaje hacia atrás','Precisión y postura']
-function SpinWheel() {
+function SpinWheel({onViewDuties}) {
   const [stage,setStage]=useState('idle')
   const [revealed,setRevealed]=useState([])
   const [angle,setAngle]=useState(0)
@@ -70,63 +71,135 @@ function SpinWheel() {
     </div>
     <p className="mt-1 text-center text-xs font-semibold uppercase tracking-[.18em] text-white/50">{stage==='done'?'Revelación de muestra completa':stage==='spinning'?'Revelando desafíos…':'Diseño interactivo · vista de prueba'}</p>
     <div className="mt-5 grid grid-cols-3 gap-2" aria-live="polite">{Array.from({length:6},(_,i)=><div key={i} className={`min-h-[64px] rounded-xl border p-3 text-center ${revealed[i]?'border-[#BBFF1F]/50 bg-[#BBFF1F]/10':'border-white/10 bg-white/5'}`}><p className="text-[10px] font-black text-[#BBFF1F]">{String(i+1).padStart(2,'0')}</p><p className="mt-1 text-xs font-semibold leading-tight text-white">{revealed[i]||'Por revelar'}</p></div>)}</div>
-    <button type="button" onClick={start} disabled={stage==='spinning'} className="mt-5 w-full rounded-full bg-[#BBFF1F] px-5 py-4 text-sm font-black uppercase tracking-wider text-[#0D0303] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">{stage==='done'?'Revelación completada':stage==='spinning'?'Girando…':'Probar animación'}</button>
+    {stage==='done'&&<button type="button" onClick={onViewDuties} className="mt-5 w-full rounded-full bg-[#BBFF1F] px-5 py-4 text-sm font-black text-[#0D0303]">Ver mis deberes →</button>}
+    <button type="button" onClick={start} disabled={stage!=='idle'} className="mt-5 w-full rounded-full bg-[#BBFF1F] px-5 py-4 text-sm font-black uppercase tracking-wider text-[#0D0303] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">{stage==='done'?'Revelación completada':stage==='spinning'?'Girando…':'Probar animación'}</button>
     <p className="mt-3 text-center text-xs leading-5 text-white/50">Simulación de diseño: los deberes mostrados son ejemplos. No se asignan ni guardan tareas reales.</p>
   </div>
 }
+function TrainingDailyControl(){
+ const [tab,setTab]=useState('hoy')
+ const tabs=[['hoy','Hoy'],['alumnos','Alumnos'],['contenido','Contenido']]
+ return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/30 bg-[#17191D] p-4 sm:p-6">
+  <div className="mb-4"><p className="text-xs font-bold tracking-[.16em] text-[#BBFF1F]">CENTRO DE CONTROL</p><h2 className="mt-1 text-2xl font-black">PR Training</h2><p className="mt-1 text-xs text-white/50">Todo lo importante, en un solo lugar.</p></div>
+  <div role="tablist" aria-label="Administración de PR Training" className="grid grid-cols-3 gap-2">{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
+  <div role="tabpanel">{tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
+  {tab==='alumnos'&&<p className="mt-3 text-xs text-white/45">Asignación de nivel B1, B2 o B3. La búsqueda por nombre se incorpora en la siguiente conexión.</p>}
+  {tab==='contenido'&&<p className="mt-3 text-xs text-white/45">Catálogo y videos demostrativos: los archivos se podrán incorporar posteriormente.</p>}
+ </section>
+}
+
+function TrainingStudentSearch(){
+ const [query,setQuery]=useState('')
+ const [items,setItems]=useState([])
+ const [message,setMessage]=useState('')
+ async function search(e){
+  e.preventDefault()
+  const {data,error}=await supabase.rpc('pr_training_v2_admin_search_students',{p_query:query.trim()})
+  if(error)setMessage(error.message);else {setItems(data||[]);setMessage('')}
+ }
+ async function setLevel(id,level){
+  const {error}=await supabase.rpc('pr_training_v2_admin_set_level',{p_profile_id:id,p_level:level})
+  if(error)setMessage(error.message);else setItems(rows=>rows.map(r=>r.id===id?{...r,level}:r))
+ }
+ return <div className="mt-4 rounded-2xl bg-[#222328] p-4">
+  <h3 className="text-lg font-black">Buscar alumnos</h3>
+  <p className="mt-1 text-xs text-white/50">Los alumnos nuevos empiezan en B1. Cambiá su nivel desde acá.</p>
+  <form onSubmit={search} className="mt-4 flex gap-2"><input value={query} onChange={e=>setQuery(e.target.value)} minLength={2} required placeholder="Nombre del alumno" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm"/><button className="rounded-xl bg-[#BBFF1F] px-4 font-bold text-[#0D0303]">Buscar</button></form>
+  {message&&<p role="status" className="mt-3 text-xs">{message}</p>}
+  <div className="mt-4 space-y-2">{items.map(p=><div key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-white/5 p-3"><div><p className="text-sm font-bold">{p.name}</p><p className="text-xs text-white/40">{p.level}</p></div><select value={p.level} onChange={e=>setLevel(p.id,e.target.value)} aria-label={'Nivel de '+p.name} className="rounded-lg bg-[#303238] p-2 text-sm">{['B1','B2','B3'].map(l=><option key={l}>{l}</option>)}</select></div>)}</div>
+ </div>
+}
+
+function TrainingReviewQueue(){
+ const [items,setItems]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(''),[notes,setNotes]=useState({}),[showAll,setShowAll]=useState(false)
+ async function refresh(){const {data,error:e}=await supabase.rpc('pr_training_v2_staff_submissions');if(e)setError(e.message);else {setItems(data||[]);setError('')}}
+ useEffect(()=>{refresh()},[])
+ async function review(id,status){
+  setBusy(id);const {error:e}=await supabase.rpc('pr_training_v2_review_submission',{p_submission_id:id,p_status:status,p_note:notes[id]||''})
+  if(e)setError(e.message);else await refresh();setBusy('')
+ }
+ async function openEvidence(item,path){
+  const {data,error:e}=await supabase.storage.from('pr-training-v2-evidence').createSignedUrl(path,120)
+  if(e||!data?.signedUrl){setError(e?.message||'No se pudo abrir el archivo');return}
+  window.open(data.signedUrl,'_blank','noopener,noreferrer')
+ }
+ const pending=items.filter(item=>item.status==='submitted'||item.status==='under_review')
+ const visible=showAll?items:pending
+ return <section className="mt-5 rounded-[24px] border border-white/10 bg-[#222328] p-5"><div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-black">Revisión de evidencias · {pending.length} pendientes</h2><p className="mt-1 text-xs text-white/50">Entregas privadas · Claudio y profesores</p></div><button type="button" onClick={refresh} className="rounded-full border border-white/20 px-4 py-2 text-xs font-bold">Actualizar</button></div>{error&&<p role="alert" className="mt-3 text-xs text-[#FF8DAF]">{error}</p>}<label className="mt-4 flex items-center gap-2 text-xs text-white/60"><input type="checkbox" checked={showAll} onChange={e=>setShowAll(e.target.checked)}/> Mostrar también aprobadas</label>{visible.length===0?<p className="mt-4 text-sm text-white/45">No hay entregas pendientes.</p>:<div className="mt-4 space-y-3">{visible.map(item=><article key={item.id} className="rounded-xl border border-white/10 bg-white/5 p-4"><div className="flex flex-wrap justify-between gap-2"><div><p className="text-sm font-bold">{item.duty_title}</p><p className="mt-1 text-xs text-white/50">Perfil: {item.profile_id}</p></div><span className="text-xs text-[#BBFF1F]">{item.status}</span></div><div className="mt-3 flex flex-wrap gap-2">{(item.evidence?.paths||[]).map((path,i)=><button key={path} type="button" onClick={()=>openEvidence(item,path)} className="rounded-lg border border-white/20 px-3 py-2 text-xs">Ver evidencia {i+1}</button>)}</div><textarea value={notes[item.id]??item.reviewer_note??''} onChange={e=>setNotes(p=>({...p,[item.id]:e.target.value}))} placeholder="Comentario para el alumno" className="mt-3 w-full rounded-xl border border-white/15 bg-black/30 p-3 text-sm" rows={2}/><div className="mt-3 flex flex-wrap gap-2">{[['approved','Aprobar'],['returned','Solicitar corrección'],['under_review','En revisión']].map(([status,label])=><button type="button" key={status} disabled={busy===item.id} onClick={()=>review(item.id,status)} className="rounded-full border border-[#BBFF1F]/40 px-3 py-2 text-xs font-bold text-[#BBFF1F] disabled:opacity-40">{label}</button>)}</div></article>)}</div>}</section>
+}
+
+function TrainingAdminControls(){
+ const [overview,setOverview]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(false)
+ const [dutyMessage,setDutyMessage]=useState('')
+ async function refresh(){
+  setLoading(true);setError('')
+  const {data,error:e}=await supabase.rpc('pr_training_v2_admin_overview')
+  if(e)setError(e.message);else setOverview(data)
+  setLoading(false)
+ }
+ useEffect(()=>{refresh()},[])
+ async function updateDuty(d, field){
+  setDutyMessage('')
+  if(field==='demo'&&!d.demo_ready&&!d.demo_video_path){setDutyMessage('Primero hay que subir el video demostrativo del ejercicio.');return}
+  const nextDemo=field==='demo'? !d.demo_ready : d.demo_ready
+  const nextActive=field==='active'? !d.active : d.active
+  if(nextActive&&!nextDemo&&(d.requires_demo!==false)){
+   setDutyMessage('Verificá el video demostrativo antes de activar el deber.')
+   return
+  }
+  const {error:e}=await supabase.rpc('pr_training_v2_admin_set_duty_readiness',{p_code:d.code,p_demo_ready:nextDemo,p_active:nextActive})
+  if(e)setDutyMessage(e.message)
+  else refresh()
+ }
+ return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/25 bg-[#222328] p-5">
+  <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">Centro de control · PR Training 2.0</h2><p className="mt-1 text-xs text-white/50">Datos reales de Supabase · Acceso administrativo</p></div><button type="button" onClick={refresh} disabled={loading} className="rounded-full border border-white/20 px-4 py-2 text-xs font-bold">{loading?'Actualizando…':'Actualizar datos'}</button></div>
+  {error&&<p role="alert" className="mt-4 text-sm text-[#FF8DAF]">{error}</p>}
+  {overview&&<><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Deberes',overview.catalog?.length||0],['Videos listos',overview.catalog?.filter(d=>d.demo_ready).length||0],['Incidencias',overview.incidents?.length||0],['Niveles asignados',overview.levels?.length||0]].map(([label,value])=><div key={label} className="rounded-xl bg-white/5 p-3"><p className="text-2xl font-black text-[#BBFF1F]">{value}</p><p className="text-xs text-white/50">{label}</p></div>)}</div>
+  <div className="mt-4 space-y-2">{overview.cycles?.map(c=><div key={c.month} className="flex justify-between gap-3 rounded-xl bg-white/5 p-3 text-sm"><span>{c.month}</span><span className={c.visible&&c.assignments_enabled?'text-[#BBFF1F]':'text-white/50'}>{c.visible&&c.assignments_enabled?'Habilitado':'Oculto / bloqueado'}</span></div>)}</div>
+  <h3 className="mt-5 text-sm font-black">Catálogo real</h3><div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-white/10">{overview.catalog?.map(d=><div key={d.code} className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 text-xs"><span><b className="text-[#BBFF1F]">{d.code}</b> · {d.title}</span><span className="flex shrink-0 gap-1"><button type="button" onClick={()=>updateDuty(d,'demo')} className={`rounded-md border px-2 py-1 ${d.demo_ready?'border-[#BBFF1F] text-[#BBFF1F]':'border-white/20 text-white/50'}`} title="Confirmar que el video demostrativo está cargado y validado">{d.demo_ready?'Demo ✓':'Demo pendiente'}</button><button type="button" onClick={()=>updateDuty(d,'active')} className={`rounded-md border px-2 py-1 ${d.active?'border-[#BBFF1F] text-[#BBFF1F]':'border-white/20 text-white/50'}`}>{d.active?'Activo':'Inactivo'}</button></span></div>)}</div>
+  {dutyMessage&&<p role="alert" className="mt-2 text-xs text-[#FF8DAF]">{dutyMessage}</p>}
+  {overview.incidents?.length>0&&<div className="mt-4"><h3 className="text-sm font-black text-[#FF8DAF]">Incidencias</h3>{overview.incidents.map(i=><p key={i.id} className="mt-2 text-xs text-white/65">{i.profile_id} · {i.code}</p>)}</div>}
+</>}
+ </section>
+}
+
 const staffIds = new Set(['admin-claudio', 'profe-david', 'alumno-48812609'])
 
-export default function PRTrainingV2Lab() {
-  const { user, loading } = useAuth()
-  const [section, setSection] = useState('experiencia')
-  if (loading) return <AppLayout><div className="mx-auto max-w-5xl px-5 py-20 text-white/70">Cargando PR Training…</div></AppLayout>
-  if (!user) return <Navigate to="/login" replace />
-  // Página de trabajo cerrada: no basta con conocer la URL para acceder.
-  if (!staffIds.has(user.id)) return <Navigate to="/app/dashboard" replace />
-
-  const displayName = [user.nombre, user.apellido].filter(Boolean).join(' ') || 'Equipo Punta Rollers'
-  return <AppLayout>
-    <main className="mx-auto max-w-6xl px-4 pb-28 pt-7 text-white sm:px-8">
-      <div className="relative overflow-hidden rounded-[30px] border border-violet-400/25 bg-[#101023] p-6 shadow-2xl sm:p-10">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-1/4 h-60 w-60 rounded-full bg-fuchsia-600/10 blur-3xl" />
-        <div className="relative">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="rounded-full border border-violet-400/40 bg-violet-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[.2em] text-violet-200">PR Training 2.0 · Laboratorio privado</span>
-            <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/60">Sin acceso para alumnos</span>
-          </div>
-          <div className="mt-9 max-w-3xl">
-            <p className="text-sm font-medium text-violet-200">Nueva temporada · Noviembre 2026</p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-6xl">Cada mes, un nuevo desafío.</h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-white/65">Seis deberes. Tu nivel. Tu progreso. Una experiencia de entrenamiento que se construye sobre tu recorrido en Punta Rollers.</p>
-          </div>
-          <div className="mt-9 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><p className="text-xs uppercase tracking-widest text-white/50">Próximo ciclo</p><p className="mt-2 text-2xl font-black">NOV 2026</p><p className="mt-1 text-xs text-white/50">01/11 · 15:00 UY</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><p className="text-xs uppercase tracking-widest text-white/50">Desafíos por ciclo</p><p className="mt-2 text-3xl font-black">06</p><p className="mt-1 text-xs text-white/50">Asignación individual</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><p className="text-xs uppercase tracking-widest text-white/50">Identidad conectada</p><p className="mt-2 truncate text-lg font-bold">{displayName}</p><p className="mt-1 text-xs text-white/50">Perfil real · {user.estado || 'Sin estado'}</p></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Secciones del laboratorio">
-        {[['experiencia','Experiencia'],['niveles','Niveles'],['revision','Evidencias y revisión']].map(([key,label])=><button key={key} role="tab" aria-selected={section===key} onClick={()=>setSection(key)} className={`rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${section===key?'bg-violet-500 text-white':'border border-white/15 bg-white/5 text-white/65 hover:bg-white/10'}`}>{label}</button>)}
-      </div>
-      {section==='experiencia' && <section className="mt-6 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
-        <div className="rounded-[26px] border border-violet-400/20 bg-[#17142c] p-7 sm:p-10">
-          <p className="text-xs font-bold uppercase tracking-[.24em] text-violet-300">PR SPIN</p>
-          <div className="my-7"><SpinWheel/></div>
-          <h2 className="text-xl font-bold">Tu mes empieza acá.</h2>
-          <p className="mt-2 text-sm leading-6 text-white/60">La ruleta visual tiene ocho segmentos amplios, pero el ciclo revela seis deberes. La animación ya puede probarse aquí; la asignación real todavía no está habilitada.</p>
-        </div>
-        <div className="rounded-[26px] border border-white/10 bg-[#141421] p-7">
-          <p className="text-xs font-bold uppercase tracking-[.2em] text-white/50">Así funciona</p>
-          <ol className="mt-6 space-y-6">{sampleSteps.map((step,i)=><li key={step} className="flex items-center gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 font-black text-violet-200">{String(i+1).padStart(2,'0')}</span><span className="font-medium">{step}</span></li>)}</ol>
-          <div className="mt-9 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-xs leading-6 text-amber-100/75">Modo construcción: no se generan deberes, no se registran evidencias y no se alteran datos de alumnos.</div>
-        </div>
-      </section>}
-      {section==='niveles' && <section className="mt-6 grid gap-4 sm:grid-cols-2">{levels.map(level=><article key={level.code} className="rounded-2xl border border-white/10 bg-[#161625] p-6"><p className="text-4xl font-black text-violet-300">{level.code}</p><h2 className="mt-3 text-xl font-bold">{level.label}</h2><p className="mt-2 text-sm text-white/55">{level.detail}</p><p className="mt-5 text-xs text-white/40">Nivel ilustrativo · Sin asignación automática habilitada</p></article>)}</section>}
-      {section==='revision' && <section className="mt-6 grid gap-4 sm:grid-cols-3">{[['01','Enviado','El alumno adjunta foto, video o actividad de Strava.'],['02','En revisión','Claudio o David verifica la evidencia privada.'],['03','Aprobado o devuelto','Se registra el resultado y, si corresponde, se solicita un nuevo envío.']].map(([n,t,d])=><article key={n} className="rounded-2xl border border-white/10 bg-[#161625] p-6"><p className="text-3xl font-black text-violet-300">{n}</p><h2 className="mt-5 text-lg font-bold">{t}</h2><p className="mt-3 text-sm leading-6 text-white/55">{d}</p></article>)}</section>}
-      <p className="mt-8 text-center text-xs text-white/40">Laboratorio PR Training 2.0 · Acceso restringido al equipo · Sin conexión de escritura</p>
-    </main>
-  </AppLayout>
+const tabs=[['inicio','Inicio'],['deberes','Mis deberes'],['actividad','Actividad'],['spin','PR SPIN']]
+const sample=[{n:'01',title:'Control y equilibrio',type:'Técnica',detail:'Dominio del patín y estabilidad',color:'#BBFF1F'},{n:'02',title:'Frenada en T',type:'Técnica',detail:'10 repeticiones · grabar las últimas 2',color:'#EFF8FF'},{n:'03',title:'Técnica de giro',type:'Técnica',detail:'Giros controlados y postura',color:'#FF0055'},{n:'04',title:'Resistencia',type:'Strava',detail:'Entrenamiento registrado',color:'#BBFF1F'},{n:'05',title:'Patinaje hacia atrás',type:'Video',detail:'3 minutos de práctica',color:'#EFF8FF'},{n:'06',title:'Precisión y postura',type:'Técnica',detail:'Evidencia visual de ejecución',color:'#FF0055'}]
+const weekdays=['L','M','M','J','V','S','D']
+function MonthPreview(){
+  const days=Array.from({length:35},(_,i)=>i-5)
+  return <div className="grid grid-cols-7 gap-2">{weekdays.map((d,i)=><span key={i} className="pb-2 text-center text-[11px] font-bold text-white/40">{d}</span>)}{days.map((d,i)=><span key={i} className={`flex aspect-square items-center justify-center rounded-full text-xs font-bold ${d<1||d>30?'text-white/10':d===1?'bg-[#BBFF1F] text-[#0D0303]':d===14||d===21||d===28?'bg-[#FF0055] text-white':'bg-white/[.055] text-white/65'}`}>{d>=1&&d<=30?d:''}</span>)}</div>
+}
+function Ring({value=0,size=110}){
+ return <div className="relative grid shrink-0 place-items-center rounded-full" style={{width:size,height:size,background:`conic-gradient(#BBFF1F ${value}%,#33343B 0)`}}><div className="absolute inset-[9px] grid place-items-center rounded-full bg-[#202126]"><span className="text-2xl font-black text-[#EFF8FF]">{value}%</span></div></div>
+}
+function TaskCard({task,index,onClick}){
+ return <button type="button" onClick={onClick} className="group flex w-full items-center gap-4 rounded-[22px] border border-white/[.07] bg-[#232429] p-4 text-left transition hover:border-[#BBFF1F]/50 hover:bg-[#292A30]"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-black" style={{background:task.color,color:'#0D0303'}}>{task.n}</span><span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-bold text-[#EFF8FF]">{task.title}</span><span className="mt-1 block truncate text-xs text-white/45">{task.detail}</span></span><span className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-bold uppercase text-white/60">{task.type}</span><span className="text-xl text-white/40">›</span></button>
+}
+export default function PRTrainingV2Lab(){
+ const {user,loading}=useAuth()
+ const [section,setSection]=useState('spin')
+ const [adminView,setAdminView]=useState(false)
+ const [selected,setSelected]=useState(null)
+ if(loading)return <AppLayout><div className="p-10 text-white">Cargando…</div></AppLayout>
+ if(!user)return <Navigate to="/login" replace/>
+ if(!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
+ const name=user.nombre||'Equipo'
+ return <AppLayout>
+ <main className="min-h-screen bg-[#0D0303] px-3 pb-28 pt-5 text-[#EFF8FF] sm:px-6">
+ <div className="mx-auto w-full min-w-0 max-w-5xl">
+  <header className="mb-7 flex items-center justify-between gap-3 px-2"><div><div className="flex items-center gap-2"><span className="text-sm font-black tracking-[.17em]">PUNTA ROLLERS</span><span className="h-2 w-2 rounded-full bg-[#BBFF1F]"/></div><p className="mt-1 text-xs text-white/40">TRAINING / NEW SEASON</p></div><div className="flex items-center gap-2"><span className="hidden rounded-full bg-[#25262B] px-3 py-2 text-xs text-white/65 sm:block">Laboratorio privado</span><span className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border-2 border-[#BBFF1F] bg-[#303139] text-lg font-black">{name[0]?.toUpperCase()}</span></div></header>
+  <div className="mb-4 flex flex-wrap gap-2"><button type="button" onClick={()=>setAdminView(false)} className={`rounded-full px-4 py-2 text-xs font-bold ${!adminView?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white'}`}>Vista alumno</button><button type="button" onClick={()=>setAdminView(true)} className={`rounded-full px-4 py-2 text-xs font-bold ${adminView?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white'}`}>Centro de Control</button></div>
+  {adminView?<TrainingDailyControl/>:<>
+  <section className="relative overflow-hidden rounded-[24px] bg-[#222328] px-4 pb-6 pt-6 sm:rounded-[30px] sm:px-9 sm:pt-8"><div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-[#BBFF1F]/10 blur-[80px]"/><div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#BBFF1F] px-3 py-1 text-[10px] font-black tracking-widest text-[#0D0303]">NEW SEASON</span><span className="text-xs text-white/45">Laboratorio de diseño</span></div><h1 className="mt-6 text-3xl font-black leading-[1.06] tracking-tight sm:text-6xl">Tu próximo<br/><span className="text-[#BBFF1F]">nivel empieza acá.</span></h1><p className="mt-4 max-w-lg text-sm leading-6 text-white/55">Hola, {name}. Una nueva manera de entrenar, seguir tu evolución y completar tus desafíos.</p><div className="mt-7 flex flex-wrap items-center gap-3"><button type="button" onClick={()=>setSection('spin')} className="rounded-full bg-[#EFF8FF] px-6 py-3.5 text-sm font-black text-[#0D0303]">Explorar PR SPIN →</button><span className="text-xs text-white/45">Vista privada de diseño</span></div></div></section>
+  <nav className="mt-5 flex gap-2 overflow-x-auto pb-2" aria-label="Secciones de PR Training">{tabs.map(([key,label])=><button key={key} type="button" onClick={()=>{setSection(key);setSelected(null)}} className={`shrink-0 rounded-full px-5 py-3 text-xs font-bold transition ${section===key?'bg-[#BBFF1F] text-[#0D0303]':'bg-[#25262B] text-white/65 hover:text-white'}`}>{label}</button>)}</nav>
+  {section==='inicio'&&<div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_.9fr]"><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Mi progreso</p><h2 className="mt-2 text-2xl font-black">Ciclo de noviembre</h2><p className="mt-2 text-xs text-white/45">Seis deberes · Vista de diseño</p></div><Ring value={0}/></div><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-[#BBFF1F]"/></div><div className="mt-3 flex justify-between text-xs text-white/50"><span>0 de 6 completados</span><span>Aún no iniciado</span></div></section><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Mis desafíos</h2><button onClick={()=>setSection('deberes')} className="text-xs font-bold text-[#BBFF1F]">Ver todos ↗</button></div><div className="mt-5 space-y-3">{sample.slice(0,3).map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>{setSection('deberes');setSelected(i)}}/>)}</div></section></div><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Calendario</h2><span className="text-xs text-white/40">NOV / 2026</span></div><p className="mb-5 mt-1 text-xs text-white/45">Vista ilustrativa de actividad</p><MonthPreview/><div className="mt-5 flex flex-wrap gap-4 text-[11px] text-white/55"><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#BBFF1F]"/>Deber realizado</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#FF0055]"/>Clase asistida</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-[#BBFF1F] to-[#FF0055]"/>Ambas actividades</span></div></section><section className="rounded-[27px] bg-[#BBFF1F] p-6 text-[#0D0303]"><p className="text-xs font-black uppercase tracking-widest">PR SPIN</p><h2 className="mt-3 text-2xl font-black">6 desafíos.<br/>Una revelación.</h2><p className="mt-3 text-sm opacity-70">Una experiencia que vuelve cada mes.</p><button onClick={()=>setSection('spin')} className="mt-5 rounded-full bg-[#0D0303] px-5 py-3 text-xs font-bold text-[#EFF8FF]">Ver ruleta →</button></section></div></div>}
+  {section==='deberes'&&<section className="mt-4 rounded-[27px] bg-[#222328] p-5 sm:p-8"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-[#BBFF1F]">NOVIEMBRE / 2026</p><h2 className="mt-2 text-3xl font-black">Mis seis deberes</h2><p className="mt-2 text-sm text-white/45">Tarjetas de diseño · No son asignaciones reales</p></div><span className="rounded-full bg-[#35363C] px-4 py-2 text-xs font-bold">0 / 6</span></div><div className="mt-7 grid gap-3 md:grid-cols-2">{sample.map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>setSelected(selected===i?null:i)}/>)}</div>{selected!==null&&<div className="mt-5 rounded-2xl border border-[#BBFF1F]/35 bg-[#BBFF1F]/[.07] p-5"><p className="text-xs font-bold uppercase text-[#BBFF1F]">Vista del deber {sample[selected].n}</p><h3 className="mt-2 text-xl font-black">{sample[selected].title}</h3><p className="mt-2 text-sm text-white/60">{sample[selected].detail}</p><p className="mt-4 text-xs text-white/45">El envío de evidencia se habilitará cuando estén conectados el catálogo real y la revisión docente.</p></div>}</section>}
+  {section==='actividad'&&<div className="mt-4 grid gap-4 lg:grid-cols-2"><section className="rounded-[27px] bg-[#222328] p-6"><p className="text-xs font-bold uppercase tracking-widest text-white/40">Estadísticas</p><h2 className="mt-2 text-2xl font-black">Tu evolución</h2><div className="mt-7 flex items-center gap-5"><Ring value={0} size={125}/><div><p className="text-3xl font-black">0 <span className="text-sm text-white/40">/ 6</span></p><p className="mt-2 text-sm text-white/50">Tareas del próximo ciclo</p><p className="mt-3 text-xs text-[#BBFF1F]">Tu progreso se actualizará con las entregas</p></div></div></section><section className="rounded-[27px] bg-[#222328] p-6"><h2 className="text-2xl font-black">Cómo se valida</h2><div className="mt-5 space-y-4">{[['01','Enviado','Foto, video o Strava'],['02','En revisión','Claudio o David comprueban la evidencia'],['03','Aprobado','Tu progreso se actualiza']].map(([n,title,desc])=><div key={n} className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#FF0055] font-black">{n}</span><div><p className="font-bold">{title}</p><p className="mt-1 text-xs text-white/50">{desc}</p></div></div>)}</div></section></div>}
+  {section==='spin'&&<section className="mt-4 rounded-[27px] bg-[#222328] p-5 sm:p-8"><div className="text-center"><p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PUNTA ROLLERS · PR TRAINING</p><h2 className="mt-2 text-4xl font-black">PR SPIN</h2><p className="mt-2 text-sm text-white/45">Descubrí tus seis desafíos mensuales</p></div><div className="mx-auto mt-5 max-w-[450px]"><SpinWheel onViewDuties={()=>setSection('deberes')}/></div></section>}
+  </>}
+  <footer className="mt-8 px-2 text-center text-xs leading-5 text-white/35">PR Training 2.0 · Laboratorio privado · Contenido de demostración sin escritura de datos</footer>
+ </div></main></AppLayout>
 }
