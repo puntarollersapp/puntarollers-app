@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const levels = [
   { code: 'B1', label: 'Fundamentos', detail: 'Control, equilibrio y frenadas' },
@@ -74,6 +75,34 @@ function SpinWheel() {
     <p className="mt-3 text-center text-xs leading-5 text-white/50">Simulación de diseño: los deberes mostrados son ejemplos. No se asignan ni guardan tareas reales.</p>
   </div>
 }
+function TrainingAdminControls(){
+ const [overview,setOverview]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(false)
+ const [profileId,setProfileId]=useState(''),[level,setLevel]=useState('B1'),[message,setMessage]=useState('')
+ async function refresh(){
+  setLoading(true);setError('')
+  const {data,error:e}=await supabase.rpc('pr_training_v2_admin_overview')
+  if(e)setError(e.message);else setOverview(data)
+  setLoading(false)
+ }
+ useEffect(()=>{refresh()},[])
+ async function saveLevel(e){
+  e.preventDefault();setMessage('')
+  if(!profileId.trim())return
+  const {error:e2}=await supabase.rpc('pr_training_v2_admin_set_level',{p_profile_id:profileId.trim(),p_level:level})
+  if(e2)setMessage('No se pudo guardar: '+e2.message)
+  else {setMessage('Nivel guardado correctamente.');refresh()}
+ }
+ return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/25 bg-[#222328] p-5">
+  <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">Centro de control · PR Training 2.0</h2><p className="mt-1 text-xs text-white/50">Datos reales de Supabase · Acceso administrativo</p></div><button type="button" onClick={refresh} disabled={loading} className="rounded-full border border-white/20 px-4 py-2 text-xs font-bold">{loading?'Actualizando…':'Actualizar datos'}</button></div>
+  {error&&<p role="alert" className="mt-4 text-sm text-[#FF8DAF]">{error}</p>}
+  {overview&&<><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Deberes',overview.catalog?.length||0],['Videos listos',overview.catalog?.filter(d=>d.demo_ready).length||0],['Incidencias',overview.incidents?.length||0],['Niveles asignados',overview.levels?.length||0]].map(([label,value])=><div key={label} className="rounded-xl bg-white/5 p-3"><p className="text-2xl font-black text-[#BBFF1F]">{value}</p><p className="text-xs text-white/50">{label}</p></div>)}</div>
+  <div className="mt-4 space-y-2">{overview.cycles?.map(c=><div key={c.month} className="flex justify-between gap-3 rounded-xl bg-white/5 p-3 text-sm"><span>{c.month}</span><span className={c.visible&&c.assignments_enabled?'text-[#BBFF1F]':'text-white/50'}>{c.visible&&c.assignments_enabled?'Habilitado':'Oculto / bloqueado'}</span></div>)}</div>
+  <h3 className="mt-5 text-sm font-black">Catálogo real</h3><div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-white/10">{overview.catalog?.map(d=><div key={d.code} className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 text-xs"><span><b className="text-[#BBFF1F]">{d.code}</b> · {d.title}</span><span className="shrink-0 text-white/45">{d.active?'Activo':'Pendiente'}</span></div>)}</div>
+  {overview.incidents?.length>0&&<div className="mt-4"><h3 className="text-sm font-black text-[#FF8DAF]">Incidencias</h3>{overview.incidents.map(i=><p key={i.id} className="mt-2 text-xs text-white/65">{i.profile_id} · {i.code}</p>)}</div>}
+  <form onSubmit={saveLevel} className="mt-5 space-y-3 rounded-xl bg-white/5 p-4"><h3 className="text-sm font-black">Asignar nivel a un alumno</h3><p className="text-xs text-white/50">Para alumnos nuevos el nivel inicial es B1. Este cambio solo afecta futuras asignaciones; no modifica deberes ya guardados.</p><input value={profileId} onChange={e=>setProfileId(e.target.value)} placeholder="ID exacto del perfil" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-3 text-sm text-white" required/><select value={level} onChange={e=>setLevel(e.target.value)} className="w-full rounded-lg border border-white/15 bg-[#222328] px-3 py-3 text-sm">{['B1','B2','B3'].map(v=><option key={v} value={v}>{v}</option>)}</select><button className="rounded-full bg-[#BBFF1F] px-5 py-3 text-xs font-black text-[#0D0303]">Guardar nivel</button>{message&&<p role="status" className="text-xs">{message}</p>}</form></>}
+ </section>
+}
+
 const staffIds = new Set(['admin-claudio', 'profe-david', 'alumno-48812609'])
 
 const tabs=[['inicio','Inicio'],['deberes','Mis deberes'],['actividad','Actividad'],['spin','PR SPIN']]
@@ -101,6 +130,7 @@ export default function PRTrainingV2Lab(){
  <main className="min-h-screen bg-[#0D0303] px-3 pb-28 pt-5 text-[#EFF8FF] sm:px-6">
  <div className="mx-auto max-w-5xl">
   <header className="mb-7 flex items-center justify-between gap-3 px-2"><div><div className="flex items-center gap-2"><span className="text-sm font-black tracking-[.17em]">PUNTA ROLLERS</span><span className="h-2 w-2 rounded-full bg-[#BBFF1F]"/></div><p className="mt-1 text-xs text-white/40">TRAINING / NEW SEASON</p></div><div className="flex items-center gap-2"><span className="hidden rounded-full bg-[#25262B] px-3 py-2 text-xs text-white/65 sm:block">Laboratorio privado</span><span className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border-2 border-[#BBFF1F] bg-[#303139] text-lg font-black">{name[0]?.toUpperCase()}</span></div></header>
+  <TrainingAdminControls/>
   <section className="relative overflow-hidden rounded-[30px] bg-[#222328] px-6 pb-7 pt-8 sm:px-9"><div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-[#BBFF1F]/10 blur-[80px]"/><div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#BBFF1F] px-3 py-1 text-[10px] font-black tracking-widest text-[#0D0303]">NEW SEASON</span><span className="text-xs text-white/45">Noviembre 2026 · Vista previa</span></div><h1 className="mt-6 text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl">Tu próximo<br/><span className="text-[#BBFF1F]">nivel empieza acá.</span></h1><p className="mt-4 max-w-lg text-sm leading-6 text-white/55">Hola, {name}. Una nueva manera de entrenar, seguir tu evolución y completar tus desafíos.</p><div className="mt-7 flex flex-wrap items-center gap-3"><button type="button" onClick={()=>setSection('spin')} className="rounded-full bg-[#EFF8FF] px-6 py-3.5 text-sm font-black text-[#0D0303]">Explorar PR SPIN →</button><span className="text-xs text-white/45">Estreno · 01 NOV · 15:00 UY</span></div></div></section>
   <nav className="mt-5 flex gap-2 overflow-x-auto pb-2" aria-label="Secciones de PR Training">{tabs.map(([key,label])=><button key={key} type="button" onClick={()=>{setSection(key);setSelected(null)}} className={`shrink-0 rounded-full px-5 py-3 text-xs font-bold transition ${section===key?'bg-[#BBFF1F] text-[#0D0303]':'bg-[#25262B] text-white/65 hover:text-white'}`}>{label}</button>)}</nav>
   {section==='inicio'&&<div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_.9fr]"><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Mi progreso</p><h2 className="mt-2 text-2xl font-black">Ciclo de noviembre</h2><p className="mt-2 text-xs text-white/45">Seis deberes · Vista de diseño</p></div><Ring value={0}/></div><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-[#BBFF1F]"/></div><div className="mt-3 flex justify-between text-xs text-white/50"><span>0 de 6 completados</span><span>Aún no iniciado</span></div></section><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Mis desafíos</h2><button onClick={()=>setSection('deberes')} className="text-xs font-bold text-[#BBFF1F]">Ver todos ↗</button></div><div className="mt-5 space-y-3">{sample.slice(0,3).map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>{setSection('deberes');setSelected(i)}}/>)}</div></section></div><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Calendario</h2><span className="text-xs text-white/40">NOV / 2026</span></div><p className="mb-5 mt-1 text-xs text-white/45">Vista ilustrativa de actividad</p><MonthPreview/><div className="mt-5 flex flex-wrap gap-4 text-[11px] text-white/55"><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#BBFF1F]"/>Inicio</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#FF0055]"/>Días de ejemplo</span></div></section><section className="rounded-[27px] bg-[#BBFF1F] p-6 text-[#0D0303]"><p className="text-xs font-black uppercase tracking-widest">PR SPIN</p><h2 className="mt-3 text-2xl font-black">6 desafíos.<br/>Una revelación.</h2><p className="mt-3 text-sm opacity-70">Una experiencia que vuelve cada mes.</p><button onClick={()=>setSection('spin')} className="mt-5 rounded-full bg-[#0D0303] px-5 py-3 text-xs font-bold text-[#EFF8FF]">Ver ruleta →</button></section></div></div>}
