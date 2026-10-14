@@ -34,10 +34,12 @@ export default function PRTrainingV2Spin({duties=[],onComplete}){
  return <div className="mx-auto max-w-lg text-center">
   <p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PR SPIN</p>
   <h3 className="mt-2 text-2xl font-black">Descubrí tus seis deberes</h3>
+  <p className="mt-2 text-sm text-white/50">La ruleta presenta tus ejercicios uno por uno. Tu selección ya está guardada.</p>
   <svg viewBox="0 0 300 310" className="mx-auto mt-3 w-full max-w-[310px]" role="img" aria-label="Ruleta de ocho sectores">
    <g style={{transformOrigin:'150px 150px',transform:`rotate(${angle}deg)`,transition:'transform 1.2s cubic-bezier(.1,.75,.12,1)'}}>{sectors}<circle cx="150" cy="150" r="43" fill="#0D0303" stroke="#EFF8FF" strokeWidth="3"/><text x="150" y="159" fill="#BBFF1F" textAnchor="middle" fontSize="28" fontWeight="900">PR</text></g>
    <path d="M137 8 L163 8 L150 35 Z" fill="#BBFF1F" stroke="#EFF8FF" strokeWidth="2"/>
   </svg>
+  <p className="mt-2 text-xs font-bold text-[#BBFF1F]" aria-live="polite">{shown} de 6 descubiertos</p>
   <div aria-live="polite" className="mt-2 grid grid-cols-2 gap-2 text-left">{Array.from({length:6},(_,i)=><div key={i} className="rounded-xl border border-white/15 bg-white/5 p-3 text-xs"><span className="font-black text-[#BBFF1F]">{i+1}. </span>{i<shown?duties[i]?.title:'Por descubrir'}</div>)}</div>
   {finished?<button onClick={onComplete} className="mt-5 rounded-full bg-[#BBFF1F] px-6 py-3 font-black text-[#0D0303]">Ver mis deberes</button>:<button disabled={running||duties.length!==6} onClick={start} className="mt-5 rounded-full bg-[#BBFF1F] px-6 py-3 font-black text-[#0D0303] disabled:opacity-50">{running?'Descubriendo…':'Girar PR SPIN'}</button>}
  </div>
