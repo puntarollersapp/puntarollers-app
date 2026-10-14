@@ -76,57 +76,37 @@ function SpinWheel() {
 }
 const staffIds = new Set(['admin-claudio', 'profe-david', 'alumno-48812609'])
 
-export default function PRTrainingV2Lab() {
-  const { user, loading } = useAuth()
-  const [section, setSection] = useState('experiencia')
-  if (loading) return <AppLayout><div className="mx-auto max-w-5xl px-5 py-20 text-white/70">Cargando PR Training…</div></AppLayout>
-  if (!user) return <Navigate to="/login" replace />
-  // Página de trabajo cerrada: no basta con conocer la URL para acceder.
-  if (!staffIds.has(user.id)) return <Navigate to="/app/dashboard" replace />
-
-  const displayName = [user.nombre, user.apellido].filter(Boolean).join(' ') || 'Equipo Punta Rollers'
-  return <AppLayout>
-    <main className="mx-auto max-w-6xl px-4 pb-28 pt-7 text-white sm:px-8">
-      <div className="relative overflow-hidden rounded-[30px] border border-violet-400/25 bg-[#101023] p-6 shadow-2xl sm:p-10">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 left-1/4 h-60 w-60 rounded-full bg-fuchsia-600/10 blur-3xl" />
-        <div className="relative">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="rounded-full border border-violet-400/40 bg-violet-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[.2em] text-violet-200">PR Training 2.0 · Laboratorio privado</span>
-            <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/60">Sin acceso para alumnos</span>
-          </div>
-          <div className="mt-9 max-w-3xl">
-            <p className="text-sm font-medium text-violet-200">Nueva temporada · Noviembre 2026</p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-6xl">Cada mes, un nuevo desafío.</h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-white/65">Seis deberes. Tu nivel. Tu progreso. Una experiencia de entrenamiento que se construye sobre tu recorrido en Punta Rollers.</p>
-          </div>
-          <div className="mt-9 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><p className="text-xs uppercase tracking-widest text-white/50">Próximo ciclo</p><p className="mt-2 text-2xl font-black">NOV 2026</p><p className="mt-1 text-xs text-white/50">01/11 · 15:00 UY</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><p className="text-xs uppercase tracking-widest text-white/50">Desafíos por ciclo</p><p className="mt-2 text-3xl font-black">06</p><p className="mt-1 text-xs text-white/50">Asignación individual</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5"><p className="text-xs uppercase tracking-widest text-white/50">Identidad conectada</p><p className="mt-2 truncate text-lg font-bold">{displayName}</p><p className="mt-1 text-xs text-white/50">Perfil real · {user.estado || 'Sin estado'}</p></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Secciones del laboratorio">
-        {[['experiencia','Experiencia'],['niveles','Niveles'],['revision','Evidencias y revisión']].map(([key,label])=><button key={key} role="tab" aria-selected={section===key} onClick={()=>setSection(key)} className={`rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${section===key?'bg-violet-500 text-white':'border border-white/15 bg-white/5 text-white/65 hover:bg-white/10'}`}>{label}</button>)}
-      </div>
-      {section==='experiencia' && <section className="mt-6 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
-        <div className="rounded-[26px] border border-violet-400/20 bg-[#17142c] p-7 sm:p-10">
-          <p className="text-xs font-bold uppercase tracking-[.24em] text-violet-300">PR SPIN</p>
-          <div className="my-7"><SpinWheel/></div>
-          <h2 className="text-xl font-bold">Tu mes empieza acá.</h2>
-          <p className="mt-2 text-sm leading-6 text-white/60">La ruleta visual tiene ocho segmentos amplios, pero el ciclo revela seis deberes. La animación ya puede probarse aquí; la asignación real todavía no está habilitada.</p>
-        </div>
-        <div className="rounded-[26px] border border-white/10 bg-[#141421] p-7">
-          <p className="text-xs font-bold uppercase tracking-[.2em] text-white/50">Así funciona</p>
-          <ol className="mt-6 space-y-6">{sampleSteps.map((step,i)=><li key={step} className="flex items-center gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 font-black text-violet-200">{String(i+1).padStart(2,'0')}</span><span className="font-medium">{step}</span></li>)}</ol>
-          <div className="mt-9 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 text-xs leading-6 text-amber-100/75">Modo construcción: no se generan deberes, no se registran evidencias y no se alteran datos de alumnos.</div>
-        </div>
-      </section>}
-      {section==='niveles' && <section className="mt-6 grid gap-4 sm:grid-cols-2">{levels.map(level=><article key={level.code} className="rounded-2xl border border-white/10 bg-[#161625] p-6"><p className="text-4xl font-black text-violet-300">{level.code}</p><h2 className="mt-3 text-xl font-bold">{level.label}</h2><p className="mt-2 text-sm text-white/55">{level.detail}</p><p className="mt-5 text-xs text-white/40">Nivel ilustrativo · Sin asignación automática habilitada</p></article>)}</section>}
-      {section==='revision' && <section className="mt-6 grid gap-4 sm:grid-cols-3">{[['01','Enviado','El alumno adjunta foto, video o actividad de Strava.'],['02','En revisión','Claudio o David verifica la evidencia privada.'],['03','Aprobado o devuelto','Se registra el resultado y, si corresponde, se solicita un nuevo envío.']].map(([n,t,d])=><article key={n} className="rounded-2xl border border-white/10 bg-[#161625] p-6"><p className="text-3xl font-black text-violet-300">{n}</p><h2 className="mt-5 text-lg font-bold">{t}</h2><p className="mt-3 text-sm leading-6 text-white/55">{d}</p></article>)}</section>}
-      <p className="mt-8 text-center text-xs text-white/40">Laboratorio PR Training 2.0 · Acceso restringido al equipo · Sin conexión de escritura</p>
-    </main>
-  </AppLayout>
+const tabs=[['inicio','Inicio'],['deberes','Mis deberes'],['actividad','Actividad'],['spin','PR SPIN']]
+const sample=[{n:'01',title:'Control y equilibrio',type:'Técnica',detail:'Dominio del patín y estabilidad',color:'#BBFF1F'},{n:'02',title:'Frenada en T',type:'Técnica',detail:'10 repeticiones · grabar las últimas 2',color:'#EFF8FF'},{n:'03',title:'Técnica de giro',type:'Técnica',detail:'Giros controlados y postura',color:'#FF0055'},{n:'04',title:'Resistencia',type:'Strava',detail:'Entrenamiento registrado',color:'#BBFF1F'},{n:'05',title:'Patinaje hacia atrás',type:'Video',detail:'3 minutos de práctica',color:'#EFF8FF'},{n:'06',title:'Precisión y postura',type:'Técnica',detail:'Evidencia visual de ejecución',color:'#FF0055'}]
+const weekdays=['L','M','M','J','V','S','D']
+function MonthPreview(){
+  const days=Array.from({length:35},(_,i)=>i-5)
+  return <div className="grid grid-cols-7 gap-2">{weekdays.map((d,i)=><span key={i} className="pb-2 text-center text-[11px] font-bold text-white/40">{d}</span>)}{days.map((d,i)=><span key={i} className={`flex aspect-square items-center justify-center rounded-full text-xs font-bold ${d<1||d>30?'text-white/10':d===1?'bg-[#BBFF1F] text-[#0D0303]':d===14||d===21||d===28?'bg-[#FF0055] text-white':'bg-white/[.055] text-white/65'}`}>{d>=1&&d<=30?d:''}</span>)}</div>
+}
+function Ring({value=0,size=110}){
+ return <div className="relative grid shrink-0 place-items-center rounded-full" style={{width:size,height:size,background:`conic-gradient(#BBFF1F ${value}%,#33343B 0)`}}><div className="absolute inset-[9px] grid place-items-center rounded-full bg-[#202126]"><span className="text-2xl font-black text-[#EFF8FF]">{value}%</span></div></div>
+}
+function TaskCard({task,index,onClick}){
+ return <button type="button" onClick={onClick} className="group flex w-full items-center gap-4 rounded-[22px] border border-white/[.07] bg-[#232429] p-4 text-left transition hover:border-[#BBFF1F]/50 hover:bg-[#292A30]"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-black" style={{background:task.color,color:'#0D0303'}}>{task.n}</span><span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-bold text-[#EFF8FF]">{task.title}</span><span className="mt-1 block truncate text-xs text-white/45">{task.detail}</span></span><span className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-bold uppercase text-white/60">{task.type}</span><span className="text-xl text-white/40">›</span></button>
+}
+export default function PRTrainingV2Lab(){
+ const {user,loading}=useAuth()
+ const [section,setSection]=useState('inicio')
+ const [selected,setSelected]=useState(null)
+ if(loading)return <AppLayout><div className="p-10 text-white">Cargando…</div></AppLayout>
+ if(!user)return <Navigate to="/login" replace/>
+ if(!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
+ const name=user.nombre||'Equipo'
+ return <AppLayout>
+ <main className="min-h-screen bg-[#0D0303] px-3 pb-28 pt-5 text-[#EFF8FF] sm:px-6">
+ <div className="mx-auto max-w-5xl">
+  <header className="mb-7 flex items-center justify-between gap-3 px-2"><div><div className="flex items-center gap-2"><span className="text-sm font-black tracking-[.17em]">PUNTA ROLLERS</span><span className="h-2 w-2 rounded-full bg-[#BBFF1F]"/></div><p className="mt-1 text-xs text-white/40">TRAINING / NEW SEASON</p></div><div className="flex items-center gap-2"><span className="hidden rounded-full bg-[#25262B] px-3 py-2 text-xs text-white/65 sm:block">Laboratorio privado</span><span className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border-2 border-[#BBFF1F] bg-[#303139] text-lg font-black">{name[0]?.toUpperCase()}</span></div></header>
+  <section className="relative overflow-hidden rounded-[30px] bg-[#222328] px-6 pb-7 pt-8 sm:px-9"><div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-[#BBFF1F]/10 blur-[80px]"/><div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#BBFF1F] px-3 py-1 text-[10px] font-black tracking-widest text-[#0D0303]">NEW SEASON</span><span className="text-xs text-white/45">Noviembre 2026 · Vista previa</span></div><h1 className="mt-6 text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl">Tu próximo<br/><span className="text-[#BBFF1F]">nivel empieza acá.</span></h1><p className="mt-4 max-w-lg text-sm leading-6 text-white/55">Hola, {name}. Una nueva manera de entrenar, seguir tu evolución y completar tus desafíos.</p><div className="mt-7 flex flex-wrap items-center gap-3"><button type="button" onClick={()=>setSection('spin')} className="rounded-full bg-[#EFF8FF] px-6 py-3.5 text-sm font-black text-[#0D0303]">Explorar PR SPIN →</button><span className="text-xs text-white/45">Estreno · 01 NOV · 15:00 UY</span></div></div></section>
+  <nav className="mt-5 flex gap-2 overflow-x-auto pb-2" aria-label="Secciones de PR Training">{tabs.map(([key,label])=><button key={key} type="button" onClick={()=>{setSection(key);setSelected(null)}} className={`shrink-0 rounded-full px-5 py-3 text-xs font-bold transition ${section===key?'bg-[#BBFF1F] text-[#0D0303]':'bg-[#25262B] text-white/65 hover:text-white'}`}>{label}</button>)}</nav>
+  {section==='inicio'&&<div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_.9fr]"><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-white/45">Mi progreso</p><h2 className="mt-2 text-2xl font-black">Ciclo de noviembre</h2><p className="mt-2 text-xs text-white/45">Seis deberes · Vista de diseño</p></div><Ring value={0}/></div><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-0 rounded-full bg-[#BBFF1F]"/></div><div className="mt-3 flex justify-between text-xs text-white/50"><span>0 de 6 completados</span><span>Aún no iniciado</span></div></section><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Mis desafíos</h2><button onClick={()=>setSection('deberes')} className="text-xs font-bold text-[#BBFF1F]">Ver todos ↗</button></div><div className="mt-5 space-y-3">{sample.slice(0,3).map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>{setSection('deberes');setSelected(i)}}/>)}</div></section></div><div className="space-y-4"><section className="rounded-[27px] bg-[#222328] p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Calendario</h2><span className="text-xs text-white/40">NOV / 2026</span></div><p className="mb-5 mt-1 text-xs text-white/45">Vista ilustrativa de actividad</p><MonthPreview/><div className="mt-5 flex flex-wrap gap-4 text-[11px] text-white/55"><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#BBFF1F]"/>Inicio</span><span><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-[#FF0055]"/>Días de ejemplo</span></div></section><section className="rounded-[27px] bg-[#BBFF1F] p-6 text-[#0D0303]"><p className="text-xs font-black uppercase tracking-widest">PR SPIN</p><h2 className="mt-3 text-2xl font-black">6 desafíos.<br/>Una revelación.</h2><p className="mt-3 text-sm opacity-70">Una experiencia que vuelve cada mes.</p><button onClick={()=>setSection('spin')} className="mt-5 rounded-full bg-[#0D0303] px-5 py-3 text-xs font-bold text-[#EFF8FF]">Ver ruleta →</button></section></div></div>}
+  {section==='deberes'&&<section className="mt-4 rounded-[27px] bg-[#222328] p-5 sm:p-8"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-[#BBFF1F]">NOVIEMBRE / 2026</p><h2 className="mt-2 text-3xl font-black">Mis seis deberes</h2><p className="mt-2 text-sm text-white/45">Tarjetas de diseño · No son asignaciones reales</p></div><span className="rounded-full bg-[#35363C] px-4 py-2 text-xs font-bold">0 / 6</span></div><div className="mt-7 grid gap-3 md:grid-cols-2">{sample.map((task,i)=><TaskCard key={task.n} task={task} index={i} onClick={()=>setSelected(selected===i?null:i)}/>)}</div>{selected!==null&&<div className="mt-5 rounded-2xl border border-[#BBFF1F]/35 bg-[#BBFF1F]/[.07] p-5"><p className="text-xs font-bold uppercase text-[#BBFF1F]">Vista del deber {sample[selected].n}</p><h3 className="mt-2 text-xl font-black">{sample[selected].title}</h3><p className="mt-2 text-sm text-white/60">{sample[selected].detail}</p><p className="mt-4 text-xs text-white/45">El envío de evidencia se habilitará cuando estén conectados el catálogo real y la revisión docente.</p></div>}</section>}
+  {section==='actividad'&&<div className="mt-4 grid gap-4 lg:grid-cols-2"><section className="rounded-[27px] bg-[#222328] p-6"><p className="text-xs font-bold uppercase tracking-widest text-white/40">Estadísticas</p><h2 className="mt-2 text-2xl font-black">Tu evolución</h2><div className="mt-7 flex items-center gap-5"><Ring value={0} size={125}/><div><p className="text-3xl font-black">0 <span className="text-sm text-white/40">/ 6</span></p><p className="mt-2 text-sm text-white/50">Tareas del próximo ciclo</p><p className="mt-3 text-xs text-[#BBFF1F]">Se activa el 1 de noviembre</p></div></div></section><section className="rounded-[27px] bg-[#222328] p-6"><h2 className="text-2xl font-black">Cómo se valida</h2><div className="mt-5 space-y-4">{[['01','Enviado','Foto, video o Strava'],['02','En revisión','Claudio o David comprueban la evidencia'],['03','Aprobado','Tu progreso se actualiza']].map(([n,title,desc])=><div key={n} className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#FF0055] font-black">{n}</span><div><p className="font-bold">{title}</p><p className="mt-1 text-xs text-white/50">{desc}</p></div></div>)}</div></section></div>}
+  {section==='spin'&&<section className="mt-4 rounded-[27px] bg-[#222328] p-5 sm:p-8"><div className="text-center"><p className="text-xs font-black tracking-[.2em] text-[#BBFF1F]">PUNTA ROLLERS · NOVIEMBRE 2026</p><h2 className="mt-2 text-4xl font-black">PR SPIN</h2><p className="mt-2 text-sm text-white/45">Descubrí tus seis desafíos mensuales</p></div><div className="mx-auto mt-5 max-w-[450px]"><SpinWheel/></div></section>}
+  <footer className="mt-8 px-2 text-center text-xs leading-5 text-white/35">PR Training 2.0 · Laboratorio privado · Contenido de demostración sin escritura de datos</footer>
+ </div></main></AppLayout>
 }
