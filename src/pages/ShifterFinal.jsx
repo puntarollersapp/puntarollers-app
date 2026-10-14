@@ -109,6 +109,17 @@ export default function ShifterFinal() {
       <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4"><p className="text-xs text-white/50">Entrenamientos Strava</p><p className="mt-2 text-2xl font-black">{activity.length}</p></div>
       <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4"><p className="text-xs text-white/50">Kilómetros registrados</p><p className="mt-2 text-2xl font-black">{kilometers.toFixed(1)}</p></div>
     </section>
+    <section className="relative overflow-hidden rounded-[28px] border border-fuchsia-400/20 bg-gradient-to-br from-[#26122d] via-[#171323] to-[#0e141b] p-5">
+      <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-fuchsia-500/15 blur-3xl"/>
+      <p className="text-[10px] font-black uppercase tracking-[.18em] text-fuchsia-300">Tu preparación en números</p>
+      <h2 className="mt-2 text-2xl font-black">Cada toma cuenta.</h2>
+      <p className="mt-2 text-sm leading-6 text-white/60">Tus resultados se actualizan cuando se registra una nueva toma. Los mejores tiempos se calculan por distancia.</p>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-white/10 bg-white/[.05] p-4"><p className="text-xs text-white/55">Tomas registradas</p><p className="mt-2 text-3xl font-black tabular-nums text-white">{reports.reduce((sum,r)=>sum+r.count,0)}</p></div>
+        <div className="rounded-2xl border border-white/10 bg-white/[.05] p-4"><p className="text-xs text-white/55">Devoluciones recibidas</p><p className="mt-2 text-3xl font-black tabular-nums text-white">{takes.filter(t=>t.devolucion&&t.eliminado!==true).length+feedback.length}</p></div>
+        {reports.filter(r=>r.count>0).map(r=><div key={r.distanceKm} className="rounded-2xl border border-violet-400/20 bg-violet-400/[.07] p-4"><p className="text-xs font-semibold text-violet-200">Tu récord · {r.distanceKm}K</p><p className="mt-2 text-2xl font-black tabular-nums">{r.rows.find(row=>row.seconds===r.bestSeconds)?.formattedTime}</p>{r.count>1&&<p className="mt-1 text-[11px] text-emerald-200/80">{r.firstSeconds>r.bestSeconds?`${Math.round(r.firstSeconds-r.bestSeconds)} s más rápido que tu primera marca`:'Tu primera referencia sigue siendo tu récord'}</p>}</div>)}
+      </div>
+    </section>
     {reports.map(report => <section key={report.distanceKm} className="rounded-[28px] border border-violet-400/20 bg-[#14111c] p-5">
       <p className="text-[10px] font-bold uppercase tracking-widest text-violet-300">Evolución · {report.distanceKm} km</p>
       <h2 className="mt-2 text-xl font-black">{report.title}</h2>
