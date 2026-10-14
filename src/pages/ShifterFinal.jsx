@@ -67,7 +67,7 @@ export default function ShifterFinal() {
       if (!alive) return
       if (queries.some(x => x.error)) setError('Algunos datos no están disponibles. No se modificó ningún registro.')
       setTakes(queries[0].data || [])
-      const coachResponse = await supabase.from('profiles').select('id,nombre,apellido,foto,role,es_profesor').in('id',['admin-claudio','profe-david'])
+      const coachResponse = await supabase.rpc('shifter_coach_profiles')
       if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['Claudio','David'].some(name => String(p.nombre || '').toLowerCase() === name.toLowerCase()) && (p.es_profesor || ['admin','profesor'].includes(p.role))))
       setEnrollment(queries[1].data || null)
       setTasks(queries[2].data || [])
