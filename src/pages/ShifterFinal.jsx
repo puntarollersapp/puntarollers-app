@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
-import ProfileAvatar from '../components/ProfileAvatar'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildShifterFinalReport } from '../lib/shifterFinalReport'
@@ -68,7 +67,7 @@ export default function ShifterFinal() {
       if (queries.some(x => x.error)) setError('Algunos datos no están disponibles. No se modificó ningún registro.')
       setTakes(queries[0].data || [])
       const coachResponse = await supabase.rpc('shifter_coach_profiles')
-      if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['Claudio','David'].some(name => String(p.nombre || '').toLowerCase() === name.toLowerCase()) && (p.es_profesor || ['admin','profesor'].includes(p.role))))
+      if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['admin-claudio','profe-david'].includes(p.id)))
       setEnrollment(queries[1].data || null)
       setTasks(queries[2].data || [])
       setResults(queries[3].data || [])
@@ -86,7 +85,9 @@ export default function ShifterFinal() {
   return <AppLayout title="Shifter 2026" showBack><div className="mx-auto max-w-xl space-y-4 px-4 pb-28 pt-5 text-white">
     <section className="rounded-[30px] border border-violet-300/20 relative isolate overflow-hidden bg-gradient-to-br from-[#301a39] via-[#1c1427] to-[#0d0a15] p-6 text-center shadow-[0_20px_65px_rgba(126,65,190,.25)]">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"><div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 animate-pulse rounded-full bg-violet-500/20 blur-3xl"/><div className="absolute -right-20 top-1/3 h-64 w-64 animate-pulse rounded-full bg-orange-400/10 blur-3xl"/><div className="absolute inset-0 opacity-20" style={{backgroundImage:"radial-gradient(circle, rgba(255,255,255,.45) 1px, transparent 1px)",backgroundSize:"30px 30px",maskImage:"linear-gradient(to bottom,black,transparent)"}}/></div>
-      <div className="mb-5 flex justify-center gap-5">{['Claudio','David'].map(name => { const coach = coaches.find(p => String(p.nombre || '').toLowerCase() === name.toLowerCase()); return <div key={name} className="flex flex-col items-center gap-2">{coach ? <ProfileAvatar profile={coach} className="h-[84px] w-[84px] ring-2 ring-orange-300/60 ring-offset-4 ring-offset-[#23162c] shadow-xl" badge={false}/> : <div className="grid h-[74px] w-[74px] place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-black text-white/50">{name.slice(0,1)}</div>}<span className="text-xs font-semibold text-white/70">{name}</span></div> })}</div>
+      <style>{`@keyframes shifterDrift{0%{transform:translate3d(0,0,0);opacity:0}15%{opacity:.5}85%{opacity:.5}100%{transform:translate3d(12px,220px,0);opacity:0}}@keyframes shifterGlow{0%,100%{transform:translate(-10%,-5%) scale(1)}50%{transform:translate(12%,10%) scale(1.25)}}@media(prefers-reduced-motion:reduce){.shifter-drift,.shifter-glow{animation:none!important}}`}</style>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">{Array.from({length:22},(_,i)=><span key={i} className="shifter-drift absolute h-1 w-1 rounded-full bg-orange-200/70" style={{left:`${(i*37+13)%100}%`,top:`${(i*19+3)%85}%`,animation:`shifterDrift ${7+(i%5)*2}s linear ${-(i%8)*2}s infinite`}}/>)}<div className="shifter-glow absolute -top-28 left-1/4 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" style={{animation:'shifterGlow 13s ease-in-out infinite'}}/></div>
+      <div className="mb-6 flex items-center justify-center gap-8">{[{id:'admin-claudio',label:'Claudio'},{id:'profe-david',label:'David'}].map(({id,label})=>{const coach=coaches.find(p=>p.id===id);return <div key={id} className="flex flex-col items-center gap-3"><div className="relative h-[88px] w-[88px] rounded-full bg-gradient-to-br from-violet-400 via-fuchsia-500 to-orange-400 p-[3px] shadow-[0_0_28px_rgba(167,100,245,.28)]"><div className="h-full w-full overflow-hidden rounded-full bg-[#24182c]">{coach?.foto?<img src={coach.foto} alt={`Foto de perfil de ${label}`} className="h-full w-full object-cover" loading="eager"/>:<span className="grid h-full w-full place-items-center text-xl font-black text-white/60">{label[0]}</span>}</div></div><span className="text-xs font-bold tracking-wide text-white/80">{label}</span></div>})}</div>
       <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Un mensaje de tus entrenadores</p>
       <h2 className="mt-3 text-[27px] font-black leading-tight">Estás en la recta final.</h2>
       <p className="mt-4 text-sm leading-7 text-white/75">Queremos felicitarte por todo lo que venís construyendo. Por tu esfuerzo, tu constancia y las ganas que le pusiste a cada entrenamiento.</p>
@@ -107,6 +108,17 @@ export default function ShifterFinal() {
     {!loading && <><section className="grid grid-cols-2 gap-3">
       <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4"><p className="text-xs text-white/50">Entrenamientos Strava</p><p className="mt-2 text-2xl font-black">{activity.length}</p></div>
       <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4"><p className="text-xs text-white/50">Kilómetros registrados</p><p className="mt-2 text-2xl font-black">{kilometers.toFixed(1)}</p></div>
+    </section>
+    <section className="relative overflow-hidden rounded-[28px] border border-fuchsia-400/20 bg-gradient-to-br from-[#26122d] via-[#171323] to-[#0e141b] p-5">
+      <div className="pointer-events-none absolute -right-14 -top-20 h-44 w-44 rounded-full bg-fuchsia-500/15 blur-3xl"/>
+      <p className="text-[10px] font-black uppercase tracking-[.18em] text-fuchsia-300">Tu preparación en números</p>
+      <h2 className="mt-2 text-2xl font-black">Cada toma cuenta.</h2>
+      <p className="mt-2 text-sm leading-6 text-white/60">Tus resultados se actualizan cuando se registra una nueva toma. Los mejores tiempos se calculan por distancia.</p>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-white/10 bg-white/[.05] p-4"><p className="text-xs text-white/55">Tomas registradas</p><p className="mt-2 text-3xl font-black tabular-nums text-white">{reports.reduce((sum,r)=>sum+r.count,0)}</p></div>
+        <div className="rounded-2xl border border-white/10 bg-white/[.05] p-4"><p className="text-xs text-white/55">Devoluciones recibidas</p><p className="mt-2 text-3xl font-black tabular-nums text-white">{takes.filter(t=>t.devolucion&&t.eliminado!==true).length+feedback.length}</p></div>
+        {reports.filter(r=>r.count>0).map(r=><div key={r.distanceKm} className="rounded-2xl border border-violet-400/20 bg-violet-400/[.07] p-4"><p className="text-xs font-semibold text-violet-200">Tu récord · {r.distanceKm}K</p><p className="mt-2 text-2xl font-black tabular-nums">{r.rows.find(row=>row.seconds===r.bestSeconds)?.formattedTime}</p>{r.count>1&&<p className="mt-1 text-[11px] text-emerald-200/80">{r.firstSeconds>r.bestSeconds?`${Math.round(r.firstSeconds-r.bestSeconds)} s más rápido que tu primera marca`:'Tu primera referencia sigue siendo tu récord'}</p>}</div>)}
+      </div>
     </section>
     {reports.map(report => <section key={report.distanceKm} className="rounded-[28px] border border-violet-400/20 bg-[#14111c] p-5">
       <p className="text-[10px] font-bold uppercase tracking-widest text-violet-300">Evolución · {report.distanceKm} km</p>
