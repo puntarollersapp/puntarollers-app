@@ -127,7 +127,7 @@ function TrainingReviewQueue(){
 
 function TrainingAdminControls(){
  const [overview,setOverview]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(false)
- const [profileId,setProfileId]=useState(''),[level,setLevel]=useState('B1'),[message,setMessage]=useState(''),[dutyMessage,setDutyMessage]=useState('')
+ const [dutyMessage,setDutyMessage]=useState('')
  async function refresh(){
   setLoading(true);setError('')
   const {data,error:e}=await supabase.rpc('pr_training_v2_admin_overview')
@@ -147,13 +147,6 @@ function TrainingAdminControls(){
   if(e)setDutyMessage(e.message)
   else refresh()
  }
- async function saveLevel(e){
-  e.preventDefault();setMessage('')
-  if(!profileId.trim())return
-  const {error:e2}=await supabase.rpc('pr_training_v2_admin_set_level',{p_profile_id:profileId.trim(),p_level:level})
-  if(e2)setMessage('No se pudo guardar: '+e2.message)
-  else {setMessage('Nivel guardado correctamente.');refresh()}
- }
  return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/25 bg-[#222328] p-5">
   <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">Centro de control · PR Training 2.0</h2><p className="mt-1 text-xs text-white/50">Datos reales de Supabase · Acceso administrativo</p></div><button type="button" onClick={refresh} disabled={loading} className="rounded-full border border-white/20 px-4 py-2 text-xs font-bold">{loading?'Actualizando…':'Actualizar datos'}</button></div>
   {error&&<p role="alert" className="mt-4 text-sm text-[#FF8DAF]">{error}</p>}
@@ -162,7 +155,7 @@ function TrainingAdminControls(){
   <h3 className="mt-5 text-sm font-black">Catálogo real</h3><div className="mt-2 max-h-52 overflow-y-auto rounded-xl border border-white/10">{overview.catalog?.map(d=><div key={d.code} className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 text-xs"><span><b className="text-[#BBFF1F]">{d.code}</b> · {d.title}</span><span className="flex shrink-0 gap-1"><button type="button" onClick={()=>updateDuty(d,'demo')} className={`rounded-md border px-2 py-1 ${d.demo_ready?'border-[#BBFF1F] text-[#BBFF1F]':'border-white/20 text-white/50'}`} title="Confirmar que el video demostrativo está cargado y validado">{d.demo_ready?'Demo ✓':'Demo pendiente'}</button><button type="button" onClick={()=>updateDuty(d,'active')} className={`rounded-md border px-2 py-1 ${d.active?'border-[#BBFF1F] text-[#BBFF1F]':'border-white/20 text-white/50'}`}>{d.active?'Activo':'Inactivo'}</button></span></div>)}</div>
   {dutyMessage&&<p role="alert" className="mt-2 text-xs text-[#FF8DAF]">{dutyMessage}</p>}
   {overview.incidents?.length>0&&<div className="mt-4"><h3 className="text-sm font-black text-[#FF8DAF]">Incidencias</h3>{overview.incidents.map(i=><p key={i.id} className="mt-2 text-xs text-white/65">{i.profile_id} · {i.code}</p>)}</div>}
-  <form onSubmit={saveLevel} className="mt-5 space-y-3 rounded-xl bg-white/5 p-4"><h3 className="text-sm font-black">Asignar nivel a un alumno</h3><p className="text-xs text-white/50">Para alumnos nuevos el nivel inicial es B1. Este cambio solo afecta futuras asignaciones; no modifica deberes ya guardados.</p><input value={profileId} onChange={e=>setProfileId(e.target.value)} placeholder="ID exacto del perfil" className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-3 text-sm text-white" required/><select value={level} onChange={e=>setLevel(e.target.value)} className="w-full rounded-lg border border-white/15 bg-[#222328] px-3 py-3 text-sm">{['B1','B2','B3'].map(v=><option key={v} value={v}>{v}</option>)}</select><button className="rounded-full bg-[#BBFF1F] px-5 py-3 text-xs font-black text-[#0D0303]">Guardar nivel</button>{message&&<p role="status" className="text-xs">{message}</p>}</form></>}
+</>}
  </section>
 }
 
