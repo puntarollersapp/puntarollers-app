@@ -4,8 +4,10 @@ import PRTrainingV2Evidence from '../components/training/PRTrainingV2Evidence'
 import PRTrainingV2Spin from '../components/training/PRTrainingV2Spin'
 
 const monthNow = () => {
- const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date())
- return parts+'-01'
+ const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).formatToParts(new Date())
+ const year=parts.find(p=>p.type==='year')?.value
+ const month=parts.find(p=>p.type==='month')?.value
+ return `${year}-${month}-01`
 }
 export default function PRTrainingV2Student({profileId}) {
  const [cycle,setCycle]=useState(null)
