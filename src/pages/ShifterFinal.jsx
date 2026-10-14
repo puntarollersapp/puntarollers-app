@@ -19,7 +19,6 @@ export default function ShifterFinal() {
   const [results, setResults] = useState([])
   const [enrollment, setEnrollment] = useState(null)
   const [activity, setActivity] = useState([])
-  const [feedback, setFeedback] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -34,13 +33,11 @@ export default function ShifterFinal() {
         supabase.from('pr_training_task_results').select('*').eq('profile_id', user.id),
         supabase.from('pr_inline_skate_activities').select('distancia_metros').eq('alumno_id', user.id).eq('fuente', 'strava').eq('eliminada', false).limit(1000),
         supabase.from('pr_performance_notes').select('id,body,visibility,created_at').eq('profile_id', user.id).eq('visibility','student').order('created_at',{ascending:false}).limit(100),
-        supabase.from('pr_performance_notes').select('id,body,visibility,created_at').eq('profile_id', user.id).eq('visibility', 'student').order('created_at', { ascending: false }),
       ])
       if (!alive) return
       if (queries.some(x => x.error)) setError('Algunos datos no están disponibles. No se modificó ningún registro.')
       setTakes(queries[0].data || [])
-      setFeedback(queries[5].data || [])
-      const coachResponse = await supabase.from('profiles').select('id,nombre,apellido,foto,role,es_profesor').or('nombre.ilike.%Claudio%,nombre.ilike.%David%').limit(30)
+      const coachResponse = await supabase.from('profiles').select('id,nombre,apellido,foto,role,es_profesor').in('id',['admin-claudio','profe-david'])
       if (alive && !coachResponse.error) setCoaches((coachResponse.data || []).filter(p => ['Claudio','David'].some(name => String(p.nombre || '').toLowerCase() === name.toLowerCase()) && (p.es_profesor || ['admin','profesor'].includes(p.role))))
       setEnrollment(queries[1].data || null)
       setTasks(queries[2].data || [])
@@ -57,8 +54,9 @@ export default function ShifterFinal() {
   const completed = assigned.filter(t => results.some(r => r.task_id === t.id && r.status === 'completed')).length
   const kilometers = activity.reduce((sum, a) => sum + (Number(a.distancia_metros) || 0) / 1000, 0)
   return <AppLayout title="Shifter 2026" showBack><div className="mx-auto max-w-xl space-y-4 px-4 pb-28 pt-5 text-white">
-    <section className="rounded-[30px] border border-violet-300/20 bg-gradient-to-br from-[#261829] via-[#17111d] to-[#0d0a10] p-6 text-center shadow-[0_16px_50px_rgba(80,35,115,.15)]">
-      <div className="mb-5 flex justify-center gap-4">{['Claudio','David'].map(name => { const coach = coaches.find(p => String(p.nombre || '').toLowerCase() === name.toLowerCase()); return <div key={name} className="flex flex-col items-center gap-2">{coach ? <ProfileAvatar profile={coach} className="h-[74px] w-[74px]" badge={false}/> : <div className="grid h-[74px] w-[74px] place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-black text-white/50">{name.slice(0,1)}</div>}<span className="text-xs font-semibold text-white/70">{name}</span></div> })}</div>
+    <section className="rounded-[30px] border border-violet-300/20 relative isolate overflow-hidden bg-gradient-to-br from-[#301a39] via-[#1c1427] to-[#0d0a15] p-6 text-center shadow-[0_20px_65px_rgba(126,65,190,.25)]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"><div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 animate-pulse rounded-full bg-violet-500/20 blur-3xl"/><div className="absolute -right-20 top-1/3 h-64 w-64 animate-pulse rounded-full bg-orange-400/10 blur-3xl"/><div className="absolute inset-0 opacity-20" style={{backgroundImage:"radial-gradient(circle, rgba(255,255,255,.45) 1px, transparent 1px)",backgroundSize:"30px 30px",maskImage:"linear-gradient(to bottom,black,transparent)"}}/></div>
+      <div className="mb-5 flex justify-center gap-5">{['Claudio','David'].map(name => { const coach = coaches.find(p => String(p.nombre || '').toLowerCase() === name.toLowerCase()); return <div key={name} className="flex flex-col items-center gap-2">{coach ? <ProfileAvatar profile={coach} className="h-[84px] w-[84px] ring-2 ring-orange-300/60 ring-offset-4 ring-offset-[#23162c] shadow-xl" badge={false}/> : <div className="grid h-[74px] w-[74px] place-items-center rounded-full border border-white/15 bg-white/5 text-sm font-black text-white/50">{name.slice(0,1)}</div>}<span className="text-xs font-semibold text-white/70">{name}</span></div> })}</div>
       <p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Un mensaje de tus entrenadores</p>
       <h2 className="mt-3 text-[27px] font-black leading-tight">Estás en la recta final.</h2>
       <p className="mt-4 text-sm leading-7 text-white/75">Queremos felicitarte por todo lo que venís construyendo. Por tu esfuerzo, tu constancia y las ganas que le pusiste a cada entrenamiento.</p>
@@ -90,14 +88,6 @@ export default function ShifterFinal() {
       </> : <p className="mt-3 text-sm text-white/50">Todavía no hay tomas registradas para esta distancia.</p>}
       <p className="mt-4 text-sm leading-6 text-white/75">{report.message}</p>
     </section>)}
-    <section className="rounded-[28px] border border-orange-300/20 bg-[#171116] p-5">
-      <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">Tus devoluciones</p>
-      <h2 className="mt-2 text-xl font-black">Lo que fuimos observando</h2>
-      {takes.filter(t => t.devolucion && t.eliminado !== true).length === 0 && feedback.length === 0 ? <p className="mt-3 text-sm text-white/55">Todavía no hay devoluciones registradas en tu perfil.</p> : <div className="mt-4 space-y-3">
-        {takes.filter(t => t.devolucion && t.eliminado !== true).map((t,i) => <div key={t.id || i} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[10px] font-bold text-orange-200">Toma {t.numero_toma || i+1}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">{t.devolucion}</p></div>)}
-        {feedback.map(n => <div key={n.id} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[10px] font-bold text-violet-300">Devolución del entrenador</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">{n.body}</p></div>)}
-      </div>}
-    </section>
     <section className="rounded-[28px] border border-orange-300/20 bg-[#171116] p-5">
       <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">Tus devoluciones</p>
       <h2 className="mt-2 text-xl font-black">Lo que fuimos observando</h2>
