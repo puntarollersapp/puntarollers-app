@@ -111,10 +111,14 @@ export default function ShifterFinal() {
   const finalActivity = activity.filter(a=>String(a.nombre||'').trim().toUpperCase()===SHIFTER_FINAL_LABEL)
   const latestFinal = [...finalActivity].sort((a,b)=>new Date(b.fecha_inicio||0)-new Date(a.fecha_inicio||0))[0]
   const finalKm=latestFinal?Number(latestFinal.distancia_metros||0)/1000:0
-  const finalDistance=finalKm>=5&&finalKm<=7?6:finalKm>=10.76&&finalKm<=13.5?12:null
+  // El cierre se reconoce por el título, independientemente de la distancia GPS.
+  // La categoría inscrita solo sirve para buscar una referencia histórica.
+  const finalDistance=enrollment?.category==='6K'?6:enrollment?.category==='12K'?12:null
   const finalReport=reports.find(r=>r.distanceKm===finalDistance&&r.count>0)
   const finalSeconds=Number(latestFinal?.tiempo_movimiento_segundos||0)
-  const finalDifference=finalReport&&finalSeconds>0?finalReport.firstSeconds-finalSeconds:null
+  // Nunca comparar tiempos de distancias diferentes como si fueran equivalentes.
+  const comparableDistance=finalDistance!=null&&Math.abs(finalKm-finalDistance)<=finalDistance*0.05
+  const finalDifference=finalReport&&finalSeconds>0&&comparableDistance?finalReport.firstSeconds-finalSeconds:null
   const metrics = [
     {label:'Tomas',value:Math.min(100,reports.reduce((s,r)=>s+r.count,0)*20)},
     {label:'Deberes',value:assigned.length?Math.round(completed/assigned.length*100):0},
@@ -193,6 +197,7 @@ export default function ShifterFinal() {
       <div className="mt-4 break-all rounded-xl border border-white/10 bg-black/30 p-3 font-mono text-sm font-bold text-white">{SHIFTER_FINAL_LABEL}</div>
       <button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(SHIFTER_FINAL_LABEL);setCopied(true)}catch{setCopied(false)}}} className="mt-3 w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-black text-black">{copied?'Nombre copiado':'Copiar nombre para Strava'}</button>
       {latestFinal?<p className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">Actividad final detectada en Strava · {Number(latestFinal.distancia_metros/1000).toFixed(2)} km · {latestFinal.fecha_inicio?String(latestFinal.fecha_inicio).slice(0,10):'Fecha no disponible'}. El tiempo proviene de Strava y se muestra por separado de las tomas validadas.</p>:<p className="mt-4 text-xs text-orange-200/70">Pendiente de sincronización. Tu progreso anterior se conserva intacto.</p>}
+      {latestFinal&&finalDifference===null&&<p className="mt-3 rounded-xl border border-orange-300/20 bg-orange-400/[.06] p-3 text-xs leading-5 text-orange-100">Toma final recibida correctamente. Se conserva la distancia y el tiempo reales de Strava, aunque no coincidan con la categoría. La comparación cronométrica se reserva para recorridos equivalentes; no se descarta esta actividad.</p>}
       {finalDifference!==null&&<div className="mt-3 rounded-xl border border-orange-300/20 bg-orange-400/[.06] p-4"><p className="text-xs font-bold uppercase tracking-wide text-orange-200">Comparativa provisional · {finalDistance}K</p><p className="mt-2 text-sm text-white/80">Primera toma: {finalReport.rows[0].formattedTime} · Actividad Strava: {Math.floor(finalSeconds/60)}:{String(Math.round(finalSeconds%60)).padStart(2,'0')}</p><p className="mt-2 text-sm font-bold">{finalDifference>0?`${Math.round(finalDifference)} segundos más rápido que la primera toma`:finalDifference===0?'Mismo tiempo que tu primera toma':`${Math.abs(Math.round(finalDifference))} segundos por encima de tu primera toma`}</p><p className="mt-2 text-xs text-white/55">Comparación informativa con el tiempo en movimiento de Strava. No reemplaza la devolución técnica del entrenador.</p></div>}
     </section>
     {groupIndex?.participants>=5&&<SportRadar title="Índice deportivo grupal" subtitle={`Panorama colectivo de ${groupIndex.participants} participantes. Solo indicadores agregados, sin tiempos ni datos personales de compañeros.`} metrics={[{label:'Tomas',value:groupIndex.takes_coverage||0},{label:'Deberes',value:groupIndex.task_coverage||0},{label:'Actividad',value:groupIndex.activity_coverage||0},{label:'6K',value:groupIndex.six_k_coverage||0},{label:'12K',value:groupIndex.twelve_k_coverage||0}]}/>}
