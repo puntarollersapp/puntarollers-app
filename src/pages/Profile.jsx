@@ -1100,9 +1100,14 @@ export default function Profile() {
 
   async function equipFrame(frameId) {
     if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
-    const nextAvatar = { ...profileAvatar, frames: { ...profileAvatar.frames, equipped: frameId } }
     try {
       setSavingFrame(true)
+      // Refresh first so equipping a frame does not overwrite newer Chibi/avatar settings.
+      const { data: latestProfile, error: readError } = await supabase.from('profiles').select('pr_avatar').eq('id', profileId).maybeSingle()
+      if (readError) throw readError
+      if (!latestProfile) throw new Error('No encontramos el perfil para guardar.')
+      const latestAvatar = avatarObject(latestProfile.pr_avatar)
+      const nextAvatar = { ...latestAvatar, frames: { ...avatarObject(latestAvatar.frames), equipped: frameId } }
       const { data, error } = await supabase.from('profiles').update({ pr_avatar: nextAvatar, updated_at: new Date().toISOString() }).eq('id', profileId).select('id').maybeSingle()
       if (error) throw error
       if (!data?.id) throw new Error('No encontramos el perfil para guardar.')
