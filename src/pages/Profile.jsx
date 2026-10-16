@@ -18,11 +18,11 @@ import VerifiedBadge from '../components/VerifiedBadge'
 
 // PR Frames beta: visual placeholders until individual transparent assets are approved.
 const PR_FRAMES = [
-  { id: 'original', name: 'PR Original', accent: '#65a7ff', available: true, description: 'Marco inicial de Punta Rollers.' },
-  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', available: false, description: 'Participación verificada en Shifter 2026.' },
-  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', available: false, description: 'Logro de asistencia verificado mediante PR Check.' },
-  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', available: false, description: 'Temporada navideña 2026.' },
-  { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', available: false, description: 'Celebración de Año Nuevo 2027.' },
+  { id: 'original', name: 'PR Original', accent: '#65a7ff', description: 'Marco inicial de Punta Rollers.' },
+  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', description: 'Participación verificada en Shifter 2026.' },
+  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', description: 'Logro de asistencia verificado mediante PR Check.' },
+  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', description: 'Temporada navideña 2026.' },
+  { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', description: 'Celebración de Año Nuevo 2027.' },
 ]
 const PR_FRAME_IDS = new Set(PR_FRAMES.map((frame) => frame.id))
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -1096,6 +1096,7 @@ export default function Profile() {
   const unlockedFrameIds = new Set(['original', ...seasonalFrameIds])
   const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
   const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
+  const unlockedCount = PR_FRAMES.filter((frame) => unlockedFrameIds.has(frame.id)).length
 
   async function equipFrame(frameId) {
     if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
@@ -1421,7 +1422,7 @@ export default function Profile() {
 
             <div className="pt-20">
               <button type="button" onClick={() => setFramesOpen((value) => !value)} aria-expanded={framesOpen} className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 py-3 text-left">
-                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedFrameIds.size} desbloqueado(s)</span></span>
+                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedCount} de {PR_FRAMES.length} disponibles</span></span>
                 <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
               </button>
               {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
@@ -1433,6 +1434,7 @@ export default function Profile() {
                     <span className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-[17px] border-[5px] bg-[#222a39]" style={{ borderColor: frame.accent }}><span className="text-lg">{unlocked ? 'PR' : '🔒'}</span></span>
                     <span className="block text-[10px] font-bold text-white">{frame.name}</span>
                     <span className="block text-[9px] text-white/50">{equipped ? 'Equipado' : unlocked ? 'Seleccionar' : 'Bloqueado'}</span>
+                    {!unlocked && <span className="mt-1 block text-[8px] leading-3 text-white/45">{frame.description}</span>}
                     {!unlocked && <span className="mt-1 block text-[8px] leading-3 text-white/45">{frame.description}</span>}
                   </button>
                 })}</div>
