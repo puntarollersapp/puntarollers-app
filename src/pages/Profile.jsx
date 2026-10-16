@@ -16,6 +16,15 @@ import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 import { getBadgeImage } from '../lib/badges'
 import VerifiedBadge from '../components/VerifiedBadge'
 
+// PR Frames beta: visual placeholders until individual transparent assets are approved.
+const PR_FRAMES = [
+  { id: 'original', name: 'PR Original', accent: '#65a7ff', available: true, description: 'Marco inicial de Punta Rollers.' },
+  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', available: false, description: 'Participación verificada en Shifter 2026.' },
+  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', available: false, description: 'Logro de asistencia verificado mediante PR Check.' },
+  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', available: false, description: 'Temporada navideña 2026.' },
+  { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', available: false, description: 'Celebración de Año Nuevo 2027.' },
+]
+const PR_FRAME_IDS = new Set(PR_FRAMES.map((frame) => frame.id))
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const PAYMENT_EXEMPT_DOCUMENTS = new Set([
@@ -385,6 +394,8 @@ export default function Profile() {
   const [profileAvatar, setProfileAvatar] = useState(
     avatarObject(base.pr_avatar)
   )
+  const [framesOpen, setFramesOpen] = useState(false)
+  const [savingFrame, setSavingFrame] = useState(false)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -1070,6 +1081,27 @@ export default function Profile() {
     }
   }
 
+  const savedFrameId = PR_FRAME_IDS.has(profileAvatar?.frames?.equipped)
+    ? profileAvatar.frames.equipped : 'original'
+  const equippedFrame = PR_FRAMES.find((frame) => frame.id === savedFrameId) || PR_FRAMES[0]
+  const unlockedFrameIds = new Set(['original', ...(Array.isArray(profileAvatar?.frames?.unlocked) ? profileAvatar.frames.unlocked.filter((id) => PR_FRAME_IDS.has(id)) : [])])
+
+  async function equipFrame(frameId) {
+    if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
+    const nextAvatar = { ...profileAvatar, frames: { ...profileAvatar.frames, equipped: frameId } }
+    try {
+      setSavingFrame(true)
+      const { data, error } = await supabase.from('profiles').update({ pr_avatar: nextAvatar, updated_at: new Date().toISOString() }).eq('id', profileId).select('id').maybeSingle()
+      if (error) throw error
+      if (!data?.id) throw new Error('No encontramos el perfil para guardar.')
+      setProfileAvatar(nextAvatar)
+      updateUser?.({ pr_avatar: nextAvatar })
+      setMessage('Marco guardado en tu perfil.')
+    } catch (error) {
+      setMessage(`No pudimos guardar el marco: ${error.message}`)
+    } finally { setSavingFrame(false) }
+  }
+
   function toggleProfileEditor() {
     if (editing) {
       setEditing(false)
@@ -1324,7 +1356,7 @@ export default function Profile() {
           </div>
 
           <div className="px-5 pb-5 relative">
-            <div className={`absolute -top-16 left-5 h-32 w-32 rounded-[36px] bg-gradient-to-br p-[3px] ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)]`}>
+            <div className="absolute -top-16 left-5 h-32 w-32 rounded-[36px] p-[3px] shadow-[0_18px_50px_rgba(0,0,0,0.55)]" style={{ background: `linear-gradient(135deg, ${equippedFrame.accent}, #171720 55%, ${equippedFrame.accent})` }}>
               <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
               {useChibiPhoto ? (
                 <ChibiAvatarPortrait
@@ -1347,6 +1379,8 @@ export default function Profile() {
                 </div>
               )}
               </span>
+
+              <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: equippedFrame.accent, boxShadow: `0 0 12px ${equippedFrame.accent}55` }} />
 
               {!useChibiPhoto && (
                 <label
@@ -1374,7 +1408,26 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="pt-20 flex items-start justify-between gap-4">
+            <div className="pt-20">
+              <button type="button" onClick={() => setFramesOpen((value) => !value)} aria-expanded={framesOpen} className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 py-3 text-left">
+                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedFrameIds.size} desbloqueado(s)</span></span>
+                <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
+              </button>
+              {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
+                <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales.</p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{PR_FRAMES.map((frame) => {
+                  const unlocked = unlockedFrameIds.has(frame.id)
+                  const equipped = savedFrameId === frame.id
+                  return <button key={frame.id} type="button" disabled={!unlocked || savingFrame} onClick={() => equipFrame(frame.id)} className={`rounded-2xl border p-2 text-center ${equipped ? 'border-orange-300/70 bg-orange-300/10' : 'border-white/10 bg-white/[.025]'} ${unlocked ? '' : 'opacity-50'}`} title={frame.description}>
+                    <span className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-[17px] border-[5px] bg-[#222a39]" style={{ borderColor: frame.accent }}><span className="text-lg">{unlocked ? 'PR' : '🔒'}</span></span>
+                    <span className="block text-[10px] font-bold text-white">{frame.name}</span>
+                    <span className="block text-[9px] text-white/50">{equipped ? 'Equipado' : unlocked ? 'Seleccionar' : 'Bloqueado'}</span>
+                  </button>
+                })}</div>
+              </div>}
+            </div>
+
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="font-display text-[34px] leading-none text-white">
                   {profile.nombre}
