@@ -403,6 +403,7 @@ export default function Profile() {
   const [newFrame, setNewFrame] = useState({ id: '', name: '', description: '' })
   const [adminFrameId, setAdminFrameId] = useState('')
   const [adminProfileId, setAdminProfileId] = useState('')
+  const [adminStudents, setAdminStudents] = useState([])
   const [adminBusy, setAdminBusy] = useState(false)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
@@ -1149,6 +1150,15 @@ export default function Profile() {
     } finally { setSavingFrame(false) }
   }
 
+  useEffect(() => {
+    if (base.role !== 'admin') return
+    let mounted = true
+    supabase.rpc('pr_frames_admin_students').then(({ data, error }) => {
+      if (mounted && !error) setAdminStudents(data || [])
+    })
+    return () => { mounted = false }
+  }, [base.role])
+
   async function manageFrame(action, frameId = adminFrameId) {
     if (adminBusy) return
     setAdminBusy(true)
@@ -1488,7 +1498,7 @@ export default function Profile() {
                 <input aria-label="Descripción del marco" value={newFrame.description} onChange={(e) => setNewFrame((v) => ({ ...v, description: e.target.value }))} placeholder="Cómo conseguirlo" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
                 <button type="button" disabled={adminBusy || !newFrame.id || !newFrame.name} onClick={() => manageFrame('create')} className="rounded-xl bg-orange-300 px-4 py-2 text-xs font-bold text-black disabled:opacity-40">Crear marco especial</button>
                 <select aria-label="Marco especial" value={adminFrameId} onChange={(e) => setAdminFrameId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Elegir marco especial</option>{displayFrames.filter((f) => f.unlock_kind === 'manual').map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
-                <input aria-label="Identificador del alumno" value={adminProfileId} onChange={(e) => setAdminProfileId(e.target.value)} placeholder="ID del perfil del alumno" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <select aria-label="Alumno" value={adminProfileId} onChange={(e) => setAdminProfileId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Seleccionar alumno</option>{adminStudents.map((student) => <option key={student.profile_id} value={student.profile_id}>{student.display_name}</option>)}</select>
                 <div className="flex flex-wrap gap-2"><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('grant')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Otorgar</button><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('revoke')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Retirar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('hide')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Ocultar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('show')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Mostrar</button></div>
               </section>}
               {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
