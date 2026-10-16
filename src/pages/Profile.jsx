@@ -399,6 +399,7 @@ export default function Profile() {
   const [savingFrame, setSavingFrame] = useState(false)
   const [verifiedAttendance, setVerifiedAttendance] = useState({ count: 0, loading: true, error: false })
   const [earnedFrameIds, setEarnedFrameIds] = useState([])
+  const [serverFrames, setServerFrames] = useState(null)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -498,10 +499,12 @@ export default function Profile() {
     let cancelled = false
     async function loadVerifiedAttendance() {
       setVerifiedAttendance({ count: 0, loading: true, error: false })
-      const [attendanceResult, framesResult] = await Promise.all([
+      const [attendanceResult, framesResult, catalogResult] = await Promise.all([
         supabase.rpc('pr_check_my_attendance'),
         supabase.rpc('pr_frames_my_unlocks'),
+        supabase.rpc('pr_frames_catalog'),
       ])
+      if (!cancelled && !catalogResult.error) setServerFrames(catalogResult.data || [])
       const { data, error } = attendanceResult
       if (!cancelled && !framesResult.error) setEarnedFrameIds((framesResult.data || []).map((entry) => entry.frame_id))
       if (!cancelled) {
@@ -1120,13 +1123,14 @@ export default function Profile() {
   ]
   // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
   // PR Check and Shifter eligibility must be granted by a server-controlled source.
-  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds, ...earnedFrameIds])
+  const displayFrames = serverFrames ? serverFrames.map((frame) => ({ ...frame, imageUrl: frame.image_url })) : PR_FRAMES
+  const unlockedFrameIds = serverFrames ? new Set(serverFrames.filter((frame) => frame.unlocked).map((frame) => frame.id)) : new Set(['original', ...seasonalFrameIds, ...earnedFrameIds])
   const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
-  const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
-  const unlockedCount = PR_FRAMES.filter((frame) => unlockedFrameIds.has(frame.id)).length
+  const activeFrame = displayFrames.find((frame) => frame.id === activeFrameId) || displayFrames[0] || PR_FRAMES[0]
+  const unlockedCount = displayFrames.filter((frame) => unlockedFrameIds.has(frame.id)).length
 
   async function equipFrame(frameId) {
-    if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
+    if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !displayFrames.some((frame) => frame.id === frameId)) return
     try {
       setSavingFrame(true)
       // Server checks account ownership and unlock eligibility, then merges JSON atomically.
@@ -1449,12 +1453,12 @@ export default function Profile() {
 
             <div className="pt-20">
               <button type="button" onClick={() => setFramesOpen((value) => !value)} aria-expanded={framesOpen} className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 py-3 text-left">
-                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedCount} de {PR_FRAMES.length} disponibles</span></span>
+                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedCount} de {displayFrames.length} disponibles</span></span>
                 <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
               </button>
               {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
                 <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales. {verifiedAttendance.loading ? 'Consultando PR Check…' : verifiedAttendance.error ? 'PR Check no disponible por ahora.' : `Asistencias verificadas: ${verifiedAttendance.count}.`}</p>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{PR_FRAMES.map((frame) => {
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{displayFrames.map((frame) => {
                   const unlocked = unlockedFrameIds.has(frame.id)
                   const equipped = activeFrameId === frame.id
                   return <button key={frame.id} type="button" disabled={!unlocked || savingFrame} onClick={() => equipFrame(frame.id)} className={`rounded-2xl border p-2 text-center ${equipped ? 'border-orange-300/70 bg-orange-300/10' : 'border-white/10 bg-white/[.025]'} ${unlocked ? '' : 'opacity-50'}`} title={frame.description}>
