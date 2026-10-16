@@ -1083,8 +1083,15 @@ export default function Profile() {
 
   const savedFrameId = PR_FRAME_IDS.has(profileAvatar?.frames?.equipped)
     ? profileAvatar.frames.equipped : 'original'
-  const equippedFrame = PR_FRAMES.find((frame) => frame.id === savedFrameId) || PR_FRAMES[0]
-  const unlockedFrameIds = new Set(['original', ...(Array.isArray(profileAvatar?.frames?.unlocked) ? profileAvatar.frames.unlocked.filter((id) => PR_FRAME_IDS.has(id)) : [])])
+  // Seasonal availability is automatic; achievement unlocks require trusted server validation before launch.
+  const uruguayDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  const seasonalFrameIds = [
+    ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-26' ? ['navidad-2026'] : []),
+    ...(uruguayDate >= '2026-12-27' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
+  ]
+  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds])
+  const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
+  const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
 
   async function equipFrame(frameId) {
     if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
@@ -1356,7 +1363,7 @@ export default function Profile() {
           </div>
 
           <div className="px-5 pb-5 relative">
-            <div className="absolute -top-16 left-5 h-32 w-32 rounded-[36px] p-[3px] shadow-[0_18px_50px_rgba(0,0,0,0.55)]" style={{ background: `linear-gradient(135deg, ${equippedFrame.accent}, #171720 55%, ${equippedFrame.accent})` }}>
+            <div className="absolute -top-16 left-5 h-32 w-32 rounded-[36px] p-[3px] shadow-[0_18px_50px_rgba(0,0,0,0.55)]" style={{ background: `linear-gradient(135deg, ${activeFrame.accent}, #171720 55%, ${activeFrame.accent})` }}>
               <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
               {useChibiPhoto ? (
                 <ChibiAvatarPortrait
@@ -1380,7 +1387,7 @@ export default function Profile() {
               )}
               </span>
 
-              <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: equippedFrame.accent, boxShadow: `0 0 12px ${equippedFrame.accent}55` }} />
+              <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: activeFrame.accent, boxShadow: `0 0 12px ${activeFrame.accent}55` }} />
 
               {!useChibiPhoto && (
                 <label
@@ -1417,7 +1424,7 @@ export default function Profile() {
                 <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales.</p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{PR_FRAMES.map((frame) => {
                   const unlocked = unlockedFrameIds.has(frame.id)
-                  const equipped = savedFrameId === frame.id
+                  const equipped = activeFrameId === frame.id
                   return <button key={frame.id} type="button" disabled={!unlocked || savingFrame} onClick={() => equipFrame(frame.id)} className={`rounded-2xl border p-2 text-center ${equipped ? 'border-orange-300/70 bg-orange-300/10' : 'border-white/10 bg-white/[.025]'} ${unlocked ? '' : 'opacity-50'}`} title={frame.description}>
                     <span className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-[17px] border-[5px] bg-[#222a39]" style={{ borderColor: frame.accent }}><span className="text-lg">{unlocked ? 'PR' : '🔒'}</span></span>
                     <span className="block text-[10px] font-bold text-white">{frame.name}</span>
