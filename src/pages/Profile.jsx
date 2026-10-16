@@ -1084,7 +1084,9 @@ export default function Profile() {
   const savedFrameId = PR_FRAME_IDS.has(profileAvatar?.frames?.equipped)
     ? profileAvatar.frames.equipped : 'original'
   // Seasonal availability is automatic; achievement unlocks require trusted server validation before launch.
-  const uruguayDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const dateValue = (type) => dateParts.find((part) => part.type === type)?.value || ''
+  const uruguayDate = `${dateValue('year')}-${dateValue('month')}-${dateValue('day')}`
   const seasonalFrameIds = [
     ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-26' ? ['navidad-2026'] : []),
     ...(uruguayDate >= '2026-12-27' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
