@@ -16,6 +16,15 @@ import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 import { getBadgeImage } from '../lib/badges'
 import VerifiedBadge from '../components/VerifiedBadge'
 
+// PR Frames beta: visual placeholders until individual transparent assets are approved.
+const PR_FRAMES = [
+  { id: 'original', name: 'PR Original', accent: '#65a7ff', description: 'Marco inicial de Punta Rollers.' },
+  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', description: 'Participación verificada en Shifter 2026.' },
+  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', description: 'Logro de asistencia verificado mediante PR Check.' },
+  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', description: 'Temporada navideña 2026.' },
+  { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', description: 'Celebración de Año Nuevo 2027.' },
+]
+const PR_FRAME_IDS = new Set(PR_FRAMES.map((frame) => frame.id))
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const PAYMENT_EXEMPT_DOCUMENTS = new Set([
@@ -385,6 +394,8 @@ export default function Profile() {
   const [profileAvatar, setProfileAvatar] = useState(
     avatarObject(base.pr_avatar)
   )
+  const [framesOpen, setFramesOpen] = useState(false)
+  const [savingFrame, setSavingFrame] = useState(false)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -1070,6 +1081,44 @@ export default function Profile() {
     }
   }
 
+  const savedFrameId = PR_FRAME_IDS.has(profileAvatar?.frames?.equipped)
+    ? profileAvatar.frames.equipped : 'original'
+  // Seasonal availability is automatic; achievement unlocks require trusted server validation before launch.
+  const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const dateValue = (type) => dateParts.find((part) => part.type === type)?.value || ''
+  const uruguayDate = `${dateValue('year')}-${dateValue('month')}-${dateValue('day')}`
+  const seasonalFrameIds = [
+    ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-26' ? ['navidad-2026'] : []),
+    ...(uruguayDate >= '2026-12-27' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
+  ]
+  // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
+  // PR Check and Shifter eligibility must be granted by a server-controlled source.
+  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds])
+  const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
+  const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
+  const unlockedCount = PR_FRAMES.filter((frame) => unlockedFrameIds.has(frame.id)).length
+
+  async function equipFrame(frameId) {
+    if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
+    try {
+      setSavingFrame(true)
+      // Refresh first so equipping a frame does not overwrite newer Chibi/avatar settings.
+      const { data: latestProfile, error: readError } = await supabase.from('profiles').select('pr_avatar').eq('id', profileId).maybeSingle()
+      if (readError) throw readError
+      if (!latestProfile) throw new Error('No encontramos el perfil para guardar.')
+      const latestAvatar = avatarObject(latestProfile.pr_avatar)
+      const nextAvatar = { ...latestAvatar, frames: { ...avatarObject(latestAvatar.frames), equipped: frameId } }
+      const { data, error } = await supabase.from('profiles').update({ pr_avatar: nextAvatar, updated_at: new Date().toISOString() }).eq('id', profileId).select('id').maybeSingle()
+      if (error) throw error
+      if (!data?.id) throw new Error('No encontramos el perfil para guardar.')
+      setProfileAvatar(nextAvatar)
+      updateUser?.({ pr_avatar: nextAvatar })
+      setMessage('Marco guardado en tu perfil.')
+    } catch (error) {
+      setMessage(`No pudimos guardar el marco: ${error.message}`)
+    } finally { setSavingFrame(false) }
+  }
+
   function toggleProfileEditor() {
     if (editing) {
       setEditing(false)
@@ -1348,6 +1397,8 @@ export default function Profile() {
               )}
               </span>
 
+              {activeFrameId !== 'original' && <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: activeFrame.accent, boxShadow: `0 0 12px ${activeFrame.accent}55` }} />}
+
               {!useChibiPhoto && (
                 <label
                   className="absolute inset-0 cursor-pointer rounded-[36px]"
@@ -1374,7 +1425,27 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="pt-20 flex items-start justify-between gap-4">
+            <div className="pt-20">
+              <button type="button" onClick={() => setFramesOpen((value) => !value)} aria-expanded={framesOpen} className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 py-3 text-left">
+                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedCount} de {PR_FRAMES.length} disponibles</span></span>
+                <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
+              </button>
+              {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
+                <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales.</p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{PR_FRAMES.map((frame) => {
+                  const unlocked = unlockedFrameIds.has(frame.id)
+                  const equipped = activeFrameId === frame.id
+                  return <button key={frame.id} type="button" disabled={!unlocked || savingFrame} onClick={() => equipFrame(frame.id)} className={`rounded-2xl border p-2 text-center ${equipped ? 'border-orange-300/70 bg-orange-300/10' : 'border-white/10 bg-white/[.025]'} ${unlocked ? '' : 'opacity-50'}`} title={frame.description}>
+                    <span className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-[17px] border-[5px] bg-[#222a39]" style={{ borderColor: frame.accent }}><span className="text-lg">{unlocked ? 'PR' : '🔒'}</span></span>
+                    <span className="block text-[10px] font-bold text-white">{frame.name}</span>
+                    <span className="block text-[9px] text-white/50">{equipped ? 'Equipado' : unlocked ? 'Seleccionar' : 'Bloqueado'}</span>
+                    {!unlocked && <span className="mt-1 block text-[8px] leading-3 text-white/45">{frame.description}</span>}
+                  </button>
+                })}</div>
+              </div>}
+            </div>
+
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="font-display text-[34px] leading-none text-white">
                   {profile.nombre}
