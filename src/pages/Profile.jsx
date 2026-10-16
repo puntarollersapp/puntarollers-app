@@ -1365,7 +1365,7 @@ export default function Profile() {
           </div>
 
           <div className="px-5 pb-5 relative">
-            <div className="absolute -top-16 left-5 h-32 w-32 rounded-[36px] p-[3px] shadow-[0_18px_50px_rgba(0,0,0,0.55)]" style={{ background: `linear-gradient(135deg, ${activeFrame.accent}, #171720 55%, ${activeFrame.accent})` }}>
+            <div className={`absolute -top-16 left-5 h-32 w-32 rounded-[36px] bg-gradient-to-br p-[3px] ${profileRingClass} shadow-[0_18px_50px_rgba(0,0,0,0.55)]`}>
               <span className="w-full h-full rounded-[33px] border-[4px] border-[#0d0d13] bg-[#171720] overflow-hidden grid place-items-center">
               {useChibiPhoto ? (
                 <ChibiAvatarPortrait
@@ -1389,7 +1389,7 @@ export default function Profile() {
               )}
               </span>
 
-              <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: activeFrame.accent, boxShadow: `0 0 12px ${activeFrame.accent}55` }} />
+              {activeFrameId !== 'original' && <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: activeFrame.accent, boxShadow: `0 0 12px ${activeFrame.accent}55` }} />}
 
               {!useChibiPhoto && (
                 <label
