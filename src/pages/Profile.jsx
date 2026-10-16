@@ -504,11 +504,13 @@ export default function Profile() {
     let cancelled = false
     async function loadVerifiedAttendance() {
       setVerifiedAttendance({ count: 0, loading: true, error: false })
-      const [attendanceResult, framesResult, catalogResult] = await Promise.all([
+      const [attendanceResult, framesResult, sportsResult] = await Promise.all([
         supabase.rpc('pr_check_my_attendance'),
         supabase.rpc('pr_frames_my_unlocks'),
-        supabase.rpc('pr_frames_catalog'),
+        supabase.rpc('pr_frames_sync_sports'),
       ])
+      // Sports grants are persisted first; catalog is read afterward to avoid stale lock states.
+      const catalogResult = await supabase.rpc('pr_frames_catalog')
       if (!cancelled && !catalogResult.error) setServerFrames(catalogResult.data || [])
       const { data, error } = attendanceResult
       if (!cancelled && !framesResult.error) setEarnedFrameIds((framesResult.data || []).map((entry) => entry.frame_id))
