@@ -400,6 +400,10 @@ export default function Profile() {
   const [verifiedAttendance, setVerifiedAttendance] = useState({ count: 0, loading: true, error: false })
   const [earnedFrameIds, setEarnedFrameIds] = useState([])
   const [serverFrames, setServerFrames] = useState(null)
+  const [newFrame, setNewFrame] = useState({ id: '', name: '', description: '' })
+  const [adminFrameId, setAdminFrameId] = useState('')
+  const [adminProfileId, setAdminProfileId] = useState('')
+  const [adminBusy, setAdminBusy] = useState(false)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -1145,6 +1149,26 @@ export default function Profile() {
     } finally { setSavingFrame(false) }
   }
 
+  async function manageFrame(action, frameId = adminFrameId) {
+    if (adminBusy) return
+    setAdminBusy(true)
+    try {
+      const { error } = await supabase.rpc('pr_frames_admin_manage', {
+        p_action: action,
+        p_frame_id: action === 'create' ? newFrame.id.trim().toLowerCase() : frameId,
+        p_name: action === 'create' ? newFrame.name.trim() : null,
+        p_description: action === 'create' ? newFrame.description.trim() : null,
+        p_profile_id: action === 'grant' || action === 'revoke' ? adminProfileId.trim() : null,
+      })
+      if (error) throw error
+      const result = await supabase.rpc('pr_frames_catalog')
+      if (!result.error) setServerFrames(result.data || [])
+      setMessage('Colección actualizada.')
+      if (action === 'create') setNewFrame({ id: '', name: '', description: '' })
+    } catch (error) { setMessage('No se pudo actualizar PR Frames: ' + error.message) }
+    finally { setAdminBusy(false) }
+  }
+
   function toggleProfileEditor() {
     if (editing) {
       setEditing(false)
@@ -1456,6 +1480,17 @@ export default function Profile() {
                 <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedCount} de {displayFrames.length} disponibles</span></span>
                 <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
               </button>
+              {base.role === 'admin' && <section className="mt-3 rounded-2xl border border-orange-300/20 bg-orange-300/[.04] p-4 space-y-3">
+                <p className="text-xs font-black uppercase tracking-wider text-orange-200">PR Frames · Administración</p>
+                <p className="text-xs text-white/55">Creá marcos especiales y asigná o retirales el acceso a alumnos. Solo cuentas administradoras pueden ejecutar estas acciones.</p>
+                <input aria-label="Código del marco" value={newFrame.id} onChange={(e) => setNewFrame((v) => ({ ...v, id: e.target.value }))} placeholder="Código: aniversario-pr" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <input aria-label="Nombre del marco" value={newFrame.name} onChange={(e) => setNewFrame((v) => ({ ...v, name: e.target.value }))} placeholder="Nombre del marco" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <input aria-label="Descripción del marco" value={newFrame.description} onChange={(e) => setNewFrame((v) => ({ ...v, description: e.target.value }))} placeholder="Cómo conseguirlo" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <button type="button" disabled={adminBusy || !newFrame.id || !newFrame.name} onClick={() => manageFrame('create')} className="rounded-xl bg-orange-300 px-4 py-2 text-xs font-bold text-black disabled:opacity-40">Crear marco especial</button>
+                <select aria-label="Marco especial" value={adminFrameId} onChange={(e) => setAdminFrameId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Elegir marco especial</option>{displayFrames.filter((f) => f.unlock_kind === 'manual').map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
+                <input aria-label="Identificador del alumno" value={adminProfileId} onChange={(e) => setAdminProfileId(e.target.value)} placeholder="ID del perfil del alumno" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <div className="flex flex-wrap gap-2"><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('grant')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Otorgar</button><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('revoke')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Retirar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('hide')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Ocultar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('show')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Mostrar</button></div>
+              </section>}
               {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
                 <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales. {verifiedAttendance.loading ? 'Consultando PR Check…' : verifiedAttendance.error ? 'PR Check no disponible por ahora.' : `Asistencias verificadas: ${verifiedAttendance.count}.`}</p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{displayFrames.map((frame) => {
