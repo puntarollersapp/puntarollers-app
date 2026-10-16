@@ -19,9 +19,10 @@ import VerifiedBadge from '../components/VerifiedBadge'
 // PR Frames beta: visual placeholders until individual transparent assets are approved.
 const PR_FRAMES = [
   { id: 'original', name: 'PR Original', accent: '#65a7ff', description: 'Marco inicial de Punta Rollers.' },
-  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', description: 'Participación verificada en Shifter 2026.' },
+  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', description: 'Se desbloquea con una toma de tiempo registrada y validada.' },
   { id: 'constancia', name: 'Constancia', accent: '#49e3c0', description: 'Se desbloquea con 10 clases diferentes verificadas en PR Check.' },
-  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', description: 'Temporada navideña 2026.' },
+  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', description: 'Disponible automáticamente del 1 al 31 de diciembre de 2026.' },
+  { id: '100km', name: '100 KM Club', accent: '#b6ee70', description: 'Se desbloquea con 100 km acumulados y verificados.' },
   { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', description: 'Celebración de Año Nuevo 2027.' },
 ]
 const PR_FRAME_IDS = new Set(PR_FRAMES.map((frame) => frame.id))
@@ -1114,8 +1115,8 @@ export default function Profile() {
   const dateValue = (type) => dateParts.find((part) => part.type === type)?.value || ''
   const uruguayDate = `${dateValue('year')}-${dateValue('month')}-${dateValue('day')}`
   const seasonalFrameIds = [
-    ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-26' ? ['navidad-2026'] : []),
-    ...(uruguayDate >= '2026-12-27' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
+    ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-31' ? ['navidad-2026'] : []),
+    ...(uruguayDate >= '2027-01-01' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
   ]
   // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
   // PR Check and Shifter eligibility must be granted by a server-controlled source.
