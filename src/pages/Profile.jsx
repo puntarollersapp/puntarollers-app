@@ -396,6 +396,7 @@ export default function Profile() {
   )
   const [framesOpen, setFramesOpen] = useState(false)
   const [savingFrame, setSavingFrame] = useState(false)
+  const [verifiedAttendance, setVerifiedAttendance] = useState({ count: 0, loading: true, error: false })
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -488,6 +489,25 @@ export default function Profile() {
       }, 250)
     }
   }, [location.hash])
+
+  // Attendance is obtained from the existing authenticated server-side RPC.
+  // Never read staff-only attendance tables directly or trust editable avatar metadata.
+  useEffect(() => {
+    let cancelled = false
+    async function loadVerifiedAttendance() {
+      setVerifiedAttendance({ count: 0, loading: true, error: false })
+      const { data, error } = await supabase.rpc('pr_check_my_attendance')
+      if (!cancelled) {
+        setVerifiedAttendance({
+          count: error ? 0 : new Set((data || []).map((entry) => String(entry.starts_at || entry.scanned_at))).size,
+          loading: false,
+          error: Boolean(error),
+        })
+      }
+    }
+    loadVerifiedAttendance()
+    return () => { cancelled = true }
+  }, [profileId])
 
   useEffect(() => {
     async function loadAll() {
@@ -1431,7 +1451,7 @@ export default function Profile() {
                 <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
               </button>
               {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
-                <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales.</p>
+                <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales. {verifiedAttendance.loading ? 'Consultando PR Check…' : verifiedAttendance.error ? 'PR Check no disponible por ahora.' : `Asistencias verificadas: ${verifiedAttendance.count}.`}</p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{PR_FRAMES.map((frame) => {
                   const unlocked = unlockedFrameIds.has(frame.id)
                   const equipped = activeFrameId === frame.id
