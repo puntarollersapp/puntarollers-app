@@ -397,6 +397,7 @@ export default function Profile() {
   const [framesOpen, setFramesOpen] = useState(false)
   const [savingFrame, setSavingFrame] = useState(false)
   const [verifiedAttendance, setVerifiedAttendance] = useState({ count: 0, loading: true, error: false })
+  const [earnedFrameIds, setEarnedFrameIds] = useState([])
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -496,7 +497,12 @@ export default function Profile() {
     let cancelled = false
     async function loadVerifiedAttendance() {
       setVerifiedAttendance({ count: 0, loading: true, error: false })
-      const { data, error } = await supabase.rpc('pr_check_my_attendance')
+      const [attendanceResult, framesResult] = await Promise.all([
+        supabase.rpc('pr_check_my_attendance'),
+        supabase.rpc('pr_frames_my_unlocks'),
+      ])
+      const { data, error } = attendanceResult
+      if (!cancelled && !framesResult.error) setEarnedFrameIds((framesResult.data || []).map((entry) => entry.frame_id))
       if (!cancelled) {
         setVerifiedAttendance({
           count: error ? 0 : new Set((data || []).filter((entry) => entry.starts_at).map((entry) => String(entry.starts_at))).size,
@@ -1113,7 +1119,7 @@ export default function Profile() {
   ]
   // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
   // PR Check and Shifter eligibility must be granted by a server-controlled source.
-  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds, ...(verifiedAttendance.count >= 10 ? ['constancia'] : [])])
+  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds, ...earnedFrameIds])
   const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
   const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
   const unlockedCount = PR_FRAMES.filter((frame) => unlockedFrameIds.has(frame.id)).length
