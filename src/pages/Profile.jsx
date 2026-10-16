@@ -20,7 +20,7 @@ import VerifiedBadge from '../components/VerifiedBadge'
 const PR_FRAMES = [
   { id: 'original', name: 'PR Original', accent: '#65a7ff', description: 'Marco inicial de Punta Rollers.' },
   { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', description: 'Participación verificada en Shifter 2026.' },
-  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', description: 'Logro de asistencia verificado mediante PR Check.' },
+  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', description: 'Se desbloquea con 10 clases diferentes verificadas en PR Check.' },
   { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', description: 'Temporada navideña 2026.' },
   { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', description: 'Celebración de Año Nuevo 2027.' },
 ]
@@ -499,7 +499,7 @@ export default function Profile() {
       const { data, error } = await supabase.rpc('pr_check_my_attendance')
       if (!cancelled) {
         setVerifiedAttendance({
-          count: error ? 0 : new Set((data || []).map((entry) => String(entry.starts_at || entry.scanned_at))).size,
+          count: error ? 0 : new Set((data || []).filter((entry) => entry.starts_at).map((entry) => String(entry.starts_at))).size,
           loading: false,
           error: Boolean(error),
         })
@@ -1113,7 +1113,7 @@ export default function Profile() {
   ]
   // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
   // PR Check and Shifter eligibility must be granted by a server-controlled source.
-  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds])
+  const unlockedFrameIds = new Set(['original', ...seasonalFrameIds, ...(verifiedAttendance.count >= 10 ? ['constancia'] : [])])
   const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
   const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
   const unlockedCount = PR_FRAMES.filter((frame) => unlockedFrameIds.has(frame.id)).length
