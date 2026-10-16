@@ -1429,6 +1429,7 @@ export default function Profile() {
                     <span className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-[17px] border-[5px] bg-[#222a39]" style={{ borderColor: frame.accent }}><span className="text-lg">{unlocked ? 'PR' : '🔒'}</span></span>
                     <span className="block text-[10px] font-bold text-white">{frame.name}</span>
                     <span className="block text-[9px] text-white/50">{equipped ? 'Equipado' : unlocked ? 'Seleccionar' : 'Bloqueado'}</span>
+                    {!unlocked && <span className="mt-1 block text-[8px] leading-3 text-white/45">{frame.description}</span>}
                   </button>
                 })}</div>
               </div>}
