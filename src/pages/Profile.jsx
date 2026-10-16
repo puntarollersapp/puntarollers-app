@@ -1091,6 +1091,8 @@ export default function Profile() {
     ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-26' ? ['navidad-2026'] : []),
     ...(uruguayDate >= '2026-12-27' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
   ]
+  // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
+  // PR Check and Shifter eligibility must be granted by a server-controlled source.
   const unlockedFrameIds = new Set(['original', ...seasonalFrameIds])
   const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
   const activeFrame = PR_FRAMES.find((frame) => frame.id === activeFrameId) || PR_FRAMES[0]
