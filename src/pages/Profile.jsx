@@ -1128,15 +1128,10 @@ export default function Profile() {
     if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !PR_FRAME_IDS.has(frameId)) return
     try {
       setSavingFrame(true)
-      // Refresh first so equipping a frame does not overwrite newer Chibi/avatar settings.
-      const { data: latestProfile, error: readError } = await supabase.from('profiles').select('pr_avatar').eq('id', profileId).maybeSingle()
-      if (readError) throw readError
-      if (!latestProfile) throw new Error('No encontramos el perfil para guardar.')
-      const latestAvatar = avatarObject(latestProfile.pr_avatar)
-      const nextAvatar = { ...latestAvatar, frames: { ...avatarObject(latestAvatar.frames), equipped: frameId } }
-      const { data, error } = await supabase.from('profiles').update({ pr_avatar: nextAvatar, updated_at: new Date().toISOString() }).eq('id', profileId).select('id').maybeSingle()
+      // Server checks account ownership and unlock eligibility, then merges JSON atomically.
+      const { error } = await supabase.rpc('pr_frames_equip', { p_frame_id: frameId })
       if (error) throw error
-      if (!data?.id) throw new Error('No encontramos el perfil para guardar.')
+      const nextAvatar = { ...profileAvatar, frames: { ...avatarObject(profileAvatar.frames), equipped: frameId } }
       setProfileAvatar(nextAvatar)
       updateUser?.({ pr_avatar: nextAvatar })
       setMessage('Marco guardado en tu perfil.')
