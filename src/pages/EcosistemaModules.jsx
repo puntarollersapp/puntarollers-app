@@ -16,6 +16,8 @@ const formatDate=d=>d?new Date(d).toLocaleDateString('es-UY',{day:'2-digit',mont
 function useEcosystemData(){
  const {user}=useAuth()
  const [state,setState]=useState({loading:true,error:'',activities:[],profile:null,catalog:[],catalogError:''})
+ const [revision,setRevision]=useState(0)
+ useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('ecosistema-activities-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true
   async function fetchData(){
    const [a,p,b]=await Promise.all([
@@ -25,9 +27,9 @@ function useEcosystemData(){
    ])
    if(live)setState({loading:false,error:[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · '),catalogError:b.error?.message||'',activities:a.data||[],profile:p.data||null,catalog:b.data||[]})
   }fetchData();return()=>{live=false}
- },[user?.id])
+ },[user?.id,revision])
  const data=useMemo(()=>{
-  const activities=state.activities.filter(a=>!a.eliminada&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0)
+  const activities=state.activities.filter(a=>!a.eliminada&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0&&a.fecha_inicio&&new Date(a.fecha_inicio).getTime()<=Date.now()).sort((a,b)=>new Date(b.fecha_inicio)-new Date(a.fecha_inicio))
   const days=new Set(activities.map(a=>String(a.fecha_inicio||'').slice(0,10)).filter(Boolean))
   const months=new Map()
   for(const a of activities){const key=String(a.fecha_inicio||'').slice(0,7);if(!key)continue;const old=months.get(key)||{month:key,count:0,meters:0};old.count++;old.meters+=Number(a.distancia_metros);months.set(key,old)}
@@ -50,7 +52,7 @@ function Page({kind}){
   {kind==='active'&&<ActiveNow d={d}/>}
   {kind==='orbit'&&<OrbitEvolution d={d}/>}
     {kind==='patch'&&<PatchRegistry/>}
-  <p className="mt-5 text-xs leading-5 text-white/45">Versión privada de trabajo. Las métricas reflejan únicamente registros accesibles de la cuenta actual, con un límite de consulta de 1000 actividades; no representan necesariamente el historial completo.</p>
+  <p className="mt-5 text-xs leading-5 text-white/45">Versión privada de trabajo. Los datos de ACTIVE y ORBIT se vuelven a consultar ante cambios detectados y cada 30 segundos mientras la página esté abierta. La consulta tiene un límite de 1000 actividades por perfil; no necesariamente incluye todo el historial.</p>
  </div></main></AppLayout>
 }
 export function EcosistemaActive(){return <Page kind="active"/>}
