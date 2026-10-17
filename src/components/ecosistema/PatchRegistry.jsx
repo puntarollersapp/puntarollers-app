@@ -3,7 +3,6 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 
 const patterns={class:/\\b(clase|class|entrenamiento|training)\\b/i,roll:/rolleada|roll(eada|ing)?|patinada|salida grupal/i,time:/shifter|toma de tiempo|contrarreloj|time trial|crono/i,event:/evento|encuentro|festival|competencia/i}
-const names={class:'CLASES EN STRAVA',roll:'ROLLEADAS POSIBLES',time:'TOMAS DE TIEMPO POSIBLES',event:'EVENTOS POSIBLES'}
 function category(name){return Object.keys(patterns).find(k=>patterns[k].test(String(name||'')))||null}
 const dateKey=v=>String(v||'').slice(0,10)
 function Orbit({days}){const cells=Array.from({length:84},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-83+i);const key=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');return {key,count:days.get(key)||0}});return <div className="mt-5 grid grid-cols-12 gap-[5px]" aria-label="Mapa de 84 días de registros">{cells.map(c=><div key={c.key} title={c.key+' · '+c.count+' registros'} className="aspect-square rounded-[5px] border border-white/5" style={{background:c.count>2?'#C4FF24':c.count===2?'#9FCB48':c.count===1?'#4F7E6C':'#343641'}}/>)}</div>}
