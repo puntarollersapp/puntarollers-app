@@ -4,10 +4,11 @@ import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import PatchRegistry from '../components/ecosistema/PatchRegistry'
+import { ActiveNow, OrbitEvolution } from '../components/ecosistema/ActiveOrbitViews'
 
 const config={
- active:{title:'ACTIVE',eyebrow:'TU MOVIMIENTO',color:'#57E7DA',description:'Cada salida suma a tu historia. Explorá los kilómetros y actividades que ya están registrados en Punta Rollers.'},
- orbit:{title:'ORBIT',eyebrow:'TU EVOLUCIÓN',color:'#FF78AC',description:'No es una carrera contra otros. Es una forma de observar tu constancia y entender cómo se construye tu propio recorrido.'},
+ active:{title:'ACTIVE',eyebrow:'AHORA MISMO',color:'#57E7DA',description:'Tu semana en movimiento. Actividades recientes, novedades y el pulso actual de tus registros.'},
+ orbit:{title:'ORBIT',eyebrow:'TU EVOLUCIÓN',color:'#FF78AC',description:'Tu progreso en perspectiva. Tendencias, frecuencia y evolución a lo largo del tiempo.'},
  patch:{title:'PATCH',eyebrow:'TU HISTORIA REGISTRADA',color:'#C4FF24',description:'Clases, asistencias, rolleadas, eventos y tomas de tiempo: todo lo que registrás en Punta Rollers, en una sola experiencia visual. Las insignias también viven acá.'}
 }
 const formatKm=m=>(Number(m||0)/1000).toLocaleString('es-UY',{maximumFractionDigits:1})
@@ -46,9 +47,9 @@ function Page({kind}){
    <p className="mt-5 text-xs text-white/50">Perfil: {d.profile?.nombre||'Cuenta autenticada'} · Datos de la plataforma oficial</p>
   </header>
   {d.loading?<p className="mt-6 rounded-2xl bg-white/5 p-5 text-sm">Consultando registros…</p>:d.error?<p role="alert" className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-200/5 p-5 text-sm text-amber-100">Algunas fuentes no se pudieron consultar. No mostramos estadísticas estimadas. {d.error}</p>:null}
-  {kind==='active'&&<><section className="mt-5 grid grid-cols-3 gap-2 sm:gap-4"><Stat label="KM REGISTRADOS" value={d.loading||d.error?'—':formatKm(d.meters)} color={theme.color}/><Stat label="SALIDAS" value={d.loading||d.error?'—':d.activities.length} color={theme.color}/><Stat label="DÍAS ACTIVOS" value={d.loading||d.error?'—':d.days} color={theme.color}/></section><section className="mt-5 rounded-[26px] border border-white/10 bg-[#20212A] p-5 sm:p-7"><h2 className="text-xl font-black">Tus últimas actividades</h2><p className="mt-2 text-xs leading-5 text-white/55">Registro disponible en PR. Las actividades privadas solo se muestran dentro de esta vista de administración.</p><div className="mt-5 space-y-2">{!d.loading&&!d.error&&!d.activities.length?<p className="text-sm text-white/55">Todavía no hay actividades disponibles para este perfil.</p>:d.activities.slice(0,12).map(a=><div key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3"><div className="min-w-0"><p className="truncate text-sm font-bold">{a.nombre||'Salida en patines'}</p><p className="mt-1 text-[11px] text-white/50">{formatDate(a.fecha_inicio)} · {a.fuente||'Registro PR'}{a.es_privada?' · Privada':''}</p></div><p className="shrink-0 text-lg font-black" style={{color:theme.color}}>{formatKm(a.distancia_metros)} km</p></div>)}</div></section></>}
-  {kind==='orbit'&&<><section className="mt-5 grid grid-cols-2 gap-3"><Stat label="DÍAS CON ACTIVIDAD" value={d.loading||d.error?'—':d.days} color={theme.color}/><Stat label="SALIDAS REGISTRADAS" value={d.loading||d.error?'—':d.activities.length} color={theme.color}/></section><section className="mt-5 rounded-[26px] border border-white/10 bg-[#20212A] p-5 sm:p-7"><h2 className="text-xl font-black">Tu actividad en los últimos seis meses</h2><p className="mt-2 text-xs leading-5 text-white/55">Cada barra representa kilómetros de actividades registradas durante ese mes. Los meses sin registros se muestran con valor cero; no se inventan actividades.</p>{!d.loading&&!d.error&&d.months.length?<div className="mt-8 flex h-48 items-end gap-3">{d.months.map(m=><div key={m.month} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"><p className="text-[10px] font-black text-white/70">{formatKm(m.meters)}</p><div className="w-full max-w-20 rounded-t-xl" style={{height:Math.max(4,Math.round(m.meters/Math.max(...d.months.map(x=>x.meters),1)*140))+'px',background:'linear-gradient(#FF78AC,#794F92)'}}/><p className="text-[10px] text-white/60">{m.month.slice(5)}</p></div>)}</div>:<p className="mt-6 text-sm text-white/55">{d.loading?'Consultando datos…':d.error?'Datos no disponibles':'Aún no hay suficientes registros para construir tu gráfica.'}</p>}</section><p className="mt-4 text-xs leading-5 text-white/50">La asistencia de PR Check y las aprobaciones de deberes se sumarán cuando sus relaciones con cada perfil estén verificadas.</p></>}
-  {kind==='patch'&&<PatchRegistry/>}
+  {kind==='active'&&<ActiveNow d={d}/>}
+  {kind==='orbit'&&<OrbitEvolution d={d}/>}
+    {kind==='patch'&&<PatchRegistry/>}
   <p className="mt-5 text-xs leading-5 text-white/45">Versión privada de trabajo. Las métricas reflejan únicamente registros accesibles de la cuenta actual, con un límite de consulta de 1000 actividades; no representan necesariamente el historial completo.</p>
  </div></main></AppLayout>
 }
