@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { validEcosystemActivity, ecosystemDayKey, uniqueEcosystemActivities } from '../lib/ecosystemActivity'
 
 const tiles=[
  {id:'active',title:'ACTIVE',subtitle:'TU MOVIMIENTO',color:'#57E7DA',description:'Tus salidas sobre patines y kilómetros registrados. No hay rankings: el objetivo es conocer tu propia actividad.'},
@@ -32,9 +33,9 @@ export default function Ecosistema(){
   setState({loading:false,error:activities.error?.message||profile.error?.message||'',activities:activities.data||[],truncated:!!activities.truncated,profile:profile.data||null})
  }load();return()=>{mounted=false}},[user?.id])
  const stats=useMemo(()=>{
-  const rows=state.activities.filter(a=>!a.eliminada&&a.tipo==='Patinaje'&&a.fecha_inicio&&new Date(a.fecha_inicio).getTime()<=Date.now()&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0&&((a.fuente==='strava'&&a.estado_validacion==='sincronizada')||(a.fuente==='manual'&&a.estado_validacion==='validada')))
+  const rows=uniqueEcosystemActivities(state.activities.filter(a=>validEcosystemActivity(a)))
   const distance=rows.reduce((sum,a)=>sum+Number(a.distancia_metros),0)
-  const days=new Set(rows.map(a=>String(a.fecha_inicio||'').slice(0,10)).filter(Boolean))
+  const days=new Set(rows.map(a=>ecosystemDayKey(a.fecha_inicio)).filter(Boolean))
   return {rows,distance,days:days.size,last:rows[0]?.fecha_inicio}
  },[state.activities])
  return <AppLayout><div className="min-h-screen bg-[#101117] pb-24 text-white"><div className="mx-auto max-w-5xl px-4 pb-12 pt-7 sm:px-7">
