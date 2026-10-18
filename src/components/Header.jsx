@@ -20,7 +20,7 @@ export default function Header({ title, showBack = false, onBack }) {
     navigate('/', { replace: true })
   }
 
-  return <header className="sticky top-0 z-50 border-b border-white/[0.055] bg-[#08080c]/92 backdrop-blur-2xl">
+  return <header className="sticky top-0 z-50 border-b border-white/[0.055] bg-[#08080c]/92 pt-[env(safe-area-inset-top,0px)] backdrop-blur-2xl">
     <div className="relative flex h-[70px] items-center justify-between px-[18px]">
       {showBack ? <button type="button" onClick={onBack} aria-label="Volver" className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.075] bg-white/[0.035] active:scale-95"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-white/55" strokeWidth="1.9"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg></button> : <Link to="/" className="relative grid h-10 w-10 place-items-center active:scale-95" aria-label="Ir a la página pública de Punta Rollers"><img src="/logo.png" alt="Punta Rollers" className="h-9 w-9 object-contain"/>{rollerween&&<span className="absolute -bottom-1 -right-2 rounded-full border border-[#BEFF37]/25 bg-[#0b0810] px-1.5 py-0.5 font-mono text-[5px] font-black tracking-[.12em] text-[#BEFF37]">RW26</span>}</Link>}
 
