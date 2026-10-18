@@ -13,6 +13,16 @@ const config={
 }
 const formatKm=m=>(Number(m||0)/1000).toLocaleString('es-UY',{maximumFractionDigits:1})
 const formatDate=d=>d?new Date(d).toLocaleDateString('es-UY',{day:'2-digit',month:'short',year:'numeric'}):'—'
+async function loadAllActivities(profileId){
+ const rows=[];const pageSize=500
+ for(let start=0;start<20000;start+=pageSize){
+  const result=await supabase.from('pr_activities').select('id,nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos,fuente,tipo,estado_validacion,es_privada,eliminada').eq('alumno_id',profileId).order('fecha_inicio',{ascending:false}).order('id',{ascending:false}).range(start,start+pageSize-1)
+  if(result.error)return {data:[],error:result.error}
+  rows.push(...(result.data||[]))
+  if((result.data||[]).length<pageSize)return {data:rows,error:null,truncated:false}
+ }
+ return {data:rows,error:null,truncated:true}
+}
 function useEcosystemData(){
  const {user}=useAuth()
  const [state,setState]=useState({loading:true,error:'',activities:[],profile:null,catalog:[],catalogError:''})
@@ -21,11 +31,11 @@ function useEcosystemData(){
  useEffect(()=>{if(!user?.id)return;let live=true
   async function fetchData(){
    const [a,p,b]=await Promise.all([
-    supabase.from('pr_activities').select('id,nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos,fuente,tipo,estado_validacion,es_privada,eliminada').eq('alumno_id',user.id).order('fecha_inicio',{ascending:false}).limit(1000),
+    loadAllActivities(user.id),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle(),
     supabase.from('insignias_catalogo').select('id,nombre,descripcion,categoria,imagen,activa,orden').eq('activa',true).order('orden',{ascending:true}).limit(100)
    ])
-   if(live)setState({loading:false,error:[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · '),catalogError:b.error?.message||'',activities:a.data||[],profile:p.data||null,catalog:b.data||[]})
+   if(live)setState({loading:false,error:[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · '),catalogError:b.error?.message||'',truncated:!!a.truncated,activities:a.data||[],profile:p.data||null,catalog:b.data||[]})
   }fetchData();return()=>{live=false}
  },[user?.id,revision])
  const data=useMemo(()=>{
@@ -52,7 +62,7 @@ function Page({kind}){
   {kind==='active'&&<ActiveNow d={d}/>}
   {kind==='orbit'&&<OrbitEvolution d={d}/>}
     {kind==='patch'&&<PatchRegistry/>}
-  <p className="mt-5 text-xs leading-5 text-white/45">Versión privada de trabajo. Los datos de ACTIVE y ORBIT se vuelven a consultar ante cambios detectados y cada 30 segundos mientras la página esté abierta. La consulta tiene un límite de 1000 actividades por perfil; no necesariamente incluye todo el historial.</p>
+  <p className="mt-5 text-xs leading-5 text-white/45">Versión privada de trabajo. Los datos de ACTIVE y ORBIT se vuelven a consultar ante cambios detectados y cada 30 segundos mientras la página esté abierta. El historial se consulta por páginas hasta 20.000 registros por perfil. {d.truncated?'Se alcanzó el límite de consulta: algunas actividades podrían faltar.':'La consulta terminó sin alcanzar ese límite.'}</p>
  </div></main></AppLayout>
 }
 export function EcosistemaActive(){return <Page kind="active"/>}
