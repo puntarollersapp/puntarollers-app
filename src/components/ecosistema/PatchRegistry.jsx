@@ -23,7 +23,7 @@ export default function PatchRegistry(){
  useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('patch-profile-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_attendance'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_classes'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_ids',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_training_task_results',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_performance_tomas',filter:'alumno_id=eq.'+user.id},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true;async function load(){try{
   const [identities,activities,rsvps,training,times]=await Promise.all([
-   supabase.from('pr_check_ids').select('id').eq('profile_id',user.id),
+   supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).is('child_id',null),
    supabase.from('pr_activities').select('id,nombre,fecha_inicio,fuente,estado_validacion,eliminada').eq('alumno_id',user.id).order('fecha_inicio',{ascending:false}).limit(1000),
    supabase.from('pr_event_rsvps').select('id,event_slug,status,created_at').eq('profile_id',user.id).limit(300),
    supabase.from('pr_training_task_results').select('id,task_id,status,completed_at').eq('profile_id',user.id).eq('status','completed').order('completed_at',{ascending:false}).limit(500),
