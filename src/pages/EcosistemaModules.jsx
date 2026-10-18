@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { validEcosystemActivity, ecosystemDayKey, uniqueEcosystemActivities } from '../lib/ecosystemActivity'
 import PatchRegistry from '../components/ecosistema/PatchRegistry'
 import { ActiveNow, OrbitEvolution } from '../components/ecosistema/ActiveOrbitViews'
 
@@ -16,7 +17,7 @@ const formatDate=d=>d?new Date(d).toLocaleDateString('es-UY',{day:'2-digit',mont
 async function loadAllActivities(profileId){
  const rows=[];const pageSize=500
  for(let start=0;start<20000;start+=pageSize){
-  const result=await supabase.from('pr_activities').select('id,nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos,fuente,tipo,estado_validacion,es_privada,eliminada').eq('alumno_id',profileId).order('fecha_inicio',{ascending:false}).order('id',{ascending:false}).range(start,start+pageSize-1)
+  const result=await supabase.from('pr_activities').select('id,nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos,strava_activity_id,fuente,tipo,estado_validacion,es_privada,eliminada').eq('alumno_id',profileId).order('fecha_inicio',{ascending:false}).order('id',{ascending:false}).range(start,start+pageSize-1)
   if(result.error)return {data:[],error:result.error}
   rows.push(...(result.data||[]))
   if((result.data||[]).length<pageSize)return {data:rows,error:null,truncated:false}
@@ -39,10 +40,10 @@ function useEcosystemData(){
   }fetchData();return()=>{live=false}
  },[user?.id,revision])
  const data=useMemo(()=>{
-  const activities=state.activities.filter(a=>!a.eliminada&&a.tipo==='Patinaje'&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0&&a.fecha_inicio&&new Date(a.fecha_inicio).getTime()<=Date.now()&&((a.fuente==='strava'&&a.estado_validacion==='sincronizada')||(a.fuente==='manual'&&a.estado_validacion==='validada'))).sort((a,b)=>new Date(b.fecha_inicio)-new Date(a.fecha_inicio))
-  const days=new Set(activities.map(a=>String(a.fecha_inicio||'').slice(0,10)).filter(Boolean))
+  const activities=uniqueEcosystemActivities(state.activities.filter(a=>validEcosystemActivity(a))).sort((a,b)=>new Date(b.fecha_inicio)-new Date(a.fecha_inicio))
+  const days=new Set(activities.map(a=>ecosystemDayKey(a.fecha_inicio)).filter(Boolean))
   const months=new Map()
-  for(const a of activities){const key=String(a.fecha_inicio||'').slice(0,7);if(!key)continue;const old=months.get(key)||{month:key,count:0,meters:0};old.count++;old.meters+=Number(a.distancia_metros);months.set(key,old)}
+  for(const a of activities){const key=ecosystemDayKey(a.fecha_inicio).slice(0,7);if(!key)continue;const old=months.get(key)||{month:key,count:0,meters:0};old.count++;old.meters+=Number(a.distancia_metros);months.set(key,old)}
   const lastSix=Array.from({length:6},(_,i)=>{const now=new Date();const dt=new Date(Date.UTC(now.getFullYear(),now.getMonth()-5+i,1));const key=dt.toISOString().slice(0,7);return months.get(key)||{month:key,count:0,meters:0}})
   return {activities,days:days.size,meters:activities.reduce((s,a)=>s+Number(a.distancia_metros),0),months:lastSix}
  },[state.activities])
