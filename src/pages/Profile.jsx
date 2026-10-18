@@ -400,6 +400,7 @@ export default function Profile() {
   const [verifiedAttendance, setVerifiedAttendance] = useState({ count: 0, loading: true, error: false })
   const [earnedFrameIds, setEarnedFrameIds] = useState([])
   const [serverFrames, setServerFrames] = useState(null)
+  const [frameCatalogError, setFrameCatalogError] = useState(false)
   const [newFrame, setNewFrame] = useState({ id: '', name: '', description: '' })
   const [adminFrameId, setAdminFrameId] = useState('')
   const [adminProfileId, setAdminProfileId] = useState('')
@@ -512,7 +513,10 @@ export default function Profile() {
       ])
       // Sports grants are persisted first; catalog is read afterward to avoid stale lock states.
       const catalogResult = await supabase.rpc('pr_frames_catalog')
-      if (!cancelled && !catalogResult.error) setServerFrames(catalogResult.data || [])
+      if (!cancelled) {
+        setFrameCatalogError(Boolean(catalogResult.error || framesResult.error || sportsResult.error))
+        if (!catalogResult.error) setServerFrames(catalogResult.data || [])
+      }
       const { data, error } = attendanceResult
       if (!cancelled && !framesResult.error) setEarnedFrameIds((framesResult.data || []).map((entry) => entry.frame_id))
       if (!cancelled) {
@@ -1132,7 +1136,8 @@ export default function Profile() {
   // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
   // PR Check and Shifter eligibility must be granted by a server-controlled source.
   const displayFrames = serverFrames ? serverFrames.map((frame) => ({ ...frame, imageUrl: frame.image_url })) : PR_FRAMES
-  const unlockedFrameIds = serverFrames ? new Set(serverFrames.filter((frame) => frame.unlocked).map((frame) => frame.id)) : new Set(['original', ...seasonalFrameIds, ...earnedFrameIds])
+  // Fail closed if the authoritative catalog cannot load: never infer earned or seasonal eligibility on the client.
+  const unlockedFrameIds = serverFrames && !frameCatalogError ? new Set(serverFrames.filter((frame) => frame.unlocked).map((frame) => frame.id)) : new Set(['original'])
   const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
   const activeFrame = displayFrames.find((frame) => frame.id === activeFrameId) || displayFrames[0] || PR_FRAMES[0]
   const unlockedCount = displayFrames.filter((frame) => unlockedFrameIds.has(frame.id)).length
@@ -1178,7 +1183,10 @@ export default function Profile() {
       })
       if (error) throw error
       const result = await supabase.rpc('pr_frames_catalog')
-      if (!result.error) setServerFrames(result.data || [])
+      if (!result.error) {
+        setServerFrames(result.data || [])
+        setFrameCatalogError(false)
+      }
       const adminCatalog = await supabase.rpc('pr_frames_admin_catalog')
       if (!adminCatalog.error) setAdminManualFrames(adminCatalog.data || [])
       setMessage('Colección actualizada.')
@@ -1510,6 +1518,7 @@ export default function Profile() {
                 <div className="flex flex-wrap gap-2"><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('grant')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Otorgar</button><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('revoke')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Retirar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('hide')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Ocultar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('show')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Mostrar</button></div>
               </section>}
               {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
+                {frameCatalogError && <p role="status" className="mb-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3 text-xs text-amber-100">No pudimos verificar tus marcos ahora. Tu colección y tus logros siguen guardados; volvé a ingresar más tarde.</p>}
                 <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales. {verifiedAttendance.loading ? 'Consultando PR Check…' : verifiedAttendance.error ? 'PR Check no disponible por ahora.' : `Asistencias verificadas: ${verifiedAttendance.count}.`}</p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{displayFrames.map((frame) => {
                   const unlocked = unlockedFrameIds.has(frame.id)
