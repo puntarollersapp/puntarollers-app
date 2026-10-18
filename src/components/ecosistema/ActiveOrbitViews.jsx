@@ -1,8 +1,9 @@
 import {useMemo,useState} from 'react'
+import { ecosystemDayKey } from '../../lib/ecosystemActivity'
 const fmt=n=>Number(n||0).toLocaleString('es-UY',{maximumFractionDigits:1})
 const km=n=>fmt(Number(n||0)/1000)
 const day=d=>new Date(d).toLocaleDateString('es-UY',{day:'numeric',month:'short'})
-const dateKey=d=>{const v=new Date(d);return Number.isNaN(v.getTime())?'':v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0')}
+const dateKey=ecosystemDayKey
 const ready=d=>!d.loading&&!d.error
 const shell='relative overflow-hidden rounded-[28px] border border-white/10 bg-[#1A1D27] p-5 sm:p-7'
 function Capsule({selected,onClick,children,accent='#72F6D4'}){return <button type="button" aria-pressed={selected} onClick={onClick} className="rounded-full border px-4 py-2 text-[11px] font-black tracking-wide transition" style={{background:selected?accent:'rgba(255,255,255,.035)',color:selected?'#10131A':'#ADB2C2',borderColor:selected?accent:'rgba(255,255,255,.12)'}}>{children}</button>}
