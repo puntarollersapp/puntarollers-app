@@ -21,7 +21,7 @@ function useEcosystemData(){
  useEffect(()=>{if(!user?.id)return;let live=true
   async function fetchData(){
    const [a,p,b]=await Promise.all([
-    supabase.from('pr_activities').select('id,nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos,fuente,estado_validacion,es_privada,eliminada').eq('alumno_id',user.id).order('fecha_inicio',{ascending:false}).limit(1000),
+    supabase.from('pr_activities').select('id,nombre,fecha_inicio,distancia_metros,tiempo_movimiento_segundos,fuente,tipo,estado_validacion,es_privada,eliminada').eq('alumno_id',user.id).order('fecha_inicio',{ascending:false}).limit(1000),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle(),
     supabase.from('insignias_catalogo').select('id,nombre,descripcion,categoria,imagen,activa,orden').eq('activa',true).order('orden',{ascending:true}).limit(100)
    ])
@@ -29,7 +29,7 @@ function useEcosystemData(){
   }fetchData();return()=>{live=false}
  },[user?.id,revision])
  const data=useMemo(()=>{
-  const activities=state.activities.filter(a=>!a.eliminada&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0&&a.fecha_inicio&&new Date(a.fecha_inicio).getTime()<=Date.now()).sort((a,b)=>new Date(b.fecha_inicio)-new Date(a.fecha_inicio))
+  const activities=state.activities.filter(a=>!a.eliminada&&a.tipo==='Patinaje'&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0&&a.fecha_inicio&&new Date(a.fecha_inicio).getTime()<=Date.now()&&((a.fuente==='strava'&&a.estado_validacion==='sincronizada')||(a.fuente==='manual'&&a.estado_validacion==='validada'))).sort((a,b)=>new Date(b.fecha_inicio)-new Date(a.fecha_inicio))
   const days=new Set(activities.map(a=>String(a.fecha_inicio||'').slice(0,10)).filter(Boolean))
   const months=new Map()
   for(const a of activities){const key=String(a.fecha_inicio||'').slice(0,7);if(!key)continue;const old=months.get(key)||{month:key,count:0,meters:0};old.count++;old.meters+=Number(a.distancia_metros);months.set(key,old)}
