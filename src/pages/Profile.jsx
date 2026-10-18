@@ -404,6 +404,7 @@ export default function Profile() {
   const [adminFrameId, setAdminFrameId] = useState('')
   const [adminProfileId, setAdminProfileId] = useState('')
   const [adminStudents, setAdminStudents] = useState([])
+  const [adminManualFrames, setAdminManualFrames] = useState([])
   const [adminBusy, setAdminBusy] = useState(false)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
@@ -1158,6 +1159,9 @@ export default function Profile() {
     supabase.rpc('pr_frames_admin_students').then(({ data, error }) => {
       if (mounted && !error) setAdminStudents(data || [])
     })
+    supabase.rpc('pr_frames_admin_catalog').then(({ data, error }) => {
+      if (mounted && !error) setAdminManualFrames(data || [])
+    })
     return () => { mounted = false }
   }, [base.role])
 
@@ -1175,6 +1179,8 @@ export default function Profile() {
       if (error) throw error
       const result = await supabase.rpc('pr_frames_catalog')
       if (!result.error) setServerFrames(result.data || [])
+      const adminCatalog = await supabase.rpc('pr_frames_admin_catalog')
+      if (!adminCatalog.error) setAdminManualFrames(adminCatalog.data || [])
       setMessage('Colección actualizada.')
       if (action === 'create') setNewFrame({ id: '', name: '', description: '' })
     } catch (error) { setMessage('No se pudo actualizar PR Frames: ' + error.message) }
@@ -1499,7 +1505,7 @@ export default function Profile() {
                 <input aria-label="Nombre del marco" value={newFrame.name} onChange={(e) => setNewFrame((v) => ({ ...v, name: e.target.value }))} placeholder="Nombre del marco" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
                 <input aria-label="Descripción del marco" value={newFrame.description} onChange={(e) => setNewFrame((v) => ({ ...v, description: e.target.value }))} placeholder="Cómo conseguirlo" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
                 <button type="button" disabled={adminBusy || !newFrame.id || !newFrame.name} onClick={() => manageFrame('create')} className="rounded-xl bg-orange-300 px-4 py-2 text-xs font-bold text-black disabled:opacity-40">Crear marco especial</button>
-                <select aria-label="Marco especial" value={adminFrameId} onChange={(e) => setAdminFrameId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Elegir marco especial</option>{displayFrames.filter((f) => f.unlock_kind === 'manual').map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select>
+                <select aria-label="Marco especial" value={adminFrameId} onChange={(e) => setAdminFrameId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Elegir marco especial</option>{adminManualFrames.map((f) => <option key={f.id} value={f.id}>{f.name}{f.visible ? '' : ' · Oculto'}</option>)}</select>
                 <select aria-label="Alumno" value={adminProfileId} onChange={(e) => setAdminProfileId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Seleccionar alumno</option>{adminStudents.map((student) => <option key={student.profile_id} value={student.profile_id}>{student.display_name}</option>)}</select>
                 <div className="flex flex-wrap gap-2"><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('grant')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Otorgar</button><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('revoke')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Retirar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('hide')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Ocultar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('show')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Mostrar</button></div>
               </section>}
