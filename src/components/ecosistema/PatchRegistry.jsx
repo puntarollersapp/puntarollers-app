@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
+import { ecosystemDayKey } from '../../lib/ecosystemActivity'
 
 const patterns={class:/\b(clase|clases|class|classes|entrenamiento|entrenamientos|training)\b/i,roll:/rolleada|roll(eada|ing)?|patinada|salida grupal/i,time:/shifter|toma de tiempo|contrarreloj|time trial|crono/i,event:/evento|encuentro|festival|competencia/i}
 function category(name){return Object.keys(patterns).find(k=>patterns[k].test(String(name||'')))||null}
-const dateKey=v=>String(v||'').slice(0,10)
+const dateKey=ecosystemDayKey
 const formatTime=seconds=>{const n=Math.max(0,Math.round(Number(seconds)||0));const parts=n>=3600?[Math.floor(n/3600),Math.floor(n%3600/60),n%60]:[Math.floor(n/60),n%60];return parts.map(x=>String(x).padStart(2,'0')).join(':')}
 const uniqueBy=(items,key)=>[...new Map(items.map(item=>[key(item),item])).values()]
 const isPast=v=>{if(!v)return false;const t=new Date(v).getTime();return Number.isFinite(t)&&t<=Date.now()}
