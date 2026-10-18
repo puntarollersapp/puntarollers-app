@@ -15,14 +15,14 @@ export default function Ecosistema(){
  const [state,setState]=useState({loading:true,error:'',activities:[],profile:null})
  useEffect(()=>{if(!user?.id)return;let mounted=true;async function load(){
   const [activities,profile]=await Promise.all([
-   supabase.from('pr_activities').select('id,fecha_inicio,distancia_metros,fuente,estado_validacion,es_privada,eliminada').eq('alumno_id',user.id).order('fecha_inicio',{ascending:false}).limit(1000),
+   supabase.from('pr_activities').select('id,fecha_inicio,distancia_metros,fuente,estado_validacion,es_privada,eliminada,tipo,strava_activity_id').eq('alumno_id',user.id).order('fecha_inicio',{ascending:false}).limit(1000),
    supabase.from('profiles').select('id,nombre,apellido,foto,pr_avatar,miembro_desde').eq('id',user.id).maybeSingle()
   ])
   if(!mounted)return
   setState({loading:false,error:activities.error?.message||profile.error?.message||'',activities:activities.data||[],profile:profile.data||null})
  }load();return()=>{mounted=false}},[user?.id])
  const stats=useMemo(()=>{
-  const rows=state.activities.filter(a=>!a.eliminada&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0)
+  const rows=state.activities.filter(a=>!a.eliminada&&a.tipo==='Patinaje'&&a.fecha_inicio&&new Date(a.fecha_inicio).getTime()<=Date.now()&&Number.isFinite(Number(a.distancia_metros))&&Number(a.distancia_metros)>=0&&((a.fuente==='strava'&&a.estado_validacion==='sincronizada')||(a.fuente==='manual'&&a.estado_validacion==='validada')))
   const distance=rows.reduce((sum,a)=>sum+Number(a.distancia_metros),0)
   const days=new Set(rows.map(a=>String(a.fecha_inicio||'').slice(0,10)).filter(Boolean))
   return {rows,distance,days:days.size,last:rows[0]?.fecha_inicio}
