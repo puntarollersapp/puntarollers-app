@@ -58,7 +58,7 @@ function Page({kind}){
    <p className="mt-5 max-w-xl text-sm leading-6 text-white/75">{theme.description}</p>
    <p className="mt-5 text-xs text-white/50">Perfil: {d.profile?.nombre||'Cuenta autenticada'} · Datos de la plataforma oficial</p>
   </header>
-  {d.lastUpdated&&<p className="mt-3 text-[11px] text-white/45">Última consulta correcta: {d.lastUpdated.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'})}</p>}
+  {d.lastUpdated&&<p className="mt-3 text-[11px] text-white/45">Última consulta correcta: {d.lastUpdated.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',timeZone:'America/Montevideo'})} (Uruguay)</p>}
   {d.loading?<p className="mt-6 rounded-2xl bg-white/5 p-5 text-sm">Consultando registros…</p>:d.error?<p role="alert" className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-200/5 p-5 text-sm text-amber-100">No pudimos consultar los registros de ACTIVE y ORBIT. Conservamos el último dato correcto, pero no lo mostramos como actualizado. {d.error} <button type="button" onClick={d.refresh} className="ml-2 underline underline-offset-4">Reintentar</button></p>:null}
   {!d.loading&&!d.error&&kind==='active'&&<ActiveNow d={d}/>}
   {!d.loading&&!d.error&&kind==='orbit'&&<OrbitEvolution d={d}/>}
