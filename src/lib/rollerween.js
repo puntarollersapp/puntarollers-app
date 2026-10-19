@@ -11,8 +11,8 @@ export const ROLLERWEEN = {
   },
   clinic: {
     title: 'Clínica Internacional · Miguel Flores',
-    dateLabel: '28 · 29 · 30 OCTUBRE',
-    detail: 'Tres jornadas de entrenamiento con Miguel Flores, Subcampeón Mundial Máster. Cupos limitados.',
+    dateLabel: '28 · 29 OCTUBRE',
+    detail: 'Dos jornadas · 6 horas de entrenamiento con Miguel Flores, Subcampeón Mundial Máster. Cupos limitados.',
     href: '/clinica-miguel-octubre',
   },
   timeTrial: {
