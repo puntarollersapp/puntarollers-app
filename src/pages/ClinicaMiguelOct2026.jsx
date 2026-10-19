@@ -66,7 +66,7 @@ export default function ClinicaMiguelOct2026(){
 
     {step===0&&<div className="oct-hero">
       <div className="oct-hero-copy"><p className="oct-overline">PUNTA ROLLERS × MIGUEL FLORES</p><h1><span>INTENSIVO DE ROLLERS</span><strong>EDICIÓN 02</strong><span className="oct-hero-subtitle">Clínica de patinaje</span></h1><h2>Más técnica.<br/>Más control.<br/><em>Más nivel.</em></h2><p className="oct-intro">Una experiencia intensiva de dos jornadas junto a Miguel Ángel Flores, entrenador argentino y Subcampeón Mundial Máster con más de 40 años dentro del patinaje. Abierto a patinadores de todas las escuelas, desde quienes están empezando hasta quienes quieren perfeccionar su técnica.</p></div>
-      <aside className="oct-date-card"><span>OCT</span><div><b>28</b><small>MIÉRCOLES</small></div><div><b>29</b><small>JUEVES</small></div><p>2026 · 19:30 A 22:30 H · PARADA 3 DE LA BRAVA, FRENTE AL EDIFICIO IMPERIALE · MALDONADO – PUNTA DEL ESTE</p></aside>
+      <aside className="oct-date-card"><span>OCT</span><div><b>28</b><small>MIÉRCOLES</small></div><div><b>29</b><small>JUEVES</small></div><p>2026 · 19:30 h · PARADA 3 DE LA BRAVA, FRENTE AL EDIFICIO IMPERIALE · MALDONADO – PUNTA DEL ESTE</p></aside>
       <div className="oct-manifesto"><div><b>2</b><span>jornadas</span></div><div><b>6H</b><span>de trabajo</span></div><div><b>30</b><span>cupos</span></div><div><b>ALL</b><span>niveles</span></div></div>
 
       <section className="oct-shifter">
@@ -93,8 +93,8 @@ export default function ClinicaMiguelOct2026(){
     </div>}
 
     {step===2&&<div className="oct-stage"><button className="oct-back" onClick={()=>setStep(1)}>← Volver a mis datos</button><p className="oct-overline">02 · CONFIRMACIÓN</p><h2 className="oct-title">Reservá la experiencia.</h2>
-      <div className="oct-summary"><div><span>CLÍNICA 02 · PREVIA SHIFTER</span><b>28 · 29 OCT · 19:30 H</b><small>19:30 a 22:30 h · Parada 3 de la Brava, frente al edificio Imperiale · Maldonado – Punta del Este</small></div><strong>${PRICE.toLocaleString('es-UY')}</strong></div>
-      <label className={`oct-check ${form.asistencia_completa?'active':''}`}><input type="checkbox" checked={form.asistencia_completa} onChange={e=>update('asistencia_completa',e.target.checked)}/><i>{form.asistencia_completa?'✓':''}</i><div><b>Confirmo mi participación en las dos jornadas</b><small>Miércoles 28 y jueves 29 de octubre · 19:30 a 22:30 h</small></div></label>
+      <div className="oct-summary"><div><span>CLÍNICA 02 · PREVIA SHIFTER</span><b>28 · 29 OCT · 19:30 H</b><small>19:30 h · Parada 3 de la Brava, frente al edificio Imperiale · Maldonado – Punta del Este</small></div><strong>${PRICE.toLocaleString('es-UY')}</strong></div>
+      <label className={`oct-check ${form.asistencia_completa?'active':''}`}><input type="checkbox" checked={form.asistencia_completa} onChange={e=>update('asistencia_completa',e.target.checked)}/><i>{form.asistencia_completa?'✓':''}</i><div><b>Confirmo mi participación en las dos jornadas</b><small>Miércoles 28 y jueves 29 de octubre · 19:30 h</small></div></label>
       <div className="oct-bank"><span>ORDEN CORRECTO</span><small>Primero guardamos tu inscripción. En la pantalla siguiente elegís pagar con Mercado Pago o hacer una transferencia.</small></div>
       <p className="oct-no-coupon">Esta inscripción no utiliza códigos ni cupones de descuento.</p>{error&&<p className="oct-error">{error}</p>}<button className="oct-cta" disabled={sending} onClick={submit}><span>{sending?'GUARDANDO…':waitlistActive?'ENTRAR EN LISTA DE ESPERA':'GUARDAR Y ELEGIR PAGO'}</span><b>→</b></button>
     </div>}
