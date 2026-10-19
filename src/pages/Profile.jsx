@@ -16,6 +16,16 @@ import { resolveChibiSelection } from '../features/avatar/chibiCatalog'
 import { getBadgeImage } from '../lib/badges'
 import VerifiedBadge from '../components/VerifiedBadge'
 
+// PR Frames beta: visual placeholders until individual transparent assets are approved.
+const PR_FRAMES = [
+  { id: 'original', name: 'PR Original', accent: '#65a7ff', description: 'Marco inicial de Punta Rollers.' },
+  { id: 'shifter-2026', name: 'Shifter 2026', accent: '#ff9138', description: 'Se desbloquea con una toma de tiempo registrada y validada.' },
+  { id: 'constancia', name: 'Constancia', accent: '#49e3c0', description: 'Se desbloquea con 10 clases diferentes verificadas en PR Check.' },
+  { id: 'navidad-2026', name: 'Navidad', accent: '#e85064', description: 'Disponible automáticamente del 1 al 31 de diciembre de 2026.' },
+  { id: '100km', name: '100 KM Club', accent: '#b6ee70', description: 'Se desbloquea con 100 km acumulados y verificados.' },
+  { id: 'nuevo-2027', name: 'Año Nuevo 2027', accent: '#e7bd67', description: 'Celebración de Año Nuevo 2027.' },
+]
+const PR_FRAME_IDS = new Set(PR_FRAMES.map((frame) => frame.id))
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const PAYMENT_EXEMPT_DOCUMENTS = new Set([
@@ -385,6 +395,18 @@ export default function Profile() {
   const [profileAvatar, setProfileAvatar] = useState(
     avatarObject(base.pr_avatar)
   )
+  const [framesOpen, setFramesOpen] = useState(false)
+  const [savingFrame, setSavingFrame] = useState(false)
+  const [verifiedAttendance, setVerifiedAttendance] = useState({ count: 0, loading: true, error: false })
+  const [earnedFrameIds, setEarnedFrameIds] = useState([])
+  const [serverFrames, setServerFrames] = useState(null)
+  const [frameCatalogError, setFrameCatalogError] = useState(false)
+  const [newFrame, setNewFrame] = useState({ id: '', name: '', description: '' })
+  const [adminFrameId, setAdminFrameId] = useState('')
+  const [adminProfileId, setAdminProfileId] = useState('')
+  const [adminStudents, setAdminStudents] = useState([])
+  const [adminManualFrames, setAdminManualFrames] = useState([])
+  const [adminBusy, setAdminBusy] = useState(false)
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -477,6 +499,37 @@ export default function Profile() {
       }, 250)
     }
   }, [location.hash])
+
+  // Attendance is obtained from the existing authenticated server-side RPC.
+  // Never read staff-only attendance tables directly or trust editable avatar metadata.
+  useEffect(() => {
+    let cancelled = false
+    async function loadVerifiedAttendance() {
+      setVerifiedAttendance({ count: 0, loading: true, error: false })
+      const [attendanceResult, framesResult, sportsResult] = await Promise.all([
+        supabase.rpc('pr_check_my_attendance'),
+        supabase.rpc('pr_frames_my_unlocks'),
+        supabase.rpc('pr_frames_sync_sports'),
+      ])
+      // Sports grants are persisted first; catalog is read afterward to avoid stale lock states.
+      const catalogResult = await supabase.rpc('pr_frames_catalog')
+      if (!cancelled) {
+        setFrameCatalogError(Boolean(catalogResult.error || framesResult.error || sportsResult.error))
+        if (!catalogResult.error) setServerFrames(catalogResult.data || [])
+      }
+      const { data, error } = attendanceResult
+      if (!cancelled && !framesResult.error) setEarnedFrameIds((framesResult.data || []).map((entry) => entry.frame_id))
+      if (!cancelled) {
+        setVerifiedAttendance({
+          count: error ? 0 : new Set((data || []).filter((entry) => entry.starts_at).map((entry) => String(entry.starts_at))).size,
+          loading: false,
+          error: Boolean(error),
+        })
+      }
+    }
+    loadVerifiedAttendance()
+    return () => { cancelled = true }
+  }, [profileId])
 
   useEffect(() => {
     async function loadAll() {
@@ -1070,6 +1123,85 @@ export default function Profile() {
     }
   }
 
+  const savedFrameId = PR_FRAME_IDS.has(profileAvatar?.frames?.equipped)
+    ? profileAvatar.frames.equipped : 'original'
+  // Seasonal availability is automatic; achievement unlocks require trusted server validation before launch.
+  const dateParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const dateValue = (type) => dateParts.find((part) => part.type === type)?.value || ''
+  const uruguayDate = `${dateValue('year')}-${dateValue('month')}-${dateValue('day')}`
+  const seasonalFrameIds = [
+    ...(uruguayDate >= '2026-12-01' && uruguayDate <= '2026-12-31' ? ['navidad-2026'] : []),
+    ...(uruguayDate >= '2027-01-01' && uruguayDate <= '2027-01-07' ? ['nuevo-2027'] : []),
+  ]
+  // Never trust client-editable pr_avatar.frames.unlocked as proof of achievement.
+  // PR Check and Shifter eligibility must be granted by a server-controlled source.
+  const displayFrames = serverFrames ? serverFrames.map((frame) => ({ ...frame, imageUrl: frame.image_url })) : PR_FRAMES
+  // Fail closed if the authoritative catalog cannot load: never infer earned or seasonal eligibility on the client.
+  const unlockedFrameIds = serverFrames && !frameCatalogError ? new Set(serverFrames.filter((frame) => frame.unlocked).map((frame) => frame.id)) : new Set(['original'])
+  const activeFrameId = unlockedFrameIds.has(savedFrameId) ? savedFrameId : 'original'
+  const activeFrame = displayFrames.find((frame) => frame.id === activeFrameId) || displayFrames[0] || PR_FRAMES[0]
+  const unlockedCount = displayFrames.filter((frame) => unlockedFrameIds.has(frame.id)).length
+
+  async function equipFrame(frameId) {
+    if (!profileId || savingFrame || !unlockedFrameIds.has(frameId) || !displayFrames.some((frame) => frame.id === frameId)) return
+    try {
+      setSavingFrame(true)
+      // Server checks account ownership and unlock eligibility, then merges JSON atomically.
+      const { error } = await supabase.rpc('pr_frames_equip', { p_frame_id: frameId })
+      if (error) throw error
+      const nextAvatar = { ...profileAvatar, frames: { ...avatarObject(profileAvatar.frames), equipped: frameId } }
+      setProfileAvatar(nextAvatar)
+      updateUser?.({ pr_avatar: nextAvatar })
+      setMessage('Marco guardado en tu perfil.')
+    } catch (error) {
+      setMessage(`No pudimos guardar el marco: ${error.message}`)
+    } finally { setSavingFrame(false) }
+  }
+
+  useEffect(() => {
+    if (base.role !== 'admin') return
+    let mounted = true
+    supabase.rpc('pr_frames_admin_students').then(({ data, error }) => {
+      if (mounted && !error) setAdminStudents(data || [])
+    })
+    supabase.rpc('pr_frames_admin_catalog').then(({ data, error }) => {
+      if (mounted && !error) setAdminManualFrames(data || [])
+    })
+    return () => { mounted = false }
+  }, [base.role])
+
+  async function manageFrame(action, frameId = adminFrameId) {
+    if (adminBusy) return
+    setAdminBusy(true)
+    try {
+      const { error } = await supabase.rpc('pr_frames_admin_manage', {
+        p_action: action,
+        p_frame_id: action === 'create' ? newFrame.id.trim().toLowerCase() : frameId,
+        p_name: action === 'create' ? newFrame.name.trim() : null,
+        p_description: action === 'create' ? newFrame.description.trim() : null,
+        p_profile_id: action === 'grant' || action === 'revoke' ? adminProfileId.trim() : null,
+      })
+      if (error) throw error
+      if (action === 'hide' || action === 'revoke') {
+        const repair = await supabase.rpc('pr_frames_reset_invalid_manual_equips', {
+          p_frame_id: frameId,
+          p_profile_id: action === 'revoke' ? adminProfileId.trim() : null,
+        })
+        if (repair.error) throw repair.error
+      }
+      const result = await supabase.rpc('pr_frames_catalog')
+      if (!result.error) {
+        setServerFrames(result.data || [])
+        setFrameCatalogError(false)
+      }
+      const adminCatalog = await supabase.rpc('pr_frames_admin_catalog')
+      if (!adminCatalog.error) setAdminManualFrames(adminCatalog.data || [])
+      setMessage('Colección actualizada.')
+      if (action === 'create') setNewFrame({ id: '', name: '', description: '' })
+    } catch (error) { setMessage('No se pudo actualizar PR Frames: ' + error.message) }
+    finally { setAdminBusy(false) }
+  }
+
   function toggleProfileEditor() {
     if (editing) {
       setEditing(false)
@@ -1348,6 +1480,8 @@ export default function Profile() {
               )}
               </span>
 
+              {activeFrameId !== 'original' && <div aria-hidden="true" className="pointer-events-none absolute -inset-[5px] rounded-[40px] border-[3px]" style={{ borderColor: activeFrame.accent, boxShadow: `0 0 12px ${activeFrame.accent}55` }} />}
+
               {!useChibiPhoto && (
                 <label
                   className="absolute inset-0 cursor-pointer rounded-[36px]"
@@ -1374,7 +1508,39 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="pt-20 flex items-start justify-between gap-4">
+            <div className="pt-20">
+              <button type="button" onClick={() => setFramesOpen((value) => !value)} aria-expanded={framesOpen} className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 py-3 text-left">
+                <span><span className="block text-[10px] font-black uppercase tracking-[.14em] text-white/45">PR Frames · Beta</span><span className="text-sm font-bold text-white">Mi colección · {unlockedCount} de {displayFrames.length} disponibles</span></span>
+                <span className="text-xs text-white/60">{framesOpen ? 'Cerrar ↑' : 'Explorar →'}</span>
+              </button>
+              {base.role === 'admin' && <section className="mt-3 rounded-2xl border border-orange-300/20 bg-orange-300/[.04] p-4 space-y-3">
+                <p className="text-xs font-black uppercase tracking-wider text-orange-200">PR Frames · Administración</p>
+                <p className="text-xs text-white/55">Creá marcos especiales y asigná o retirales el acceso a alumnos. Solo cuentas administradoras pueden ejecutar estas acciones.</p>
+                <input aria-label="Código del marco" value={newFrame.id} onChange={(e) => setNewFrame((v) => ({ ...v, id: e.target.value }))} placeholder="Código: aniversario-pr" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <input aria-label="Nombre del marco" value={newFrame.name} onChange={(e) => setNewFrame((v) => ({ ...v, name: e.target.value }))} placeholder="Nombre del marco" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <input aria-label="Descripción del marco" value={newFrame.description} onChange={(e) => setNewFrame((v) => ({ ...v, description: e.target.value }))} placeholder="Cómo conseguirlo" className="w-full rounded-xl bg-black/40 p-3 text-sm text-white" />
+                <button type="button" disabled={adminBusy || !newFrame.id || !newFrame.name} onClick={() => manageFrame('create')} className="rounded-xl bg-orange-300 px-4 py-2 text-xs font-bold text-black disabled:opacity-40">Crear marco especial</button>
+                <select aria-label="Marco especial" value={adminFrameId} onChange={(e) => setAdminFrameId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Elegir marco especial</option>{adminManualFrames.map((f) => <option key={f.id} value={f.id}>{f.name}{f.visible ? '' : ' · Oculto'}</option>)}</select>
+                <select aria-label="Alumno" value={adminProfileId} onChange={(e) => setAdminProfileId(e.target.value)} className="w-full rounded-xl bg-[#22252d] p-3 text-sm text-white"><option value="">Seleccionar alumno</option>{adminStudents.map((student) => <option key={student.profile_id} value={student.profile_id}>{student.display_name}</option>)}</select>
+                <div className="flex flex-wrap gap-2"><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('grant')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Otorgar</button><button type="button" disabled={adminBusy || !adminFrameId || !adminProfileId} onClick={() => manageFrame('revoke')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Retirar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('hide')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Ocultar</button><button type="button" disabled={adminBusy || !adminFrameId} onClick={() => manageFrame('show')} className="rounded-xl border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">Mostrar</button></div>
+              </section>}
+              {framesOpen && <div className="mt-3 rounded-[24px] border border-white/10 bg-black/30 p-3">
+                {frameCatalogError && <p role="status" className="mb-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3 text-xs text-amber-100">No pudimos verificar tus marcos ahora. Tu colección y tus logros siguen guardados; volvé a ingresar más tarde.</p>}
+                <p className="mb-3 text-xs text-white/55">Elegí un marco para tu foto. Los bloqueados muestran cómo conseguirlos. Los diseños son provisionales. {verifiedAttendance.loading ? 'Consultando PR Check…' : verifiedAttendance.error ? 'PR Check no disponible por ahora.' : `Asistencias verificadas: ${verifiedAttendance.count}.`}</p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">{displayFrames.map((frame) => {
+                  const unlocked = unlockedFrameIds.has(frame.id)
+                  const equipped = activeFrameId === frame.id
+                  return <button key={frame.id} type="button" disabled={!unlocked || savingFrame} onClick={() => equipFrame(frame.id)} className={`rounded-2xl border p-2 text-center ${equipped ? 'border-orange-300/70 bg-orange-300/10' : 'border-white/10 bg-white/[.025]'} ${unlocked ? '' : 'opacity-50'}`} title={frame.description}>
+                    <span className="mx-auto mb-2 grid h-14 w-14 place-items-center rounded-[17px] border-[5px] bg-[#222a39]" style={{ borderColor: frame.accent }}><span className="text-lg">{unlocked ? 'PR' : '🔒'}</span></span>
+                    <span className="block text-[10px] font-bold text-white">{frame.name}</span>
+                    <span className="block text-[9px] text-white/50">{equipped ? 'Equipado' : unlocked ? 'Seleccionar' : 'Bloqueado'}</span>
+                    {!unlocked && <span className="mt-1 block text-[8px] leading-3 text-white/45">{frame.description}</span>}
+                  </button>
+                })}</div>
+              </div>}
+            </div>
+
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="font-display text-[34px] leading-none text-white">
                   {profile.nombre}
