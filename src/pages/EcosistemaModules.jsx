@@ -36,7 +36,7 @@ function useEcosystemData(){
     loadAllActivities(user.id),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle()
    ])
-   if(live)setState({loading:false,error:[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · '),truncated:!!a.truncated,activities:a.data||[],profile:p.data||null,catalog:b.data||[]})
+   if(live){setState({loading:false,error:[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · '),truncated:!!a.truncated,activities:a.data||[],profile:p.data||null});setRefreshing(false);if(!a.error&&!p.error)setLastUpdated(new Date())}
   }fetchData();return()=>{live=false}
  },[user?.id,revision])
  const data=useMemo(()=>{
