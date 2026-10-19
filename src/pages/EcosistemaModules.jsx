@@ -41,7 +41,7 @@ function useEcosystemData(){
   const days=new Set(activities.map(a=>ecosystemDayKey(a.fecha_inicio)).filter(Boolean))
   const months=new Map()
   for(const a of activities){const key=ecosystemDayKey(a.fecha_inicio).slice(0,7);if(!key)continue;const old=months.get(key)||{month:key,count:0,meters:0};old.count++;old.meters+=Number(a.distancia_metros);months.set(key,old)}
-  const lastSix=Array.from({length:6},(_,i)=>{const now=new Date();const dt=new Date(Date.UTC(now.getFullYear(),now.getMonth()-5+i,1));const key=dt.toISOString().slice(0,7);return months.get(key)||{month:key,count:0,meters:0}})
+  const lastSix=Array.from({length:6},(_,i)=>{const current=ecosystemDayKey(new Date());const [year,month]=current.split('-').map(Number);const dt=new Date(Date.UTC(year,month-1-5+i,1));const key=dt.toISOString().slice(0,7);return months.get(key)||{month:key,count:0,meters:0}})
   return {activities,days:days.size,meters:activities.reduce((s,a)=>s+Number(a.distancia_metros),0),months:lastSix}
  },[state.activities])
  return {...state,...data}
