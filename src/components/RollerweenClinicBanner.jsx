@@ -7,9 +7,9 @@ export default function RollerweenClinicBanner({ compact=false }) {
     <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full border border-[#BEFF37]/10 bg-[#BEFF37]/[.035]"/>
     <div className="relative z-10 flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-[8px] font-black uppercase tracking-[.18em] text-[#BEFF37]">28 · 29 · 30 OCTUBRE</p>
+        <p className="text-[8px] font-black uppercase tracking-[.18em] text-[#BEFF37]">28 · 29 OCTUBRE · 19:30 H</p>
         <h3 className={`${compact?'mt-1 text-[18px]':'mt-2 text-[23px]'} font-black leading-tight text-white`}>CLÍNICA INTERNACIONAL<br/><span className="text-violet-300">MIGUEL FLORES</span></h3>
-        <p className="mt-2 text-[10px] leading-4 text-white/45">No olvides reservar tu cupo. Tres jornadas de entrenamiento · cupos limitados.</p>
+        <p className="mt-2 text-[10px] leading-4 text-white/45">No olvides reservar tu cupo. Dos jornadas · 6 horas de entrenamiento · cupos limitados.</p>
       </div>
       <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#BEFF37]/25 bg-[#BEFF37]/10 text-lg text-[#BEFF37] transition group-hover:translate-x-1">→</div>
     </div>
