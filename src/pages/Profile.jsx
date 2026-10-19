@@ -1182,6 +1182,13 @@ export default function Profile() {
         p_profile_id: action === 'grant' || action === 'revoke' ? adminProfileId.trim() : null,
       })
       if (error) throw error
+      if (action === 'hide' || action === 'revoke') {
+        const repair = await supabase.rpc('pr_frames_reset_invalid_manual_equips', {
+          p_frame_id: frameId,
+          p_profile_id: action === 'revoke' ? adminProfileId.trim() : null,
+        })
+        if (repair.error) throw repair.error
+      }
       const result = await supabase.rpc('pr_frames_catalog')
       if (!result.error) {
         setServerFrames(result.data || [])
