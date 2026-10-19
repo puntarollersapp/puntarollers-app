@@ -24,6 +24,7 @@ async function loadAllActivities(profileId){
 export default function Ecosistema(){
  const {user}=useAuth()
  const [state,setState]=useState({loading:true,error:'',activities:[],profile:null})
+ const [revision,setRevision]=useState(0)
  useEffect(()=>{if(!user?.id)return;let mounted=true;async function load(){
   const [activities,profile]=await Promise.all([
    loadAllActivities(user.id),
@@ -31,7 +32,7 @@ export default function Ecosistema(){
   ])
   if(!mounted)return
   setState({loading:false,error:activities.error?.message||profile.error?.message||'',activities:activities.data||[],truncated:!!activities.truncated,profile:profile.data||null})
- }load();return()=>{mounted=false}},[user?.id])
+ }load();return()=>{mounted=false}},[user?.id,revision])
  const stats=useMemo(()=>{
   const rows=uniqueEcosystemActivities(state.activities.filter(a=>validEcosystemActivity(a)))
   const distance=rows.reduce((sum,a)=>sum+Number(a.distancia_metros),0)
@@ -45,7 +46,7 @@ export default function Ecosistema(){
   <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75">Todo lo que construís sobre ruedas, en un solo lugar. Tu actividad, tu constancia y tu historia. Sin competir con nadie.</p>
   <p className="mt-5 text-xs font-bold text-white/65">{state.profile?.nombre?('Tu espacio, '+state.profile.nombre+'.'):'Tu espacio personal'}</p>
  </header>
- {state.loading?<p className="mt-6 rounded-2xl bg-white/5 p-5 text-sm text-white/60">Cargando tus registros…</p>:state.error?<p role="alert" className="mt-6 rounded-2xl border border-amber-300/30 p-5 text-sm text-amber-100">No pudimos consultar todos tus registros. Intentá ingresar nuevamente más tarde.</p>:<section className="mt-6 grid grid-cols-3 gap-2 sm:gap-4" aria-label="Resumen de actividad registrada">
+ {state.loading?<p className="mt-6 rounded-2xl bg-white/5 p-5 text-sm text-white/60">Cargando tus registros…</p>:state.error?<p role="alert" className="mt-6 rounded-2xl border border-amber-300/30 p-5 text-sm text-amber-100">No pudimos consultar todos tus registros. <button type="button" onClick={()=>{setState(v=>({...v,loading:true,error:''}));setRevision(v=>v+1)}} className="ml-2 underline underline-offset-4">Reintentar consulta</button></p>:<section className="mt-6 grid grid-cols-3 gap-2 sm:gap-4" aria-label="Resumen de actividad registrada">
   {[['KM REGISTRADOS',km(stats.distance)],['SALIDAS',stats.rows.length.toLocaleString('es-UY')],['DÍAS ACTIVOS',stats.days.toLocaleString('es-UY')]].map(([label,value])=><div key={label} className="rounded-[20px] border border-white/10 bg-[#20222B] p-3 sm:p-5"><p className="text-[9px] font-black tracking-wide text-white/55">{label}</p><p className="mt-3 text-[clamp(20px,5vw,36px)] font-black tabular-nums tracking-tight text-[#C4FF24]">{value}</p></div>)}
  </section>}
  <p className="mt-3 text-[11px] leading-relaxed text-white/50">Se muestran únicamente actividades disponibles para tu perfil. Las cifras no incluyen registros ausentes ni garantizan que todo tu historial esté sincronizado. {state.truncated?'Se alcanzó el límite de consulta: parte del historial podría faltar.':'Se consultaron todas las páginas disponibles dentro del límite de seguridad.'}</p>
