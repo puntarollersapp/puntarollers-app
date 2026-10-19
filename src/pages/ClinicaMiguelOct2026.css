@@ -35,3 +35,5 @@
 .oct-success-mark{background:#ddff18;color:#111}.oct-success>p:not(.oct-overline),.oct-success-date span{color:#cbd5cb}.oct-success-date{border-color:#48544b}
 .oct-cta:focus-visible,.oct-back:focus-visible,.oct-fields input:focus-visible,.oct-fields select:focus-visible{outline:3px solid #ddff18;outline-offset:3px}
 @media(max-width:760px){.oct-hero-copy h1 span{font-size:clamp(40px,10vw,68px)}.oct-hero-copy h1 p{font-size:11px}.oct-shifter{background:#151a1b}.oct-shifter-timeline{grid-template-columns:repeat(4,1fr)}.oct-manifesto>div:nth-child(-n+2),.oct-value-strip span{border-bottom-color:#465148}}
+
+.oct-hero-copy h1 .oct-hero-subtitle{display:inline-block;width:auto;margin:0 0 0 12px;font-size:clamp(11px,1.5vw,16px);font-style:normal;line-height:1.3;letter-spacing:.13em;font-weight:800;color:#e7eee6;vertical-align:middle}
