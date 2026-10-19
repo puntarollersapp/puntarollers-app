@@ -26,9 +26,11 @@ function useEcosystemData(){
  const {user}=useAuth()
  const [state,setState]=useState({loading:true,error:'',activities:[],profile:null})
  const [revision,setRevision]=useState(0)
+ const [refreshing,setRefreshing]=useState(false)
  useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('ecosistema-activities-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true
   async function fetchData(){
+   setRefreshing(true)
    const [a,p]=await Promise.all([
     loadAllActivities(user.id),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle()
@@ -44,12 +46,12 @@ function useEcosystemData(){
   const lastSix=Array.from({length:6},(_,i)=>{const current=ecosystemDayKey(new Date());const [year,month]=current.split('-').map(Number);const dt=new Date(Date.UTC(year,month-1-5+i,1));const key=dt.toISOString().slice(0,7);return months.get(key)||{month:key,count:0,meters:0}})
   return {activities,days:days.size,meters:activities.reduce((s,a)=>s+Number(a.distancia_metros),0),months:lastSix}
  },[state.activities])
- return {...state,...data}
+ return {...state,...data,refreshing,refresh:()=>setRevision(v=>v+1)}
 }
 function Page({kind}){
  const theme=config[kind],d=useEcosystemData()
  return <AppLayout><main className="min-h-screen bg-[#101117] pb-28 text-white"><div className="mx-auto max-w-5xl px-4 pt-6 sm:px-7">
-  <div className="mb-5 flex flex-wrap items-center justify-between gap-2"><Link to="/app/ecosistema" className="text-xs font-bold text-white/65 hover:text-white">← ECOSISTEMA</Link><span className="rounded-full border border-white/20 px-3 py-1 text-[10px] font-black tracking-wider text-white/60">LAB PRIVADO · PRELANZAMIENTO</span></div>
+  <div className="mb-5 flex flex-wrap items-center justify-between gap-2"><Link to="/app/ecosistema" className="text-xs font-bold text-white/65 hover:text-white">← ECOSISTEMA</Link><div className="flex items-center gap-2"><button type="button" onClick={d.refresh} disabled={d.refreshing} className="rounded-full border border-white/20 px-3 py-1 text-[10px] font-black tracking-wider text-white/75 disabled:opacity-40">{d.refreshing?'ACTUALIZANDO…':'ACTUALIZAR DATOS ↻'}</button><span className="rounded-full border border-white/20 px-3 py-1 text-[10px] font-black tracking-wider text-white/60">LAB PRIVADO · PRELANZAMIENTO</span></div></div>
   <header className="relative overflow-hidden rounded-[30px] border border-white/10 p-6 sm:p-10" style={{background:'radial-gradient(ellipse at 100% 0%,'+theme.color+'33,transparent 60%),linear-gradient(125deg,#2B2C37,#16171D)'}}>
    <p className="text-[11px] font-black tracking-[.24em]" style={{color:theme.color}}>{theme.eyebrow}</p><h1 className="mt-5 text-[clamp(54px,13vw,110px)] font-black italic leading-none tracking-[-.08em]">{theme.title}<span style={{color:theme.color}}>.</span></h1>
    <p className="mt-5 max-w-xl text-sm leading-6 text-white/75">{theme.description}</p>
