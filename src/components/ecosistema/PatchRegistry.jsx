@@ -13,6 +13,32 @@ async function loadPatchActivities(profileId){
  }
  return {data:rows,error:null,truncated:true}
 }
+async function loadPatchRows(table,columns,filters,sort='id',max=20000){
+ const rows=[]
+ for(let start=0;start<max;start+=500){
+  let query=supabase.from(table).select(columns)
+  for(const [field,value] of filters)query=query.eq(field,value)
+  const result=await query.order(sort,{ascending:false}).order('id',{ascending:false}).range(start,start+499)
+  if(result.error)return {data:[],error:result.error}
+  rows.push(...(result.data||[]))
+  if((result.data||[]).length<500)return {data:rows,error:null,truncated:false}
+ }
+ return {data:rows,error:null,truncated:true}
+}
+async function loadPatchAttendance(ids){
+ const rows=[]
+ for(let i=0;i<ids.length;i+=100){
+  const batch=ids.slice(i,i+100)
+  for(let start=0;start<20000;start+=500){
+   const result=await supabase.from('pr_check_attendance').select('id,class_id,identity_id,scanned_at').in('identity_id',batch).order('scanned_at',{ascending:false}).order('id',{ascending:false}).range(start,start+499)
+   if(result.error)return {data:[],error:result.error}
+   rows.push(...(result.data||[]))
+   if((result.data||[]).length<500)break
+   if(start===19500)return {data:rows,error:null,truncated:true}
+  }
+ }
+ return {data:rows,error:null,truncated:false}
+}
 const patterns={class:/\b(clase|clases|class|classes|entrenamiento|entrenamientos|training)\b/i,roll:/rolleada|roll(eada|ing)?|patinada|salida grupal/i,time:/shifter|toma de tiempo|contrarreloj|time trial|crono/i,event:/evento|encuentro|festival|competencia/i}
 function category(name){return Object.keys(patterns).find(k=>patterns[k].test(String(name||'')))||null}
 const dateKey=ecosystemDayKey
@@ -39,19 +65,19 @@ export default function PatchRegistry(){
   const [identities,activities,rsvps,training,times]=await Promise.all([
    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).is('child_id',null),
    loadPatchActivities(user.id),
-   supabase.from('pr_event_rsvps').select('id,event_slug,status,created_at').eq('profile_id',user.id).limit(300),
-   supabase.from('pr_training_task_results').select('id,task_id,status,completed_at').eq('profile_id',user.id).eq('status','completed').order('completed_at',{ascending:false}).limit(500),
-   supabase.from('pr_performance_tomas').select('id,fecha,distancia_km,tiempo_segundos,eliminado').eq('alumno_id',user.id).eq('eliminado',false).order('fecha',{ascending:false}).limit(500)
+   loadPatchRows('pr_event_rsvps','id,event_slug,status,created_at',[['profile_id',user.id]],'created_at'),
+   loadPatchRows('pr_training_task_results','id,task_id,status,completed_at',[['profile_id',user.id],['status','completed']],'completed_at'),
+   loadPatchRows('pr_performance_tomas','id,fecha,distancia_km,tiempo_segundos,eliminado',[['alumno_id',user.id],['eliminado',false]],'fecha')
   ])
   for(const x of [identities,activities,rsvps,training,times])if(x.error)throw x.error
   const ids=(identities.data||[]).map(x=>x.id)
-  const attendance=ids.length?await supabase.from('pr_check_attendance').select('id,class_id,identity_id,scanned_at').in('identity_id',ids).order('scanned_at',{ascending:false}).limit(1000):{data:[],error:null}
+  const attendance=ids.length?await loadPatchAttendance(ids):{data:[],error:null}
   if(attendance.error)throw attendance.error
-  if((attendance.data||[]).length===1000)throw new Error('La consulta de asistencias alcanzó su límite de 1.000 registros. Se requiere una auditoría completa antes de mostrar totales.')
+  if(attendance.truncated)throw new Error('La consulta de asistencias alcanzó su límite de 1.000 registros. Se requiere una auditoría completa antes de mostrar totales.')
   const classIds=[...new Set((attendance.data||[]).map(x=>x.class_id))]
   const classes=classIds.length?await supabase.from('pr_check_classes').select('id,title,starts_at,is_test').in('id',classIds):{data:[],error:null}
   if(classes.error)throw classes.error
-  if((rsvps.data||[]).length===300||(training.data||[]).length===500||(times.data||[]).length===500)throw new Error('Uno de los historiales alcanzó el límite de consulta; no se muestran totales potencialmente incompletos.')
+  if(rsvps.truncated||training.truncated||times.truncated)throw new Error('Uno de los historiales alcanzó el límite de consulta; no se muestran totales potencialmente incompletos.')
   if(activities.truncated)throw new Error('El historial supera el límite de 20.000 actividades; no es posible certificar sus totales completos.')
   if(live){setS({loading:false,error:'',scans:attendance.data||[],classes:classes.data||[],activities:(activities.data||[]).filter(x=>!x.eliminada&&isPast(x.fecha_inicio)),truncated:!!activities.truncated,rsvps:rsvps.data||[],training:(training.data||[]).filter(x=>isPast(x.completed_at)),times:(times.data||[]).filter(x=>!x.eliminado&&Number(x.tiempo_segundos)>0&&Number(x.distancia_km)>0&&isPastDate(x.fecha))});setLastSync(new Date())}
  }catch(e){if(live)setS(v=>({...v,loading:false,error:e.message||'No se pudieron consultar los registros',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[]}))}}load();return()=>{live=false}},[user?.id,revision])
