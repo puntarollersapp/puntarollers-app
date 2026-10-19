@@ -47,9 +47,11 @@ export default function PatchRegistry(){
   const ids=(identities.data||[]).map(x=>x.id)
   const attendance=ids.length?await supabase.from('pr_check_attendance').select('id,class_id,identity_id,scanned_at').in('identity_id',ids).order('scanned_at',{ascending:false}).limit(1000):{data:[],error:null}
   if(attendance.error)throw attendance.error
+  if((attendance.data||[]).length===1000)throw new Error('La consulta de asistencias alcanzó su límite de 1.000 registros. Se requiere una auditoría completa antes de mostrar totales.')
   const classIds=[...new Set((attendance.data||[]).map(x=>x.class_id))]
   const classes=classIds.length?await supabase.from('pr_check_classes').select('id,title,starts_at,is_test').in('id',classIds):{data:[],error:null}
   if(classes.error)throw classes.error
+  if((rsvps.data||[]).length===300||(training.data||[]).length===500||(times.data||[]).length===500)throw new Error('Uno de los historiales alcanzó el límite de consulta; no se muestran totales potencialmente incompletos.')
   if(activities.truncated)throw new Error('El historial supera el límite de 20.000 actividades; no es posible certificar sus totales completos.')
   if(live){setS({loading:false,error:'',scans:attendance.data||[],classes:classes.data||[],activities:(activities.data||[]).filter(x=>!x.eliminada&&isPast(x.fecha_inicio)),truncated:!!activities.truncated,rsvps:rsvps.data||[],training:(training.data||[]).filter(x=>isPast(x.completed_at)),times:(times.data||[]).filter(x=>!x.eliminado&&Number(x.tiempo_segundos)>0&&Number(x.distancia_km)>0&&isPastDate(x.fecha))});setLastSync(new Date())}
  }catch(e){if(live)setS(v=>({...v,loading:false,error:e.message||'No se pudieron consultar los registros',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[]}))}}load();return()=>{live=false}},[user?.id,revision])
