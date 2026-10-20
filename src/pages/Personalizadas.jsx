@@ -203,7 +203,7 @@ export default function Personalizadas() {
 
         {config && !config.reservas_habilitadas && <section className="rounded-[28px] border border-red-300/20 bg-red-400/[.07] p-5">
           <p className="pr-kicker">PR PERSONAL · CONSULTA</p>
-          <div className="mt-2 flex items-start justify-between gap-4"><div><h2 className="text-2xl font-black text-white">Reservas cerradas</h2><p className="mt-2 text-sm leading-6 text-white/50">{config.mensaje_cerrado}</p></div><span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-200">CERRADAS</span></div>
+          <div className="mt-2 flex items-start justify-between gap-4"><div><h2 className="text-2xl font-black text-white">Reservas cerradas</h2><div className="mt-4 space-y-3 text-center text-sm leading-7 text-white/75 whitespace-pre-line break-words">{config.mensaje_cerrado}</div></div><span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-200">CERRADAS</span></div>
           <p className="mt-4 rounded-2xl border border-white/8 bg-black/20 p-3 text-xs leading-5 text-white/45">Si ya reservaste una clase, podés consultar tu horario abajo. Cerrar las reservas no borra ni modifica los turnos confirmados.</p>
         </section>}
 
