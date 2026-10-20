@@ -201,10 +201,18 @@ export default function Personalizadas() {
           <div className="pr-hero-skate">🛼<span /></div></div>
         </section>
 
-        {config && !config.reservas_habilitadas && <section className="rounded-[28px] border border-red-300/20 bg-red-400/[.07] p-5">
+        {config && !config.reservas_habilitadas && <section className="rounded-[28px] border border-red-300/20 bg-red-400/[.07] px-5 py-6 sm:p-7">
           <p className="pr-kicker">PR PERSONAL · CONSULTA</p>
-          <div className="mt-2 flex items-start justify-between gap-4"><div><h2 className="text-2xl font-black text-white">Reservas cerradas</h2><div className="mt-4 space-y-3 text-center text-sm leading-7 text-white/75 whitespace-pre-line break-words">{config.mensaje_cerrado}</div></div><span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-200">CERRADAS</span></div>
-          <p className="mt-4 rounded-2xl border border-white/8 bg-black/20 p-3 text-xs leading-5 text-white/45">Si ya reservaste una clase, podés consultar tu horario abajo. Cerrar las reservas no borra ni modifica los turnos confirmados.</p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-black text-white">Reservas cerradas</h2>
+            <span className="shrink-0 rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-200">CERRADAS</span>
+          </div>
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 px-5 py-6 text-center">
+            <p className="text-base font-semibold leading-7 text-white">La agenda de esta semana ya está cerrada.</p>
+            <p className="mt-4 text-sm leading-6 text-white/75">Los próximos horarios se publicarán el <strong className="font-bold text-white">domingo</strong>.</p>
+            <p className="mt-4 text-sm font-medium text-rose-200">¡Te esperamos!</p>
+          </div>
+          <p className="mt-5 rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm leading-6 text-white/65">¿Ya reservaste? Podés consultar tu horario abajo. Tus turnos confirmados se mantienen sin cambios.</p>
         </section>}
 
         {!student && <form onSubmit={identify} className="pr-login-card"><div className="pr-login-icon">PR</div><div><p className="pr-kicker">{config?.reservas_habilitadas ? 'ACCESO PERSONAL' : 'CONSULTAR RESERVA'}</p><h2>{config?.reservas_habilitadas ? 'Entrá a tu PR Pass' : '¿Qué horario reservé?'}</h2><p className="pr-muted">{config?.reservas_habilitadas ? 'Usá el mismo WhatsApp que tenés registrado en Punta Rollers.' : 'Ingresá tu WhatsApp registrado para ver tus próximas clases confirmadas.'}</p></div><label>Tu WhatsApp</label><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Ej: 099 123 456" />
