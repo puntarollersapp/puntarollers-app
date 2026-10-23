@@ -4,6 +4,16 @@ import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
 import { isRollerweenActive } from '../lib/rollerween'
 
+async function familyLanding(user, destination, next) {
+  if (next || !user || user.participaComoAlumno || ['admin','profesor'].includes(user.role)) return destination
+  try {
+    const { supabase } = await import('../lib/supabase')
+    const { data, error } = await supabase.functions.invoke('pr-kids-family-access', { body: { action: 'family-home' } })
+    if (!error && data?.ok && data?.guardian) return '/kids'
+  } catch { /* Keep existing student destination if family access cannot be verified. */ }
+  return destination
+}
+
 const ROLLERWEEN_ART='/rollerween-logo-original-20261001-r2.png?v=original-r2'
 
 export default function Login() {
@@ -20,8 +30,10 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
-    navigate(destination, { replace: true })
-  }, [authLoading, user, navigate, destination])
+    let active = true
+    familyLanding(user, destination, next).then(path => { if (active) navigate(path, { replace: true }) })
+    return () => { active = false }
+  }, [authLoading, user, navigate, destination, next])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -40,7 +52,7 @@ export default function Login() {
         if (training?.category && training.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
         else if (training?.category === 'NO') window.localStorage.removeItem('pr_training_visible')
       }
-      navigate(destination, { replace: true })
+      navigate(await familyLanding(result?.user, destination, next), { replace: true })
     } catch {
       setError('No pudimos iniciar sesión. Revisá tus datos.')
     } finally { setLoading(false) }
