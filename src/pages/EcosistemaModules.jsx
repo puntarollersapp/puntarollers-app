@@ -35,7 +35,7 @@ function useEcosystemData(){
    const [a,p,ids,rsvps,clinicRows]=await Promise.all([
     loadAllActivities(user.id),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle(),
-    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id),
+    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).is('child_id',null),
     supabase.from('pr_event_rsvps').select('id,event_slug,status,created_at').eq('profile_id',user.id),
     supabase.from('pr_clinic_participation').select('id,clinic_key,participant_name,attended,updated_at').eq('profile_id',user.id).eq('attended',true)
    ])
