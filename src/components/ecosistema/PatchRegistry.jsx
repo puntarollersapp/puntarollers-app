@@ -75,7 +75,7 @@ export default function PatchRegistry(){
   if(attendance.error)throw attendance.error
   if(attendance.truncated)throw new Error('La consulta de asistencias alcanzó su límite de 1.000 registros. Se requiere una auditoría completa antes de mostrar totales.')
   const classIds=[...new Set((attendance.data||[]).map(x=>x.class_id))]
-  const classes=classIds.length?await supabase.from('pr_check_classes').select('id,title,starts_at,is_test').in('id',classIds):{data:[],error:null}
+  const classRows=[];let classError=null;for(let i=0;i<classIds.length;i+=100){const part=await supabase.from('pr_check_classes').select('id,title,starts_at,is_test,status').in('id',classIds.slice(i,i+100));if(part.error){classError=part.error;break}classRows.push(...(part.data||[]))}const classes={data:classRows,error:classError}
   if(classes.error)throw classes.error
   if(rsvps.truncated||training.truncated||times.truncated)throw new Error('Uno de los historiales alcanzó el límite de consulta; no se muestran totales potencialmente incompletos.')
   if(activities.truncated)throw new Error('El historial supera el límite de 20.000 actividades; no es posible certificar sus totales completos.')
@@ -83,7 +83,7 @@ export default function PatchRegistry(){
  }catch(e){if(live)setS(v=>({...v,loading:false,error:e.message||'No se pudieron consultar los registros',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[]}))}}load();return()=>{live=false}},[user?.id,revision])
  const summary=useMemo(()=>{
   const classes=new Map(s.classes.map(x=>[x.id,x]))
-  const scans=s.scans.filter(x=>classes.has(x.class_id)&&!classes.get(x.class_id).is_test&&isPast(x.scanned_at))
+  const scans=s.scans.filter(x=>classes.has(x.class_id)&&!classes.get(x.class_id).is_test&&!/^(cancelled|canceled|cancelado|cancelada|anulado|anulada)$/i.test(String(classes.get(x.class_id).status||'').trim())&&isPast(x.scanned_at))
   const uniqueScans=uniqueBy(scans,x=>x.class_id)
   const counts={class:0,roll:0,time:0,event:0};const days=new Map()
   for(const x of uniqueScans){const key=dateKey(x.scanned_at);if(key)days.set(key,(days.get(key)||0)+1)}
