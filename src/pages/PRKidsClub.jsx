@@ -11,7 +11,7 @@ export default function PRKidsClub(){
  const [params]=useSearchParams()
  const [stage,setStage]=useState('home'),[data,setData]=useState(initial),[hijos,setHijos]=useState([{nombre:''}]),[busy,setBusy]=useState(false),[error,setError]=useState('')
  useEffect(()=>{if(params.get('registro')==='1')setStage('form')},[params])
- useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:true}))},[user?.id])
+ useEffect(()=>{if(user?.documento)setData(d=>({...d,nombre_tutor:[user.nombre,user.apellido].filter(Boolean).join(' '),documento_tutor:user.documento,email_tutor:user.email||d.email_tutor,es_alumno:Boolean(user.participaComoAlumno)}))},[user?.id,user?.participaComoAlumno])
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('');setBusy(true);try{
  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
