@@ -55,21 +55,21 @@ function Orbit({days}){const cells=Array.from({length:84},(_,i)=>{const today=to
 function Metric({number,label,detail,color}){return <div className="rounded-[22px] border border-white/10 bg-[#20222C] p-4"><p className="text-[10px] font-black tracking-[.11em] text-white/55">{label}</p><p className="mt-3 text-[clamp(27px,7vw,48px)] font-black tabular-nums" style={{color}}>{number}</p><p className="mt-2 text-[11px] leading-relaxed text-white/50">{detail}</p></div>}
 export default function PatchRegistry(){
  const {user}=useAuth()
- const [s,setS]=useState({loading:true,error:'',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[]})
+ const [s,setS]=useState({loading:true,error:'',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[],frames:[],grants:[]})
  const [showAll,setShowAll]=useState(false)
  const [recordFilter,setRecordFilter]=useState('all')
  const [lastSync,setLastSync]=useState(null)
  const [revision,setRevision]=useState(0)
  useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('patch-profile-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_attendance'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_classes'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_ids',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_training_task_results',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_performance_tomas',filter:'alumno_id=eq.'+user.id},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true;async function load(){try{
-  const [identities,activities,rsvps,training,times]=await Promise.all([
+  const [identities,activities,rsvps,training,times,frames,grants]=await Promise.all([
    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).is('child_id',null),
    loadPatchActivities(user.id),
    loadPatchRows('pr_event_rsvps','id,event_slug,status,created_at',[['profile_id',user.id]],'created_at'),
    loadPatchRows('pr_training_task_results','id,task_id,status,completed_at',[['profile_id',user.id],['status','completed']],'completed_at'),
-   loadPatchRows('pr_performance_tomas','id,fecha,distancia_km,tiempo_segundos,eliminado',[['alumno_id',user.id],['eliminado',false]],'fecha')
+   loadPatchRows('pr_performance_tomas','id,fecha,distancia_km,tiempo_segundos,eliminado',[['alumno_id',user.id],['eliminado',false]],'fecha'),supabase.from('pr_collectible_frames').select('code,title,description,enabled,visible_locked,sort_order').eq('enabled',true).order('sort_order'),supabase.from('pr_profile_frames').select('frame_code,granted_at,revoked_at').eq('profile_id',user.id)
   ])
-  for(const x of [identities,activities,rsvps,training,times])if(x.error)throw x.error
+  for(const x of [identities,activities,rsvps,training,times,frames,grants])if(x.error)throw x.error
   const ids=(identities.data||[]).map(x=>x.id)
   const attendance=ids.length?await loadPatchAttendance(ids):{data:[],error:null}
   if(attendance.error)throw attendance.error
@@ -79,8 +79,8 @@ export default function PatchRegistry(){
   if(classes.error)throw classes.error
   if(rsvps.truncated||training.truncated||times.truncated)throw new Error('Uno de los historiales alcanzó el límite de consulta; no se muestran totales potencialmente incompletos.')
   if(activities.truncated)throw new Error('El historial supera el límite de 20.000 actividades; no es posible certificar sus totales completos.')
-  if(live){setS({loading:false,error:'',scans:attendance.data||[],classes:classes.data||[],activities:(activities.data||[]).filter(x=>!x.eliminada&&isPast(x.fecha_inicio)),truncated:!!activities.truncated,rsvps:rsvps.data||[],training:(training.data||[]).filter(x=>isPast(x.completed_at)),times:(times.data||[]).filter(x=>!x.eliminado&&Number(x.tiempo_segundos)>0&&Number(x.distancia_km)>0&&isPastDate(x.fecha))});setLastSync(new Date())}
- }catch(e){if(live)setS(v=>({...v,loading:false,error:e.message||'No se pudieron consultar los registros',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[]}))}}load();return()=>{live=false}},[user?.id,revision])
+  if(live){setS({loading:false,error:'',scans:attendance.data||[],classes:classes.data||[],activities:(activities.data||[]).filter(x=>!x.eliminada&&isPast(x.fecha_inicio)),truncated:!!activities.truncated,rsvps:rsvps.data||[],training:(training.data||[]).filter(x=>isPast(x.completed_at)),times:(times.data||[]).filter(x=>!x.eliminado&&Number(x.tiempo_segundos)>0&&Number(x.distancia_km)>0&&isPastDate(x.fecha)),frames:frames.data||[],grants:(grants.data||[]).filter(x=>!x.revoked_at)});setLastSync(new Date())}
+ }catch(e){if(live)setS(v=>({...v,loading:false,error:e.message||'No se pudieron consultar los registros',scans:[],classes:[],activities:[],rsvps:[],training:[],times:[],frames:[],grants:[]}))}}load();return()=>{live=false}},[user?.id,revision])
  const summary=useMemo(()=>{
   const classes=new Map(s.classes.map(x=>[x.id,x]))
   const scans=s.scans.filter(x=>classes.has(x.class_id)&&!classes.get(x.class_id).is_test&&!/^(cancelled|canceled|cancelado|cancelada|anulado|anulada)$/i.test(String(classes.get(x.class_id).status||'').trim())&&isPast(x.scanned_at))
