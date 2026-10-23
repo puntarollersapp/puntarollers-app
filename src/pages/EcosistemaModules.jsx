@@ -28,14 +28,14 @@ function useEcosystemData(){
  const [revision,setRevision]=useState(0)
  const [refreshing,setRefreshing]=useState(false)
  const [lastUpdated,setLastUpdated]=useState(null)
- useEffect(()=>{if(!user?.id)return;const refresh=()=>{if(document.visibilityState==='visible')setRevision(v=>v+1)};const channel=supabase.channel('ecosistema-activities-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'INSERT',schema:'public',table:'pr_check_attendance'},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
+ useEffect(()=>{if(!user?.id)return;const refresh=()=>{if(document.visibilityState==='visible')setRevision(v=>v+1)};const channel=supabase.channel('ecosistema-activities-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'INSERT',schema:'public',table:'pr_check_attendance'},refresh).subscribe();const timer=setInterval(refresh,30000);const onVisible=()=>{if(document.visibilityState==='visible')refresh()};document.addEventListener('visibilitychange',onVisible);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',onVisible);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true
   async function fetchData(){
    setRefreshing(true)
    const [a,p,ids,rsvps,clinicRows]=await Promise.all([
     loadAllActivities(user.id),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle(),
-    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).eq('enabled',true),
+    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id),
     supabase.from('pr_event_rsvps').select('id,event_slug,status,created_at').eq('profile_id',user.id),
     supabase.from('pr_clinic_participation').select('id,clinic_key,participant_name,attended,updated_at').eq('profile_id',user.id).eq('attended',true)
    ])
