@@ -87,6 +87,19 @@ function TrainingDailyControl(){
  </section>
 }
 
+function TrainingLevelRoster(){
+ const [month,setMonth]=useState('2026-11'),[students,setStudents]=useState([]),[loading,setLoading]=useState(false),[error,setError]=useState(''),[level,setLevel]=useState('pending'),[chosen,setChosen]=useState([]),[saving,setSaving]=useState(false)
+ const descriptions={B1:'Iniciación: equilibrio, postura y primeros controles del patinaje.',B2:'Desarrollo: afianzar el control y combinar movimientos técnicos.',B3:'Progresión técnica: frenadas, precisión y desafíos de mayor complejidad.',B4:'Nivel avanzado: contenido pedagógico pendiente de definir; todavía no hay ejercicios cargados.'}
+ async function load(){setLoading(true);const {data,error:e}=await supabase.rpc('pr_tareas_admin_student_roster',{p_month:month+'-01'});if(e)setError(e.message);else{setStudents(data?.students||[]);setError('')}setLoading(false)}
+ useEffect(()=>{load()},[month])
+ const visible=students.filter(p=>level==='pending'?!p.level:p.level===level)
+ const unplanned=students.filter(p=>p.level&&!p.has_plan).length
+ const unclassified=students.filter(p=>!p.level).length
+ function toggle(id){setChosen(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id])}
+ async function assign(){if(!chosen.length||level==='pending')return;const confirmed=window.confirm('¿Asignar '+chosen.length+' alumnos al nivel '+level+'? Esto modifica su nivel pedagógico, pero no publica tareas.');if(!confirmed)return;setSaving(true);const {data,error:e}=await supabase.rpc('pr_tareas_admin_bulk_set_level',{p_ids:chosen,p_level:level});if(e)setError(e.message);else{setError('Se clasificaron '+data.count+' alumnos en '+level+'.');setChosen([]);await load()}setSaving(false)}
+ return <section className="mt-4 rounded-2xl border border-white/10 bg-[#101014] p-4"><h3 className="text-lg font-black">Clasificar alumnos por nivel</h3><p className="mt-2 text-xs leading-5 text-white/65">Seleccioná un bloque, marcá los alumnos y guardá el nivel para todos juntos. Esto no les asigna todavía los seis desafíos mensuales.</p><label className="mt-4 block text-xs font-bold" htmlFor="roster-month">Mes a controlar</label><input id="roster-month" type="month" value={month} onChange={e=>{setMonth(e.target.value);setChosen([])}} className="mt-2 rounded-lg border border-white/20 bg-[#18191D] p-2 text-sm"/><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">{['pending','B1','B2','B3','B4'].map(l=><button key={l} type="button" onClick={()=>{setLevel(l);setChosen([])}} className={`rounded-xl border p-3 text-left text-xs ${level===l?'border-[#BBFF1F] bg-[#BBFF1F]/10':'border-white/15'}`}><strong className="block text-sm">{l==='pending'?'Sin nivel':l}</strong><span className="text-white/65">{students.filter(p=>l==='pending'?!p.level:p.level===l).length} alumnos</span></button>)}</div><p className="mt-3 text-xs text-white/65">{level==='pending'?'Alumnos sin nivel confirmado. Entrá a B1, B2, B3 o B4 para asignarles su categoría.':descriptions[level]}</p><p className="mt-3 text-xs font-semibold text-[#BBFF1F]">{unclassified} sin nivel · {unplanned} con nivel pero sin plan para {month}</p>{error&&<p role="status" className="mt-3 text-xs text-[#FF8DAF]">{error}</p>}{loading?<p className="mt-4 text-sm">Cargando alumnos…</p>:<><div className="mt-4 max-h-80 space-y-2 overflow-y-auto">{visible.map(p=><label key={p.id} className="flex items-center gap-3 rounded-lg border border-white/10 p-3 text-sm"><input type="checkbox" checked={chosen.includes(p.id)} onChange={()=>toggle(p.id)} disabled={!!p.has_plan}/><span className="flex-1">{p.name}</span><span className="text-xs text-white/50">{p.has_plan?'Plan guardado':p.level?'Falta plan':'Sin nivel'}</span></label>)}{visible.length===0&&<p className="text-xs text-white/50">No hay alumnos en este grupo.</p>}</div>{level!=='pending'&&<button type="button" disabled={saving||chosen.length===0} onClick={assign} className="mt-4 w-full rounded-xl bg-[#BBFF1F] px-4 py-3 text-sm font-black text-black disabled:opacity-40">{saving?'Guardando…':'Asignar '+chosen.length+' alumnos a '+level}</button>}</>}</section>
+}
+
 function TrainingStudentSearch(){
  const [query,setQuery]=useState('')
  const [items,setItems]=useState([])
@@ -124,7 +137,7 @@ function TrainingStudentSearch(){
   setPreviewBusy(false)
  }
  return <div className="mt-4 rounded-2xl bg-[#101014] p-4">
-  <h3 className="text-lg font-black">Alumnos y preparación de tareas</h3>
+  <TrainingLevelRoster/><h3 className="text-lg font-black">Alumnos y preparación de tareas</h3>
   <p className="mt-1 text-xs text-white/50">Buscá un perfil, confirmá su nivel y revisá sus ejercicios originales antes de asignarlos.</p>
   <form onSubmit={search} className="mt-4 flex gap-2"><input value={query} onChange={e=>setQuery(e.target.value)} minLength={2} required placeholder="Nombre del alumno" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm"/><button className="rounded-xl bg-[#BBFF1F] px-4 font-bold text-[#0D0303]">Buscar</button></form>
   {message&&<p role="status" className="mt-3 text-xs text-[#FF8DAF]">{message}</p>}
