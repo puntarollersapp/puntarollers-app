@@ -60,7 +60,7 @@ export default function PatchRegistry(){
  const [recordFilter,setRecordFilter]=useState('all')
  const [lastSync,setLastSync]=useState(null)
  const [revision,setRevision]=useState(0)
- useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('patch-profile-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_attendance'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_classes'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_ids',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_training_task_results',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_performance_tomas',filter:'alumno_id=eq.'+user.id},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
+ useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('patch-profile-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_attendance'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_classes'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_ids',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_training_task_results',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_performance_tomas',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_profile_frames',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_collectible_frames'},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true;async function load(){try{
   const [identities,activities,rsvps,training,times,frames,grants]=await Promise.all([
    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).is('child_id',null),
@@ -100,7 +100,7 @@ export default function PatchRegistry(){
  const constanciaUnlocked=!s.loading&&!s.error&&summary.scans.length>=10
  const distanceUnlocked=!s.loading&&!s.error&&summary.skateKm>=100&&summary.possibleDuplicates===0
  const christmasActive=!s.loading&&!s.error&&todayUruguay().slice(5,7)==='12'
- const shifterEligible=!s.loading&&!s.error&&summary.officialTimes>0
+ const shifterEligible=false // Requiere evidencia de tiempo vinculada específicamente al evento Shifter
  return <div className="mt-5 space-y-5">
  <section className="relative overflow-hidden rounded-[32px] border border-[#C4FF24]/30 p-6 sm:p-10" style={{background:'radial-gradient(circle at 75% 30%,rgba(196,255,36,.2),transparent 60%),#1C241E'}}>
 <p className="text-[10px] font-black tracking-[.2em] text-[#C4FF24]">PR CHECK / ASISTENCIAS CONFIRMADAS</p>
