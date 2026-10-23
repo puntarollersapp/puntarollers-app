@@ -113,6 +113,10 @@ function TrainingStudentSearch(){
  const [savingPlan,setSavingPlan]=useState(false)
  const [savedPlan,setSavedPlan]=useState(false)
  const [autoNotice,setAutoNotice]=useState('')
+ const [batch,setBatch]=useState([])
+ const [batchBusy,setBatchBusy]=useState(false)
+ const [batchError,setBatchError]=useState('')
+ async function checkMonthlyBatch(){setBatchBusy(true);const {data,error}=await supabase.rpc('pr_tareas_admin_monthly_batch_preview',{p_month:month+'-01'});if(error)setBatchError(error.message);else{setBatch(data?.students||[]);setBatchError('')}setBatchBusy(false)}
  async function search(e){
   e.preventDefault()
   const {data,error}=await supabase.rpc('pr_training_v2_admin_search_students',{p_query:query.trim()})
@@ -137,7 +141,7 @@ function TrainingStudentSearch(){
   setPreviewBusy(false)
  }
  return <div className="mt-4 rounded-2xl bg-[#101014] p-4">
-  <TrainingLevelRoster/><h3 className="text-lg font-black">Alumnos y preparación de tareas</h3>
+  <TrainingLevelRoster/><section className="mt-4 rounded-xl border border-white/10 p-4"><h3 className="text-base font-black">Control mensual de todos los alumnos</h3><p className="mt-2 text-xs text-white/60">Detecta alumnos sin nivel, sin seis ejercicios habilitados o con plan ya guardado. No publica tareas.</p><button type="button" onClick={checkMonthlyBatch} disabled={batchBusy} className="mt-3 rounded-lg border border-[#BBFF1F]/50 px-3 py-2 text-xs font-bold text-[#BBFF1F]">{batchBusy?'Comprobando…':'Comprobar alumnos del mes'}</button>{batchError&&<p role="alert" className="mt-2 text-xs text-[#FF8DAF]">{batchError}</p>}<p className="mt-3 text-xs text-white/70">{batch.length} alumnos revisados · {batch.filter(p=>p.status==='unclassified').length} sin nivel · {batch.filter(p=>p.status==='not_ready'||p.status==='no_cycle').length} sin preparación · {batch.filter(p=>p.status==='assigned').length} con plan · {batch.filter(p=>p.status==='ready').length} listos para preparar</p><div className="mt-3 max-h-64 space-y-2 overflow-y-auto">{batch.filter(p=>p.status!=='assigned').map(p=><div key={p.id} className="flex justify-between gap-2 border-b border-white/10 py-2 text-xs"><span>{p.name} · {p.level||'Sin nivel'}</span><span className="text-white/50">{p.status==='unclassified'?'Falta nivel':p.status==='ready'?'Listo para preparar':(p.eligible_count||0)+' de 6 ejercicios listos'}</span></div>)}</div></section><h3 className="text-lg font-black">Alumnos y preparación de tareas</h3>
   <p className="mt-1 text-xs text-white/50">Buscá un perfil, confirmá su nivel y revisá sus ejercicios originales antes de asignarlos.</p>
   <form onSubmit={search} className="mt-4 flex gap-2"><input value={query} onChange={e=>setQuery(e.target.value)} minLength={2} required placeholder="Nombre del alumno" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm"/><button className="rounded-xl bg-[#BBFF1F] px-4 font-bold text-[#0D0303]">Buscar</button></form>
   {message&&<p role="status" className="mt-3 text-xs text-[#FF8DAF]">{message}</p>}
