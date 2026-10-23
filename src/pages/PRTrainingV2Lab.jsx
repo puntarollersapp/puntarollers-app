@@ -221,8 +221,7 @@ function PRTareasHome({user}){
  useEffect(()=>{try{const stored=Number(localStorage.getItem('pr-tareas-reveal-'+user?.id+'-'+month)||0);setRevealed(Number.isFinite(stored)?Math.max(0,Math.min(6,stored)):0)}catch{setRevealed(0)}},[user?.id,month])
  useEffect(()=>{let cancelled=false;async function loadProfile(){if(!user?.id)return;const {data}=await supabase.from('profiles').select('id,nombre,foto,pr_avatar').eq('id',user.id).maybeSingle();if(!cancelled&&data)setProfile(data)}loadProfile();return()=>{cancelled=true}},[user?.id])
  const tasks=Array.isArray(plan?.duties)?plan.duties:[]
- const submissions={}
- const done=tasks.filter(t=>(submissions[t.assignment_duty_id]?.status||t.latest_status)==='approved').length
+ const done=tasks.filter(t=>(t.latest_status)==='approved').length
  const percent=tasks.length?Math.round(done/tasks.length*100):0
  const discovered=tasks.length===6?Math.min(revealed,6):0
  const inReview=tasks.filter(t=>['submitted','under_review'].includes(submissions[t.assignment_duty_id]?.status||t.latest_status)).length
