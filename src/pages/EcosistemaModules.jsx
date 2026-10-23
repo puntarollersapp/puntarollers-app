@@ -36,7 +36,7 @@ function useEcosystemData(){
     loadAllActivities(user.id),
     supabase.from('profiles').select('id,nombre,apellido,foto,miembro_desde').eq('id',user.id).maybeSingle()
    ])
-   if(live){setState({loading:false,error:[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · '),truncated:!!a.truncated,activities:a.data||[],profile:p.data||null});setRefreshing(false);if(!a.error&&!p.error)setLastUpdated(new Date())}
+   if(live){const error=[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · ');setState(prev=>({loading:false,error,truncated:error?prev.truncated:!!a.truncated,activities:error?prev.activities:(a.data||[]),profile:error?prev.profile:(p.data||null)}));setRefreshing(false);if(!error)setLastUpdated(new Date())}
   }fetchData();return()=>{live=false}
  },[user?.id,revision])
  const data=useMemo(()=>{
@@ -65,7 +65,7 @@ function Page({kind}){
    <p className="mt-5 text-xs text-white/50">Perfil: {d.profile?.nombre||'Cuenta autenticada'} · Datos de la plataforma oficial</p>
   </header>}
   {d.lastUpdated&&<p className="mt-3 text-[11px] text-white/45">Última consulta correcta: {d.lastUpdated.toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit',timeZone:'America/Montevideo'})} (Uruguay)</p>}
-  {d.loading?<p className="mt-6 rounded-2xl bg-white/5 p-5 text-sm">Consultando registros…</p>:d.error?<p role="alert" className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-200/5 p-5 text-sm text-amber-100">No pudimos consultar los registros de ACTIVE y ORBIT. Conservamos el último dato correcto, pero no lo mostramos como actualizado. {d.error} <button type="button" onClick={d.refresh} className="ml-2 underline underline-offset-4">Reintentar</button></p>:null}
+  {d.loading?<p className="mt-6 rounded-2xl bg-white/5 p-5 text-sm">Consultando registros…</p>:d.error?<p role="alert" className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-200/5 p-5 text-sm text-amber-100">No pudimos actualizar los registros de ACTIVE y ORBIT. No mostramos cifras sin verificar como si fueran actuales. {d.error} <button type="button" onClick={d.refresh} className="ml-2 underline underline-offset-4">Reintentar</button></p>:null}
   {!d.loading&&!d.error&&kind==='active'&&<ActiveNow d={d}/>}
   {!d.loading&&!d.error&&kind==='orbit'&&<OrbitEvolution d={d}/>}
     {kind==='patch'&&<PatchRegistry/>}
