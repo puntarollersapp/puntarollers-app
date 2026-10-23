@@ -187,8 +187,8 @@ function TaskCard({task,index,onClick}){
 export default function PRTrainingV2Lab(){
  const {user,loading}=useAuth()
  const [section,setSection]=useState('spin')
- const [visualLab,setVisualLab]=useState(false)
- const adminView=useLocation().pathname==='/admin/pr-training-control'
+ const [visualLab,setVisualLab]=useState(true)
+ const adminView=useLocation().pathname==='/admin/tareas'
  const [selected,setSelected]=useState(null)
  const [spinCompleted,setSpinCompleted]=useState(false)
  const [spinCount,setSpinCount]=useState(0)
@@ -210,10 +210,9 @@ export default function PRTrainingV2Lab(){
  return <AppLayout>
  <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#14141B] text-[#EFF8FF]">
  <div className="mx-auto w-full min-w-0 max-w-5xl">
-  {!adminView&&<div className="mx-4 mt-4 flex gap-2 rounded-2xl border border-white/15 bg-[#22232B] p-2"><button type="button" onClick={()=>setVisualLab(false)} className={`flex-1 rounded-xl px-3 py-3 text-xs font-black ${!visualLab?'bg-[#C4FF24] text-[#141419]':'text-white/70'}`}>LAB ACTUAL</button><button type="button" onClick={()=>setVisualLab(true)} className={`flex-1 rounded-xl px-3 py-3 text-xs font-black ${visualLab?'bg-[#C4FF24] text-[#141419]':'text-white/70'}`}>NUEVO DISEÑO · REVEAL / PATH</button></div>}
   {adminView?<TrainingDailyControl/>:visualLab?<PRRevealConcept/>:<TrainingStudio user={user}/>}
   {!adminView&&visualLab&&<PRTrainingLiveAudit/>} 
 
-  {adminView&&<footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR Training 2.0 · Laboratorio privado</footer>}
+  {adminView&&<footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR TAREAS · Administración</footer>}
  </div></main></AppLayout>
 }
