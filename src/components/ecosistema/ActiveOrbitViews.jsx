@@ -62,6 +62,11 @@ export function OrbitEvolution({d}){
  const points=values.map((v,i)=>({x:28+i*54,y:176-(v/max)*132}))
  const poly=points.map(p=>p.x+','+p.y).join(' ')
  const trend=previous&&current&&previous.meters>0?(current.meters-previous.meters)/previous.meters*100:null
+ const attendance=(d.otherEvents||[]).filter(x=>x.kind==='attendance')
+ const attendanceMonths=months.map(m=>({month:m.month,count:attendance.filter(a=>ecosystemDayKey(a.fecha_inicio).slice(0,7)===m.month).length}))
+ const totalAttendance=attendance.length
+ const latestAttendance=attendance[0]
+ const maxAttendance=Math.max(1,...attendanceMonths.map(m=>m.count))
  const hasRecords=months.some(m=>m.count>0)
  const selectedMonth=selected===null?null:months[selected]
  return <div className="mt-5 space-y-4 orbit-interior">
@@ -83,6 +88,12 @@ export function OrbitEvolution({d}){
  </section>
  <section className="grid gap-4 md:grid-cols-2"><div className={shell}><p className="text-[10px] font-black tracking-widest text-[#FF9BC4]">FRECUENCIA</p><h3 className="mt-2 text-xl font-black">Tu ritmo por mes</h3><div className="mt-6 space-y-4">{months.map(m=><div key={m.month} className="grid grid-cols-[45px_1fr_25px] items-center gap-3"><span className="text-xs text-white/55">{m.month.slice(5)}</span><div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-[#D95291] to-[#FFB3CF] transition-[width] duration-700" style={{width:ready(d)?m.count/Math.max(1,...months.map(x=>x.count))*100+'%':'0%'}}/></div><span className="text-right text-xs font-black">{ready(d)?m.count:'—'}</span></div>)}</div></div>
  <div className={shell}><p className="text-[10px] font-black tracking-widest text-[#FF9BC4]">TENDENCIA</p><h3 className="mt-2 text-xl font-black">Mes en curso</h3><p className="mt-7 text-5xl font-black text-[#FF9BC4]">{!ready(d)||trend===null?'—':(trend>0?'+':'')+Math.round(trend)+'%'}</p><p className="mt-3 text-sm leading-6 text-white/60">Variación de distancia respecto del mes anterior. Es provisional: el mes actual todavía no terminó.</p>{trend===null&&<p className="mt-4 text-xs text-white/45">Se necesita distancia registrada en el mes anterior para calcular la variación.</p>}</div></section>
+ <section className={shell}>
+ <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-black tracking-[.18em] text-[#FF9BC4]">PR CHECK · ASISTENCIAS VERIFICADAS</p><h3 className="mt-2 text-2xl font-black">Tu constancia en clases</h3><p className="mt-2 max-w-xl text-sm leading-6 text-white/60">Cada escaneo confirmado de tu perfil se incorpora automáticamente a esta sección y al historial de ACTIVE.</p></div><span className="rounded-full border border-[#FF9BC4]/35 bg-[#FF9BC4]/10 px-3 py-2 text-[10px] font-black text-[#FFB3CF]">SINCRONIZADO CON PR CHECK</span></div>
+ <div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="text-[10px] font-black tracking-wider text-white/55">ASISTENCIAS REGISTRADAS</p><p className="mt-2 text-4xl font-black text-[#FF9BC4]">{ready(d)?totalAttendance:'—'}</p><p className="mt-1 text-[11px] text-white/45">Registros disponibles de tu perfil</p></div><div className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="text-[10px] font-black tracking-wider text-white/55">ÚLTIMA ASISTENCIA</p><p className="mt-3 text-xl font-black">{ready(d)&&latestAttendance?day(latestAttendance.fecha_inicio):'—'}</p><p className="mt-2 line-clamp-2 text-xs text-white/55">{latestAttendance?latestAttendance.nombre:'Aún sin escaneos confirmados'}</p></div></div>
+ <div className="mt-6"><p className="mb-4 text-xs font-bold text-white/60">Asistencias por mes · últimos {months.length} meses</p><div className="space-y-3">{attendanceMonths.map(m=><div key={m.month} className="grid grid-cols-[54px_1fr_32px] items-center gap-3"><span className="text-xs text-white/55">{m.month.slice(5)}</span><div className="h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-[#BD4B99] to-[#FFB3CF] transition-[width] duration-700" style={{width:ready(d)?m.count/maxAttendance*100+'%':'0%'}}/></div><span className="text-right text-xs font-black text-[#FFB3CF]">{ready(d)?m.count:'—'}</span></div>)}</div></div>
+ <p className="mt-5 text-[11px] leading-5 text-white/45">Solo cuentan las asistencias confirmadas mediante PR Check; una inscripción a una actividad no equivale a haber asistido. La actualización se solicita al escanear, al volver a la app y periódicamente como respaldo.</p>
+ </section>
  <p className="text-[11px] leading-5 text-white/45">ORBIT analiza únicamente actividades registradas en tu perfil. Las asistencias a clases y las inscripciones a eventos no se cuentan como kilómetros. Las estadísticas son descriptivas, no objetivos configurados.</p>
  </div>
 }
