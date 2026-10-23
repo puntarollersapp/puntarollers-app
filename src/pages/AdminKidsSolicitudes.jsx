@@ -28,7 +28,7 @@ export default function AdminKidsSolicitudes(){
   setReadiness(prev=>({...prev,[r.id]:ready}))
   setReviewHistory(previous=>({...previous,[r.id]:result.reviews||[]}))
   setPreflight(previous=>({...previous,[r.id]:null}))
-  setSelectedProfiles(previous=>({...previous,[r.id]:{}}))
+  // Preserve confirmed candidate choices; approval still requires server-side checks.
  }catch(e){setError(e.message)}finally{setReviewBusy('')}
 }
  async function openReview(r){
