@@ -28,7 +28,7 @@ function useEcosystemData(){
  const [revision,setRevision]=useState(0)
  const [refreshing,setRefreshing]=useState(false)
  const [lastUpdated,setLastUpdated]=useState(null)
- useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('ecosistema-activities-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
+ useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('ecosistema-activities-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'INSERT',schema:'public',table:'pr_check_attendance'},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true
   async function fetchData(){
    setRefreshing(true)
@@ -40,7 +40,7 @@ function useEcosystemData(){
    ])
    let otherEvents=[]
    if(!ids.error&&(ids.data||[]).length){const att=await supabase.from('pr_check_attendance').select('id,class_id,identity_id,scanned_at').in('identity_id',ids.data.map(x=>x.id)).order('scanned_at',{ascending:false}).limit(250);if(!att.error&&att.data?.length){const classes=await supabase.from('pr_check_classes').select('id,title,starts_at,status,is_test').in('id',[...new Set(att.data.map(x=>x.class_id))]);const byId=new Map((classes.data||[]).map(x=>[x.id,x]));otherEvents.push(...att.data.filter(x=>byId.has(x.class_id)&&!byId.get(x.class_id).is_test).map(x=>({id:'class-'+x.id,nombre:byId.get(x.class_id).title||'Clase Punta Rollers',fecha_inicio:byId.get(x.class_id).starts_at||x.scanned_at,fuente:'Asistencia verificada',kind:'attendance',detail:'Asistencia registrada mediante PR Check'})))}}
-   if(!rsvps.error){otherEvents.push(...(rsvps.data||[]).filter(x=>!['cancelled','cancelado','rejected','rechazado'].includes(String(x.status||'').toLowerCase())).map(x=>({id:'rsvp-'+x.id,nombre:'Evento · '+String(x.event_slug||'Punta Rollers').replace(/[-_]/g,' '),fecha_inicio:x.created_at,fuente:'Inscripción a evento',kind:'rsvp',detail:'Inscripción registrada · '+(x.status||'estado no informado')}))}
+   if(!rsvps.error){otherEvents.push(...(rsvps.data||[]).filter(x=>!['cancelled','cancelado','rejected','rechazado'].includes(String(x.status||'').toLowerCase())).map(x=>({id:'rsvp-'+x.id,nombre:'Evento · '+String(x.event_slug||'Punta Rollers').replace(/[-_]/g,' '),fecha_inicio:x.created_at,fuente:'Inscripción a evento',kind:'rsvp',detail:'Inscripción registrada · '+(x.status||'estado no informado')})))}
    otherEvents.sort((x,y)=>new Date(y.fecha_inicio)-new Date(x.fecha_inicio))
    if(live){const error=[a.error,p.error].filter(Boolean).map(x=>x.message).join(' · ');setState(prev=>({loading:false,error,truncated:error?prev.truncated:!!a.truncated,activities:error?prev.activities:(a.data||[]),otherEvents:error?prev.otherEvents:otherEvents,profile:error?prev.profile:(p.data||null)}));setRefreshing(false);if(!error)setLastUpdated(new Date())}
   }fetchData();return()=>{live=false}
