@@ -212,8 +212,11 @@ function PRTareasHome({user}){
   setBusy(true);const {data,error:e}=await supabase.rpc('pr_training_v2_student_assignments',{p_month:month})
   if(e)setError(e.message);else {setPlan(data);setError('')}setBusy(false)
  }
- useEffect(()=>{refresh()},[])
+ useEffect(()=>{refresh()},[month])
+ useEffect(()=>{try{const stored=Number(localStorage.getItem('pr-tareas-reveal-'+user?.id+'-'+month)||0);setRevealed(Number.isFinite(stored)?Math.max(0,Math.min(6,stored)):0)}catch{setRevealed(0)}},[user?.id,month])
+ useEffect(()=>{let cancelled=false;async function loadProfile(){if(!user?.id)return;const {data}=await supabase.from('profiles').select('id,nombre,foto,pr_avatar').eq('id',user.id).maybeSingle();if(!cancelled&&data)setProfile(data)}loadProfile();return()=>{cancelled=true}},[user?.id])
  const tasks=Array.isArray(plan?.duties)?plan.duties:[]
+ const submissions={}
  const done=tasks.filter(t=>(submissions[t.assignment_duty_id]?.status||t.latest_status)==='approved').length
  const percent=tasks.length?Math.round(done/tasks.length*100):0
  const discovered=tasks.length===6?Math.min(revealed,6):0
