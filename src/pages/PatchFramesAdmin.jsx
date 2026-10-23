@@ -32,8 +32,8 @@ export default function PatchFramesAdmin(){
   if(busy)return
   if(!window.confirm((frame.enabled?'¿Deshabilitar':'¿Habilitar')+' el marco «'+frame.title+'» en el catálogo?'))return
   setBusy(true);setError('');setNotice('')
-  const {error:writeError}=await supabase.from('pr_collectible_frames').update({enabled:!frame.enabled}).eq('code',frame.code)
-  if(writeError)setError(writeError.message)
+  const {error:writeError,data:changedCatalog}=await supabase.from('pr_collectible_frames').update({enabled:!frame.enabled}).eq('code',frame.code).select('code')
+  if(writeError||!changedCatalog?.length)setError(writeError?.message||'No se modificó el catálogo. Verificá los permisos.')
   else{await load();setNotice('Estado del catálogo actualizado.')}
   setBusy(false)
  }
@@ -47,8 +47,8 @@ export default function PatchFramesAdmin(){
   setBusy(true);setError('');setNotice('')
   const now=new Date().toISOString()
   const payload=revoke?{revoked_at:now,revoked_by:user.id,equipped_at:null}:{profile_id:profileId,frame_code:frameCode,grant_source:'admin',granted_by:user.id,granted_at:now,revoked_at:null,revoked_by:null}
-  const result=revoke?await supabase.from('pr_profile_frames').update(payload).eq('profile_id',profileId).eq('frame_code',frameCode):await supabase.from('pr_profile_frames').upsert(payload,{onConflict:'profile_id,frame_code'})
-  if(result.error)setError(result.error.message)
+  const result=revoke?await supabase.from('pr_profile_frames').update(payload).eq('profile_id',profileId).eq('frame_code',frameCode).select('profile_id,frame_code'):await supabase.from('pr_profile_frames').upsert(payload,{onConflict:'profile_id,frame_code'}).select('profile_id,frame_code')
+  if(result.error||!result.data?.length)setError(result.error?.message||'No se modificó ninguna asignación. Verificá los permisos y el estado actual.')
   else{setNotice(revoke?'Marco revocado correctamente.':'Marco otorgado correctamente.');await load()}
   setBusy(false)
  }
