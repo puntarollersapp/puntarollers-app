@@ -28,6 +28,15 @@ export default function PatchFramesAdmin(){
  useEffect(()=>{load()},[])
  const matches=useMemo(()=>profiles.filter(p=>(p.nombre+' '+p.apellido).toLocaleLowerCase().includes(search.toLocaleLowerCase())).slice(0,60),[profiles,search])
  const assigned=grants.filter(g=>g.profile_id===profileId)
+ const toggleFrame=async(frame)=>{
+  if(busy)return
+  if(!window.confirm((frame.enabled?'¿Deshabilitar':'¿Habilitar')+' el marco «'+frame.title+'» en el catálogo?'))return
+  setBusy(true);setError('');setNotice('')
+  const {error:writeError}=await supabase.from('pr_collectible_frames').update({enabled:!frame.enabled}).eq('code',frame.code)
+  if(writeError)setError(writeError.message)
+  else{await load();setNotice('Estado del catálogo actualizado.')}
+  setBusy(false)
+ }
  const change=async(revoke)=>{
   if(!profileId||!frameCode||busy)return
   const frame=frames.find(f=>f.code===frameCode)
@@ -45,6 +54,7 @@ export default function PatchFramesAdmin(){
  }
  return <AppLayout><main className="mx-auto max-w-5xl px-4 py-8 text-white"><Link to="/app/ecosistema/patch" className="text-sm text-[#C4FF24]">← Volver a PATCH</Link><h1 className="mt-5 text-3xl font-black">Administrar marcos PATCH</h1><p className="mt-2 text-sm text-white/60">Asignaciones manuales vinculadas a perfiles reales. Las acciones quedan registradas en Supabase.</p>
  {error&&<p role="alert" className="mt-4 rounded-xl border border-red-400/40 p-3 text-sm text-red-200">{error}</p>}{notice&&<p role="status" className="mt-4 rounded-xl border border-[#C4FF24]/40 p-3 text-sm text-[#C4FF24]">{notice}</p>}
+ <section className="mt-6 rounded-2xl border border-white/15 bg-[#20242B] p-5"><h2 className="text-lg font-black">Catálogo de marcos</h2><p className="mt-2 text-xs text-white/60">Los marcos deshabilitados no se entregan. Habilitarlos no otorga premios automáticamente.</p><div className="mt-4 grid gap-3 sm:grid-cols-2">{frames.map(frame=><div key={frame.code} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><div><p className="text-sm font-bold">{frame.title}</p><p className="text-xs text-white/50">{frame.enabled?"Habilitado":"Deshabilitado"}</p></div><button type="button" disabled={busy} onClick={()=>toggleFrame(frame)} className="rounded-lg border border-[#C4FF24]/40 px-3 py-2 text-xs font-bold text-[#C4FF24] disabled:opacity-40">{frame.enabled?"Deshabilitar":"Habilitar"}</button></div>)}</div></section>
  <div className="mt-6 grid gap-5 rounded-2xl border border-white/15 bg-[#20242B] p-5"><label className="text-sm font-bold">Buscar alumno<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nombre o apellido" className="mt-2 w-full rounded-xl border border-white/20 bg-black/30 p-3 text-white"/></label><label className="text-sm font-bold">Perfil<select value={profileId} onChange={e=>{setProfileId(e.target.value);setFrameCode('')}} className="mt-2 w-full rounded-xl border border-white/20 bg-[#20242B] p-3 text-white"><option value="">Seleccionar perfil</option>{matches.map(p=><option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>)}</select></label><label className="text-sm font-bold">Marco<select value={frameCode} onChange={e=>setFrameCode(e.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-[#20242B] p-3 text-white"><option value="">Seleccionar marco</option>{frames.map(f=><option key={f.code} value={f.code}>{f.title}{f.enabled?'':' (deshabilitado)'}</option>)}</select></label>
  {profileId&&<div className="rounded-xl border border-white/10 p-4"><p className="text-xs font-black tracking-widest text-[#C4FF24]">MARCOS DEL PERFIL</p>{assigned.length?assigned.map(g=><p key={g.frame_code} className="mt-2 text-sm">{frames.find(f=>f.code===g.frame_code)?.title||g.frame_code} — {g.revoked_at?'Revocado':'Otorgado'}</p>):<p className="mt-2 text-sm text-white/50">Sin asignaciones registradas.</p>}</div>}
  <div className="flex flex-wrap gap-3"><button type="button" disabled={!profileId||!frameCode||busy||!frames.find(f=>f.code===frameCode)?.enabled} onClick={()=>change(false)} className="rounded-xl bg-[#C4FF24] px-5 py-3 text-sm font-black text-black disabled:opacity-40">Otorgar marco</button><button type="button" disabled={!profileId||!frameCode||busy||!assigned.some(g=>g.frame_code===frameCode&&!g.revoked_at)} onClick={()=>change(true)} className="rounded-xl border border-red-300/50 px-5 py-3 text-sm font-black text-red-200 disabled:opacity-40">Revocar marco</button></div></div></main></AppLayout>
