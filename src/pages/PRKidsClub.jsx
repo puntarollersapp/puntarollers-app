@@ -8,7 +8,7 @@ import {existingGuardianNeedsLogin} from '../lib/prKidsGuardianOnboarding'
 import './PRKidsInscripciones2026.css'
 import PRKidsFamilyDashboard from '../components/PRKidsFamilyDashboard'
 import PRKidsDemoStudio from '../components/PRKidsDemoStudio'
-const features=[['✦','Qué hicimos hoy','Conocé qué practicamos en la clase del sábado.','blue'],['▣','Pasaporte roller','Cada asistencia registrada con el escáner suma un sello para premios.','pink'],['★','Insignias','Descubrí las habilidades y los logros que consiguió.','yellow'],['▧','Fotos y videos','Recuerdos de las clases en una galería privada.','green']]
+const features=[['✦','Qué hicimos hoy','Conocé qué practicamos en la clase del sábado.','blue'],['▣','Asistencias Check','Cada asistencia confirmada se registra con un sello digital.','pink'],['★','Insignias','Descubrí las habilidades y los logros que consiguió.','yellow'],['▧','Fotos y videos','Recuerdos de las clases en una galería privada.','green']]
 const initial={nombre_tutor:'',documento_tutor:'',email_tutor:'',telefono_tutor:'',nombre_nino:'',vinculo:'',es_alumno:null}
 function Input({label,value,onChange,type='text',placeholder,required=true,readOnly=false}){return <label className="full"><span>{label}</span><input required={required} readOnly={readOnly} type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}/></label>}
 export default function PRKidsClub(){
@@ -47,8 +47,8 @@ export default function PRKidsClub(){
   {stage==='home'&&!demoMode&&!familyHome&&!familyLoading&&<section className="prk-stage prk-stage-home">{guardianAccess&&<p role="status" className="mb-5 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-amber-100">{guardianAccess}</p>}
    <span className="prk-home-topline">✦ BIENVENIDOS A PR KIDS CLUB ✦</span>
    <h1 className="prk-home-title">MIRÁ CÓMO<br/><em>APRENDE A PATINAR.</em></h1>
-   <p className="prk-lead prk-home-lead">Conocé qué practicó tu hijo en cada clase, seguí su pasaporte roller y encontrá sus recuerdos. Un espacio privado para acompañarlo desde casa.</p>
-   <div className="prk-home-ribbon">PASAPORTE ROLLER · CADA ASISTENCIA CONFIRMADA SUMA UN SELLO</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Si tenés más de un hijo en PR Kids, vas a poder acompañarlos desde el mismo acceso familiar.</p>
+   <p className="prk-lead prk-home-lead">Conocé qué practicó tu hijo en cada clase, consultá sus Asistencias Check y encontrá sus recuerdos. Un espacio privado para acompañarlo desde casa.</p>
+   <div className="prk-home-ribbon">ASISTENCIAS CHECK · CADA ASISTENCIA CONFIRMADA SUMA UN SELLO</div><p className="prk-lead prk-home-lead" style={{fontSize:".91rem",marginTop:12}}>Si tenés más de un hijo en PR Kids, vas a poder acompañarlos desde el mismo acceso familiar.</p>
    <div className="prk-quick-grid prk-quick-grid-home">{features.map(([icon,title,desc,color])=><article className={color} key={title}><span>{icon}</span><div><b>{title}</b><small>{desc}</small></div></article>)}</div>
    <button className="prk-primary" onClick={()=>setStage('form')}>PEDIR ACCESO PARA MI HIJO/A →</button>
    <Link to="/kids?demo=1" className="mt-4 block rounded-xl border border-[#69d9ff]/35 bg-[#69d9ff]/10 px-5 py-4 text-center text-sm font-black text-[#9ceaff]">EXPLORAR DEMO FAMILIAR →</Link>
