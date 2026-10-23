@@ -91,21 +91,36 @@ function TrainingStudentSearch(){
  const [query,setQuery]=useState('')
  const [items,setItems]=useState([])
  const [message,setMessage]=useState('')
+ const [selected,setSelected]=useState(null)
+ const [preview,setPreview]=useState(null)
+ const [previewBusy,setPreviewBusy]=useState(false)
  async function search(e){
   e.preventDefault()
   const {data,error}=await supabase.rpc('pr_training_v2_admin_search_students',{p_query:query.trim()})
   if(error)setMessage(error.message);else {setItems(data||[]);setMessage('')}
+  setSelected(null);setPreview(null)
  }
  async function setLevel(id,level){
   const {error}=await supabase.rpc('pr_training_v2_admin_set_level',{p_profile_id:id,p_level:level})
-  if(error)setMessage(error.message);else setItems(rows=>rows.map(r=>r.id===id?{...r,level}:r))
+  if(error)setMessage(error.message);else {setItems(rows=>rows.map(r=>r.id===id?{...r,level}:r));setSelected(null);setPreview(null)}
+ }
+ async function previewStudent(p){
+  setSelected(p);setPreview(null);setPreviewBusy(true)
+  const [catalog,eligibility]=await Promise.all([
+   supabase.from('pr_training_v2_duties').select('duty_code,title,level_code,instructions,evidence_type,metadata,active,demo_ready,requires_explicit_enable').eq('level_code',p.level).order('duty_code'),
+   supabase.rpc('pr_tareas_preview_selection',{p_level:p.level})
+  ])
+  if(catalog.error||eligibility.error)setMessage(catalog.error?.message||eligibility.error?.message)
+  else {setMessage('');setPreview({duties:catalog.data||[],eligible:eligibility.data})}
+  setPreviewBusy(false)
  }
  return <div className="mt-4 rounded-2xl bg-[#101014] p-4">
-  <h3 className="text-lg font-black">Buscar alumnos</h3>
-  <p className="mt-1 text-xs text-white/50">Los alumnos nuevos empiezan en B1. Cambiá su nivel desde acá.</p>
+  <h3 className="text-lg font-black">Alumnos y preparación de tareas</h3>
+  <p className="mt-1 text-xs text-white/50">Buscá un perfil, confirmá su nivel y revisá sus ejercicios originales antes de asignarlos.</p>
   <form onSubmit={search} className="mt-4 flex gap-2"><input value={query} onChange={e=>setQuery(e.target.value)} minLength={2} required placeholder="Nombre del alumno" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm"/><button className="rounded-xl bg-[#BBFF1F] px-4 font-bold text-[#0D0303]">Buscar</button></form>
-  {message&&<p role="status" className="mt-3 text-xs">{message}</p>}
-  <div className="mt-4 space-y-2">{items.map(p=><div key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-white/5 p-3"><div><p className="text-sm font-bold">{p.name}</p><p className="text-xs text-white/40">{p.level}</p></div><select value={p.level} onChange={e=>setLevel(p.id,e.target.value)} aria-label={'Nivel de '+p.name} className="rounded-lg bg-[#1A1A1D] p-2 text-sm">{['B1','B2','B3'].map(l=><option key={l}>{l}</option>)}</select></div>)}</div>
+  {message&&<p role="status" className="mt-3 text-xs text-[#FF8DAF]">{message}</p>}
+  <div className="mt-4 space-y-2">{items.map(p=><div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 p-3"><div><p className="text-sm font-bold">{p.name}</p><p className="text-xs text-white/40">Nivel actual: {p.level}</p></div><div className="flex items-center gap-2"><select value={p.level} onChange={e=>setLevel(p.id,e.target.value)} aria-label={'Nivel de '+p.name} className="rounded-lg bg-[#1A1A1D] p-2 text-sm">{['B1','B2','B3','B4'].map(l=><option key={l}>{l}</option>)}</select><button type="button" onClick={()=>previewStudent(p)} className="rounded-lg border border-[#BBFF1F]/50 px-3 py-2 text-xs font-bold text-[#BBFF1F]">Ver plan</button></div></div>)}</div>
+  {selected&&<section className="mt-5 rounded-2xl border border-[#BBFF1F]/30 bg-white/5 p-4"><p className="text-xs font-black uppercase tracking-widest text-[#BBFF1F]">Vista previa docente · sin publicar</p><h4 className="mt-2 text-lg font-black">{selected.name} · {selected.level}</h4>{previewBusy?<p className="mt-3 text-sm">Consultando ejercicios…</p>:preview&&<><p className="mt-2 text-sm text-white/65">{preview.duties.length} ejercicios desarrollados · {preview.eligible?.eligible_count||0} habilitados para selección de seis.</p><p className="mt-2 text-xs text-white/45">Los ejercicios sin video aprobado siguen en la biblioteca, pero todavía no están habilitados para asignación automática.</p><div className="mt-4 space-y-2">{preview.duties.map(d=><details key={d.duty_code} className="rounded-xl border border-white/10 bg-black/20 p-3"><summary className="cursor-pointer text-sm font-bold"><span className="text-[#BBFF1F]">{d.duty_code}</span> · {d.title} <span className="ml-1 text-xs font-normal text-white/45">{d.active&&d.demo_ready&&!d.requires_explicit_enable?'Listo':'En preparación'}</span></summary><div className="mt-3 space-y-2 text-xs leading-5 text-white/65"><p><strong>Objetivo:</strong> {d.metadata?.objective||d.instructions}</p><p><strong>Práctica:</strong> {d.metadata?.work||'Según planificación docente'}</p><p><strong>Entrega:</strong> {d.metadata?.delivery||'Según indicación docente'}</p><p><strong>Evidencia:</strong> {d.evidence_type}</p></div></details>)}</div></>}</section>}
  </div>
 }
 
