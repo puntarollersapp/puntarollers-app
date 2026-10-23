@@ -64,7 +64,7 @@ export default function PatchRegistry(){
  const [revision,setRevision]=useState(0)
  useEffect(()=>{if(!user?.id)return;const refresh=()=>setRevision(v=>v+1);const channel=supabase.channel('patch-profile-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_attendance'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_classes'},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_check_ids',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_activities',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_training_task_results',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_performance_tomas',filter:'alumno_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_profile_frames',filter:'profile_id=eq.'+user.id},refresh).on('postgres_changes',{event:'*',schema:'public',table:'pr_collectible_frames'},refresh).subscribe();const timer=setInterval(refresh,30000);return()=>{clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
  useEffect(()=>{if(!user?.id)return;let live=true;async function load(){try{
-  const {error:syncError}=await supabase.rpc('pr_sync_my_collectible_frames');if(syncError)throw syncError
+  await supabase.rpc('pr_sync_my_collectible_frames') // La colección sigue disponible si falla una sincronización.
   const [identities,activities,rsvps,training,times,frames,grants]=await Promise.all([
    supabase.from('pr_check_ids').select('id').eq('profile_id',user.id).is('child_id',null),
    loadPatchActivities(user.id),
