@@ -61,7 +61,9 @@ export function OrbitEvolution({d}){
  const best=months.reduce((winner,m)=>!winner||m.meters>winner.meters?m:winner,null)
  const points=values.map((v,i)=>({x:28+i*54,y:176-(v/max)*132}))
  const poly=points.map(p=>p.x+','+p.y).join(' ')
- const trend=previous&&current&&previous.meters>0?(current.meters-previous.meters)/previous.meters*100:null
+ const today=Number(ecosystemDayKey(new Date()).slice(8,10))
+ const baseline=(d.activities||[]).filter(a=>{const day=ecosystemDayKey(a.fecha_inicio);return previous&&day.slice(0,7)===previous.month&&Number(day.slice(8,10))<=today}).reduce((sum,a)=>sum+Number(a.distancia_metros||0),0)
+ const trend=previous&&current&&baseline>0?(current.meters-baseline)/baseline*100:null
  const attendance=(d.otherEvents||[]).filter(x=>x.kind==='attendance')
  const attendanceMonths=months.map(m=>({month:m.month,count:attendance.filter(a=>ecosystemDayKey(a.fecha_inicio).slice(0,7)===m.month).length}))
  const totalAttendance=attendance.length
