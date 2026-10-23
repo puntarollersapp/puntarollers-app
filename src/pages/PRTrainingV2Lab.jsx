@@ -109,13 +109,13 @@ function TrainingStudentSearch(){
  }
  function changeDraft(next){setSelectedCodes(next);try{localStorage.setItem('pr-tareas-draft-'+selected.id+'-'+month,JSON.stringify(next));setDraftNotice('Borrador guardado en este dispositivo. No está publicado.')}catch{setDraftNotice('No se pudo guardar el borrador en este dispositivo.')}}
  async function previewStudent(p){
-  setSelected(p);setPreview(null);setDraftNotice('');setPreviewBusy(true);try{const draft=JSON.parse(localStorage.getItem('pr-tareas-draft-'+p.id+'-'+month)||'[]');setSelectedCodes(Array.isArray(draft)?draft.slice(0,6):[])}catch{setSelectedCodes([])}
+  setSelected(p);setPreview(null);setDraftNotice('');setPreviewBusy(true);try{const draft=JSON.parse(localStorage.getItem('pr-tareas-draft-'+p.id+'-'+month)||'[]');setSelectedCodes(Array.isArray(draft)?draft.filter(x=>typeof x==='string').slice(0,6):[])}catch{setSelectedCodes([])}
   const [catalog,eligibility]=await Promise.all([
    supabase.from('pr_training_v2_duties').select('duty_code,title,level_code,instructions,evidence_type,metadata,active,demo_ready,requires_explicit_enable').eq('level_code',p.level).order('duty_code'),
    supabase.rpc('pr_tareas_preview_selection',{p_level:p.level})
   ])
   if(catalog.error||eligibility.error)setMessage(catalog.error?.message||eligibility.error?.message)
-  else {setMessage('');setPreview({duties:catalog.data||[],eligible:eligibility.data})}
+  else {setMessage('');setPreview({duties:catalog.data||[],eligible:eligibility.data});setSelectedCodes(old=>old.filter(code=>(catalog.data||[]).some(d=>d.duty_code===code&&d.active&&d.demo_ready&&!d.requires_explicit_enable)).slice(0,6))}
   setPreviewBusy(false)
  }
  return <div className="mt-4 rounded-2xl bg-[#101014] p-4">
