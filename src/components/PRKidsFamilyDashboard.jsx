@@ -12,7 +12,7 @@ export default function PRKidsFamilyDashboard({child,demo=false,onBack}){
  const [showTeacher,setShowTeacher]=useState(true)
  const [historySearch,setHistorySearch]=useState(''),[historyDate,setHistoryDate]=useState('all')
  const serverPosts=Array.isArray(child.class_posts)?child.class_posts.map(normalizeFamilyClassPost).filter(Boolean):[]
- const classPosts=demo?[...serverPosts,...sampleSaturdays]:serverPosts
+ const classPosts=serverPosts
  const visibleSaturdays=filterClassPosts(classPosts,{date:historyDate,query:historySearch})
  const availableSaturdays=[...new Set(classPosts.map(post=>post.date))].sort().reverse()
  // Never interpret an unverified child-profile field as a scanner attendance record.
