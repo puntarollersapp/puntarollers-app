@@ -70,7 +70,6 @@ export function OrbitEvolution({d}){
  const latestAttendance=attendance[0]
  const maxAttendance=Math.max(1,...attendanceMonths.map(m=>m.count))
  const hasRecords=months.some(m=>m.count>0)
- const hasHistoricalRecords=(d.activities||[]).length>0
  const selectedMonth=selected===null?null:months[selected]
  return <div className="mt-5 space-y-4 orbit-interior">
  <style>{`@keyframes orbitRise{from{opacity:.25;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes orbitGlow{0%,100%{opacity:.35}50%{opacity:.75}}.orbit-interior>section{animation:orbitRise .6s ease-out both}.orbit-interior>section:nth-of-type(2){animation-delay:.09s}.orbit-interior>section:nth-of-type(3){animation-delay:.18s}.orbit-interior .orbit-glow{animation:orbitGlow 5s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.orbit-interior>section,.orbit-interior .orbit-glow{animation:none!important}}`}</style>
