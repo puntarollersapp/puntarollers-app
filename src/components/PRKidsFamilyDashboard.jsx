@@ -1,9 +1,6 @@
 import {useState} from 'react'
 import {filterClassPosts,formatClassDate,normalizeFamilyClassPost} from '../lib/prKidsClassPosts'
 import './PRKidsFamilyDashboard.css'
-const sampleSaturdays=[{date:'2026-10-03',title:'Equilibrio y frenadas',detail:'Circuito de conos, postura de seguridad y frenada controlada.',skills:['Equilibrio','Frenada en T'],teacher:'Claudio',note:'¡Muy buen trabajo en equipo!',avatar:null},{date:'2026-09-26',title:'Primeros giros',detail:'Giros amplios, coordinación y desplazamiento seguro.',skills:['Giros','Coordinación'],teacher:'David',note:'Seguimos practicando con confianza.',avatar:null}]
-
-
 const sample={
  clases:[{date:'SÁBADO · CLASE DE EJEMPLO',title:'Equilibrio y frenadas',detail:'Circuito de conos, postura de seguridad y frenada controlada.',teacher:'Mensaje de ejemplo: ¡Muy buen trabajo en equipo!'},{date:'MIÉRCOLES · CLASE DE EJEMPLO',title:'Primeros giros',detail:'Giros amplios, coordinación y desplazamiento seguro.',teacher:'Mensaje de ejemplo: Seguimos practicando con confianza.'}],
  skills:[{name:'Equilibrio',detail:'Mantener postura y estabilidad',done:true},{name:'Primeros giros',detail:'Control de dirección',done:true},{name:'Frenada en T',detail:'Aprender a detenerse con seguridad',done:false},{name:'Trabajo en equipo',detail:'Compartir el circuito',done:true}],
