@@ -46,7 +46,7 @@ export default function ClinicParticipationAdmin(){
    ?await supabase.from('pr_clinic_participation').update(payload).eq('id',existing.id)
    :await supabase.from('pr_clinic_participation').insert(payload)
   if(response.error)setError(response.error.message)
-  else setReviews(prev=>existing?prev.map(r=>r.id===existing.id?{...r,...payload}:r):[...prev,{...payload,id:'local-'+profile.id}])
+  else await load()
   setBusy('')
  }
  return <AppLayout><main className="min-h-screen bg-[#101117] px-4 pb-32 pt-8 text-white"><div className="mx-auto max-w-5xl">
