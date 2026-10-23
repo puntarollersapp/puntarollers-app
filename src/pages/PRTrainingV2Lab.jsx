@@ -184,6 +184,42 @@ function TaskCard({task,index,onClick}){
  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-lg text-white/75 transition group-hover:translate-x-0.5" aria-hidden="true">›</span>
  </button>
 }
+
+function PRTareasHome({user}){
+ const [info,setInfo]=useState(''),[open,setOpen]=useState(null),[plan,setPlan]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false)
+ const month=new Date().toISOString().slice(0,7)+'-01'
+ async function refresh(){
+  setBusy(true);const {data,error:e}=await supabase.rpc('pr_training_v2_student_assignments',{p_month:month})
+  if(e)setError(e.message);else {setPlan(data);setError('')}setBusy(false)
+ }
+ useEffect(()=>{refresh()},[])
+ const tasks=Array.isArray(plan?.duties)?plan.duties:[]
+ const done=tasks.filter(t=>t.latest_status==='approved').length
+ const percent=tasks.length?Math.round(done/tasks.length*100):0
+ const statuses={approved:'Aprobada',submitted:'En revisión',under_review:'En revisión',rejected:'Para corregir',changes_requested:'Para corregir'}
+ return <div className="mx-auto max-w-3xl px-4 pb-28 pt-6 text-white">
+  <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#C4FF24]">Punta Rollers / Tareas</p>
+  <h1 className="mt-2 text-3xl font-black italic uppercase">La clase continúa.</h1>
+  <p className="mt-2 max-w-lg text-sm text-white/65">Tus desafíos de patinaje, tus entregas y las devoluciones del equipo docente. Todo en un solo lugar.</p>
+  <nav className="mt-5 grid grid-cols-3 gap-2" aria-label="Información de tareas">
+   {[['como','Cómo funciona'],['estados','Estados'],['recorrido','Tu recorrido']].map(([key,label])=><button key={key} type="button" onClick={()=>setInfo(info===key?'':key)} className={`rounded-xl border px-2 py-3 text-xs font-bold ${info===key?'border-[#C4FF24] bg-[#C4FF24]/15 text-[#C4FF24]':'border-white/15 bg-white/5'}`}>{label}</button>)}
+  </nav>
+  {info&&<section className="mt-3 rounded-2xl border border-white/10 bg-[#1C1D25] p-4 text-sm leading-6 text-white/75">{info==='como'?'Cada mes el equipo docente prepara seis actividades para tu nivel. Practicás, enviás la evidencia solicitada y recibís una devolución.':info==='estados'?'Sin entregar: todavía podés practicar. En revisión: el profesor recibió tu evidencia. Para corregir: hay una devolución para mejorar. Aprobada: el ejercicio fue validado.':'Acá podés consultar tus seis actividades, su estado y cuánto avanzaste. Tu porcentaje se calcula únicamente con tareas aprobadas.'}</section>}
+  <section className="mt-6 rounded-3xl border border-[#C4FF24]/20 bg-gradient-to-br from-[#182319] to-[#111218] p-5">
+   <p className="text-[10px] font-black uppercase tracking-widest text-[#C4FF24]">Tu plan personal · {new Date(month+'T12:00:00').toLocaleDateString('es-UY',{month:'long',year:'numeric'})}</p>
+   <h2 className="mt-3 text-2xl font-black italic uppercase">Claudio preparó tus próximos desafíos.</h2>
+   <p className="mt-3 text-sm leading-6 text-white/65">Seis ejercicios para practicar a tu ritmo, mejorar tu técnica y compartir tus avances con el equipo docente.</p>
+  </section>
+  <section className="mt-7" aria-label="Mis tareas">
+   <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-widest text-[#C4FF24]">PR TAREAS · Mi plan</p><h2 className="mt-1 text-xl font-black">Mis seis tareas</h2></div><button type="button" onClick={refresh} disabled={busy} className="rounded-full border border-white/20 px-3 py-2 text-xs">{busy?'Cargando…':'Actualizar'}</button></div>
+   {error&&<p role="alert" className="mt-4 rounded-xl bg-red-900/25 p-3 text-sm text-red-200">{error}</p>}
+   {!error&&tasks.length===0&&<div className="mt-4 rounded-2xl border border-white/10 bg-[#1B1C24] p-5"><p className="font-bold">Tus tareas todavía no están disponibles.</p><p className="mt-2 text-sm leading-6 text-white/60">Cuando el equipo docente habilite tu ciclo, vas a poder descubrir tus ejercicios acá. No hay tareas pendientes que debas entregar por ahora.</p></div>}
+   <div className="mt-4 space-y-3">{tasks.map((t,i)=><article key={t.assignment_duty_id||i} className="overflow-hidden rounded-2xl border border-white/10 bg-[#1B1C24]"><button type="button" onClick={()=>setOpen(open===i?null:i)} aria-expanded={open===i} className="flex w-full items-center gap-3 p-4 text-left"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#C4FF24]/60 font-black text-[#C4FF24]">{String(t.slot||i+1).padStart(2,'0')}</span><span className="min-w-0 flex-1"><strong className="block text-sm">{t.title}</strong><small className="mt-1 block text-white/50">{statuses[t.latest_status]||'Sin entregar'}</small></span><span className="text-xl text-[#C4FF24]">{open===i?'−':'+'}</span></button>{open===i&&<div className="border-t border-white/10 px-4 pb-5 pt-4"><p className="whitespace-pre-wrap text-sm leading-6 text-white/75">{t.instructions||'El equipo docente completará las instrucciones.'}</p><p className="mt-3 text-xs text-white/50">Evidencia solicitada: {t.evidence_type||'Por confirmar'}</p><p className="mt-2 text-xs text-white/50">Video demostrativo: pendiente de incorporación.</p><p className="mt-3 text-xs text-[#C4FF24]">Validación: {statuses[t.latest_status]||'Aún no enviada'}</p></div>}</article>)}</div>
+  </section>
+  <aside className="fixed bottom-16 left-0 right-0 z-30 border-t border-white/10 bg-[#121319]/95 px-4 py-3 backdrop-blur-md"><div className="mx-auto flex max-w-3xl items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#C4FF24] text-xs font-black text-black">{String(user?.nombre||'PR').slice(0,2).toUpperCase()}</span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2 text-xs"><strong>Mi recorrido</strong><span>{done}/{tasks.length||6} aprobadas · {percent}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#C4FF24]" style={{width:percent+'%'}}/></div></div></div></aside>
+ </div>
+}
+
 export default function PRTrainingV2Lab(){
  const {user,loading}=useAuth()
  const [section,setSection]=useState('spin')
@@ -210,8 +246,8 @@ export default function PRTrainingV2Lab(){
  return <AppLayout>
  <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#14141B] text-[#EFF8FF]">
  <div className="mx-auto w-full min-w-0 max-w-5xl">
-  {adminView?<TrainingDailyControl/>:visualLab?<PRRevealConcept/>:<TrainingStudio user={user}/>}
-  {!adminView&&visualLab&&<PRTrainingLiveAudit/>} 
+  {adminView?<TrainingDailyControl/>:<PRTareasHome user={user}/>}
+
 
   {adminView&&<footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR TAREAS · Administración</footer>}
  </div></main></AppLayout>
