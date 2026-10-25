@@ -34,10 +34,10 @@ export function suggestUniqueTreasuryProfile(childName,candidates=[]){
 export function validateKidsTreasuryAssignments(children=[],assignments={}){
  const ids=children.map((child,index)=>String(assignments[index]||''))
  const problems=[]
- if(ids.some(id=>!id))problems.push('Seleccioná un perfil de Tesorería para cada niño.')
+ if(ids.some(id=>!id))problems.push('Seleccioná un perfil existente o creá uno nuevo para cada niño.')
  if(new Set(ids.filter(Boolean)).size!==ids.filter(Boolean).length)problems.push('Un perfil de Tesorería no puede asignarse a dos niños.')
  children.forEach((child,index)=>{
-  if(ids[index]&&!(child?.matches||[]).some(candidate=>String(candidate.profile_id)===ids[index]))problems.push('Hay un perfil seleccionado que no figura entre los candidatos.')
+  if(ids[index]&&ids[index]!=='NEW:'+(index+1)&&!(child?.matches||[]).some(candidate=>String(candidate.profile_id)===ids[index]))problems.push('Hay un perfil seleccionado que no figura entre los candidatos.')
  })
  return {valid:problems.length===0,problems}
 }
