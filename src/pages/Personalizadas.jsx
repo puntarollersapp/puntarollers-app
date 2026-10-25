@@ -94,6 +94,7 @@ export default function Personalizadas() {
   const [upcoming, setUpcoming] = useState([])
   const [reservedCredits, setReservedCredits] = useState(0)
   const [bookableCredits, setBookableCredits] = useState(0)
+  const [paymentPending, setPaymentPending] = useState(false)
   const [slots, setSlots] = useState([])
   const [selected, setSelected] = useState([])
   const [loading, setLoading] = useState(true)
@@ -128,7 +129,7 @@ export default function Personalizadas() {
   const refreshIdentity = async () => {
     const data = await callPersonal({ action: 'identify', phone, demo: demoMode })
     if (!data.found) return data
-    setStudent(data.student); setPass(data.pass); setUpcoming(data.upcoming || []); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0)); return data
+    setStudent(data.student); setPass(data.pass); setUpcoming(data.upcoming || []); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0)); setPaymentPending(Boolean(data.paymentPending)); return data
   }
 
   const identify = async (event) => {
@@ -143,8 +144,9 @@ export default function Personalizadas() {
       if (wait) await sleep(wait)
       if (!data.found) { setStudent(null); setPass(null); setUpcoming([]); setReservedCredits(0); setBookableCredits(0); setMessage('No encontramos una cuponera activa asociada a ese número. Escribinos por WhatsApp y te ayudamos.'); return }
       const nextUpcoming = data.upcoming || []
-      setStudent(data.student); setPass(data.pass); setUpcoming(nextUpcoming); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0))
-      if (!data.pass) setMessage('Te reconocimos, pero todavía no tenés una cuponera activa visible.')
+      setStudent(data.student); setPass(data.pass); setUpcoming(nextUpcoming); setReservedCredits(Number(data.reservedCredits || 0)); setBookableCredits(Number(data.bookableCredits || 0)); setPaymentPending(Boolean(data.paymentPending))
+      if (data.paymentPending) setMessage('')
+      else if (!data.pass) setMessage('Te reconocimos, pero todavía no tenés una cuponera activa visible.')
       else if (!config?.reservas_habilitadas && nextUpcoming.length === 0) setMessage('No tenés próximas clases reservadas.')
     } catch (error) { setMessage(error.message) } finally { setBusy(false) }
   }
@@ -219,11 +221,13 @@ export default function Personalizadas() {
           {config?.reservas_habilitadas && <label className="pr-terms-check"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} /><span>Leí y acepto los <button type="button" onClick={() => setTermsOpen(true)}>Términos y Condiciones</button>.</span></label>}
           <button disabled={busy} className="pr-primary">{busy ? 'Buscando tu reserva…' : (config?.reservas_habilitadas ? 'Ver mi PR Pass' : 'Ver mi horario')}</button>{busy && <SkateLoader label="Buscando tu ficha…" />}</form>}
 
+        {student && paymentPending && <section role="status" style={{background:'linear-gradient(145deg,#211b24,#111317)',border:'1px solid rgba(255,120,150,.35)',borderRadius:24,padding:'28px 24px',textAlign:'center',marginBottom:22,boxShadow:'0 16px 40px rgba(0,0,0,.18)'}}><div style={{fontSize:12,letterSpacing:3,color:'#ff8ea5',fontWeight:800}}>PR PERSONAL · ESTADO DE CUENTA</div><div style={{fontSize:34,margin:'16px 0 8px'}}>🔒</div><h2 style={{fontSize:25,fontWeight:850,color:'#fff',marginBottom:10}}>Reservas pendientes de habilitación</h2><p style={{color:'#c9c1ca',lineHeight:1.7}}>Tu PR Pass tiene {Number(pass?.clases_disponibles || 0)} clases disponibles. Podés consultar los horarios publicados, pero para reservar primero necesitamos confirmar el pago.</p><div style={{marginTop:20,padding:15,borderRadius:14,background:'rgba(255,255,255,.05)',color:'#ffb7c6',fontWeight:700}}>Pago pendiente · Reservas bloqueadas</div><p style={{color:'#a9a3ae',fontSize:13,marginTop:15}}>Una vez acreditado el pago, Punta Rollers habilitará tus reservas.</p></section>}
+
         {student && pass && <PassCard student={student} pass={pass} reservedCredits={reservedCredits} />}
 
         {student && upcoming.length > 0 && <section className="pr-section-card"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div><strong>{formatDay(item.slot.fecha)}</strong><small>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</small></div><b>RESERVADA</b></div>)}</div></section>}
 
-        {config?.reservas_habilitadas && student && pass && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tus próximas clases</h2><p className="pr-muted">Podés seleccionar y confirmar hasta {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
+        {config?.reservas_habilitadas && student && pass && !paymentPending && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tus próximas clases</h2><p className="pr-muted">Podés seleccionar y confirmar hasta {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
           {days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Sin turnos disponibles por ahora</h3><p>Los horarios que ya pasaron o están a menos de 2 horas de comenzar dejan de mostrarse automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.filter((slot) => !slot.ocupado).length} disponible{daySlots.filter((slot) => !slot.ocupado).length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => {
             const occupied = Boolean(slot.ocupado)
             const chosen = selected.some((item) => item.id === slot.id)
