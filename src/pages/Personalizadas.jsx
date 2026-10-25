@@ -152,7 +152,7 @@ export default function Personalizadas() {
   }
 
   const toggleSlot = (slot) => {
-    if (slot.ocupado || busy) return
+    if (paymentPending || slot.ocupado || busy) return
     setMessage('')
     setSelected((current) => {
       const alreadySelected = current.some((item) => item.id === slot.id)
@@ -166,7 +166,7 @@ export default function Personalizadas() {
   }
 
   const reserve = async () => {
-    if (selected.length === 0) return
+    if (paymentPending || selected.length === 0) return
     setBusy(true); setMessage('')
     const started = Date.now()
     const ordered = [...selected].sort((a, b) => `${a.fecha} ${a.hora_inicio}`.localeCompare(`${b.fecha} ${b.hora_inicio}`))
@@ -227,16 +227,16 @@ export default function Personalizadas() {
 
         {student && upcoming.length > 0 && <section className="pr-section-card"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div><strong>{formatDay(item.slot.fecha)}</strong><small>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</small></div><b>RESERVADA</b></div>)}</div></section>}
 
-        {config?.reservas_habilitadas && student && pass && !paymentPending && bookableCredits > 0 && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>Elegí tus próximas clases</h2><p className="pr-muted">Podés seleccionar y confirmar hasta {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.</p></div></div>
+        {config?.reservas_habilitadas && student && pass && (paymentPending || bookableCredits > 0) && <section className="space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>{paymentPending ? 'Horarios publicados' : 'Elegí tus próximas clases'}</h2><p className="pr-muted">{paymentPending ? 'Podés consultar todos los horarios disponibles. La selección y reserva se habilitarán cuando confirmemos tu pago.' : `Podés seleccionar y confirmar hasta ${bookableCredits} clase${bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.`}</p></div></div>
           {days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Sin turnos disponibles por ahora</h3><p>Los horarios que ya pasaron o están a menos de 2 horas de comenzar dejan de mostrarse automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.filter((slot) => !slot.ocupado).length} disponible{daySlots.filter((slot) => !slot.ocupado).length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => {
             const occupied = Boolean(slot.ocupado)
             const chosen = selected.some((item) => item.id === slot.id)
-            return <button key={slot.id} type="button" disabled={occupied || busy} aria-pressed={chosen} onClick={() => toggleSlot(slot)} className={`${chosen ? 'is-selected' : ''} ${occupied ? 'opacity-45 cursor-not-allowed border-white/5 bg-white/[.02]' : ''}`}><span>{formatTime(slot.hora_inicio)}</span><small>{formatTime(slot.hora_inicio)} → {formatTime(slot.hora_fin)}</small><em className={occupied ? '!text-white/35' : ''}>{occupied ? 'Reservado' : chosen ? 'Seleccionado' : 'Disponible'}</em></button>
+            return <button key={slot.id} type="button" disabled={paymentPending || occupied || busy} aria-pressed={chosen} onClick={() => toggleSlot(slot)} className={`${chosen ? 'is-selected' : ''} ${occupied || paymentPending ? 'opacity-60 cursor-not-allowed border-white/5 bg-white/[.02]' : ''}`}><span>{formatTime(slot.hora_inicio)}</span><small>{formatTime(slot.hora_inicio)} → {formatTime(slot.hora_fin)}</small><em className={occupied ? '!text-white/35' : ''}>{occupied ? 'Reservado' : paymentPending ? 'Disponible · solo consulta' : chosen ? 'Seleccionado' : 'Disponible'}</em></button>
           })}</div></div>)}
           {selected.length > 0 && <div className="pr-info blue">Seleccionaste {selected.length} de {bookableCredits} clase{bookableCredits === 1 ? '' : 's'} disponibles. Podés tocar un horario nuevamente para quitarlo.</div>}
           {selected.length > 0 && <button disabled={busy} onClick={reserve} className="pr-primary pr-confirm">{busy ? `Confirmando ${selected.length} clase${selected.length === 1 ? '' : 's'}…` : `Confirmar ${selected.length} clase${selected.length === 1 ? '' : 's'}`}</button>}{busy && <SkateLoader label="Confirmando tus turnos…" />}</section>}
 
-        {config?.reservas_habilitadas && student && pass && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
+        {config?.reservas_habilitadas && student && pass && !paymentPending && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
         {config?.reservas_habilitadas && student && pass && Number(pass.clases_disponibles) <= 0 && <div className="pr-info amber">Tu PR Pass está completa. Contactanos para cargar una nueva.</div>}
         {confirmed.length > 0 && <div className="pr-success pr-pass-enter"><span>✓</span><p className="pr-kicker">{confirmed.length === 1 ? 'RESERVA CONFIRMADA' : 'RESERVAS CONFIRMADAS'}</p><h2>¡Nos vemos sobre ruedas!</h2><div className="mt-3 space-y-1">{confirmed.map((item) => <p key={item.reservation.id}>{formatDay(item.slot.fecha)} · {formatTime(item.slot.hora_inicio)} a {formatTime(item.slot.hora_fin)}.</p>)}</div><small>El sello de tu PR Pass se aplica cuando cada clase se marca como realizada.</small></div>}
         {message && <div className="pr-message">{message}</div>}
