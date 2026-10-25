@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       if (phone.length < 8) return okError('Ingresá un número de teléfono válido.')
       const correctScope = demo ? profile?.id === DEMO_PROFILE_ID : profile?.id !== DEMO_PROFILE_ID
       if (!profile || !correctScope || !profile.particulares_habilitadas) return json({ found: false, config })
-      const { data: pass, error: passError } = await db.from('cuponeras_particulares').select('id,nombre_cuponera,clases_cargadas,clases_utilizadas,clases_disponibles,estado,fecha_inicio,fecha_vencimiento').eq('alumno_id', profile.id).eq('habilitada', true).eq('visible_al_alumno', true).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      const { data: pass, error: passError } = await db.from('cuponeras_particulares').select('id,nombre_cuponera,clases_cargadas,clases_utilizadas,clases_disponibles,estado,fecha_inicio,fecha_vencimiento').eq('alumno_id', profile.id).eq('visible_al_alumno', true).order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (passError) throw passError
       const { data: upcoming, error: upcomingError } = await db.from('pr_personal_reservas').select('id,estado,disponibilidad_id,fecha_reserva').eq('alumno_id', profile.id).eq('estado', 'reservada').order('fecha_reserva', { ascending: false })
       if (upcomingError) throw upcomingError
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       }
       const today = uyToday()
       const upcomingDetailed = (upcoming || []).map((r: any) => ({ ...r, slot: slotMap[String(r.disponibilidad_id)] || null })).filter((r: any) => r.slot && r.slot.fecha >= today).sort((a: any, b: any) => `${a.slot.fecha} ${a.slot.hora_inicio}`.localeCompare(`${b.slot.fecha} ${b.slot.hora_inicio}`))
-      return json({ found: true, config, student: { id: profile.id, nombre: profile.nombre, apellido: profile.apellido }, pass: pass || null, upcoming: upcomingDetailed, reservedCredits: upcomingDetailed.length, bookableCredits: Math.max(0, Number(pass?.clases_disponibles || 0) - upcomingDetailed.length) })
+      return json({ found: true, config, paymentPending: Boolean(pass && !pass.habilitada), student: { id: profile.id, nombre: profile.nombre, apellido: profile.apellido }, pass: pass || null, upcoming: upcomingDetailed, reservedCredits: upcomingDetailed.length, bookableCredits: pass?.habilitada ? Math.max(0, Number(pass?.clases_disponibles || 0) - upcomingDetailed.length) : 0 })
     }
 
     if (action === 'reserve') {
