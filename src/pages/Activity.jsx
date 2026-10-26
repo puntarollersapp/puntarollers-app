@@ -1440,7 +1440,8 @@ function RollerFeedTopRanking({ activities, profilesByAnyId, profileId }) {
   const navigate=useNavigate()
   const ranked=useMemo(()=>{
     const now=new Date()
-    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now)
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]))
+    const today=`${parts.year}-${parts.month}-${parts.day}`
     const weekday=new Date(today+'T12:00:00-03:00').getDay()
     const startDay=new Date(today+'T12:00:00-03:00')
     if(period==='week')startDay.setDate(startDay.getDate()-((weekday+6)%7))
@@ -1457,20 +1458,21 @@ function RollerFeedTopRanking({ activities, profilesByAnyId, profileId }) {
       totals.set(key,(totals.get(key)||0)+meters)
     }
     const result=[...totals].map(([id,meters])=>({id,meters,profile:profilesByAnyId.get(id)||{}})).sort((a,b)=>b.meters-a.meters)
-    const mine=result.find(row=>row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId))
-    return [mine,...result.filter(row=>row!==mine)].filter(Boolean).slice(0,5)
+    const withRanks=result.map((row,i)=>({...row,rank:i+1}))
+    const mine=withRanks.find(row=>row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId))
+    return [mine,...withRanks.filter(row=>row!==mine)].filter(Boolean).slice(0,5)
   },[activities,profilesByAnyId,profileId,period])
   const max=Math.max(1,...ranked.map(row=>row.meters))
   return <section aria-label="Top Ranking RollerFeed" className="pr-rank-panel relative overflow-hidden rounded-[28px] border border-[#FF0055]/25 bg-gradient-to-br from-[#2a0712] via-[#170910] to-[#0c090e] p-4 sm:p-5">
     <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#FF0055]/15 blur-3xl"/>
     <div className="relative flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#FF8CAD]">PR · Top Ranking</p><h2 className="mt-1 font-display text-[25px] leading-tight text-white">Así avanzamos juntos</h2></div><span aria-hidden="true" className="pr-rank-medal text-3xl">🏅</span></div>
     <div className="relative mt-4 inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['week','Esta semana'],['month','Este mes']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
-    {ranked.length?<div className="relative mt-5 grid grid-cols-5 gap-2">{ranked.map((row,index)=>{
+    {ranked.length?<div className="relative mt-5 grid grid-cols-5 gap-2">{ranked.map((row)=>{
       const name=getProfileName(row.profile)||'Integrante PR'
       const photo=getProfilePhoto(row.profile)
       const percent=Math.max(9,Math.round(row.meters/max*100))
       const isMine=row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId)
-      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-44 items-end overflow-hidden rounded-[32px] bg-white/[.09]"><div className="pr-rank-fill relative w-full rounded-[32px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full border-2 border-white bg-[#220d18] p-[2px] shadow-lg disabled:cursor-default">{photo?<img src={photo} alt={name} className="h-11 w-11 rounded-full object-cover"/>:<span className="grid h-11 w-11 place-items-center rounded-full text-sm font-bold text-white">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[12px] font-black text-white">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[10px] text-white/65" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{index===0&&!isMine&&<span className="pr-rank-medal text-sm" aria-label="Primer lugar">🥇</span>}</div>
+      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-44 items-end overflow-hidden rounded-[32px] bg-white/[.09]"><div className="pr-rank-fill relative w-full rounded-[32px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 rounded-full border-2 border-white bg-[#220d18] p-[2px] shadow-lg disabled:cursor-default">{photo?<img src={photo} alt={name} className="h-11 w-11 rounded-full object-cover"/>:<span className="grid h-11 w-11 place-items-center rounded-full text-sm font-bold text-white">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[12px] font-black text-white">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[10px] text-white/65" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
     })}</div>:<p className="mt-5 rounded-xl border border-white/10 p-4 text-xs text-white/60">Todavía no hay kilómetros registrados para este período.</p>}
     <button type="button" onClick={()=>navigate('/ranking-semanal')} className="relative mt-5 w-full rounded-xl border border-[#FF729B]/30 bg-[#FF0055]/10 px-4 py-3 text-xs font-bold text-white transition hover:bg-[#FF0055]/20">Ver clasificación completa →</button>
   </section>
