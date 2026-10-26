@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
-const blank = {id:'',title:'',body:'',image_url:'',event_at:'',kind:'news',allow_rsvp:false,published:false,options:''}
+const blank = {id:'',title:'',body:'',image_url:'',event_at:'',kind:'news',allow_rsvp:false,published:false,options:'',image_urls:[]}
 const input = 'w-full rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm text-white outline-none focus:border-[#FF0055]'
 
 export default function RollerFeedNewsAdmin() {
@@ -26,25 +26,27 @@ export default function RollerFeedNewsAdmin() {
       if(error){setMessage(error.message);return}
       options=(data||[]).map(x=>x.label).join('\n')
     }
-    setForm({...item,event_at:item.event_at?new Date(item.event_at).toISOString().slice(0,16):'',image_url:item.image_url||'',options})
+    setForm({...item,event_at:item.event_at?new Date(item.event_at).toISOString().slice(0,16):'',image_url:item.image_url||'',image_urls:item.image_urls?.length?item.image_urls:(item.image_url?[item.image_url]:[]),options})
     setExpanded(true)
   }
   async function uploadImage(event) {
-    const file=event.target.files?.[0]
-    if(!file)return
+    const files=Array.from(event.target.files||[])
     event.target.value=''
-    if(!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){setMessage('Elegí una imagen JPG, PNG, WEBP o GIF.');return}
-    if(file.size>10*1024*1024){setMessage('La imagen no puede superar los 10 MB.');return}
+    if(!files.length)return
+    if(files.some(f=>!['image/jpeg','image/png','image/webp','image/gif'].includes(f.type)||f.size>10*1024*1024)){setMessage('Cada imagen debe ser JPG, PNG, WEBP o GIF, hasta 10 MB.');return}
     setUploading(true);setMessage('')
     try{
-      const ext=({ 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[file.type]
-      const path=`news/${crypto.randomUUID()}.${ext}`
-      const {error}=await supabase.storage.from('pr-rollerfeed-news').upload(path,file,{contentType:file.type,upsert:false})
-      if(error)throw Error(error.message)
-      const {data}=supabase.storage.from('pr-rollerfeed-news').getPublicUrl(path)
-      setForm(f=>({...f,image_url:data.publicUrl}))
-      setMessage('Imagen subida correctamente.')
-    }catch(err){setMessage('No se pudo subir la imagen: '+err.message)}
+      const urls=[]
+      for(const file of files){
+        const ext=({ 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[file.type]
+        const path=`news/${crypto.randomUUID()}.${ext}`
+        const {error}=await supabase.storage.from('pr-rollerfeed-news').upload(path,file,{contentType:file.type,upsert:false})
+        if(error)throw Error(error.message)
+        urls.push(supabase.storage.from('pr-rollerfeed-news').getPublicUrl(path).data.publicUrl)
+      }
+      setForm(f=>({...f,image_urls:[...(f.image_urls||[]),...urls],image_url:(f.image_urls?.[0]||f.image_url||urls[0])}))
+      setMessage(urls.length+' imagen(es) subida(s).')
+    }catch(err){setMessage('Error al subir: '+err.message)}
     finally{setUploading(false)}
   }
   async function remove(item) {
@@ -72,7 +74,7 @@ export default function RollerFeedNewsAdmin() {
           if(JSON.stringify((previous||[]).map(o=>o.label))!==JSON.stringify(labels))throw Error('No podés modificar las opciones de una encuesta que ya recibió votos.')
         }
       }
-      const payload={title:form.title.trim(),body:form.body.trim(),image_url:form.image_url.trim()||null,event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,updated_at:new Date().toISOString()}
+      const payload={title:form.title.trim(),body:form.body.trim(),image_url:(form.image_urls?.[0]||form.image_url.trim()||null),image_urls:form.image_urls||[],event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,updated_at:new Date().toISOString()}
       if(!payload.title)throw Error('Escribí un título.')
       const request=form.id?supabase.from('pr_feed_news').update(payload).eq('id',form.id).select('id').single():supabase.from('pr_feed_news').insert(payload).select('id').single()
       const {data,error}=await request
@@ -98,10 +100,10 @@ export default function RollerFeedNewsAdmin() {
       <label className="block space-y-1 text-xs text-white/70">Tipo<select className={input} value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="news">Novedad</option><option value="event">Evento</option><option value="poll">Encuesta</option></select></label>
       <label className="block space-y-1 text-xs text-white/70">Título<input className={input} required value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label>
       <label className="block space-y-1 text-xs text-white/70">Descripción<textarea className={input} rows={4} value={form.body} onChange={e=>setForm({...form,body:e.target.value})}/></label>
-      <label className="block space-y-1 text-xs text-white/70">Subir imagen desde tu dispositivo (opcional)<input className={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading||busy} onChange={uploadImage}/></label>
+      <label className="block space-y-1 text-xs text-white/70">Subir imagen desde tu dispositivo (opcional)<input className={input} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading||busy} onChange={uploadImage}/></label>
       {uploading&&<p role="status" className="text-xs text-[#FF0055]">Subiendo imagen…</p>}
-      {form.image_url&&<div className="space-y-2"><img src={form.image_url} alt="Vista previa de la publicación" className="max-h-48 rounded-xl object-contain"/><button type="button" className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white" onClick={()=>setForm(f=>({...f,image_url:''}))}>Quitar imagen de la publicación</button></div>}
-      <details className="rounded-xl border border-white/10 p-3"><summary className="cursor-pointer text-xs text-white/60">Usar URL de imagen (opcional)</summary><input className={input+' mt-3'} type="url" placeholder="https://..." value={form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})}/></details>
+      {!!form.image_urls?.length&&<div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{form.image_urls.map((url,i)=><div key={url} className="space-y-1"><img src={url} alt={'Imagen '+(i+1)} className="h-32 w-full rounded-lg object-cover"/><button type="button" onClick={()=>setForm(f=>{const next=f.image_urls.filter(u=>u!==url);return {...f,image_urls:next,image_url:next[0]||''}})} className="rounded-lg border border-white/20 px-2 py-1 text-xs text-white">Quitar</button></div>)}</div>}
+      <details className="rounded-xl border border-white/10 p-3"><summary className="cursor-pointer text-xs text-white/60">Usar URL de imagen (opcional)</summary><input className={input+' mt-3'} type="url" placeholder="https://..." value={form.image_urls?.length?'':form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})}/></details>
       {form.kind==='event'&&<><label className="block space-y-1 text-xs text-white/70">Fecha y hora<input className={input} type="datetime-local" value={form.event_at} onChange={e=>setForm({...form,event_at:e.target.value})}/></label><label className="flex items-center gap-2 text-xs text-white/80"><input type="checkbox" checked={form.allow_rsvp} onChange={e=>setForm({...form,allow_rsvp:e.target.checked})}/> Permitir confirmar asistencia</label></>}
       {form.kind==='poll'&&<label className="block space-y-1 text-xs text-white/70">Opciones (una por línea)<textarea className={input} rows={4} value={form.options} onChange={e=>setForm({...form,options:e.target.value})} placeholder={'Sí\nNo\nQuizás'}/></label>}
       <label className="flex items-center gap-2 text-xs text-white/80"><input type="checkbox" checked={form.published} onChange={e=>setForm({...form,published:e.target.checked})}/> Publicar inmediatamente</label>
