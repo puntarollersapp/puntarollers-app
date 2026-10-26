@@ -124,7 +124,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
               const yes = all.filter(v => v.choice === 'yes').length
               return <article key={poll.id} className="min-w-0 rounded-[20px] border border-[#BBFF1F]/25 bg-[#BBFF1F]/[.045] p-3">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-[#BBFF1F]">{poll.sort_order === 2 ? 'Navidad' : 'Fin de año'}</p>
-                <h3 className="mt-1 min-h-10 text-[12px] font-bold leading-snug text-white">{poll.sort_order === 2 ? '🎅 Rolleada navideña' : '🎆 Rolleada de fin de año'}</h3>
+                <h3 className="mt-1 min-h-10 text-[12px] font-bold leading-snug text-white">{poll.sort_order === 2 ? '🎅 Rolleada navideña' : '🎆 Rolleada de Año Nuevo'}</h3>
                 <div className="mt-2 grid grid-cols-2 gap-1.5">{CHOICES.map(option => <button key={option.value} type="button" disabled={!uid || busy === poll.id} aria-pressed={own?.choice === option.value} onClick={() => vote(poll.id, option.value)} className={`rounded-lg border px-1 py-2 text-[10px] font-bold disabled:opacity-45 ${own?.choice === option.value ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-[#BBFF1F]/20 bg-black/25 text-white/75'}`}>{option.value === 'yes' ? 'Sí' : 'No'}</button>)}</div>
                 <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#BBFF1F]" style={{width:`${all.length ? yes / all.length * 100 : 0}%`}} /></div>
                 <p className="mt-1.5 text-[10px] text-white/45">{all.length} votos · {yes} sí</p>
