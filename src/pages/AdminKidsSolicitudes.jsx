@@ -42,7 +42,7 @@ export default function AdminKidsSolicitudes(){
  async function approveFamily(r){
   const familyChildren=Array.isArray(r.hijos)&&r.hijos.length?r.hijos:[{nombre:r.nombre_nino}]
   const candidateRows=matches[r.id]||familyChildren.map(child=>({nombre:child.nombre,matches:[]}))
-  const chosen=Object.fromEntries(familyChildren.map((_,i)=>[i,selectedProfiles[r.id]?.[i]||'NEW:'+(i+1)]))
+  const chosen=Object.fromEntries(familyChildren.map((_,i)=>[i,selectedProfiles[r.id]?.[i]||'']))
   const ids=familyChildren.map((_,i)=>chosen[i])
   const local=validateKidsTreasuryAssignments(candidateRows,chosen)
   if(!local.valid){setError('Revisá la selección de perfiles infantiles. '+local.problems.join(' '));return}
