@@ -712,6 +712,7 @@ export default function Activity() {
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [message, setMessage] = useState('')
+  const [stravaConnected, setStravaConnected] = useState(null)
   const initialSyncDone = useRef(false)
 
   useEffect(() => {
@@ -721,6 +722,17 @@ export default function Activity() {
       .catch((error) => { if (active) setMessage(error?.message || 'No pudimos cargar PR Moments.') })
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    if (!profileId) { setStravaConnected(null); return }
+    let active = true
+    supabase.from('pr_strava_connections').select('conectado')
+      .eq('alumno_id', profileId).maybeSingle()
+      .then(({data,error}) => {
+        if (active) setStravaConnected(error ? null : Boolean(data?.conectado))
+      })
+    return () => { active = false }
+  }, [profileId])
 
   async function syncStrava() {
     if (!profileId) {
@@ -1187,6 +1199,7 @@ export default function Activity() {
     }
 
     if (syncResult.notConnected) {
+      setStravaConnected(false)
       const currentProfile = profilesByAnyId.get(
         String(profileId)
       )
@@ -1347,6 +1360,16 @@ export default function Activity() {
                 : '↻ Actualizar'}
             </button>
           </div>
+
+          {stravaConnected === false && profileId && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-400/30 bg-orange-400/[.09] p-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black text-orange-200">🛼 ¡Conectá tu Strava!</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-white/65">Sumá tus kilómetros al ranking, RollerFeed y a tu evolución. Solo necesitás vincular tu cuenta una vez.</p>
+              </div>
+              <a href="/app/perfil" className="shrink-0 rounded-xl bg-orange-400 px-4 py-2.5 text-xs font-black text-black">Conectar Strava →</a>
+            </div>
+          )}
 
           {message && (
             <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-amber-100 text-xs leading-relaxed mb-3">
