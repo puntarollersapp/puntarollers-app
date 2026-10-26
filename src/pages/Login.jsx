@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
+import { transitionDestination } from '../lib/prTransition'
 import { isRollerweenActive } from '../lib/rollerween'
 
 const ROLLERWEEN_ART='/rollerween-logo-original-20261001-r2.png?v=original-r2'
@@ -20,7 +21,7 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
-    navigate(destination, { replace: true })
+    navigate(transitionDestination(user, destination), { replace: true })
   }, [authLoading, user, navigate, destination, next])
 
   async function handleSubmit(event) {
@@ -40,7 +41,7 @@ export default function Login() {
         if (training?.category && training.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
         else if (training?.category === 'NO') window.localStorage.removeItem('pr_training_visible')
       }
-      navigate(destination, { replace: true })
+      navigate(transitionDestination(result.user, destination), { replace: true })
     } catch {
       setError('No pudimos iniciar sesión. Revisá tus datos.')
     } finally { setLoading(false) }
