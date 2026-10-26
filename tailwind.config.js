@@ -6,6 +6,11 @@ export default {
       colors: {
         pr: {
           black:   '#050508',
+          lime: '#BEFF37',
+          cyan: '#48D9DC',
+          pink: '#FF0055',
+          surface: '#0B0B10',
+          elevated: '#17131B',
           dark:    '#09090f',
           navy:    '#0d0d1a',
           card:    '#111120',
