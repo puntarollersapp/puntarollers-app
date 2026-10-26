@@ -25,35 +25,7 @@ const REACTION_OPTIONS = [
   { key: 'amor', icon: '😍', label: 'Increíble' },
 ]
 
-const DEFAULT_ROLLER_EVENTS = [
-  {
-    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
-    descripcion:
-      'Tres jornadas intensivas de 2 horas cada una junto a Miguel Flores, argentino, subcampeón mundial máster y especialista con más de 40 años de experiencia. Horarios y ubicación a confirmar.',
-    inicio: '2026-09-04T03:00:00.000Z',
-    fin: '2026-09-07T02:59:00.000Z',
-    mes_referencia:
-      'Viernes 4, sábado 5 y domingo 6 de septiembre · horario a confirmar',
-    lugar: 'Ubicación a confirmar',
-    link: '',
-    estado: 'Publicado',
-    visible_feed: true,
-    creado_por_nombre: 'Equipo Punta Rollers',
-  },
-  {
-    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
-    descripcion:
-      'En octubre volvemos a entrenar junto a Miguel Flores en una nueva clínica intensiva de patinaje. Próximamente anunciaremos fechas, horarios y ubicación.',
-    inicio: null,
-    fin: null,
-    mes_referencia: 'Octubre 2026 · fechas a confirmar',
-    lugar: 'Ubicación a confirmar',
-    link: '',
-    estado: 'Proximamente',
-    visible_feed: true,
-    creado_por_nombre: 'Equipo Punta Rollers',
-  },
-]
+const DEFAULT_ROLLER_EVENTS = []
 
 function getReactionOption(key) {
   return (
@@ -1049,7 +1021,7 @@ export default function Activity() {
       normalizeActivity(activity, profilesByAnyId)
     )
 
-    const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores|caramelo|top ranking/i.test([event.titulo,event.descripcion].filter(Boolean).join(' '))).map(normalizeRollerEvent)
+    const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores|caramelo|top ranking|rollerween/i.test([event.titulo,event.descripcion].filter(Boolean).join(' '))).map(normalizeRollerEvent)
     return [
       ...eventPosts,
       ...trainingPosts,
