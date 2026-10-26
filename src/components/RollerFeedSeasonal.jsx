@@ -13,9 +13,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   const newsLimitRef = useRef(8)
   const [hasMoreNews, setHasMoreNews] = useState(false)
   const [avatars, setAvatars] = useState([])
-  const [avatarConsent, setAvatarConsent] = useState(false)
   const [avatarDialog, setAvatarDialog] = useState(null)
-  const [consentBusy, setConsentBusy] = useState(false)
   const [uid, setUid] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -67,25 +65,6 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 60000)
     return () => { live = false; window.clearInterval(timer); listener.subscription.unsubscribe() }
   }, [])
-
-  useEffect(() => {
-    if (!uid || section !== 'polls') { setAvatarConsent(false); return }
-    let live = true
-    supabase.from('pr_feed_avatar_consent').select('visible').eq('user_id',uid).maybeSingle()
-      .then(({data}) => { if(live) setAvatarConsent(Boolean(data?.visible)) })
-    return () => { live = false }
-  }, [uid, section])
-
-  async function toggleAvatarConsent() {
-    if (!uid || consentBusy) return
-    setConsentBusy(true)
-    const next = !avatarConsent
-    const {error: saveError} = await supabase.from('pr_feed_avatar_consent')
-      .upsert({user_id:uid,visible:next,updated_at:new Date().toISOString()},{onConflict:'user_id'})
-    if (saveError) setError('No se pudo actualizar la visibilidad de tu foto.')
-    else { setAvatarConsent(next); await refresh() }
-    setConsentBusy(false)
-  }
 
   function voterAvatars(pollId) {
     const people = avatars.filter(a => a.poll_id === pollId)
@@ -158,7 +137,6 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
             })}
           </div>
         </div>
-        {uid && <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 text-center text-[11px] text-white/60"><input type="checkbox" checked={avatarConsent} disabled={consentBusy} onChange={toggleAvatarConsent} className="accent-[#FF0055]" /> Mostrar mi foto y nombre junto a mis votos (opcional)</label>}
         {!uid && !loading && <p className="mt-3 text-center text-xs text-white/50">Iniciá sesión para participar.</p>}
         {loading && <p className="mt-4 text-center text-xs text-white/50">Cargando encuestas…</p>}
         {error && <p role="alert" className="mt-3 text-center text-xs text-red-300">{error}</p>}
