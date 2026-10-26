@@ -1044,7 +1044,7 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      // Preserve community posts, but prevent one prolific athlete from monopolizing the first page.
+      // Prioritize distinct skaters on the home feed; defer repeated trainings to later pages.
       const selected=[]
       const trainingCounts=new Map()
       const deferred=[]
@@ -1052,7 +1052,7 @@ export default function Activity() {
         if(item.type!=='Entrenamiento'){selected.push(item);continue}
         const id=String(item.userId||item.userName||'unknown')
         const count=trainingCounts.get(id)||0
-        if(count<2){selected.push(item);trainingCounts.set(id,count+1)}
+        if(count<1){selected.push(item);trainingCounts.set(id,count+1)}
         else deferred.push(item)
       }
       return [...selected,...deferred]
@@ -1293,6 +1293,8 @@ export default function Activity() {
 
         <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
 
+        <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
+
         <section id="rollerfeed-actividades" className="scroll-mt-36">
           <div className="flex items-end justify-between gap-4 mb-3">
             <div>
@@ -1379,7 +1381,7 @@ export default function Activity() {
           )}
         </section>
 
-                <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
+        
 
 
         {reactionModalItem && (
