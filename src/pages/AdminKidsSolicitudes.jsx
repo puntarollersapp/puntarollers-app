@@ -38,7 +38,7 @@ export default function AdminKidsSolicitudes(){
    setAttendanceAudits(prev=>({...prev,[profileId]:result}))
   }catch(e){setError(e.message)}
  }
- async function validateLinks(r){setPreflightBusy(r.id);setError('');try{const checked=validateKidsTreasuryAssignments(matches[r.id]||[],selectedProfiles[r.id]||{});if(!checked.valid)throw Error(checked.problems.join(' '));const ids=(matches[r.id]||[]).map((_,i)=>selectedProfiles[r.id]?.[i]||'');const result=await invoke({action:'approval-validate',id:r.id,profile_ids:ids});setPreflight(prev=>({...prev,[r.id]:result}))}catch(e){setError(e.message)}finally{setPreflightBusy('')}}
+ async function validateLinks(r){setPreflightBusy(r.id);setError('');try{const children=Array.isArray(r.hijos)&&r.hijos.length?r.hijos:[{nombre:r.nombre_nino}];const rows=matches[r.id]||children.map(child=>({nombre:child.nombre,matches:[]}));const checked=validateKidsTreasuryAssignments(rows,selectedProfiles[r.id]||{});if(!checked.valid)throw Error(checked.problems.join(' '));const ids=children.map((_,i)=>selectedProfiles[r.id]?.[i]||'');const result=await invoke({action:'approval-validate',id:r.id,profile_ids:ids});setPreflight(prev=>({...prev,[r.id]:result}))}catch(e){setError(e.message)}finally{setPreflightBusy('')}}
  async function approveFamily(r){
   const familyChildren=Array.isArray(r.hijos)&&r.hijos.length?r.hijos:[{nombre:r.nombre_nino}]
   const candidateRows=matches[r.id]||familyChildren.map(child=>({nombre:child.nombre,matches:[]}))
