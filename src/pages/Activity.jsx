@@ -1097,13 +1097,7 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      // Home shows no more than six trainings; the Entrenos tab owns the 10-at-a-time history.
-      let trainingsShown=0
-      return available.filter(item=>{
-        if(item.type!=='Entrenamiento')return true
-        trainingsShown+=1
-        return trainingsShown<=6
-      })
+      return available
     }
 
     const filteredItems = feedItems.filter(
@@ -1390,7 +1384,7 @@ export default function Activity() {
             </div>
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
-              {(filter === 'Entrenamiento' ? visibleItems.slice(0,feedLimit) : visibleItems.slice(0,6)).map((item) => (
+              {visibleItems.slice(0, feedLimit).map((item) => (
                 <div key={item.id}>
                   <FeedCard
                     item={item}
@@ -1405,7 +1399,7 @@ export default function Activity() {
                   {!['Moment','SocialPost','Entrenamiento'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
-              {filter === 'Entrenamiento' && visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + 10)} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
+              {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + (filter === 'Entrenamiento' ? 10 : 6))} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
             </div>
           ) : (
             <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
