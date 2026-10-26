@@ -309,7 +309,7 @@ export default function PRTrainingV2Lab(){
  }
  if(loading)return <AppLayout><div className="p-10 text-white">Cargando…</div></AppLayout>
  if(!user)return <Navigate to="/login" replace/>
- if(!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
+ if(adminView&&!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
  const name=user.nombre||'Equipo'
  return <AppLayout>
  <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#14141B] text-[#EFF8FF]">
