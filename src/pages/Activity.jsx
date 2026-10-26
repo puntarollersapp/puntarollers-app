@@ -1235,7 +1235,7 @@ export default function Activity() {
                     setExpandedHome(false)
                     document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
                   }}
-                  className={`min-w-0 rounded-xl border px-0.5 py-2.5 text-center text-[9px] font-bold leading-tight transition-colors sm:rounded-full sm:px-3 sm:text-[11px] ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
+                  className={`min-w-0 rounded-xl border px-0.5 py-2.5 text-center text-[9px] font-bold leading-tight transition-colors sm:rounded-full sm:px-3 sm:text-[11px] ${active ? 'border-[#FF0055] bg-[#FF0055] text-white' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#FF0055]/40 hover:text-white'}`}
                 >
                   {item.label}
                 </button>
@@ -1251,10 +1251,10 @@ export default function Activity() {
         {loading && <RollerFeedLoading syncing={syncing} />}
 
         {myLatest && (
-          <section className="rounded-[26px] border border-pr-gold/20 bg-gradient-to-r from-pr-gold/10 via-white/[0.025] to-orange-400/[0.06] p-4">
+          <section className="rounded-[20px] border border-[#FF0055]/20 bg-gradient-to-r from-[#FF0055]/[.09] via-white/[.025] to-transparent p-3">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="section-label text-pr-gold">
+                <p className="section-label text-[#FF80A9]">
                   Tu última actividad
                 </p>
                 <p className="text-white text-sm font-semibold mt-2 truncate">
@@ -1276,7 +1276,7 @@ export default function Activity() {
                   href={myLatest.strava_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 rounded-2xl border border-pr-gold/20 bg-pr-gold/10 px-3 py-2.5 text-pr-gold text-[10px] font-bold"
+                  className="shrink-0 rounded-xl border border-[#FF0055]/25 bg-[#FF0055]/10 px-3 py-2 text-[#FF80A9] text-[10px] font-bold"
                 >
                   Ver actividad →
                 </a>
