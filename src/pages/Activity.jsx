@@ -1097,7 +1097,18 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      return available
+      // Preserve community posts, but prevent one prolific athlete from monopolizing the first page.
+      const selected=[]
+      const trainingCounts=new Map()
+      const deferred=[]
+      for(const item of available){
+        if(item.type!=='Entrenamiento'){selected.push(item);continue}
+        const id=String(item.userId||item.userName||'unknown')
+        const count=trainingCounts.get(id)||0
+        if(count<2){selected.push(item);trainingCounts.set(id,count+1)}
+        else deferred.push(item)
+      }
+      return [...selected,...deferred]
     }
 
     const filteredItems = feedItems.filter(
