@@ -901,30 +901,10 @@ export default function Activity() {
     let active = true
 
     async function initializeFeed() {
-      setLoading(true)
-
-      const syncResult = await syncStrava()
-
-      if (!active) return
-
-      await loadFeed({
-        silent: true,
-        preserveMessage: true,
-      })
-
-      if (!active) return
-
-      if (syncResult.newActivities > 0) {
-        setMessage(
-          syncResult.newActivities === 1
-            ? '⚡ Se agregó 1 actividad nueva de Strava al RollerFeed.'
-            : `⚡ Se agregaron ${syncResult.newActivities} actividades nuevas de Strava al RollerFeed.`
-        )
-      } else if (syncResult.error) {
-        setMessage(
-          `El RollerFeed se cargó, pero Strava no pudo actualizarse: ${syncResult.errorMessage}`
-        )
-      }
+      // RollerFeed reads the activities already stored in production.
+      // Strava synchronization is an explicit action (Actualizar), not a
+      // blocking request every time someone opens this screen.
+      await loadFeed({ silent: false, preserveMessage: false })
     }
 
     initializeFeed()
