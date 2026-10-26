@@ -24,3 +24,8 @@
 .pr-rank-fill{animation:prRankRise .85s cubic-bezier(.22,1,.36,1) both,prRankGlow 4s ease-in-out infinite}
 .pr-rank-medal{display:inline-block;animation:prRankFloat 3.5s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.pr-rank-fill,.pr-rank-medal{animation:none!important}}
+
+/* Animated light sweep across the ranking columns. */
+@keyframes prRankShimmer {0%,15%{transform:translateX(-135%)}55%,100%{transform:translateX(135%)}}
+.pr-rank-shimmer{animation:prRankShimmer 4.8s ease-in-out infinite;will-change:transform}
+@media(prefers-reduced-motion:reduce){.pr-rank-shimmer{animation:none!important;opacity:0}}
