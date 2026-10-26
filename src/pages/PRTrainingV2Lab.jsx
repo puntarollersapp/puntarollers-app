@@ -245,7 +245,11 @@ function TaskCard({task,index,onClick}){
 
 function PRTareasHome({user}){
  const [info,setInfo]=useState(''),[open,setOpen]=useState(null),[plan,setPlan]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revealed,setRevealed]=useState(0),[profile,setProfile]=useState(null),[files,setFiles]=useState({}),[sending,setSending]=useState(null),[feedback,setFeedback]=useState('')
- const uruguayMonth=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date());
+ const [clockTick,setClockTick]=useState(0);
+ useEffect(()=>{const timer=window.setInterval(()=>setClockTick(n=>n+1),60000);return()=>window.clearInterval(timer)},[]);
+ const dateParts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+ const uruguayMonth=dateParts.find(p=>p.type==='year').value+'-'+dateParts.find(p=>p.type==='month').value;
+ void clockTick;
  const isPrivateTester=user?.id==='admin-claudio';
  const month=isPrivateTester&&uruguayMonth==='2026-10'?'2026-10-01':uruguayMonth+'-01'
  async function refresh(){
