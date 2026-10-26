@@ -1044,18 +1044,15 @@ export default function Activity() {
           item.type !== 'Evento' &&
           (item.type !== 'Cumpleaños' || item.daysUntil >= 0)
       )
-      // Prioritize distinct skaters on the home feed; defer repeated trainings to later pages.
-      const selected=[]
-      const trainingCounts=new Map()
-      const deferred=[]
-      for(const item of available){
-        if(item.type!=='Entrenamiento'){selected.push(item);continue}
-        const id=String(item.userId||item.userName||'unknown')
-        const count=trainingCounts.get(id)||0
-        if(count<1){selected.push(item);trainingCounts.set(id,count+1)}
-        else deferred.push(item)
-      }
-      return [...selected,...deferred]
+      // Home: show each skater only once. The Entrenamiento tab retains the full history.
+      const seenSkaters = new Set()
+      return available.filter(item => {
+        if(item.type !== 'Entrenamiento') return true
+        const skaterId = String(item.userId || item.userName || item.id)
+        if(seenSkaters.has(skaterId)) return false
+        seenSkaters.add(skaterId)
+        return true
+      })
     }
 
     const filteredItems = feedItems.filter(
