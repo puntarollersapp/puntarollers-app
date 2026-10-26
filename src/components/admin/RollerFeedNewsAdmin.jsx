@@ -10,6 +10,7 @@ export default function RollerFeedNewsAdmin() {
   const [busy,setBusy] = useState(false)
   const [message,setMessage] = useState('')
   const [expanded,setExpanded] = useState(false)
+  const [uploading,setUploading] = useState(false)
 
   async function load() {
     const {data,error} = await supabase.from('pr_feed_news').select('*').order('created_at',{ascending:false}).limit(100)
@@ -28,9 +29,36 @@ export default function RollerFeedNewsAdmin() {
     setForm({...item,event_at:item.event_at?new Date(item.event_at).toISOString().slice(0,16):'',image_url:item.image_url||'',options})
     setExpanded(true)
   }
+  async function uploadImage(event) {
+    const file=event.target.files?.[0]
+    if(!file)return
+    event.target.value=''
+    if(!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)){setMessage('Elegí una imagen JPG, PNG, WEBP o GIF.');return}
+    if(file.size>10*1024*1024){setMessage('La imagen no puede superar los 10 MB.');return}
+    setUploading(true);setMessage('')
+    try{
+      const ext=({ 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[file.type]
+      const path=`news/${crypto.randomUUID()}.${ext}`
+      const {error}=await supabase.storage.from('pr-rollerfeed-news').upload(path,file,{contentType:file.type,upsert:false})
+      if(error)throw Error(error.message)
+      const {data}=supabase.storage.from('pr-rollerfeed-news').getPublicUrl(path)
+      setForm(f=>({...f,image_url:data.publicUrl}))
+      setMessage('Imagen subida correctamente.')
+    }catch(err){setMessage('No se pudo subir la imagen: '+err.message)}
+    finally{setUploading(false)}
+  }
+  async function remove(item) {
+    if(busy)return
+    if(!window.confirm(`¿Eliminar definitivamente "${item.title}"? También se eliminarán sus votos o confirmaciones. Esta acción no se puede deshacer.`))return
+    setBusy(true);setMessage('')
+    const {error}=await supabase.from('pr_feed_news').delete().eq('id',item.id)
+    if(error)setMessage('No se pudo eliminar: '+error.message)
+    else {if(form.id===item.id){setForm(blank);setExpanded(false)}setMessage('Publicación eliminada.');await load()}
+    setBusy(false)
+  }
   async function save(e) {
     e.preventDefault()
-    if(busy)return
+    if(busy||uploading)return
     setBusy(true);setMessage('')
     try {
       const labels=form.kind==='poll'?form.options.split('\n').map(s=>s.trim()).filter(Boolean):[]
@@ -70,13 +98,16 @@ export default function RollerFeedNewsAdmin() {
       <label className="block space-y-1 text-xs text-white/70">Tipo<select className={input} value={form.kind} onChange={e=>setForm({...form,kind:e.target.value})}><option value="news">Novedad</option><option value="event">Evento</option><option value="poll">Encuesta</option></select></label>
       <label className="block space-y-1 text-xs text-white/70">Título<input className={input} required value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label>
       <label className="block space-y-1 text-xs text-white/70">Descripción<textarea className={input} rows={4} value={form.body} onChange={e=>setForm({...form,body:e.target.value})}/></label>
-      <label className="block space-y-1 text-xs text-white/70">URL de imagen (opcional)<input className={input} type="url" placeholder="https://..." value={form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})}/></label>
+      <label className="block space-y-1 text-xs text-white/70">Subir imagen desde tu dispositivo (opcional)<input className={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading||busy} onChange={uploadImage}/></label>
+      {uploading&&<p role="status" className="text-xs text-[#FF0055]">Subiendo imagen…</p>}
+      {form.image_url&&<div className="space-y-2"><img src={form.image_url} alt="Vista previa de la publicación" className="max-h-48 rounded-xl object-contain"/><button type="button" className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white" onClick={()=>setForm(f=>({...f,image_url:''}))}>Quitar imagen de la publicación</button></div>}
+      <details className="rounded-xl border border-white/10 p-3"><summary className="cursor-pointer text-xs text-white/60">Usar URL de imagen (opcional)</summary><input className={input+' mt-3'} type="url" placeholder="https://..." value={form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})}/></details>
       {form.kind==='event'&&<><label className="block space-y-1 text-xs text-white/70">Fecha y hora<input className={input} type="datetime-local" value={form.event_at} onChange={e=>setForm({...form,event_at:e.target.value})}/></label><label className="flex items-center gap-2 text-xs text-white/80"><input type="checkbox" checked={form.allow_rsvp} onChange={e=>setForm({...form,allow_rsvp:e.target.checked})}/> Permitir confirmar asistencia</label></>}
       {form.kind==='poll'&&<label className="block space-y-1 text-xs text-white/70">Opciones (una por línea)<textarea className={input} rows={4} value={form.options} onChange={e=>setForm({...form,options:e.target.value})} placeholder={'Sí\nNo\nQuizás'}/></label>}
       <label className="flex items-center gap-2 text-xs text-white/80"><input type="checkbox" checked={form.published} onChange={e=>setForm({...form,published:e.target.checked})}/> Publicar inmediatamente</label>
-      <button disabled={busy} className="w-full rounded-xl bg-[#FF0055] px-4 py-3 text-xs font-black text-white disabled:opacity-50">{busy?'Guardando…':'Guardar publicación'}</button>
+      <button disabled={busy||uploading} className="w-full rounded-xl bg-[#FF0055] px-4 py-3 text-xs font-black text-white disabled:opacity-50">{busy?'Guardando…':'Guardar publicación'}</button>
     </form>}
     {message&&<p role="status" className="rounded-xl border border-white/10 p-3 text-xs text-white/75">{message}</p>}
-    <div className="space-y-2">{items.length?items.map(item=><article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3"><div className="min-w-0 flex-1"><p className="text-sm font-bold text-white">{item.title}</p><p className="mt-1 text-[10px] text-white/50">{item.kind==='event'?'Evento':item.kind==='poll'?'Encuesta':'Novedad'} · {item.published?'Publicado':'Borrador'}</p></div><div className="flex gap-2"><button type="button" disabled={busy} onClick={()=>edit(item)} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-white">Editar</button><button type="button" disabled={busy} onClick={()=>toggle(item)} className="rounded-lg border border-[#FF0055]/35 px-3 py-2 text-xs font-bold text-[#FF0055]">{item.published?'Retirar':'Publicar'}</button></div></article>):<p className="text-xs text-white/45">Todavía no hay publicaciones. Creá la primera desde acá.</p>}</div>
+    <div className="space-y-2">{items.length?items.map(item=><article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3"><div className="min-w-0 flex-1"><p className="text-sm font-bold text-white">{item.title}</p><p className="mt-1 text-[10px] text-white/50">{item.kind==='event'?'Evento':item.kind==='poll'?'Encuesta':'Novedad'} · {item.published?'Publicado':'Borrador'}</p></div><div className="flex gap-2"><button type="button" disabled={busy} onClick={()=>edit(item)} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-white">Editar</button><button type="button" disabled={busy} onClick={()=>toggle(item)} className="rounded-lg border border-[#FF0055]/35 px-3 py-2 text-xs font-bold text-[#FF0055]">{item.published?'Retirar':'Publicar'}</button><button type="button" disabled={busy} onClick={()=>remove(item)} className="rounded-lg border border-red-400/40 px-3 py-2 text-xs font-bold text-red-300">Eliminar</button></div></article>):<p className="text-xs text-white/45">Todavía no hay publicaciones. Creá la primera desde acá.</p>}</div>
   </section>
 }
