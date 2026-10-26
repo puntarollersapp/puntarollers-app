@@ -1653,14 +1653,14 @@ function TrainingCard({
 }) {
   return (
     <article
-      className={`relative overflow-hidden rounded-[23px] border bg-gradient-to-br from-[#18171b] via-[#111115] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
+      className={`relative overflow-hidden rounded-[20px] border bg-gradient-to-br from-[#1b1016] via-[#130e13] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
         item.featured
-          ? 'border-[#BBFF1F]/25 shadow-[0_12px_35px_rgba(187,255,31,.035)]'
+          ? 'border-[#FF0055]/30 shadow-[0_12px_35px_rgba(255,0,85,.045)]'
           : 'border-white/[0.08]'
       }`}
     >
-      <div className="relative px-3.5 py-3.5 sm:p-4">
-        <div className="flex items-center gap-3">
+      <div className="relative px-3 py-3 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-2.5">
           <ProfileAvatar
             photo={item.userPhoto}
             name={item.userName}
@@ -1680,28 +1680,28 @@ function TrainingCard({
             </p>
           </div>
 
-          <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
+          <span className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
             🛼
           </span>
         </div>
 
-        <div className="mt-3">
-          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#BBFF1F]/75">
+        <div className="mt-2">
+          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#FF729B]/85">
             Entrenamiento
           </p>
 
-          <h3 className="font-display text-[21px] leading-tight text-white mt-1.5">
+          <h3 className="font-display text-[17px] leading-tight text-white mt-1">
             {item.title}
           </h3>
 
           {item.description && (
-            <p className="text-white/40 text-[11px] leading-relaxed mt-1.5">
+            <p className="text-white/40 text-[10px] leading-relaxed mt-1 line-clamp-2">
               {item.description}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 mt-3">
+        <div className="grid grid-cols-3 gap-1.5 mt-2.5">
           <Metric
             label="Distancia"
             value={formatDistance(item.distanceMeters)}
@@ -1730,7 +1730,7 @@ function TrainingCard({
               href={item.stravaUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-white/65 text-[10px] font-bold hover:text-[#BBFF1F]"
+              className="text-white/65 text-[10px] font-bold hover:text-[#FF729B]"
             >
               Ver en Strava →
             </a>
