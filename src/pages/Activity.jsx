@@ -1662,99 +1662,43 @@ function ProfileAvatar({
 }
 
 function TrainingCard({
-  item,
-  commentSlot,
-  reactions,
-  profilesByAnyId,
-  currentProfileId,
-  savingReactionKey,
-  onReact,
-  onOpenReactions,
+  item, commentSlot, reactions, profilesByAnyId, currentProfileId,
+  savingReactionKey, onReact, onOpenReactions,
 }) {
   return (
-    <article
-      className={`relative overflow-hidden rounded-[16px] border bg-gradient-to-r from-[#190d13] via-[#130d12] to-[#0c0b10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
-        item.featured
-          ? 'border-[#FF0055]/30 shadow-[0_12px_35px_rgba(255,0,85,.045)]'
-          : 'border-white/[0.08]'
-      }`}
-    >
-      <div className="relative px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex items-center gap-2.5">
-          <ProfileAvatar
-            photo={item.userPhoto}
-            name={item.userName}
-            verified={item.verified}
-          />
-
+    <article className="relative overflow-hidden rounded-2xl border border-[#FF0055]/20 bg-[#120e13] shadow-[0_6px_20px_rgba(0,0,0,.15)]">
+      <div className="h-[2px] bg-gradient-to-r from-[#FF0055] via-[#FF5285] to-transparent" />
+      <div className="px-3 py-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} />
           <div className="min-w-0 flex-1">
-            <p className="text-white text-sm font-bold truncate">
-              {item.userName}
-            </p>
-
-            <p className="text-white/30 text-[10px] mt-1">
-              {formatRelativeDate(item.date)} ·{' '}
-              {item.source === 'strava'
-                ? 'Strava'
-                : 'Punta Rollers'}
-            </p>
+            <p className="truncate text-[12px] font-extrabold text-white">{item.userName}</p>
+            <p className="mt-0.5 text-[10px] text-white/45">{formatRelativeDate(item.date)} · {item.source === 'strava' ? 'Strava' : 'Punta Rollers'}</p>
           </div>
-
-          <span className="grid h-7 w-7 place-items-center rounded-full border border-[#FF0055]/20 bg-[#FF0055]/10 text-sm">
-            🛼
-          </span>
+          <span className="shrink-0 rounded-full border border-[#FF0055]/25 bg-[#FF0055]/10 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-[#FF80A9]">🛼 Entreno</span>
         </div>
-
-        <div className="mt-1.5">
-          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#FF729B]/85">
-            Entrenamiento
-          </p>
-
-          <h3 className="font-display text-[15px] leading-snug text-white mt-0.5 line-clamp-2">
-            {item.title}
-          </h3>
-
-          {item.description && (
-            <p className="text-white/40 text-[10px] leading-relaxed mt-1 line-clamp-1">
-              {item.description}
-            </p>
-          )}
+        <h3 className="mt-2 truncate text-[13px] font-extrabold text-white" title={item.title}>{item.title}</h3>
+        <div className="mt-2 flex min-w-0 items-center gap-1.5 rounded-xl border border-white/[.07] bg-white/[.025] px-2 py-2">
+          <div className="min-w-0 flex-1 text-center">
+            <p className="text-[8px] font-bold uppercase tracking-wide text-white/40">Distancia</p>
+            <p className="mt-0.5 truncate text-[13px] font-black text-[#FF6B9B]">{formatDistance(item.distanceMeters)}</p>
+          </div>
+          <span className="h-6 w-px bg-white/10" />
+          <div className="min-w-0 flex-1 text-center">
+            <p className="text-[8px] font-bold uppercase tracking-wide text-white/40">Tiempo</p>
+            <p className="mt-0.5 truncate text-[12px] font-extrabold text-white">{formatDuration(item.durationSeconds)}</p>
+          </div>
+          <span className="h-6 w-px bg-white/10" />
+          <div className="min-w-0 flex-1 text-center">
+            <p className="text-[8px] font-bold uppercase tracking-wide text-white/40">Velocidad</p>
+            <p className="mt-0.5 truncate text-[12px] font-extrabold text-white">{formatSpeed(item.averageSpeed)}</p>
+          </div>
         </div>
-
-        <div className="grid grid-cols-3 gap-1 mt-2">
-          <Metric
-            label="Distancia"
-            value={formatDistance(item.distanceMeters)}
-            highlight
-          />
-          <Metric
-            label="Tiempo"
-            value={formatDuration(item.durationSeconds)}
-          />
-          <Metric
-            label="Velocidad"
-            value={formatSpeed(item.averageSpeed)}
-          />
-        </div>
-
         <ReactionPanel
-          item={item}
-          reactions={reactions}
-          profilesByAnyId={profilesByAnyId}
-          currentProfileId={currentProfileId}
-          savingReactionKey={savingReactionKey}
-          onReact={onReact}
-          onOpenReactions={onOpenReactions}
-          action={item.stravaUrl ? (
-            <a
-              href={item.stravaUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-white/65 text-[10px] font-bold hover:text-[#FF729B]"
-            >
-              Ver en Strava →
-            </a>
-          ) : null}
+          item={item} reactions={reactions} profilesByAnyId={profilesByAnyId}
+          currentProfileId={currentProfileId} savingReactionKey={savingReactionKey}
+          onReact={onReact} onOpenReactions={onOpenReactions}
+          action={item.stravaUrl ? <a href={item.stravaUrl} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-[#FF80A9]">Strava ↗</a> : null}
         />
         {commentSlot}
       </div>
