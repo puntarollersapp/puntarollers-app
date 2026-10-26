@@ -1,3 +1,4 @@
+import { isTransitionStudent, TRANSITION_ENABLED, TRANSITION_END } from '../lib/prTransition'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -43,19 +44,21 @@ export default function StudentLaunchGate({ user, children }) {
   )
   const [now, setNow] = useState(() => Date.now())
 
+  const transitionStudent = isTransitionStudent(user)
   const hasBypass = hasLaunchBypass(user)
   const validTarget = Number.isFinite(target)
   const locked =
     STUDENT_LAUNCH_GATE.enabled &&
     Boolean(user?.id) &&
     !hasBypass &&
+    !transitionStudent &&
     validTarget &&
     now < target
 
   useEffect(() => {
     let active = true
     async function ensureTrainingChoice() {
-      if (!user?.id) { if (active) setTrainingChecked(true); return }
+      if (!user?.id || (TRANSITION_ENABLED && Date.now() < TRANSITION_END)) { if (active) setTrainingChecked(true); return }
       const isTreasury = user?.esTesoreria === true || user?.es_tesoreria === true
       const isStaff = user?.role === 'admin' || user?.role === 'profesor'
       const shouldAsk = !isTreasury && (!isStaff || user?.documento === '48036677')
@@ -80,7 +83,7 @@ export default function StudentLaunchGate({ user, children }) {
     }
     ensureTrainingChoice()
     return () => { active = false }
-  }, [user?.id, user?.role, user?.documento, user?.esTesoreria, user?.es_tesoreria, location.pathname, navigate])
+  }, [user?.id, user?.role, user?.documento, user?.esTesoreria, user?.es_tesoreria, transitionStudent, location.pathname, navigate])
 
   useEffect(() => {
     if (!locked) return undefined
