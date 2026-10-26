@@ -1472,7 +1472,9 @@ function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
     }).filter(row=>row.id&&row.meters>0).sort((a,b)=>b.meters-a.meters||b.sessions-a.sessions)
     const withRanks=rows.map((row,i)=>({...row,rank:i+1}))
     const mine=withRanks.find(row=>row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId))
-    return [mine,...withRanks.filter(row=>row!==mine)].filter(Boolean).slice(0,5)
+    const ownProfile=profilesByAnyId.get(String(profileId))||{}
+    const ownRow=mine||(profileId?{id:String(ownProfile.id||profileId),meters:0,profile:ownProfile,rank:null}:null)
+    return [ownRow,...withRanks.filter(row=>row!==mine)].filter(Boolean).slice(0,5)
   },[rankingRows,period,profilesByAnyId,profileId])
   const max=Math.max(1,...(rankingRows[period]||[]).map(row=>(Number(row.km)||0)*1000))
   const myRank=(rankingRows[period]||[]).findIndex(row=>String(row.alumno_id)===String(profileId)||String(profilesByAnyId.get(String(row.alumno_id))?.auth_user_id||'')===String(profileId))
@@ -1489,7 +1491,7 @@ function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
       const isMine=row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId)
       return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-36 items-end overflow-hidden rounded-[22px] bg-white/[.09] sm:h-44 sm:rounded-[32px]"><div className="pr-rank-fill relative w-full rounded-[22px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b] sm:rounded-[32px]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} style={{bottom:`clamp(8px, calc(${percent}% - 24px), calc(100% - 54px))`}} className="absolute left-1/2 z-10 -translate-x-1/2 rounded-full border-2 border-white bg-[#220d18] p-[2px] shadow-[0_0_18px_rgba(255,0,85,.35)] transition-[bottom] duration-500 disabled:cursor-default">{photo?<img src={photo} alt={name} className="h-8 w-8 rounded-full object-cover sm:h-11 sm:w-11"/>:<span className="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white sm:h-11 sm:w-11">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[10px] font-black text-white sm:text-[12px]">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[9px] text-white/65 sm:text-[10px]" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
     })}</div>:<p className="mt-5 rounded-xl border border-white/10 p-4 text-xs text-white/60">Todavía no hay kilómetros registrados para este período.</p>}
-    {myEntry&&<p className="relative mt-4 rounded-xl border border-[#FF0055]/20 bg-[#FF0055]/10 px-3 py-2 text-xs font-semibold text-white/80">Tu posición real: #{myRank+1} · {(Number(myEntry.km)||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>}
+    {profileId&&<p className="relative mt-4 rounded-xl border border-[#FF0055]/20 bg-[#FF0055]/10 px-3 py-2 text-xs font-semibold text-white/80">{myEntry?`Tu posición real: #${myRank+1} · ${(Number(myEntry.km)||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km`:'Todavía no tenés kilómetros registrados en este período.'}</p>}
     <button type="button" onClick={()=>navigate('/ranking-semanal')} className="relative mt-5 w-full rounded-xl border border-[#FF729B]/30 bg-[#FF0055]/10 px-4 py-3 text-xs font-bold text-white transition hover:bg-[#FF0055]/20">Ver clasificación completa →</button>
   </section>
 }
