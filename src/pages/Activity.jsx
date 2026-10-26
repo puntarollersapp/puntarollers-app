@@ -1285,7 +1285,7 @@ export default function Activity() {
           </div>
         </nav>
 
-        <RollerFeedTopRanking activities={activities} profilesByAnyId={profilesByAnyId} profileId={profileId} />
+        <RollerFeedTopRanking profilesByAnyId={profilesByAnyId} profileId={profileId} />
 
         <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
@@ -1435,39 +1435,52 @@ export default function Activity() {
   )
 }
 
-function RollerFeedTopRanking({ activities, profilesByAnyId, profileId }) {
+function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
   const [period,setPeriod]=useState('week')
+  const [rankingRows,setRankingRows]=useState({week:[],month:[]})
+  const [rankingLoading,setRankingLoading]=useState(true)
+  const [rankingError,setRankingError]=useState('')
   const navigate=useNavigate()
-  const ranked=useMemo(()=>{
-    const now=new Date()
-    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]))
-    const today=`${parts.year}-${parts.month}-${parts.day}`
-    const weekday=new Date(today+'T12:00:00-03:00').getDay()
-    const startDay=new Date(today+'T12:00:00-03:00')
-    if(period==='week')startDay.setDate(startDay.getDate()-((weekday+6)%7))
-    else startDay.setDate(1)
-    const start=new Date(startDay.getFullYear()+'-'+String(startDay.getMonth()+1).padStart(2,'0')+'-'+String(startDay.getDate()).padStart(2,'0')+'T00:00:00-03:00')
-    const totals=new Map()
-    for(const activity of activities){
-      if(activity.eliminada===true||String(activity.fuente||'strava').toLowerCase()!=='strava')continue
-      const date=new Date(activity.fecha_inicio||0)
-      if(Number.isNaN(date.getTime())||date<start||date>now)continue
-      const meters=Math.max(0,Number(activity.distancia_metros)||0)
-      const key=String(activity.alumno_id||'')
-      if(!key||!meters)continue
-      totals.set(key,(totals.get(key)||0)+meters)
+  useEffect(()=>{
+    let active=true
+    async function loadRanking(){
+      setRankingLoading(true);setRankingError('')
+      const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}).formatToParts(new Date()).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]))
+      const today=`${parts.year}-${parts.month}-${parts.day}`
+      const dayIndex=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(parts.weekday)
+      const mondayOffset=dayIndex===0?-6:1-dayIndex
+      const monday=new Date(today+'T12:00:00Z')
+      monday.setUTCDate(monday.getUTCDate()+mondayOffset)
+      const startWeek=monday.toISOString().slice(0,10)
+      const startMonth=`${parts.year}-${parts.month}-01`
+      const [week,month]=await Promise.all([
+        supabase.rpc('pr_get_inline_ranking',{p_start_date:startWeek,p_end_date:today}),
+        supabase.rpc('pr_get_inline_ranking',{p_start_date:startMonth,p_end_date:today})
+      ])
+      if(!active)return
+      if(week.error||month.error)setRankingError('No pudimos actualizar la clasificación.')
+      else setRankingRows({week:week.data||[],month:month.data||[]})
+      setRankingLoading(false)
     }
-    const result=[...totals].map(([id,meters])=>({id,meters,profile:profilesByAnyId.get(id)||{}})).sort((a,b)=>b.meters-a.meters)
-    const withRanks=result.map((row,i)=>({...row,rank:i+1}))
+    loadRanking()
+    return ()=>{active=false}
+  },[])
+  const ranked=useMemo(()=>{
+    const rows=[...(rankingRows[period]||[])].map(row=>{
+      const id=String(row.alumno_id||'')
+      return {id,meters:(Number(row.km)||0)*1000,profile:profilesByAnyId.get(id)||{},sessions:Number(row.sessions)||0}
+    }).filter(row=>row.id&&row.meters>0).sort((a,b)=>b.meters-a.meters||b.sessions-a.sessions)
+    const withRanks=rows.map((row,i)=>({...row,rank:i+1}))
     const mine=withRanks.find(row=>row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId))
     return [mine,...withRanks.filter(row=>row!==mine)].filter(Boolean).slice(0,5)
-  },[activities,profilesByAnyId,profileId,period])
+  },[rankingRows,period,profilesByAnyId,profileId])
   const max=Math.max(1,...ranked.map(row=>row.meters))
   return <section aria-label="Top Ranking RollerFeed" className="pr-rank-panel relative overflow-hidden rounded-[28px] border border-[#FF0055]/25 bg-gradient-to-br from-[#2a0712] via-[#170910] to-[#0c090e] p-4 sm:p-5">
     <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#FF0055]/15 blur-3xl"/>
     <div className="relative flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#FF8CAD]">PR · Top Ranking</p><h2 className="mt-1 font-display text-[25px] leading-tight text-white">Así avanzamos juntos</h2></div><span aria-hidden="true" className="pr-rank-medal text-3xl">🏅</span></div>
     <div className="relative mt-4 inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['week','Esta semana'],['month','Este mes']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
-    {ranked.length?<div className="relative mt-5 grid grid-cols-5 gap-2">{ranked.map((row)=>{
+    {rankingError&&<p role="alert" className="mt-3 text-xs text-red-200">{rankingError}</p>}
+    {rankingLoading?<p className="mt-5 text-xs text-white/60">Cargando clasificación…</p>:ranked.length?<div className="relative mt-5 grid grid-cols-5 gap-2">{ranked.map((row)=>{
       const name=getProfileName(row.profile)||'Integrante PR'
       const photo=getProfilePhoto(row.profile)
       const percent=Math.max(9,Math.round(row.meters/max*100))
