@@ -1049,32 +1049,10 @@ export default function Activity() {
       normalizeActivity(activity, profilesByAnyId)
     )
 
-    const communityPosts = legacyItems.filter(item => !/cl[ií]nica|miguel flores|caramelo|top ranking|sumamos .*km|ranking pr/i.test([item.titulo,item.descripcion,item.tipo,item.categoria].filter(Boolean).join(' '))).map((item) =>
-      normalizeLegacyItem(item, profilesByAnyId)
-    )
-
     const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores|caramelo|top ranking/i.test([event.titulo,event.descripcion].filter(Boolean).join(' '))).map(normalizeRollerEvent)
-    const momentPosts = moments.map((moment) => {
-      const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
-      return {
-        ...moment,
-        id: `moment-${moment.id}`,
-        momentId: moment.id,
-        type: 'Moment',
-        date: moment.created_at,
-        userId: moment.profile_id,
-        userName: getProfileName(profile) || 'Roller PR',
-        userPhoto: getProfilePhoto(profile),
-        verified: getProfileVerified(profile),
-      }
-    })
-
     return [
-      ...socialPosts.filter(post=>!/cl[ií]nica|miguel flores|caramelo|top ranking pr/i.test(String(post.body||''))).map(post=>({...post,id:`social-${post.id}`,postId:post.id,type:'SocialPost',date:post.created_at})),
-      ...momentPosts,
       ...eventPosts,
       ...trainingPosts,
-      ...communityPosts,
     ].sort(
       (a, b) =>
         new Date(b.date || 0).getTime() -
@@ -1082,11 +1060,7 @@ export default function Activity() {
     )
   }, [
     activities,
-    socialPosts,
-    legacyItems,
     events,
-    moments,
-    profiles,
     profilesByAnyId,
   ])
 
@@ -1503,7 +1477,7 @@ function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
       const photo=getProfilePhoto(row.profile)
       const percent=Math.max(9,Math.round(row.meters/max*100))
       const isMine=row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId)
-      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-36 items-end overflow-hidden rounded-[22px] bg-white/[.09] sm:h-44 sm:rounded-[32px]"><div className="pr-rank-fill relative w-full rounded-[22px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b] sm:rounded-[32px]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} style={{bottom:`clamp(8px, calc(${percent}% - 24px), calc(100% - 54px))`}} className="absolute left-1/2 z-10 grid h-10 w-10 -translate-x-1/2 place-items-center overflow-hidden rounded-full border-2 border-white bg-[#220d18] p-0 shadow-[0_0_18px_rgba(255,0,85,.35)] transition-[bottom] duration-500 sm:h-12 sm:w-12 disabled:cursor-default">{photo?<img src={photo} alt={name} className="block h-full w-full rounded-full object-cover object-center"/>:<span className="grid h-full w-full place-items-center rounded-full text-xs font-bold text-white">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[10px] font-black text-white sm:text-[12px]">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[9px] text-white/65 sm:text-[10px]" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
+      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-36 items-end rounded-[22px] bg-white/[.09] sm:h-44 sm:rounded-[32px]"><div className="pr-rank-fill relative w-full rounded-[22px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b] sm:rounded-[32px]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} style={{bottom:`clamp(8px, calc(${percent}% - 24px), calc(100% - 54px))`}} className="absolute left-1/2 z-10 flex h-10 w-10 shrink-0 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#220d18] p-0 shadow-[0_0_18px_rgba(255,0,85,.35)] transition-[bottom] duration-500 sm:h-12 sm:w-12 disabled:cursor-default">{photo?<img src={photo} alt={name} className="block h-full w-full min-h-full min-w-full rounded-full object-cover object-center"/>:<span className="grid h-full w-full place-items-center rounded-full text-xs font-bold text-white">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[10px] font-black text-white sm:text-[12px]">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[9px] text-white/65 sm:text-[10px]" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
     })}</div>:<p className="mt-5 rounded-xl border border-white/10 p-4 text-xs text-white/60">Todavía no hay kilómetros registrados para este período.</p>}
     {profileId&&<p className="relative mt-4 rounded-xl border border-[#FF0055]/20 bg-[#FF0055]/10 px-3 py-2 text-xs font-semibold text-white/80">{myEntry?`Tu posición real: #${myRank+1} · ${(Number(myEntry.km)||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km`:'Todavía no tenés kilómetros registrados en este período.'}</p>}
     <button type="button" onClick={()=>navigate('/ranking-semanal')} className="relative mt-5 w-full rounded-xl border border-[#FF729B]/30 bg-[#FF0055]/10 px-4 py-3 text-xs font-bold text-white transition hover:bg-[#FF0055]/20">Ver clasificación completa →</button>
