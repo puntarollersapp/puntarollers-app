@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import PRMomentsRail from '../components/PRMomentsRail'
 import RollerFeedComments from '../components/RollerFeedComments'
+import RollerFeedSeasonal from '../components/RollerFeedSeasonal'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
 import CommunityPhoto from '../components/community/CommunityPhoto'
@@ -1291,6 +1292,8 @@ export default function Activity() {
           </div>
         </section>
 
+        <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
+
         {loading && <RollerFeedLoading syncing={syncing} />}
 
         {myLatest && (
@@ -1432,6 +1435,8 @@ export default function Activity() {
             </div>
           )}
         </section>
+
+        <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
 
         {reactionModalItem && (
           <ReactionsModal
