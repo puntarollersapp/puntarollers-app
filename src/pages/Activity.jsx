@@ -1,4 +1,3 @@
-import RollerweenBadge from '../components/RollerweenBadge'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
@@ -1049,11 +1048,11 @@ export default function Activity() {
       normalizeActivity(activity, profilesByAnyId)
     )
 
-    const communityPosts = legacyItems.map((item) =>
+    const communityPosts = legacyItems.filter(item => !/cl[ií]nica|miguel flores|caramelo/i.test(item.titulo || '')).map((item) =>
       normalizeLegacyItem(item, profilesByAnyId)
     )
 
-    const eventPosts = events.map(normalizeRollerEvent)
+    const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores/i.test(event.titulo || '')).map(normalizeRollerEvent)
     const momentPosts = moments.map((moment) => {
       const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
       return {
@@ -1385,7 +1384,7 @@ export default function Activity() {
             </div>
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
-              {visibleItems.slice(0, filter === 'Entrenamiento' ? feedLimit : Math.min(feedLimit, 6)).map((item) => (
+              {visibleItems.slice(0, feedLimit).map((item) => (
                 <div key={item.id}>
                   <FeedCard
                     item={item}
@@ -1636,7 +1635,6 @@ function ProfileAvatar({
         )}
       </div>
 
-      <RollerweenBadge className="absolute -right-1 -bottom-1 z-20 h-6 w-6"/>
       {verified && <VerifiedBadge size={22} className="absolute -top-1.5 -right-1.5 z-20" />}
     </div>
   )
