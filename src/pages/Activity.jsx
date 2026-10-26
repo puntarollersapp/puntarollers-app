@@ -757,11 +757,16 @@ export default function Activity() {
       }
 
       if (error) {
-        throw new Error(
-          data?.error ||
-            error.message ||
-            'No se pudo sincronizar Strava.'
-        )
+        // Supabase returns a non-2xx error for profiles without a connection.
+        // This is an expected state, not a failed RollerFeed load.
+        const response = error.context
+        let details = null
+        try { details = response?.json ? await response.json() : null } catch {}
+        const reason = clean(details?.error || data?.error || error.message)
+        if (response?.status === 409 && /no conectado|not connected/i.test(reason)) {
+          return { notConnected: true, newActivities: 0 }
+        }
+        throw new Error(reason || 'No se pudo sincronizar Strava.')
       }
 
       if (data?.error) {
