@@ -5,6 +5,7 @@ import PrivateLessonsPanel from '../components/admin/PrivateLessonsPanel'
 import ContactsPanel from '../components/admin/ContactsPanel'
 import ProductsPanel from '../components/admin/ProductsPanel'
 import DashboardOverview from '../components/admin/DashboardOverview'
+import RollerFeedNewsAdmin from '../components/admin/RollerFeedNewsAdmin'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getCupos, saveCupos } from '../data/cupos'
@@ -547,7 +548,7 @@ export default function Admin() {
         )}
 
         {!loading && section === 'eventos' && canManageContent && (
-          <EventsPanel creator={user} setMsg={setMsg} />
+          <div className="space-y-5"><RollerFeedNewsAdmin /><EventsPanel creator={user} setMsg={setMsg} /></div>
         )}
 
         {!loading && section === 'pagos' && canFullAdmin && (
