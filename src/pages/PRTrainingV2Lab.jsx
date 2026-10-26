@@ -258,7 +258,7 @@ function PRTareasHome({user}){
  }
  useEffect(()=>{refresh()},[month])
  useEffect(()=>{try{const stored=Number(localStorage.getItem('pr-tareas-reveal-'+user?.id+'-'+month)||0);setRevealed(Number.isFinite(stored)?Math.max(0,Math.min(6,stored)):0)}catch{setRevealed(0)}},[user?.id,month])
- useEffect(()=>{let cancelled=false;async function loadProfile(){if(!user?.id)return;const {data}=await supabase.from('profiles').select('id,nombre,foto,pr_avatar').eq('auth_user_id',user.id).maybeSingle();if(!cancelled&&data)setProfile(data)}loadProfile();return()=>{cancelled=true}},[user?.id])
+ useEffect(()=>{let cancelled=false;async function loadProfile(){if(!user?.id)return;let {data}=await supabase.from('profiles').select('id,nombre,foto,pr_avatar').eq('id',user.id).maybeSingle();if(!data){const fallback=await supabase.from('profiles').select('id,nombre,foto,pr_avatar').eq('auth_user_id',user.id).maybeSingle();data=fallback.data}if(!cancelled&&data)setProfile(data)}loadProfile();return()=>{cancelled=true}},[user?.id])
  const tasks=Array.isArray(plan?.duties)?plan.duties:[]
  const done=tasks.filter(t=>(t.latest_status)==='approved').length
  const percent=tasks.length?Math.round(done/tasks.length*100):0
