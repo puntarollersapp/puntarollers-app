@@ -50,14 +50,8 @@ export default function RollerFeedNewsAdmin() {
       const {data,error}=await request
       if(error)throw Error(error.message)
       if(form.kind==='poll'){
-        const {data:responses,error:countError}=await supabase.from('pr_feed_news_responses').select('voter_uid').eq('news_id',data.id).limit(1)
-        if(countError)throw Error(countError.message)
-        if(!responses?.length){
-          const {error:deleteError}=await supabase.from('pr_feed_news_options').delete().eq('news_id',data.id)
-          if(deleteError)throw Error(deleteError.message)
-          const {error:insertError}=await supabase.from('pr_feed_news_options').insert(labels.map((label,sort_order)=>({news_id:data.id,label,sort_order})))
-          if(insertError)throw Error(insertError.message)
-        }
+        const {error:optionsError}=await supabase.rpc('pr_feed_save_news_poll_options',{p_news_id:data.id,p_labels:labels})
+        if(optionsError)throw Error(optionsError.message)
       }
       setMessage('Publicación guardada correctamente.')
       setForm(blank);setExpanded(false);await load()
