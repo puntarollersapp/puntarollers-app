@@ -40,8 +40,11 @@ export default function AdminKidsSolicitudes(){
  }
  async function validateLinks(r){setPreflightBusy(r.id);setError('');try{const checked=validateKidsTreasuryAssignments(matches[r.id]||[],selectedProfiles[r.id]||{});if(!checked.valid)throw Error(checked.problems.join(' '));const ids=(matches[r.id]||[]).map((_,i)=>selectedProfiles[r.id]?.[i]||'');const result=await invoke({action:'approval-validate',id:r.id,profile_ids:ids});setPreflight(prev=>({...prev,[r.id]:result}))}catch(e){setError(e.message)}finally{setPreflightBusy('')}}
  async function approveFamily(r){
-  const ids=(matches[r.id]||[]).map((_,i)=>selectedProfiles[r.id]?.[i]||'')
-  const local=validateKidsTreasuryAssignments(matches[r.id]||[],selectedProfiles[r.id]||{})
+  const familyChildren=Array.isArray(r.hijos)&&r.hijos.length?r.hijos:[{nombre:r.nombre_nino}]
+  const candidateRows=matches[r.id]||familyChildren.map(child=>({nombre:child.nombre,matches:[]}))
+  const chosen=Object.fromEntries(familyChildren.map((_,i)=>[i,selectedProfiles[r.id]?.[i]||'NEW:'+(i+1)]))
+  const ids=familyChildren.map((_,i)=>chosen[i])
+  const local=validateKidsTreasuryAssignments(candidateRows,chosen)
   if(!local.valid){setError('Revisá la selección de perfiles infantiles. '+local.problems.join(' '));return}
   setBusy(r.id);setError('');setApprovalNotice('')
   try{
