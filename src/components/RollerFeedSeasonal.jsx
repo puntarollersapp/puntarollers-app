@@ -23,7 +23,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   async function refresh() {
     if (section === 'news') {
       const result = await supabase.from('pr_feed_news')
-        .select('id,title,body,image_url,event_at,created_at,kind,allow_rsvp')
+        .select('id,title,body,image_url,image_urls,event_at,created_at,kind,allow_rsvp')
         .eq('published', true)
         .order('created_at', { ascending: false })
         .limit(newsLimitRef.current + 1)
