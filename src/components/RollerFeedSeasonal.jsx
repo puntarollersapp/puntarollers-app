@@ -13,6 +13,9 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   const newsLimitRef = useRef(8)
   const [hasMoreNews, setHasMoreNews] = useState(false)
   const [avatars, setAvatars] = useState([])
+  const [avatarConsent, setAvatarConsent] = useState(false)
+  const [avatarDialog, setAvatarDialog] = useState(null)
+  const [consentBusy, setConsentBusy] = useState(false)
   const [uid, setUid] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -65,12 +68,34 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
     return () => { live = false; window.clearInterval(timer); listener.subscription.unsubscribe() }
   }, [])
 
+  useEffect(() => {
+    if (!uid || section !== 'polls') { setAvatarConsent(false); return }
+    let live = true
+    supabase.from('pr_feed_avatar_consent').select('visible').eq('user_id',uid).maybeSingle()
+      .then(({data}) => { if(live) setAvatarConsent(Boolean(data?.visible)) })
+    return () => { live = false }
+  }, [uid, section])
+
+  async function toggleAvatarConsent() {
+    if (!uid || consentBusy) return
+    setConsentBusy(true)
+    const next = !avatarConsent
+    const {error: saveError} = await supabase.from('pr_feed_avatar_consent')
+      .upsert({user_id:uid,visible:next,updated_at:new Date().toISOString()},{onConflict:'user_id'})
+    if (saveError) setError('No se pudo actualizar la visibilidad de tu foto.')
+    else { setAvatarConsent(next); await refresh() }
+    setConsentBusy(false)
+  }
+
   function voterAvatars(pollId) {
-    const people = avatars.filter(a => a.poll_id === pollId).slice(0, 7)
+    const people = avatars.filter(a => a.poll_id === pollId)
     if (!people.length) return null
-    return <div className="mt-2 flex items-center gap-1.5" aria-label="Participantes que habilitaron su foto en encuestas">
-      <div className="flex -space-x-2">{people.map((person, index) => <img key={index} src={person.photo_url} alt={person.display_name || 'Participante'} title={person.display_name || 'Participante'} loading="lazy" className="h-7 w-7 rounded-full border-2 border-[#0D0303] bg-[#191919] object-cover" />)}</div>
-      <span className="text-[10px] text-white/40">Participantes</span>
+    const visible = people.slice(0, 7)
+    const remaining = people.length - visible.length
+    return <div className="mt-3 flex items-center gap-2" aria-label={people.length+' participantes que autorizaron mostrar su foto'}>
+      <div className="flex -space-x-2">{visible.map((person,index) => <img key={index} src={person.photo_url} alt={person.display_name || 'Participante'} title={person.display_name || 'Participante'} loading="lazy" className="h-8 w-8 rounded-full border-2 border-[#0D0303] bg-[#191919] object-cover" />)}</div>
+      {remaining > 0 && <button type="button" onClick={() => setAvatarDialog(pollId)} className="rounded-full border border-[#BBFF1F]/40 bg-[#BBFF1F]/10 px-2.5 py-1.5 text-[11px] font-black text-[#BBFF1F]" aria-label={'Ver '+remaining+' participantes más'}>+{remaining}</button>}
+      <button type="button" onClick={() => setAvatarDialog(pollId)} className="text-[10px] font-bold text-white/55 underline decoration-white/25 underline-offset-2">Ver todas ({people.length})</button>
     </div>
   }
 
@@ -133,12 +158,14 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
             })}
           </div>
         </div>
+        {uid && <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 text-center text-[11px] text-white/60"><input type="checkbox" checked={avatarConsent} disabled={consentBusy} onChange={toggleAvatarConsent} className="accent-[#FF0055]" /> Mostrar mi foto y nombre junto a mis votos (opcional)</label>}
         {!uid && !loading && <p className="mt-3 text-center text-xs text-white/50">Iniciá sesión para participar.</p>}
         {loading && <p className="mt-4 text-center text-xs text-white/50">Cargando encuestas…</p>}
         {error && <p role="alert" className="mt-3 text-center text-xs text-red-300">{error}</p>}
       </div>
     </section>
     </>}
+    {avatarDialog && <div role="dialog" aria-modal="true" aria-label="Participantes de la votación" className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 p-4" onClick={() => setAvatarDialog(null)}><div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-[24px] border border-[#FF0055]/40 bg-[#151016] p-5" onClick={e=>e.stopPropagation()}><div className="mb-4 flex items-center justify-between gap-3"><h3 className="text-lg font-black text-white">Participantes ({avatars.filter(a=>a.poll_id===avatarDialog).length})</h3><button type="button" onClick={() => setAvatarDialog(null)} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white">Cerrar ✕</button></div><div className="grid grid-cols-4 gap-4">{avatars.filter(a=>a.poll_id===avatarDialog).map((person,index)=><div key={index} className="min-w-0 text-center"><img src={person.photo_url} alt={person.display_name||'Participante'} loading="lazy" className="mx-auto h-14 w-14 rounded-full border-2 border-[#FF0055]/40 object-cover" /><p className="mt-1 break-words text-[10px] text-white/75">{person.display_name||'Participante'}</p></div>)}</div><p className="mt-4 text-xs text-white/40">Solo aparecen quienes eligieron mostrar su foto. El total de votos incluye a todos.</p></div></div>}
     {section === 'news' && <>
     <section className="rf-news-shell rounded-[28px] border border-[#BBFF1F]/20 bg-[#0D0303] p-4 shadow-[0_16px_45px_rgba(0,0,0,.2)] sm:p-5">
       <div aria-hidden="true" className="rf-news-glow" />
