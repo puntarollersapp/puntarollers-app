@@ -36,37 +36,5 @@ export default function BottomNav(){
  const nav=[{path:'/app/perfil',label:'Perfil',icon:'profile'},{path:'https://www.puntarollers.com/pr-awards',label:'PR Awards',icon:'awards'},{path:'/app/ecosistema',label:'Ecosistema',icon:'ecosystem'},{path:'/app/actividad',label:'RollerFeed',icon:'feed',feed:true},{path:'/app/mi-pr',label:'Mi PR',icon:'mypr'},{path:'/app/comunidad',label:'Comunidad',icon:'community',badge:communityBadge}]
  if(user?.esTesoreria && !isStaff)nav.push({path:'/tesoreria',label:'Tesorería',icon:'treasury'})
  if(isStaff)nav.push({path:'/admin',label:'Admin',icon:'admin'})
- const activeIndex=Math.max(0,nav.findIndex(item=>isActive(pathname,item)))
- const count=nav.length
- const activeItem=nav[activeIndex]
- return <nav aria-label="Navegación principal" className="fixed bottom-0 left-1/2 z-50 w-full max-w-[520px] -translate-x-1/2" style={{paddingBottom:'env(safe-area-inset-bottom, 0px)'}}>
-   <style>{`
-     .pr-island-bar{position:relative;isolation:isolate;background:linear-gradient(180deg,#17151e 0%,#09090e 100%);border:1px solid rgba(255,255,255,.1);border-radius:24px 24px 0 0;box-shadow:0 -12px 38px rgba(0,0,0,.5)}
-     .pr-island-indicator{position:absolute;z-index:3;top:-29px;left:calc((100% / var(--pr-count)) * (var(--pr-active) + .5));width:57px;height:57px;transform:translateX(-50%);border:5px solid #09090e;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff3c83,#ff0055 65%,#a60043);color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 8px 26px rgba(255,0,85,.36);transition:left .38s cubic-bezier(.22,1,.36,1)}
-     .pr-island-indicator:before,.pr-island-indicator:after{content:'';position:absolute;bottom:8px;width:17px;height:17px;border-radius:0 0 100% 0;pointer-events:none}
-     .pr-island-indicator:before{right:calc(100% + 2px);border-radius:0 0 100% 0;box-shadow:6px 6px 0 #09090e}
-     .pr-island-indicator:after{left:calc(100% + 2px);border-radius:0 0 0 100%;box-shadow:-6px 6px 0 #09090e}
-     .pr-island-link{display:flex;flex:1 1 0;min-width:0;height:62px;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;padding:3px 1px 7px;color:rgba(255,255,255,.45);text-decoration:none;transition:color .25s}
-     .pr-island-link[aria-current=page]{color:#ff82ad}
-     .pr-island-link[aria-current=page] .pr-island-icon{opacity:0;transform:translateY(-8px)}
-     .pr-island-icon{height:24px;display:grid;place-items:center;transition:opacity .2s,transform .25s}
-     .pr-island-label{font-size:clamp(7px,1.75vw,10px);font-weight:700;line-height:1;white-space:nowrap;letter-spacing:-.025em}
-     .pr-island-link[aria-current=page] .pr-island-label{color:#fff}
-     @media(max-width:359px){.pr-island-indicator{width:49px;height:49px;top:-24px}.pr-island-label{font-size:7px}.pr-island-link{height:60px}}
-     @media(prefers-reduced-motion:reduce){.pr-island-indicator,.pr-island-link,.pr-island-icon{transition:none!important}}
-   `}</style>
-   <div className="pr-island-bar mx-auto" style={{'--pr-count':count,'--pr-active':activeIndex}}>
-     <div className="pr-island-indicator" aria-hidden="true"><NavIcon type={activeItem.icon}/></div>
-     <div className="flex items-end justify-between px-1 pt-3">
-       {nav.map(item=>{
-         const active=isActive(pathname,item)
-         return <Link key={item.path} to={item.path} aria-current={active?'page':undefined} aria-label={item.label} className="pr-island-link active:scale-95">
-           <span className="pr-island-icon"><NavIcon type={item.icon}/></span>
-           <span className="pr-island-label">{item.label}</span>
-           {item.badge>0&&<span className="absolute mt-[-42px] ml-7 grid h-4 min-w-4 place-items-center rounded-full border border-[#09090e] bg-[#BEFF37] px-1 text-[8px] font-black text-black">{item.badge>9?'9+':item.badge}</span>}
-         </Link>
-       })}
-     </div>
-   </div>
- </nav>
+ return <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[520px] -translate-x-1/2 border-t border-white/[.07] bg-pr-black/95 shadow-[0_-14px_40px_rgba(0,0,0,.38)] backdrop-blur-2xl" style={{paddingBottom:'max(env(safe-area-inset-bottom, 0px), 8px)'}}><div className="flex items-end justify-around gap-0 px-1 pb-1 pt-2">{nav.map(item=>{const active=isActive(pathname,item);if(item.feed)return <Link key={item.path} to={item.path} aria-current={active?'page':undefined} className="relative flex w-[clamp(110px,29vw,138px)] min-w-[110px] shrink-0 flex-col items-center justify-end active:scale-95"><span style={{backgroundColor:"#FF0055",backgroundImage:"none",color:"#EFF8FF",borderColor:active?"#FF477E":"rgba(255,255,255,.24)",boxShadow:active?"0 12px 32px rgba(255,0,85,.32)":"0 10px 30px rgba(255,0,85,.22)"}} className={`pr-feed-button absolute -top-[43px] flex h-[66px] w-full items-center justify-center gap-1 rounded-[24px] border px-1 transition-all ${active?'border-pr-pink/80 bg-pr-pink text-white shadow-[0_10px_30px_rgba(255,0,85,.26)]':'border-pr-pink/35 bg-[linear-gradient(150deg,#FF0055,#B5003E)] text-white shadow-[0_10px_28px_rgba(255,0,85,.18)]'}`}><span className="relative scale-[1.05]"><NavIcon type="feed"/><span className="pr-feed-spark absolute -right-2 -top-1.5 text-[8px]">✦</span></span><span className="whitespace-nowrap text-[clamp(9px,2.8vw,13px)] font-black tracking-[-.035em]">RollerFeed</span></span><span className="mt-[35px] h-[10px] text-[1px] text-transparent">.</span></Link>;return <Link key={item.path} to={item.path} aria-current={active?'page':undefined} className={`relative flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 transition-all active:scale-95 ${active?'text-pr-lime':'text-white/35'}`}>{active&&<span className="absolute -top-2 h-[2px] w-7 rounded-full bg-current opacity-90 shadow-[0_0_10px_currentColor]"/>}<NavIcon type={item.icon}/>{item.badge>0&&<span className="absolute right-0 top-0 grid h-4 min-w-4 place-items-center rounded-full border border-pr-black bg-pr-cyan px-1 text-[7px] font-black text-black">{item.badge>9?'9+':item.badge}</span>}<span className="max-w-[58px] truncate text-[7px] font-semibold tracking-[-.03em]">{item.label}</span></Link>})}</div></nav>
 }
