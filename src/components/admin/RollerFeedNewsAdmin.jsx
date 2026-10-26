@@ -35,6 +35,15 @@ export default function RollerFeedNewsAdmin() {
     try {
       const labels=form.kind==='poll'?form.options.split('\n').map(s=>s.trim()).filter(Boolean):[]
       if(form.kind==='poll' && labels.length<2)throw Error('Una encuesta necesita al menos dos opciones.')
+      if(form.id && form.kind==='poll'){
+        const {data:existing,error:existingError}=await supabase.from('pr_feed_news_responses').select('voter_uid').eq('news_id',form.id).limit(1)
+        if(existingError)throw Error(existingError.message)
+        if(existing?.length){
+          const {data:previous,error:optionsError}=await supabase.from('pr_feed_news_options').select('label').eq('news_id',form.id).order('sort_order')
+          if(optionsError)throw Error(optionsError.message)
+          if(JSON.stringify((previous||[]).map(o=>o.label))!==JSON.stringify(labels))throw Error('No podés modificar las opciones de una encuesta que ya recibió votos.')
+        }
+      }
       const payload={title:form.title.trim(),body:form.body.trim(),image_url:form.image_url.trim()||null,event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,updated_at:new Date().toISOString()}
       if(!payload.title)throw Error('Escribí un título.')
       const request=form.id?supabase.from('pr_feed_news').update(payload).eq('id',form.id).select('id').single():supabase.from('pr_feed_news').insert(payload).select('id').single()
@@ -43,11 +52,12 @@ export default function RollerFeedNewsAdmin() {
       if(form.kind==='poll'){
         const {data:responses,error:countError}=await supabase.from('pr_feed_news_responses').select('voter_uid').eq('news_id',data.id).limit(1)
         if(countError)throw Error(countError.message)
-        if(responses?.length && form.id)throw Error('La publicación se guardó. Las opciones no se modificaron porque ya hay votos.')
-        const {error:deleteError}=await supabase.from('pr_feed_news_options').delete().eq('news_id',data.id)
-        if(deleteError)throw Error(deleteError.message)
-        const {error:insertError}=await supabase.from('pr_feed_news_options').insert(labels.map((label,sort_order)=>({news_id:data.id,label,sort_order})))
-        if(insertError)throw Error(insertError.message)
+        if(!responses?.length){
+          const {error:deleteError}=await supabase.from('pr_feed_news_options').delete().eq('news_id',data.id)
+          if(deleteError)throw Error(deleteError.message)
+          const {error:insertError}=await supabase.from('pr_feed_news_options').insert(labels.map((label,sort_order)=>({news_id:data.id,label,sort_order})))
+          if(insertError)throw Error(insertError.message)
+        }
       }
       setMessage('Publicación guardada correctamente.')
       setForm(blank);setExpanded(false);await load()
