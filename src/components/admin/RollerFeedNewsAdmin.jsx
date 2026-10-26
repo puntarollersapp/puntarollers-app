@@ -44,7 +44,7 @@ export default function RollerFeedNewsAdmin() {
         if(error)throw Error(error.message)
         urls.push(supabase.storage.from('pr-rollerfeed-news').getPublicUrl(path).data.publicUrl)
       }
-      setForm(f=>({...f,image_urls:[...(f.image_urls||[]),...urls],image_url:(f.image_urls?.[0]||f.image_url||urls[0])}))
+      setForm(f=>{const current=f.image_urls?.length?f.image_urls:(f.image_url?[f.image_url]:[]);const next=[...current,...urls];return {...f,image_urls:next,image_url:next[0]}})
       setMessage(urls.length+' imagen(es) subida(s).')
     }catch(err){setMessage('Error al subir: '+err.message)}
     finally{setUploading(false)}
@@ -74,7 +74,7 @@ export default function RollerFeedNewsAdmin() {
           if(JSON.stringify((previous||[]).map(o=>o.label))!==JSON.stringify(labels))throw Error('No podés modificar las opciones de una encuesta que ya recibió votos.')
         }
       }
-      const payload={title:form.title.trim(),body:form.body.trim(),image_url:(form.image_urls?.[0]||form.image_url.trim()||null),image_urls:form.image_urls||[],event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,updated_at:new Date().toISOString()}
+      const payload={title:form.title.trim(),body:form.body.trim(),image_url:(form.image_urls?.[0]||form.image_url.trim()||null),image_urls:form.image_urls?.length?form.image_urls:(form.image_url.trim()?[form.image_url.trim()]:[]),event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,updated_at:new Date().toISOString()}
       if(!payload.title)throw Error('Escribí un título.')
       const request=form.id?supabase.from('pr_feed_news').update(payload).eq('id',form.id).select('id').single():supabase.from('pr_feed_news').insert(payload).select('id').single()
       const {data,error}=await request
