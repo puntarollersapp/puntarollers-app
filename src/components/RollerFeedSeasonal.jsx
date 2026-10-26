@@ -5,6 +5,9 @@ import { supabase } from '../lib/supabase'
 
 const CHOICES = [{ value: 'yes', label: 'Me sumo' }, { value: 'no', label: 'Esta vez no' }]
 
+// Retired campaign cards stay in the database but never render in RollerFeed.
+const isRetiredFeedNews = item => /cl[ií]nica internacional|miguel flores|rollerween|caramelos?|top ranking pr|pr km challenge/i.test([item.title,item.body,item.kind].filter(Boolean).join(' '))
+
 export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [polls, setPolls] = useState([])
   const [votes, setVotes] = useState([])
@@ -26,9 +29,9 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         .select('id,title,body,image_url,image_urls,event_at,created_at,kind,allow_rsvp')
         .eq('published', true)
         .order('created_at', { ascending: false })
-        .limit(newsLimitRef.current + 1)
+        .limit(100)
       if (result.error) setError('No pudimos cargar las novedades. Probá nuevamente.')
-      else { setHasMoreNews((result.data || []).length > newsLimitRef.current); setNews((result.data || []).slice(0, newsLimitRef.current)); setError('') }
+      else { const visible=(result.data||[]).filter(item=>!isRetiredFeedNews(item)); setHasMoreNews(visible.length>newsLimitRef.current); setNews(visible.slice(0,newsLimitRef.current)); setError('') }
       setLoading(false)
       return
     }
