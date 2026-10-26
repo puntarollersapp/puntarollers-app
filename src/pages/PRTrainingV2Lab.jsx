@@ -245,7 +245,7 @@ function TaskCard({task,index,onClick}){
 
 function PRTareasHome({user}){
  const [info,setInfo]=useState(''),[open,setOpen]=useState(null),[plan,setPlan]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revealed,setRevealed]=useState(0),[profile,setProfile]=useState(null),[files,setFiles]=useState({}),[sending,setSending]=useState(null),[feedback,setFeedback]=useState('')
- const today=new Date();const month=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-01'
+ const uruguayMonth=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date());const month=uruguayMonth+'-01'
  async function refresh(){
   setBusy(true);const {data,error:e}=await supabase.rpc('pr_training_v2_student_assignments',{p_month:month})
   if(e)setError(e.message);else {setPlan(data);setError('')}setBusy(false)
