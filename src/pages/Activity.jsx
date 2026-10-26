@@ -707,6 +707,7 @@ export default function Activity() {
   const [savingReactionKey, setSavingReactionKey] = useState('')
   const [filter, setFilter] = useState('Todos')
   const [feedLimit, setFeedLimit] = useState(6)
+  const [showFeedHistory, setShowFeedHistory] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -1285,6 +1286,7 @@ export default function Activity() {
                     }
                     setFilter(item.key)
                     setFeedLimit(item.key === 'Entrenamiento' ? 10 : 6)
+                    setShowFeedHistory(false)
                     document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
                   }}
                   className={`min-w-0 rounded-xl border px-0.5 py-2.5 text-center text-[9px] font-bold leading-tight transition-colors sm:rounded-full sm:px-3 sm:text-[11px] ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
@@ -1395,7 +1397,7 @@ export default function Activity() {
             </div>
           ) : visibleItems.length > 0 ? (
             <div className="space-y-4">
-              {visibleItems.slice(0, feedLimit).map((item) => (
+              {visibleItems.slice(0, filter === 'Todos' && !showFeedHistory ? 6 : feedLimit).map((item) => (
                 <div key={item.id}>
                   <FeedCard
                     item={item}
@@ -1410,7 +1412,7 @@ export default function Activity() {
                   {!['Moment','SocialPost','Entrenamiento'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
-              {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + (filter === 'Entrenamiento' ? 10 : 6))} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
+              {visibleItems.length > (filter === 'Todos' && !showFeedHistory ? 6 : feedLimit) && <button type="button" onClick={() => {setShowFeedHistory(true);setFeedLimit(n => n + (filter === 'Entrenamiento' ? 10 : 6))}} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
             </div>
           ) : (
             <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
@@ -1493,7 +1495,7 @@ function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
   return <section aria-label="Top Ranking RollerFeed" className="pr-rank-panel relative overflow-hidden rounded-[28px] border border-[#FF0055]/25 bg-gradient-to-br from-[#2a0712] via-[#170910] to-[#0c090e] p-4 sm:p-5">
     <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#FF0055]/15 blur-3xl"/>
     <div className="relative flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#FF8CAD]">PR · Top Ranking</p><h2 className="mt-1 font-display text-[25px] leading-tight text-white">Así avanzamos juntos</h2></div><span aria-hidden="true" className="pr-rank-medal text-3xl">🏅</span></div>
-    <div className="relative mt-4 inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['month','Este mes'],['week','Esta semana']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
+    <div className="relative mt-4 flex w-fit max-w-full gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['month','Este mes'],['week','Esta semana']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
     {rankingError&&<p role="alert" className="mt-3 text-xs text-red-200">{rankingError}</p>}
     {rankingLoading?<p role="status" className="mt-5 text-xs text-white/60">Cargando clasificación…</p>:rankingError?<p className="mt-5 text-xs text-white/60">La clasificación no está disponible por ahora.</p>:ranked.length?<div className="relative mx-auto mt-5 grid w-full max-w-[520px] grid-cols-5 items-end gap-1.5 sm:gap-3">{ranked.map((row)=>{
       const name=getProfileName(row.profile)||'Integrante PR'
