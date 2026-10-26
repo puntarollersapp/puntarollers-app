@@ -16,3 +16,11 @@
 @keyframes rf-ambient{from{transform:translate3d(-3%,0,0) scale(.96)}to{transform:translate3d(4%,2%,0) scale(1.08)}}
 @keyframes rf-shimmer{0%,65%{background-position:120% 0}100%{background-position:-130% 0}}
 @media(prefers-reduced-motion:reduce){.rf-hero::before,.rf-heart,.rf-pulse,.rf-envelope,.rf-shine{animation:none!important}.rf-pulse{stroke-dashoffset:0}.rf-envelope{display:none}}
+
+/* PR NEXT ranking: motion is decorative and disabled for reduced-motion users. */
+@keyframes prRankRise {from{transform:translateY(12px);opacity:.35}to{transform:translateY(0);opacity:1}}
+@keyframes prRankFloat {0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-5px) rotate(6deg)}}
+@keyframes prRankGlow {0%,100%{box-shadow:inset 0 0 12px rgba(255,255,255,.06)}50%{box-shadow:inset 0 0 25px rgba(255,135,170,.3)}}
+.pr-rank-fill{animation:prRankRise .85s cubic-bezier(.22,1,.36,1) both,prRankGlow 4s ease-in-out infinite}
+.pr-rank-medal{display:inline-block;animation:prRankFloat 3.5s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.pr-rank-fill,.pr-rank-medal{animation:none!important}}

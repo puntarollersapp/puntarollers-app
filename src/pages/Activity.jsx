@@ -1,4 +1,3 @@
-import RollerweenBadge from '../components/RollerweenBadge'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
@@ -707,7 +706,7 @@ export default function Activity() {
   const [reactionModalItem, setReactionModalItem] = useState(null)
   const [savingReactionKey, setSavingReactionKey] = useState('')
   const [filter, setFilter] = useState('Todos')
-  const [feedLimit, setFeedLimit] = useState(10)
+  const [feedLimit, setFeedLimit] = useState(6)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -1049,11 +1048,11 @@ export default function Activity() {
       normalizeActivity(activity, profilesByAnyId)
     )
 
-    const communityPosts = legacyItems.map((item) =>
+    const communityPosts = legacyItems.filter(item => !/cl[ií]nica|miguel flores|caramelo/i.test(item.titulo || '')).map((item) =>
       normalizeLegacyItem(item, profilesByAnyId)
     )
 
-    const eventPosts = events.map(normalizeRollerEvent)
+    const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores/i.test(event.titulo || '')).map(normalizeRollerEvent)
     const momentPosts = moments.map((moment) => {
       const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
       return {
@@ -1274,7 +1273,7 @@ export default function Activity() {
                       return
                     }
                     setFilter(item.key)
-                    setFeedLimit(10)
+                    setFeedLimit(item.key === 'Entrenamiento' ? 10 : 6)
                     document.getElementById('rollerfeed-actividades')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
                   }}
                   className={`min-w-0 rounded-xl border px-0.5 py-2.5 text-center text-[9px] font-bold leading-tight transition-colors sm:rounded-full sm:px-3 sm:text-[11px] ${active ? 'border-[#BBFF1F] bg-[#BBFF1F] text-[#0D0303]' : 'border-white/10 bg-white/[.04] text-white/65 hover:border-[#BBFF1F]/30 hover:text-white'}`}
@@ -1285,6 +1284,8 @@ export default function Activity() {
             })}
           </div>
         </nav>
+
+        <RollerFeedTopRanking profilesByAnyId={profilesByAnyId} profileId={profileId} />
 
         <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
@@ -1393,12 +1394,12 @@ export default function Activity() {
                     savingReactionKey={savingReactionKey}
                     onReact={selectReaction}
                     onOpenReactions={() => setReactionModalItem(item)}
-                    commentSlot={item.type === 'Entrenamiento' ? <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} /> : null}
+                    commentSlot={item.type === 'Entrenamiento' ? <details className="mt-2 rounded-xl border border-white/[.07] bg-black/10 px-3 py-2"><summary className="cursor-pointer text-[11px] font-bold text-[#FF9ABA]">Comentarios · Ver conversación</summary><RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} /></details> : null}
                   />
                   {!['Moment','SocialPost','Entrenamiento'].includes(item.type) && <RollerFeedComments feedKey={item.id} currentProfileId={currentReactionProfileId} canModerate={['admin', 'profesor'].includes(user?.role)} />}
                 </div>
               ))}
-              {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + 10)} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
+              {visibleItems.length > feedLimit && <button type="button" onClick={() => setFeedLimit(n => n + (filter === 'Entrenamiento' ? 10 : 6))} className="w-full rounded-2xl border border-white/15 bg-white/[.04] px-4 py-3.5 text-xs font-bold text-white/75 transition hover:border-[#FF0055]/40">Ver más actividades · {visibleItems.length - feedLimit} restantes ↓</button>}
             </div>
           ) : (
             <div className="rounded-[30px] border border-white/[0.07] bg-white/[0.025] p-7 text-center">
@@ -1417,9 +1418,9 @@ export default function Activity() {
           )}
         </section>
 
-        <PRMomentsRail currentProfileId={currentReactionProfileId} />
-
         <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
+
+        <PRMomentsRail currentProfileId={currentReactionProfileId} />
 
         {reactionModalItem && (
           <ReactionsModal
@@ -1432,6 +1433,67 @@ export default function Activity() {
       </div>
     </AppLayout>
   )
+}
+
+function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
+  const [period,setPeriod]=useState('week')
+  const [rankingRows,setRankingRows]=useState({week:[],month:[]})
+  const [rankingLoading,setRankingLoading]=useState(true)
+  const [rankingError,setRankingError]=useState('')
+  const navigate=useNavigate()
+  useEffect(()=>{
+    let active=true
+    async function loadRanking(){
+      setRankingLoading(true);setRankingError('')
+      const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'}).formatToParts(new Date()).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]))
+      const today=`${parts.year}-${parts.month}-${parts.day}`
+      const dayIndex=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(parts.weekday)
+      const mondayOffset=dayIndex===0?-6:1-dayIndex
+      const monday=new Date(today+'T12:00:00Z')
+      monday.setUTCDate(monday.getUTCDate()+mondayOffset)
+      const startWeek=monday.toISOString().slice(0,10)
+      const startMonth=`${parts.year}-${parts.month}-01`
+      const [week,month]=await Promise.all([
+        supabase.rpc('pr_get_inline_ranking',{p_start_date:startWeek,p_end_date:today}),
+        supabase.rpc('pr_get_inline_ranking',{p_start_date:startMonth,p_end_date:today})
+      ])
+      if(!active)return
+      if(week.error||month.error)setRankingError('No pudimos actualizar la clasificación.')
+      else setRankingRows({week:week.data||[],month:month.data||[]})
+      setRankingLoading(false)
+    }
+    loadRanking()
+    return ()=>{active=false}
+  },[])
+  const ranked=useMemo(()=>{
+    const rows=[...(rankingRows[period]||[])].map(row=>{
+      const id=String(row.alumno_id||'')
+      return {id,meters:(Number(row.km)||0)*1000,profile:profilesByAnyId.get(id)||{},sessions:Number(row.sessions)||0}
+    }).filter(row=>row.id&&row.meters>0).sort((a,b)=>b.meters-a.meters||b.sessions-a.sessions)
+    const withRanks=rows.map((row,i)=>({...row,rank:i+1}))
+    const mine=withRanks.find(row=>row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId))
+    const ownProfile=profilesByAnyId.get(String(profileId))||{}
+    const ownRow=mine||(profileId?{id:String(ownProfile.id||profileId),meters:0,profile:ownProfile,rank:null}:null)
+    return [ownRow,...withRanks.filter(row=>row!==mine)].filter(Boolean).slice(0,5)
+  },[rankingRows,period,profilesByAnyId,profileId])
+  const max=Math.max(1,...(rankingRows[period]||[]).map(row=>(Number(row.km)||0)*1000))
+  const myRank=(rankingRows[period]||[]).findIndex(row=>String(row.alumno_id)===String(profileId)||String(profilesByAnyId.get(String(row.alumno_id))?.auth_user_id||'')===String(profileId))
+  const myEntry=myRank>=0?rankingRows[period][myRank]:null
+  return <section aria-label="Top Ranking RollerFeed" className="pr-rank-panel relative overflow-hidden rounded-[28px] border border-[#FF0055]/25 bg-gradient-to-br from-[#2a0712] via-[#170910] to-[#0c090e] p-4 sm:p-5">
+    <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#FF0055]/15 blur-3xl"/>
+    <div className="relative flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#FF8CAD]">PR · Top Ranking</p><h2 className="mt-1 font-display text-[25px] leading-tight text-white">Así avanzamos juntos</h2></div><span aria-hidden="true" className="pr-rank-medal text-3xl">🏅</span></div>
+    <div className="relative mt-4 inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['week','Esta semana'],['month','Este mes']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
+    {rankingError&&<p role="alert" className="mt-3 text-xs text-red-200">{rankingError}</p>}
+    {rankingLoading?<p role="status" className="mt-5 text-xs text-white/60">Cargando clasificación…</p>:rankingError?<p className="mt-5 text-xs text-white/60">La clasificación no está disponible por ahora.</p>:ranked.length?<div className="relative mt-5 grid grid-cols-5 gap-1.5 sm:gap-3">{ranked.map((row)=>{
+      const name=getProfileName(row.profile)||'Integrante PR'
+      const photo=getProfilePhoto(row.profile)
+      const percent=Math.max(9,Math.round(row.meters/max*100))
+      const isMine=row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId)
+      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-36 items-end overflow-hidden rounded-[22px] bg-white/[.09] sm:h-44 sm:rounded-[32px]"><div className="pr-rank-fill relative w-full rounded-[22px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b] sm:rounded-[32px]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} style={{bottom:`clamp(8px, calc(${percent}% - 24px), calc(100% - 54px))`}} className="absolute left-1/2 z-10 -translate-x-1/2 rounded-full border-2 border-white bg-[#220d18] p-[2px] shadow-[0_0_18px_rgba(255,0,85,.35)] transition-[bottom] duration-500 disabled:cursor-default">{photo?<img src={photo} alt={name} className="h-8 w-8 rounded-full object-cover sm:h-11 sm:w-11"/>:<span className="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white sm:h-11 sm:w-11">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[10px] font-black text-white sm:text-[12px]">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[9px] text-white/65 sm:text-[10px]" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
+    })}</div>:<p className="mt-5 rounded-xl border border-white/10 p-4 text-xs text-white/60">Todavía no hay kilómetros registrados para este período.</p>}
+    {profileId&&<p className="relative mt-4 rounded-xl border border-[#FF0055]/20 bg-[#FF0055]/10 px-3 py-2 text-xs font-semibold text-white/80">{myEntry?`Tu posición real: #${myRank+1} · ${(Number(myEntry.km)||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km`:'Todavía no tenés kilómetros registrados en este período.'}</p>}
+    <button type="button" onClick={()=>navigate('/ranking-semanal')} className="relative mt-5 w-full rounded-xl border border-[#FF729B]/30 bg-[#FF0055]/10 px-4 py-3 text-xs font-bold text-white transition hover:bg-[#FF0055]/20">Ver clasificación completa →</button>
+  </section>
 }
 
 function HeroStat({
@@ -1594,7 +1656,6 @@ function ProfileAvatar({
         )}
       </div>
 
-      <RollerweenBadge className="absolute -right-1 -bottom-1 z-20 h-6 w-6"/>
       {verified && <VerifiedBadge size={22} className="absolute -top-1.5 -right-1.5 z-20" />}
     </div>
   )
@@ -1612,14 +1673,14 @@ function TrainingCard({
 }) {
   return (
     <article
-      className={`relative overflow-hidden rounded-[23px] border bg-gradient-to-br from-[#18171b] via-[#111115] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
+      className={`relative overflow-hidden rounded-[20px] border bg-gradient-to-br from-[#1b1016] via-[#130e13] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
         item.featured
-          ? 'border-[#BBFF1F]/25 shadow-[0_12px_35px_rgba(187,255,31,.035)]'
+          ? 'border-[#FF0055]/30 shadow-[0_12px_35px_rgba(255,0,85,.045)]'
           : 'border-white/[0.08]'
       }`}
     >
-      <div className="relative px-3.5 py-3.5 sm:p-4">
-        <div className="flex items-center gap-3">
+      <div className="relative px-3 py-3 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-2.5">
           <ProfileAvatar
             photo={item.userPhoto}
             name={item.userName}
@@ -1639,28 +1700,28 @@ function TrainingCard({
             </p>
           </div>
 
-          <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
+          <span className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
             🛼
           </span>
         </div>
 
-        <div className="mt-3">
-          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#BBFF1F]/75">
+        <div className="mt-2">
+          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#FF729B]/85">
             Entrenamiento
           </p>
 
-          <h3 className="font-display text-[21px] leading-tight text-white mt-1.5">
+          <h3 className="font-display text-[17px] leading-tight text-white mt-1">
             {item.title}
           </h3>
 
           {item.description && (
-            <p className="text-white/40 text-[11px] leading-relaxed mt-1.5">
+            <p className="text-white/40 text-[10px] leading-relaxed mt-1 line-clamp-2">
               {item.description}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 mt-3">
+        <div className="grid grid-cols-3 gap-1.5 mt-2.5">
           <Metric
             label="Distancia"
             value={formatDistance(item.distanceMeters)}
@@ -1689,7 +1750,7 @@ function TrainingCard({
               href={item.stravaUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-white/65 text-[10px] font-bold hover:text-[#BBFF1F]"
+              className="text-white/65 text-[10px] font-bold hover:text-[#FF729B]"
             >
               Ver en Strava →
             </a>
