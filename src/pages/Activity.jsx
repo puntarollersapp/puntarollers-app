@@ -1048,11 +1048,11 @@ export default function Activity() {
       normalizeActivity(activity, profilesByAnyId)
     )
 
-    const communityPosts = legacyItems.filter(item => !/cl[ií]nica|miguel flores|caramelo/i.test(item.titulo || '')).map((item) =>
+    const communityPosts = legacyItems.filter(item => !/cl[ií]nica|miguel flores|caramelo|top ranking|sumamos .*km|ranking pr/i.test([item.titulo,item.descripcion,item.tipo,item.categoria].filter(Boolean).join(' '))).map((item) =>
       normalizeLegacyItem(item, profilesByAnyId)
     )
 
-    const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores/i.test(event.titulo || '')).map(normalizeRollerEvent)
+    const eventPosts = events.filter(event => !/cl[ií]nica|miguel flores|caramelo|top ranking/i.test([event.titulo,event.descripcion].filter(Boolean).join(' '))).map(normalizeRollerEvent)
     const momentPosts = moments.map((moment) => {
       const profile = profilesByAnyId.get(String(moment.profile_id)) || {}
       return {
@@ -1069,7 +1069,7 @@ export default function Activity() {
     })
 
     return [
-      ...socialPosts.map(post=>({...post,id:`social-${post.id}`,postId:post.id,type:'SocialPost',date:post.created_at})),
+      ...socialPosts.filter(post=>!/cl[ií]nica|miguel flores|caramelo|top ranking pr/i.test(String(post.body||''))).map(post=>({...post,id:`social-${post.id}`,postId:post.id,type:'SocialPost',date:post.created_at})),
       ...momentPosts,
       ...eventPosts,
       ...trainingPosts,
@@ -1436,7 +1436,7 @@ export default function Activity() {
 }
 
 function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
-  const [period,setPeriod]=useState('week')
+  const [period,setPeriod]=useState('month')
   const [rankingRows,setRankingRows]=useState({week:[],month:[]})
   const [rankingLoading,setRankingLoading]=useState(true)
   const [rankingError,setRankingError]=useState('')
@@ -1482,14 +1482,14 @@ function RollerFeedTopRanking({ profilesByAnyId, profileId }) {
   return <section aria-label="Top Ranking RollerFeed" className="pr-rank-panel relative overflow-hidden rounded-[28px] border border-[#FF0055]/25 bg-gradient-to-br from-[#2a0712] via-[#170910] to-[#0c090e] p-4 sm:p-5">
     <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-[#FF0055]/15 blur-3xl"/>
     <div className="relative flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#FF8CAD]">PR · Top Ranking</p><h2 className="mt-1 font-display text-[25px] leading-tight text-white">Así avanzamos juntos</h2></div><span aria-hidden="true" className="pr-rank-medal text-3xl">🏅</span></div>
-    <div className="relative mt-4 inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['week','Esta semana'],['month','Este mes']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
+    <div className="relative mt-4 inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1" role="group" aria-label="Período del ranking">{[['month','Este mes'],['week','Esta semana']].map(([value,label])=><button key={value} type="button" aria-pressed={period===value} onClick={()=>setPeriod(value)} className={'rounded-lg px-3 py-2 text-[11px] font-bold transition-colors '+(period===value?'bg-[#FF0055] text-white':'text-white/60 hover:text-white')}>{label}</button>)}</div>
     {rankingError&&<p role="alert" className="mt-3 text-xs text-red-200">{rankingError}</p>}
-    {rankingLoading?<p role="status" className="mt-5 text-xs text-white/60">Cargando clasificación…</p>:rankingError?<p className="mt-5 text-xs text-white/60">La clasificación no está disponible por ahora.</p>:ranked.length?<div className="relative mt-5 grid grid-cols-5 gap-1.5 sm:gap-3">{ranked.map((row)=>{
+    {rankingLoading?<p role="status" className="mt-5 text-xs text-white/60">Cargando clasificación…</p>:rankingError?<p className="mt-5 text-xs text-white/60">La clasificación no está disponible por ahora.</p>:ranked.length?<div className="relative mx-auto mt-5 grid w-full max-w-[520px] grid-cols-5 items-end gap-1.5 sm:gap-3">{ranked.map((row)=>{
       const name=getProfileName(row.profile)||'Integrante PR'
       const photo=getProfilePhoto(row.profile)
       const percent=Math.max(9,Math.round(row.meters/max*100))
       const isMine=row.id===String(profileId)||String(row.profile.id||'')===String(profileId)||String(row.profile.auth_user_id||'')===String(profileId)
-      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-36 items-end overflow-hidden rounded-[22px] bg-white/[.09] sm:h-44 sm:rounded-[32px]"><div className="pr-rank-fill relative w-full rounded-[22px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b] sm:rounded-[32px]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} style={{bottom:`clamp(8px, calc(${percent}% - 24px), calc(100% - 54px))`}} className="absolute left-1/2 z-10 -translate-x-1/2 rounded-full border-2 border-white bg-[#220d18] p-[2px] shadow-[0_0_18px_rgba(255,0,85,.35)] transition-[bottom] duration-500 disabled:cursor-default">{photo?<img src={photo} alt={name} className="h-8 w-8 rounded-full object-cover sm:h-11 sm:w-11"/>:<span className="grid h-8 w-8 place-items-center rounded-full text-xs font-bold text-white sm:h-11 sm:w-11">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[10px] font-black text-white sm:text-[12px]">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[9px] text-white/65 sm:text-[10px]" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
+      return <div key={row.id} className="min-w-0 text-center"><div className="relative flex h-36 items-end overflow-hidden rounded-[22px] bg-white/[.09] sm:h-44 sm:rounded-[32px]"><div className="pr-rank-fill relative w-full rounded-[22px] bg-gradient-to-t from-[#9d0037] via-[#ee1257] to-[#ff729b] sm:rounded-[32px]" style={{height:percent+'%'}}/><button type="button" onClick={()=>row.profile.id&&navigate('/app/comunidad/perfil/'+row.profile.id)} disabled={!row.profile.id} aria-label={'Ver perfil de '+name} style={{bottom:`clamp(8px, calc(${percent}% - 24px), calc(100% - 54px))`}} className="absolute left-1/2 z-10 -translate-x-1/2 rounded-full border-2 border-white bg-[#220d18] p-[2px] shadow-[0_0_18px_rgba(255,0,85,.35)] transition-[bottom] duration-500 disabled:cursor-default">{photo?<img src={photo} alt={name} className="aspect-square h-9 w-9 rounded-full object-cover sm:h-12 sm:w-12"/>:<span className="grid aspect-square h-9 w-9 place-items-center rounded-full text-xs font-bold text-white sm:h-12 sm:w-12">{getInitials(name)}</span>}</button></div><p className="mt-2 text-[10px] font-black text-white sm:text-[12px]">{(row.meters/1000).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="mt-1 truncate text-[9px] text-white/65 sm:text-[10px]" title={name}>{isMine?'Vos':name.split(' ')[0]}</p>{row.rank<=3&&<span className="pr-rank-medal text-sm" aria-label={'Puesto '+row.rank}>{['🥇','🥈','🥉'][row.rank-1]}</span>}</div>
     })}</div>:<p className="mt-5 rounded-xl border border-white/10 p-4 text-xs text-white/60">Todavía no hay kilómetros registrados para este período.</p>}
     {profileId&&<p className="relative mt-4 rounded-xl border border-[#FF0055]/20 bg-[#FF0055]/10 px-3 py-2 text-xs font-semibold text-white/80">{myEntry?`Tu posición real: #${myRank+1} · ${(Number(myEntry.km)||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km`:'Todavía no tenés kilómetros registrados en este período.'}</p>}
     <button type="button" onClick={()=>navigate('/ranking-semanal')} className="relative mt-5 w-full rounded-xl border border-[#FF729B]/30 bg-[#FF0055]/10 px-4 py-3 text-xs font-bold text-white transition hover:bg-[#FF0055]/20">Ver clasificación completa →</button>
@@ -1673,13 +1673,13 @@ function TrainingCard({
 }) {
   return (
     <article
-      className={`relative overflow-hidden rounded-[20px] border bg-gradient-to-br from-[#1b1016] via-[#130e13] to-[#0d0d10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
+      className={`relative overflow-hidden rounded-[16px] border bg-gradient-to-r from-[#190d13] via-[#130d12] to-[#0c0b10] transition-[border-color,transform,box-shadow] duration-200 hover:border-white/20 hover:shadow-[0_12px_35px_rgba(0,0,0,.24)] ${
         item.featured
           ? 'border-[#FF0055]/30 shadow-[0_12px_35px_rgba(255,0,85,.045)]'
           : 'border-white/[0.08]'
       }`}
     >
-      <div className="relative px-3 py-3 sm:px-4 sm:py-3">
+      <div className="relative px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2.5">
           <ProfileAvatar
             photo={item.userPhoto}
@@ -1700,28 +1700,28 @@ function TrainingCard({
             </p>
           </div>
 
-          <span className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/[.035] text-base">
+          <span className="grid h-7 w-7 place-items-center rounded-full border border-[#FF0055]/20 bg-[#FF0055]/10 text-sm">
             🛼
           </span>
         </div>
 
-        <div className="mt-2">
+        <div className="mt-1.5">
           <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#FF729B]/85">
             Entrenamiento
           </p>
 
-          <h3 className="font-display text-[17px] leading-tight text-white mt-1">
+          <h3 className="font-display text-[15px] leading-snug text-white mt-0.5 line-clamp-2">
             {item.title}
           </h3>
 
           {item.description && (
-            <p className="text-white/40 text-[10px] leading-relaxed mt-1 line-clamp-2">
+            <p className="text-white/40 text-[10px] leading-relaxed mt-1 line-clamp-1">
               {item.description}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 mt-2.5">
+        <div className="grid grid-cols-3 gap-1 mt-2">
           <Metric
             label="Distancia"
             value={formatDistance(item.distanceMeters)}
