@@ -81,11 +81,10 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
   async function vote(pollId, choice, galaChoice = null) {
     if (!uid || busy) return
     setBusy(pollId)
-    const existing = votes.some(v => v.poll_id === pollId && v.voter_uid === uid)
-    const query = existing
-      ? supabase.from('pr_feed_poll_votes').update({ choice, gala_choice: choice === 'yes' ? galaChoice : null }).eq('poll_id', pollId).eq('voter_uid', uid)
-      : supabase.from('pr_feed_poll_votes').insert({ poll_id: pollId, voter_uid: uid, choice, gala_choice: choice === 'yes' ? galaChoice : null })
-    const { error: voteError } = await query
+    const { error: voteError } = await supabase.from('pr_feed_poll_votes').upsert(
+      { poll_id: pollId, voter_uid: uid, choice, gala_choice: choice === 'yes' ? galaChoice : null },
+      { onConflict: 'poll_id,voter_uid' }
+    )
     if (voteError) setError('No se pudo guardar tu voto. Intentá de nuevo.')
     else await refresh()
     setBusy('')
