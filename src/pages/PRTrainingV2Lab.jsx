@@ -166,7 +166,9 @@ function TrainingReviewQueue(){
  async function refresh(){const {data,error:e}=await supabase.rpc('pr_training_v2_staff_submissions');if(e)setError(e.message);else {setItems(data||[]);setError('');const ids=[...new Set((data||[]).map(x=>x.profile_id).filter(Boolean))];if(ids.length){const found=await supabase.from('profiles').select('id,nombre,apellido').in('id',ids);if(!found.error)setStudentNames(Object.fromEntries((found.data||[]).map(p=>[p.id,[p.nombre,p.apellido].filter(Boolean).join(' ')])))}}}
  useEffect(()=>{refresh()},[])
  async function review(id,status){
-  setBusy(id);const {error:e}=await supabase.rpc('pr_training_v2_review_submission',{p_submission_id:id,p_status:status,p_note:notes[id]||''})
+  const item=items.find(x=>x.id===id);const note=(notes[id]??item?.reviewer_note??'').trim();
+  if(status==='returned'&&!note){setError('Escribí qué debe corregir el alumno.');return}
+  setBusy(id);setError('');const {error:e}=await supabase.rpc('pr_training_v2_review_submission',{p_submission_id:id,p_status:status,p_note:note});
   if(e)setError(e.message);else await refresh();setBusy('')
  }
  async function openEvidence(item,path){
