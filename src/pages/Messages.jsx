@@ -319,7 +319,7 @@ export default function MessagesPage() {
           <div ref={bottomRef} />
         </div>
 
-        <form onSubmit={sendMessage} className="fixed bottom-[72px] left-1/2 z-40 w-full max-w-[520px] -translate-x-1/2 border-t border-white/[0.07] bg-[#09090e]/95 p-3 backdrop-blur-xl">
+        <form data-pr-chat-composer="true" onSubmit={sendMessage} className="fixed bottom-[72px] left-1/2 z-40 w-full max-w-[520px] -translate-x-1/2 border-t border-white/[0.07] bg-[#09090e]/95 p-3 backdrop-blur-xl">
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => uploadMedia(e.target.files?.[0], 'image')} />
           <div className="flex items-end gap-1.5 rounded-[24px] border border-white/[0.09] bg-white/[0.04] p-2">
             <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || recording} className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] text-lg text-white/65 active:bg-white/10 disabled:opacity-30" aria-label="Enviar foto">📷</button>
