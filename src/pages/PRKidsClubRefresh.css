@@ -1,0 +1,24 @@
+/* PR Kids Club 2026 visual refresh — scoped to club shell. */
+.prk-shell{background:radial-gradient(ellipse at 8% 4%,rgba(112,73,255,.23),transparent 38%),radial-gradient(ellipse at 95% 30%,rgba(40,218,198,.14),transparent 36%),radial-gradient(ellipse at 48% 95%,rgba(244,76,172,.14),transparent 45%),#090b15;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.prk-shell .prk-card{background:linear-gradient(145deg,rgba(22,20,42,.96),rgba(9,13,26,.98) 55%,rgba(17,17,33,.98));border:1px solid rgba(184,154,255,.22);box-shadow:0 26px 90px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.07)}
+.prk-shell .prk-header{background:linear-gradient(105deg,rgba(104,65,205,.17),rgba(40,215,191,.07));backdrop-filter:blur(18px)}
+.prk-shell .prk-brand p{font-size:.85rem;letter-spacing:.11em;background:linear-gradient(90deg,#d6a7ff,#7dece1);color:transparent;background-clip:text}
+.prk-shell .prk-brand img{border:1px solid rgba(184,154,255,.24);box-shadow:0 0 20px rgba(135,91,255,.13)}
+.prk-shell .prk-badge,.prk-shell .prk-home-topline{color:#d5baff;background:linear-gradient(110deg,rgba(157,99,255,.16),rgba(67,221,197,.1));border-color:rgba(174,143,255,.3)}
+.prk-shell .prk-stage h1{font-weight:900;letter-spacing:-.055em;text-wrap:balance;line-height:1.03}
+.prk-shell .prk-kicker{color:#a9eddf}
+.prk-shell .prk-home-title em,.prk-shell .prk-access-title-accent{background:linear-gradient(105deg,#8eece2,#b795ff 42%,#ff83c5 80%,#b5f4dd);background-size:210% auto;background-clip:text;-webkit-background-clip:text;color:transparent;animation:prk-spectrum 9s ease-in-out infinite alternate}
+.prk-shell .prk-home-ribbon{background:linear-gradient(110deg,#6548b8,#2a9f9b);border:1px solid rgba(180,255,241,.22);box-shadow:0 10px 30px rgba(83,63,186,.24)}
+.prk-shell .prk-quick-grid article,.prk-shell .prk-child-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;border-color:rgba(188,159,255,.2);box-shadow:inset 0 1px rgba(255,255,255,.07)}
+.prk-shell .prk-quick-grid article::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 25%,rgba(255,255,255,.055) 50%,transparent 75%);background-size:250% 100%;animation:prk-shimmer 11s linear infinite}
+.prk-shell .prk-primary{background:linear-gradient(105deg,#754ed9,#b45cb9 56%,#27afa6);border:1px solid rgba(255,255,255,.2);box-shadow:0 12px 28px rgba(91,54,172,.3);transition:transform .22s ease,box-shadow .22s ease}
+.prk-shell .prk-primary:focus-visible,.prk-shell a:focus-visible,.prk-shell button:focus-visible{outline:3px solid #a9eddf;outline-offset:3px}
+.prk-shell .prk-blob-a{background:#8b4dff;animation:prk-float 13s ease-in-out infinite alternate}
+.prk-shell .prk-blob-b{background:#36d3c1;animation:prk-float 17s ease-in-out infinite alternate-reverse}
+.prk-shell .prk-access-steps>div{border-color:rgba(170,138,255,.22);background:linear-gradient(145deg,rgba(120,84,221,.11),rgba(29,40,56,.3))}
+@media(hover:hover){.prk-shell .prk-quick-grid article:hover,.prk-shell .prk-child-card:hover{transform:translateY(-3px);border-color:rgba(150,227,223,.45);box-shadow:0 12px 32px rgba(78,49,145,.2)}.prk-shell .prk-primary:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(91,54,172,.4)}}
+@keyframes prk-spectrum{to{background-position:100% 50%}}
+@keyframes prk-shimmer{to{background-position:-250% 0}}
+@keyframes prk-float{to{transform:translate3d(24px,30px,0)}}
+@media(prefers-reduced-motion:reduce){.prk-shell .prk-blob,.prk-shell .prk-home-title em,.prk-shell .prk-access-title-accent,.prk-shell .prk-quick-grid article::after{animation:none!important}.prk-shell *{scroll-behavior:auto!important}}
+@media(max-width:480px){.prk-shell{padding:12px 9px 40px}.prk-shell .prk-card{border-radius:24px}.prk-shell .prk-header{padding:15px 14px}.prk-shell .prk-stage{padding:32px 19px 34px}.prk-shell .prk-stage h1{font-size:clamp(2rem,9vw,3.1rem)}.prk-shell .prk-badge{font-size:.61rem;padding:8px}}
