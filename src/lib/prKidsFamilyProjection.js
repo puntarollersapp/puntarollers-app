@@ -17,6 +17,7 @@ export function projectFamilyHome(payload) {
   foto_url:typeof c.foto_url==='string' && c.foto_url.startsWith('https://')?c.foto_url:null,
   class_posts:Array.isArray(c.class_posts)?c.class_posts.filter(p=>p?.status==='published').slice(0,100).map(normalizeFamilyClassPost).filter(Boolean):[],
   achievements:Array.isArray(c.achievements)?c.achievements.slice(0,100).map(a=>({id:String(a.id||''),title:String(a.title||'').slice(0,100),description:String(a.description||'').slice(0,500),icon:String(a.icon||'🏅').slice(0,12),awarded_at:a.awarded_at})):[],
+  albums:Array.isArray(c.albums)?c.albums.slice(0,100).map(a=>({id:String(a.id||''),title:String(a.title||''),caption:String(a.caption||''),created_at:a.created_at,photos:Array.isArray(a.photos)?a.photos.filter(p=>typeof p.url==='string'&&p.url.startsWith('https://')).map(p=>({id:String(p.id||''),url:p.url})):[]})):[],
   memories:Array.isArray(c.memories)?c.memories.slice(0,60).map(m=>({id:String(m.id||''),title:String(m.title||'').slice(0,100),caption:String(m.caption||'').slice(0,500),media_type:m.media_type||null,created_at:m.created_at})):[]
  }))
  return {guardian:{nombre:guardianName||'Familia roller'},children}
