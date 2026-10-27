@@ -12,7 +12,7 @@ export default function Login() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login, user, loading: authLoading } = useAuth()
+  const { login, logout, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const next = params.get('next')
@@ -31,6 +31,7 @@ export default function Login() {
     try {
       const result = await login(documento, pin)
       if (result?.error) { setError(result.error); return }
+      if(result?.user?.role==='familiar'&&!result?.user?.accesoHabilitado){await logout();setError('Tu solicitud familiar está pendiente de aprobación. Te avisaremos cuando puedas ingresar.');return}
       if (result?.user?.id && (!['admin','profesor'].includes(result?.user?.role) || result?.user?.documento === '48036677')) {
         const { data: training } = await (await import('../lib/supabase')).supabase
           .from('pr_training_enrollments')
