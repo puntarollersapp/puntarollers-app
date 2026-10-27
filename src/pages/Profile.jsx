@@ -1151,13 +1151,18 @@ export default function Profile() {
         updated_at: new Date().toISOString(),
       }
 
-      const { error } = await supabase
+      const { data: savedProfile, error } = await supabase
         .from('profiles')
         .update(payload)
         .eq('id', profileId)
+        .select('id')
+        .maybeSingle()
 
       if (error) {
         throw new Error(error.message)
+      }
+      if (!savedProfile?.id) {
+        throw new Error('No se confirmó el guardado del perfil. Volvé a intentarlo.')
       }
 
       const nextUser = {
