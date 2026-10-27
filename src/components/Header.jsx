@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
@@ -13,7 +15,8 @@ export default function Header({ title, showBack = false, onBack }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const feedActive = pathname === '/app/actividad'
+  const [family, setFamily] = useState(null)
+  useEffect(() => { if (!user?.id) { setFamily(null); return } let live=true; supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}}).then(({data,error})=>{if(live)setFamily(!error&&data?.ok&&Array.isArray(data.children)&&data.children.length?data:null)}).catch(()=>{if(live)setFamily(null)}); return ()=>{live=false} }, [user?.id])
   const initials = user?.nombre?.split(' ').filter(Boolean).map((name) => name[0]).join('').slice(0, 2) || 'PR'
 
   async function handleLogout() {
@@ -23,6 +26,7 @@ export default function Header({ title, showBack = false, onBack }) {
   }
 
   return <header className="sticky top-0 z-50 border-b border-white/[0.055] bg-[#08080c]/92 pt-[env(safe-area-inset-top,0px)] backdrop-blur-2xl">
+    {family && <Link to="/kids" aria-label="Abrir acceso familiar PR Kids" className="group mx-3 mt-2 flex h-[33px] items-center justify-center gap-2 rounded-[12px] border border-[#b8f4e1]/25 bg-[linear-gradient(100deg,rgba(72,166,154,.18),rgba(123,115,202,.12))] px-3 text-[#d3f9ee] shadow-[inset_0_1px_0_rgba(255,255,255,.07)] transition hover:border-[#b8f4e1]/50 hover:bg-teal-400/15 active:scale-[.99]"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><path d="M3 20v-2a5 5 0 0 1 10 0v2M13 20v-2a5 5 0 0 1 8-3.8V20"/></svg><span className="text-[10px] font-extrabold uppercase tracking-[.14em]">Mis hijos</span><span className="text-[10px] text-[#d3f9ee]/65">· PR Kids</span><span className="text-[13px] text-[#d3f9ee]/80 transition group-hover:translate-x-0.5">→</span></Link>}
     <div className="relative flex h-[70px] items-center justify-between px-[18px]">
       {showBack ? <button type="button" onClick={onBack} aria-label="Volver" className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.075] bg-white/[0.035] active:scale-95"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-white/55" strokeWidth="1.9"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg></button> : <Link to="/" className="relative grid h-9 w-9 place-items-center active:scale-95" aria-label="Ir a la página pública de Punta Rollers"><img src="/logo.png" alt="Punta Rollers" className="h-7 w-7 object-contain"/></Link>}
 
