@@ -49,3 +49,16 @@
 .prk-dashboard-stamp .prk-stamp-mark img{width:100%;height:100%;object-fit:contain;border-radius:50%;filter:grayscale(1) contrast(1.25)}
 .prk-dashboard-stamp.is-pending .prk-stamp-mark{transform:rotate(0);opacity:.16}
 @media(max-width:530px){.prk-dashboard-stamps{gap:11px 7px}.prk-dashboard-stamp,.prk-dashboard-stamp.is-earned,.prk-dashboard-stamp.is-pending{max-width:108px;min-height:0;padding:6px}}
+
+
+/* PR Kids profile: visual language shared with the adult PR profile */
+.prk-dashboard-hero{position:relative;isolation:isolate;overflow:hidden;flex-direction:column;text-align:center;gap:16px;padding:34px 15px 27px;border-radius:25px;background:radial-gradient(ellipse at 15% 15%,rgba(244,56,150,.21),transparent 55%),radial-gradient(ellipse at 85% 75%,rgba(112,82,244,.23),transparent 58%),linear-gradient(155deg,#161423,#080a13);border:1px solid rgba(255,255,255,.11)}
+.prk-dashboard-hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 28%,rgba(255,255,255,.06) 46%,transparent 64%);transform:translateX(-130%);animation:prkHeroShimmer 9s ease-in-out infinite}
+.prk-dashboard-avatar{position:relative;width:132px;height:132px;border-radius:37px;padding:5px;overflow:visible;background:conic-gradient(from 0deg,#f50078,#9a65ff,#c7ff3c,#f50078);box-shadow:0 0 0 4px rgba(255,255,255,.045),0 0 32px rgba(154,101,255,.35);animation:prkAvatarGlow 5s ease-in-out infinite}
+.prk-dashboard-avatar img{width:100%;height:100%;object-fit:cover;border-radius:32px;background:#10101a}
+.prk-dashboard-avatar>span{display:grid;place-items:center;width:100%;height:100%;border-radius:32px;background:#14131e;color:white;font-size:52px}
+.prk-dashboard-hero h2{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px;font-size:clamp(28px,7vw,42px);letter-spacing:-.035em}
+.prk-dashboard-eyebrow{color:#d6fca2}
+@keyframes prkAvatarGlow{0%,100%{filter:hue-rotate(0deg);box-shadow:0 0 26px rgba(154,101,255,.28)}50%{filter:hue-rotate(20deg);box-shadow:0 0 36px rgba(245,0,120,.38)}}
+@keyframes prkHeroShimmer{0%,65%,100%{transform:translateX(-130%)}85%{transform:translateX(130%)}}
+@media(prefers-reduced-motion:reduce){.prk-dashboard-avatar,.prk-dashboard-hero:before{animation:none}}
