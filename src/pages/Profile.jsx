@@ -418,6 +418,8 @@ export default function Profile() {
     telefono: base.telefono || '',
     ciudad: base.ciudad || '',
     instagram: base.instagram || '',
+    tiktok: base.tiktok || '',
+    facebook: base.facebook || '',
     email: base.email || '',
     fechaNacimiento: base.fechaNacimiento || '',
     sobreMi: base.sobreMi || '',
@@ -1136,6 +1138,8 @@ export default function Profile() {
         telefono: form.telefono,
         ciudad: form.ciudad,
         instagram: form.instagram,
+        tiktok: form.tiktok,
+        facebook: form.facebook,
         email: form.email,
         fecha_nacimiento: form.fechaNacimiento,
         sobre_mi: form.sobreMi,
@@ -1695,6 +1699,18 @@ export default function Profile() {
                   instagram: value,
                 })
               }
+            />
+
+            <EditInput
+              label="TikTok"
+              value={form.tiktok}
+              onChange={(value) => setForm({ ...form, tiktok: value })}
+            />
+
+            <EditInput
+              label="Facebook"
+              value={form.facebook}
+              onChange={(value) => setForm({ ...form, facebook: value })}
             />
 
             <EditInput
