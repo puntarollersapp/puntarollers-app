@@ -588,6 +588,8 @@ export default function Profile() {
           telefono: data.telefono || base.telefono || '',
           ciudad: data.ciudad || '',
           instagram: data.instagram || '',
+          tiktok: data.tiktok || '',
+          facebook: data.facebook || '',
           email: data.email || '',
           fechaNacimiento:
             data.fecha_nacimiento || '',
