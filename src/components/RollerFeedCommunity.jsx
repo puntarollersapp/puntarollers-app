@@ -34,9 +34,9 @@ export default function RollerFeedCommunity({ initialPosts = [] }) {
     else {setDrafts(old=>({...old,[post.id]:''}));await refresh()}
     setBusy('')
   }
-  const latest=[...posts].filter(p=>p?.id).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5)
+  const latest=[...posts].filter(p=>p?.id).sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0)).slice(0,5)
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
-    <div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">PR Social · en vivo</p><h2 className="mt-1 font-display text-[30px] text-white">Nuestra comunidad<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Lo último que comparten los alumnos.</p></div><Link to="/app/comunidad" className="shrink-0 rounded-xl border border-[#FF0055]/30 px-3 py-2 text-[10px] font-bold text-[#FF91B2]">Ver comunidad →</Link></div>
+    <div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">PR Social · novedades de alumnos</p><h2 className="mt-1 font-display text-[30px] text-white">Nuestra comunidad<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Lo último que comparten los alumnos.</p></div><Link to="/app/comunidad" className="shrink-0 rounded-xl border border-[#FF0055]/30 px-3 py-2 text-[10px] font-bold text-[#FF91B2]">Ver comunidad →</Link></div>
     {error&&<p role="alert" className="rounded-xl border border-red-400/30 p-3 text-xs text-red-200">{error}</p>}
     {!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">Todavía no hay publicaciones para mostrar.</p>}
     {latest.map(post=>{
