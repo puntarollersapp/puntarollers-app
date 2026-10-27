@@ -64,6 +64,9 @@ export default function PRAwards(){
   {showIntro&&createPortal(<div className="pr-awards-intro" role="dialog" aria-modal="true" aria-label="Presentación de PR Awards 2026"><div className="pr-awards-intro-aura" aria-hidden="true"/><div className="pr-awards-intro-content"><div className="pr-awards-intro-trophy"><img src="/pr-awards-trophy.webp" alt="Trofeo oficial de PR Awards" onError={e=>{e.currentTarget.style.display='none'}}/></div><p className="pr-awards-intro-eyebrow">PUNTA ROLLERS PRESENTA</p><h2 className="pr-awards-intro-title">PR <span>AWARDS</span></h2><p className="pr-awards-intro-year">2026</p><div className="pr-awards-intro-rule" aria-hidden="true"/></div><button type="button" className="pr-awards-intro-skip" onClick={skipIntro}>Saltar presentación <span aria-hidden="true">↗</span></button></div>,document.body)}
 
   <div className="mx-auto max-w-5xl px-4 pb-24 pt-7 sm:px-8">
+   <div className="mb-5 flex justify-start">
+    <Link to="/app/perfil" className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#bda478]/40 bg-[#c5a36b]/10 px-4 py-2.5 text-xs font-black text-[#f5e1b9] no-underline shadow-[0_5px_20px_rgba(0,0,0,.18)] transition hover:border-[#e8c789]/70 hover:bg-[#c5a36b]/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e8c789]" aria-label="Volver a la aplicación de Punta Rollers"><span aria-hidden="true" className="text-lg leading-none">←</span> Volver a Punta Rollers</Link>
+   </div>
    <header className="flex items-center justify-between gap-4 border-b border-[#bda478]/20 pb-5">
     <Link to="/" className="text-xs font-black tracking-[.2em] text-[#e5d3ae] no-underline">PUNTA ROLLERS</Link>
     <button type="button" onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bda478]/40 px-4 py-2 text-xs font-semibold text-[#e5d3ae]"><span aria-hidden="true">↗</span> Compartir</button>
