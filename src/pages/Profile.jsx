@@ -460,14 +460,9 @@ export default function Profile() {
 
     if (location.hash === '#editar') {
       setEditing(true)
-
-      setTimeout(() => {
-        document
-          .getElementById('editar-perfil')
-          ?.scrollIntoView({
-            behavior: 'smooth',
-          })
-      }, 250)
+      // The modern profile launches a focused editor, not a scroll to
+      // the bottom of the legacy profile.
+      window.scrollTo({ top: 0, behavior: 'instant' })
     }
 
     if (location.hash === '#mensualidad') {
@@ -1648,7 +1643,10 @@ export default function Profile() {
           <section
             ref={editSectionRef}
             id="editar-perfil"
-            className="pr-panel p-5 space-y-4 scroll-mt-4"
+            role={location.hash === '#editar' ? 'dialog' : undefined}
+            aria-modal={location.hash === '#editar' ? true : undefined}
+            aria-label="Editar mi perfil"
+            className={location.hash === '#editar' ? 'fixed inset-x-3 top-[max(76px,env(safe-area-inset-top))] bottom-[calc(76px+env(safe-area-inset-bottom))] z-[70] mx-auto max-w-xl overflow-y-auto overscroll-contain rounded-[24px] border border-[#ff0055]/35 bg-[#100d16] p-5 pb-8 shadow-[0_0_0_100vmax_rgba(0,0,0,.85),0_20px_80px_rgba(0,0,0,.7)] space-y-4' : 'pr-panel p-5 space-y-4 scroll-mt-4'}
           >
             <div>
               <p className="section-label">
@@ -1658,6 +1656,9 @@ export default function Profile() {
               <h2 className="font-display text-2xl text-white mt-1">
                 Editá tu información
               </h2>
+              {location.hash === '#editar' && (
+                <button type="button" onClick={() => navigate('/app/perfil', { replace: true })} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-xs font-bold text-white" aria-label="Cerrar edición y volver al perfil nuevo">← Volver a mi perfil</button>
+              )}
 
               {!form.fechaNacimiento && (
                 <div className="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-400/[0.08] p-3 mt-4">
