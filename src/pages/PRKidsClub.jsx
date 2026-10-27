@@ -6,6 +6,7 @@ import {validateFamilyApplication} from '../lib/prKidsFamilyValidation'
 import {projectFamilyHome} from '../lib/prKidsFamilyProjection'
 import {existingGuardianNeedsLogin} from '../lib/prKidsGuardianOnboarding'
 import './PRKidsInscripciones2026.css'
+import './PRKidsClubRefresh.css'
 import PRKidsFamilyDashboard from '../components/PRKidsFamilyDashboard'
 import PRKidsDemoStudio from '../components/PRKidsDemoStudio'
 const features=[['✦','Qué hicimos hoy','Conocé qué practicamos en la clase del sábado.','blue'],['▣','Asistencias Check','Cada asistencia confirmada se registra con un sello digital.','pink'],['★','Insignias','Descubrí las habilidades y los logros que consiguió.','yellow'],['▧','Fotos y videos','Recuerdos de las clases en una galería privada.','green']]
