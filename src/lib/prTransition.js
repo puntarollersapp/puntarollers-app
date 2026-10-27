@@ -16,7 +16,7 @@ export function isTransitionStudent(user) {
     !STAFF_PROFILE_IDS.has(String(user.id)) && !isNewAccountDuringTesting(user)
 }
 export function isTransitionPrivatePath(path) {
-  return /^\\/(app|admin)(\\/|$)/.test(path) || path === '/tesoreria'
+  return path.startsWith('/app/') || path.startsWith('/admin/') || path === '/tesoreria'
 }
 export function transitionDestination(user, requested) {
   return isTransitionStudent(user) ? '/app/shifter' : requested
