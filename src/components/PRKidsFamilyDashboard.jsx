@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import VerifiedBadge from './VerifiedBadge'
 import {filterClassPosts,formatClassDate,normalizeFamilyClassPost} from '../lib/prKidsClassPosts'
 import './PRKidsFamilyDashboard.css'
 const sample={
@@ -21,7 +22,7 @@ export default function PRKidsFamilyDashboard({child,demo=false,onBack}){
  const childPhoto=child.foto_url||child.photo_url||child.avatar_url||null
  return <section className="prk-dashboard" aria-label={'Perfil infantil de '+child.nombre}>
   <div className="prk-dashboard-top"><button type="button" className="prk-dashboard-back" onClick={onBack}>← Mi familia</button><span className="prk-dashboard-chip">{demo?'VISTA DEMO · FICTICIA':'PERFIL PRIVADO'}</span></div>
-  <div className="prk-dashboard-hero"><div className="prk-dashboard-avatar" aria-label="Foto de perfil infantil">{childPhoto?<img src={childPhoto} alt={'Foto de '+child.nombre}/>:<span>{String(child.nombre||'?').trim()[0]?.toUpperCase()}</span>}</div><div><p className="prk-dashboard-eyebrow">MI AVENTURA SOBRE RUEDAS</p><h2>{child.nombre}</h2><p>{demo?'Un ejemplo de cómo la familia acompañará cada avance.':'Mi espacio familiar de PR Kids.'}</p></div></div>
+  <div className="prk-dashboard-hero"><div className="prk-dashboard-avatar" aria-label="Foto de perfil infantil">{childPhoto?<img src={childPhoto} alt={'Foto de '+child.nombre}/>:<span>{String(child.nombre||'?').trim()[0]?.toUpperCase()}</span>}</div><div><p className="prk-dashboard-eyebrow">MI AVENTURA SOBRE RUEDAS</p><h2>{child.nombre}{!demo&&<VerifiedBadge size={24} className="ml-2"/>}</h2><p>{demo?'Un ejemplo de cómo la familia acompañará cada avance.':'Mi espacio familiar de PR Kids.'}</p></div></div>
   {demo&&<div className="prk-dashboard-stats"><div><strong>2</strong><span>Clases de ejemplo</span></div><div><strong>3</strong><span>Logros de ejemplo</span></div><div><strong>3</strong><span>Sellos de asistencia · ejemplo</span></div></div>}
   <div className="prk-dashboard-tabs" role="tablist" aria-label="Secciones del perfil infantil">{tabs.map(([id,name])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)}>{name}</button>)}</div>
   <div className="prk-dashboard-panel" role="tabpanel">
