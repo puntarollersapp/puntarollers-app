@@ -100,7 +100,7 @@ export default function Insignias() {
                     className="group relative overflow-hidden rounded-[25px] border border-white/[.08] bg-[#0e0e13] p-3 text-left active:scale-[.99]">
                     <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-pr-gold/[.04]" />
                     <div className="relative aspect-square overflow-hidden rounded-[20px] border border-pr-gold/12 bg-gradient-to-b from-pr-gold/[.07] to-black/25 grid place-items-center">
-                      {image ? <img src={image} alt="" className={`h-full w-full object-contain p-2 ${normalizeBadgeTitle(badge.titulo) === "primeros 6k" ? "scale-[1.16]" : ""}`} /> : <span className="text-5xl">🏅</span>}
+                      {image ? <img src={image} alt="" className="h-full w-full object-contain p-2" /> : <span className="text-5xl">🏅</span>}
                       <span className="absolute right-2 top-2 rounded-full border border-pr-gold/15 bg-black/55 px-2 py-1 text-[7px] font-black text-pr-gold">
                         #{String(index + 1).padStart(2, '0')}
                       </span>
@@ -124,7 +124,7 @@ export default function Insignias() {
           <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-3 backdrop-blur-sm" onClick={() => setSelected(null)}>
             <div className="w-full max-w-md rounded-[30px] border border-pr-gold/20 bg-[#111116] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="mx-auto aspect-square max-w-[210px] overflow-hidden rounded-[28px] border border-pr-gold/15 bg-pr-gold/[.06] grid place-items-center">
-                {getBadgeImage(selected.titulo) ? <img src={getBadgeImage(selected.titulo)} alt="" className={`h-full w-full object-contain p-3 ${normalizeBadgeTitle(selected.titulo) === "primeros 6k" ? "scale-[1.16]" : ""}`} /> : <span className="text-6xl">🏅</span>}
+                {getBadgeImage(selected.titulo) ? <img src={getBadgeImage(selected.titulo)} alt="" className="h-full w-full object-contain p-3" /> : <span className="text-6xl">🏅</span>}
               </div>
               <p className="mt-5 text-[9px] font-black uppercase tracking-[.18em] text-pr-gold">Insignia PR</p>
               <h2 className="mt-2 font-display text-[30px] leading-none text-white">{selected.titulo}</h2>
