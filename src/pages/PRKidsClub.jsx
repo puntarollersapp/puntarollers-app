@@ -34,13 +34,14 @@ export default function PRKidsClub(){
  async function submit(e){e.preventDefault();if(busy)return;setError('')
  if(data.es_alumno===null){setError('Elegí si ya tenés cuenta de alumno adulto.');return}
  if(existingGuardianNeedsLogin({claimsExistingAccount:data.es_alumno===true,authenticatedAdultId:user?.id})){setError('Para vincular a tu hijo con tu cuenta actual, primero ingresá con tu documento y PIN.');return}
+ if(!user&&data.es_alumno===false){if(!/^[0-9]{6,12}$/.test(familyPin)){setError('El PIN debe tener entre 6 y 12 números.');return}if(familyPin!==familyPinConfirm){setError('Los PIN no coinciden.');return}}
  const errors=validateFamilyApplication({adult:data,children:hijos,authenticatedDocument:user?.documento})
  if(errors.length){setError(errors[0]);return}
  setBusy(true)
  try{
-  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos}})
+  const {data:r,error:err}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'request',...data,nombre_nino:hijos[0]?.nombre||'',hijos,...(!user&&data.es_alumno===false?{registration_pin:familyPin}:{})}})
   if(err||r?.error)throw Error(r?.error||'No pudimos enviar la solicitud. Intentá nuevamente.')
-  setStage(r?.already_exists?'pending':'done')
+  setFamilyPin('');setFamilyPinConfirm('');setStage(r?.already_exists?'pending':'done')
  }catch(e){setError(e.message)}finally{setBusy(false)}
 }
  return <main className="prk-shell"><div className="prk-blob prk-blob-a"/><div className="prk-blob prk-blob-b"/>
