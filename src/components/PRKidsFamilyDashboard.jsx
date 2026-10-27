@@ -8,13 +8,14 @@ const sample={
  skills:[{name:'Equilibrio',detail:'Mantener postura y estabilidad',done:true},{name:'Primeros giros',detail:'Control de dirección',done:true},{name:'Frenada en T',detail:'Aprender a detenerse con seguridad',done:false},{name:'Trabajo en equipo',detail:'Compartir el circuito',done:true}],
  attendanceStamps:6
 }
-const tabs=[['clases','Qué hicimos hoy'],['asistencias','Asistencias Check'],['qr','QR ID'],['logros','Mis logros'],['recuerdos','Recuerdos']]
+const tabs=[['clases','Qué hicimos hoy'],['asistencias','Asistencias Check'],['logros','Mis logros'],['recuerdos','Recuerdos']]
 export default function PRKidsFamilyDashboard({child,demo=false,onBack,onProfileSaved}){
  const [tab,setTab]=useState('clases')
  const [editing,setEditing]=useState(false),[editName,setEditName]=useState(child.nombre||''),[editBirth,setEditBirth]=useState(child.fecha_nacimiento||''),[saving,setSaving]=useState(false),[editError,setEditError]=useState('')
  const age=child.fecha_nacimiento?(()=>{const d=new Date(child.fecha_nacimiento+'T12:00:00');const now=new Date();let n=now.getFullYear()-d.getFullYear();if(now.getMonth()<d.getMonth()||(now.getMonth()===d.getMonth()&&now.getDate()<d.getDate()))n--;return n>=0?n:null})():null
  async function saveProfile(){setSaving(true);setEditError('');try{const {data,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'child-profile-update',child_id:child.id,nombre:editName,fecha_nacimiento:editBirth||null}});if(error||!data?.ok)throw Error(data?.error||'No se pudo guardar');onProfileSaved?.(data.child);setEditing(false)}catch(e){setEditError(e.message||'No se pudo guardar')}finally{setSaving(false)}}
  const [qr,setQr]=useState(''),[qrError,setQrError]=useState(''),[qrLoading,setQrLoading]=useState(false)
+ useEffect(()=>{setQr('');setQrError('');setTab('clases')},[child?.id])
  useEffect(()=>{if(tab!=='qr'||demo||qr||!child?.id)return;let active=true;setQrLoading(true);(async()=>{try{const {data,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'child-qr',child_id:child.id}});if(error||!data?.qr_payload)throw Error(data?.error||'No se pudo cargar la credencial');const QR=await import('qrcode');const url=await QR.toDataURL(data.qr_payload,{width:480,margin:3,errorCorrectionLevel:'H'});if(active)setQr(url)}catch(e){if(active)setQrError(e.message||'No se pudo generar el QR')}finally{if(active)setQrLoading(false)}})();return()=>{active=false}},[tab,demo,child?.id,qr])
  const [showTeacher,setShowTeacher]=useState(true)
  const [historySearch,setHistorySearch]=useState(''),[historyDate,setHistoryDate]=useState('all')
