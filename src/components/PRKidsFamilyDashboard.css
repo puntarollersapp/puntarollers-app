@@ -62,3 +62,8 @@
 @keyframes prkAvatarGlow{0%,100%{filter:hue-rotate(0deg);box-shadow:0 0 26px rgba(154,101,255,.28)}50%{filter:hue-rotate(20deg);box-shadow:0 0 36px rgba(245,0,120,.38)}}
 @keyframes prkHeroShimmer{0%,65%,100%{transform:translateX(-130%)}85%{transform:translateX(130%)}}
 @media(prefers-reduced-motion:reduce){.prk-dashboard-avatar,.prk-dashboard-hero:before{animation:none}}
+
+.prk-qr-inline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:15px 0 18px;padding:14px 16px;border:1px solid rgba(170,158,211,.2);border-radius:17px;background:linear-gradient(120deg,rgba(47,39,72,.65),rgba(18,27,39,.8));box-shadow:inset 0 1px rgba(255,255,255,.035)}
+.prk-qr-inline-copy{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}.prk-qr-inline-eyebrow{font-size:9px;font-weight:800;letter-spacing:.16em;color:#b9a8d5}.prk-qr-inline-copy strong{font-size:17px;color:#fff;line-height:1.3}.prk-qr-inline-copy small{font-size:11px;color:#aaa5ba}
+.prk-qr-inline-action{display:flex;align-items:center;gap:8px;flex-shrink:0;border:1px solid rgba(199,255,60,.25);border-radius:12px;background:rgba(199,255,60,.09);padding:10px 12px;color:#e8ffb0;font-size:12px;font-weight:800;transition:background .2s,transform .2s}.prk-qr-inline-action:hover{background:rgba(199,255,60,.16);transform:translateX(2px)}
+@media(max-width:370px){.prk-qr-inline{padding:12px}.prk-qr-inline-action{padding:9px}.prk-qr-inline-copy strong{font-size:15px}}
