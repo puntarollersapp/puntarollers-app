@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import {
@@ -365,6 +365,7 @@ function getPaymentStatus(
 
 export default function Profile() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { user, logout, updateUser } = useAuth()
 
   const base = {
@@ -1192,12 +1193,18 @@ export default function Profile() {
       setEditing(false)
       setMessage('Cambios guardados correctamente.')
 
-      window.setTimeout(() => {
-        profileTopRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        })
-      }, 120)
+      // Editing from the modern profile must return there, not strand the user
+      // on the legacy profile layout after saving.
+      if (location.hash === '#editar') {
+        navigate('/app/perfil', { replace: true })
+      } else {
+        window.setTimeout(() => {
+          profileTopRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+        }, 120)
+      }
     } catch (error) {
       setMessage(
         `No se pudo guardar: ${error.message}`
