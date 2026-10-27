@@ -12,12 +12,12 @@ function isNewAccountDuringTesting(user) {
 }
 
 export function isTransitionStudent(user) {
-  return TRANSITION_ENABLED && Date.now() < TRANSITION_END && Boolean(user?.id) &&
+  return TRANSITION_ENABLED && Date.now() < TRANSITION_END && Boolean(user?.id) && user?.role !== 'familiar' &&
     !STAFF_PROFILE_IDS.has(String(user.id)) && !isNewAccountDuringTesting(user)
 }
 export function isTransitionPrivatePath(path) {
   return path.startsWith('/app/') || path.startsWith('/admin/') || path === '/tesoreria'
 }
 export function transitionDestination(user, requested) {
-  return isTransitionStudent(user) ? '/app/shifter' : requested
+  return user?.role === 'familiar' ? '/kids' : isTransitionStudent(user) ? '/app/shifter' : requested
 }
