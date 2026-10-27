@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import RollerFeedComments from '../components/RollerFeedComments'
 import RollerFeedSeasonal from '../components/RollerFeedSeasonal'
+import RollerFeedCommunity from '../components/RollerFeedCommunity'
 import '../styles/rollerfeed-hero.css'
 import { loadActiveMoments, timeLeft } from '../lib/moments'
 import VerifiedBadge from '../components/VerifiedBadge'
@@ -1291,6 +1292,8 @@ export default function Activity() {
         <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
 
         <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
+
+        <RollerFeedCommunity initialPosts={socialPosts} />
 
         <section id="rollerfeed-actividades" className="scroll-mt-36">
           <div className="flex items-end justify-between gap-4 mb-3">
