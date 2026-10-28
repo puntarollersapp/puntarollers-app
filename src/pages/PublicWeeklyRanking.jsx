@@ -278,20 +278,25 @@ function PodiumDuel({ challenger, defender, gap }) {
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute -bottom-32 left-1/2 h-64 w-[85%] -translate-x-1/2 rounded-full bg-orange-600/30 blur-[70px] motion-safe:animate-pulse" />
       <div className="absolute bottom-0 left-0 h-36 w-full bg-gradient-to-t from-orange-600/20 via-amber-500/5 to-transparent" />
-      <span className="absolute -bottom-4 left-[8%] text-[70px] opacity-35 blur-[2px] motion-safe:animate-bounce [animation-duration:2.7s]">🔥</span>
-      <span className="absolute -bottom-6 right-[7%] text-[80px] opacity-40 blur-[2px] motion-safe:animate-bounce [animation-duration:3.2s]">🔥</span>
+      <svg className="absolute inset-x-0 bottom-0 h-[75%] w-full opacity-70" viewBox="0 0 900 330" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="duelFlameGradient" x1="0" y1="330" x2="0" y2="35" gradientUnits="userSpaceOnUse"><stop stopColor="#ea580c" stopOpacity=".75"/><stop offset=".38" stopColor="#f97316" stopOpacity=".35"/><stop offset="1" stopColor="#fbbf24" stopOpacity="0"/></linearGradient><filter id="duelFlameSoft"><feGaussianBlur stdDeviation="13"/></filter></defs>
+        <g filter="url(#duelFlameSoft)"><path className="origin-bottom motion-safe:animate-[pulse_2.8s_ease-in-out_infinite]" d="M0 330V210C90 260 112 98 171 74C150 170 257 207 277 330Z" fill="url(#duelFlameGradient)"/><path className="origin-bottom motion-safe:animate-[pulse_3.7s_ease-in-out_infinite]" d="M900 330V180C811 241 802 80 728 52C760 157 655 221 640 330Z" fill="url(#duelFlameGradient)"/><path className="motion-safe:animate-[pulse_4.3s_ease-in-out_infinite]" d="M180 330C230 241 300 265 341 145C363 234 448 236 475 330Z" fill="url(#duelFlameGradient)"/><path className="motion-safe:animate-[pulse_3.1s_ease-in-out_infinite]" d="M490 330C546 246 581 250 611 143C644 244 716 262 740 330Z" fill="url(#duelFlameGradient)"/></g>
+      </svg>
+      <div className="absolute bottom-0 h-24 w-full bg-[linear-gradient(to_top,rgba(249,115,22,.19),transparent)] motion-safe:animate-pulse" />
       <span className="absolute left-[18%] top-[28%] text-lg text-orange-300/70 motion-safe:animate-ping [animation-duration:3s]">✦</span>
       <span className="absolute right-[15%] top-[37%] text-xl text-amber-300/65 motion-safe:animate-pulse">✦</span>
     </div>
     <div className="relative">
-      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-orange-300">🔥 BATALLA POR EL PODIO 🔥</p>
+      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-orange-300">✦ BATALLA POR EL PODIO ✦</p>
       <h2 className="mt-2 text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-orange-400">está en juego</span></h2>
       <div className="mt-8 flex items-center gap-2 sm:gap-5">
         {player(defender,3)}
         <div className="relative z-10 shrink-0 text-center">
           <div aria-hidden="true" className="absolute inset-0 scale-150 rounded-full bg-amber-400/20 blur-2xl motion-safe:animate-pulse" />
           <div aria-hidden="true" className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/35 motion-safe:animate-[spin_7s_linear_infinite]" />
-          <div className="relative flex items-center justify-center gap-0 text-[clamp(23px,6vw,44px)] leading-none drop-shadow-[0_0_18px_rgba(251,191,36,.75)]"><span className="inline-block -rotate-12 motion-safe:animate-[pulse_1.2s_ease-in-out_infinite]">👊</span><span className="relative -mx-1 z-10 text-amber-300 motion-safe:animate-[pulse_.6s_ease-in-out_infinite]">⚡</span><span className="inline-block rotate-12 -scale-x-100 motion-safe:animate-[pulse_1.2s_ease-in-out_infinite]">👊</span></div>
+          <div className="relative mx-auto grid h-20 w-20 place-items-center sm:h-24 sm:w-24" aria-label="Choque de energía">
+            <svg viewBox="0 0 100 100" className="h-full w-full overflow-visible" aria-hidden="true"><defs><filter id="duelBoltGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle cx="50" cy="50" r="32" stroke="#fbbf24" strokeOpacity=".3" strokeWidth="1" fill="none" className="origin-center motion-safe:animate-[spin_5s_linear_infinite]" strokeDasharray="8 9"/><path d="M57 5L31 47H48L37 94L74 41H53Z" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" filter="url(#duelBoltGlow)" className="origin-center motion-safe:animate-[pulse_.85s_ease-in-out_infinite]"/><path d="M17 23L30 43L14 57M83 23L70 43L87 60M18 75L35 64M83 77L67 65" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" filter="url(#duelBoltGlow)" className="motion-safe:animate-[pulse_1.2s_ease-in-out_infinite]"/></svg>
+          </div>
           <p className="relative mt-2 text-3xl font-black italic text-[#c9fb60] [text-shadow:0_0_18px_rgba(201,251,96,.45)]">VS</p>
         </div>
         {player(challenger,4)}
