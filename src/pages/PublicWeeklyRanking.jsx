@@ -109,12 +109,12 @@ function PrizeVisual({ campaign, level, totalKm, preview = false }) {
   const revealed = level === 1 || unlocked
   const progress = Math.min(100, Math.max(0, totalKm / Math.max(1,target) * 100))
   const prize = campaign?.[`prize_${level}_title`] || 'Premio'
-  const icons = ['🍷','🍫','🎟️']
+  const prizeImages = ['/premios/Vino.png', '/premios/Ferrerorocher.png', '/premios/Mystery.png']
   return <article className={`group relative overflow-hidden rounded-[24px] border p-4 transition-colors sm:p-5 ${unlocked ? 'border-[#c9fb60]/45 bg-[#c9fb60]/[.09]' : 'border-white/10 bg-[#171c20]'}`}>
     <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-[#c9fb60]/[.055] blur-2xl"/>
     <div className="relative flex items-center gap-4">
       <div className={`relative grid h-[84px] w-[84px] shrink-0 place-items-center overflow-hidden rounded-[22px] border text-[39px] shadow-[inset_0_1px_0_rgba(255,255,255,.06)] ${unlocked ? 'border-[#c9fb60]/40 bg-[#c9fb60]/10' : 'border-white/10 bg-gradient-to-br from-[#30383a] to-[#111518]'}`} aria-hidden="true">
-        {revealed ? <span className="drop-shadow-[0_6px_10px_rgba(0,0,0,.25)]">{icons[level-1]}</span> : <div className="relative"><span className="text-[50px] drop-shadow-lg">🎁</span><span className="absolute -right-1 top-3 grid h-6 w-6 place-items-center rounded-full border border-[#c9fb60]/50 bg-[#171c20] text-base font-black text-[#c9fb60]">?</span></div>}
+        <img src={revealed ? prizeImages[level-1] : '/premios/Mystery.png'} alt={revealed ? prize : 'Premio misterioso'} className="h-full w-full object-contain" loading="lazy" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-1.5"><span className="text-[10px] font-black uppercase tracking-[.16em] text-[#c9fb60]">RECOMPENSA 0{level}</span><span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${unlocked?'bg-[#c9fb60] text-[#111419]':'bg-white/[.07] text-white/50'}`}>{unlocked?'✓ Desbloqueada':preview?'Próximamente':'🔒 Bloqueada'}</span></div>
