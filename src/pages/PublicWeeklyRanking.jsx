@@ -264,55 +264,48 @@ function Podium({ ranking, period, statuses }) {
 function PodiumDuel({ challenger, defender, gap }) {
   if (!challenger || !defender) return null
   const player = (row, rank) => <div className="relative z-10 flex min-w-0 flex-1 flex-col items-center">
-    <div className="relative">
-      <div aria-hidden="true" className="absolute -inset-3 rounded-full bg-red-600/20 blur-xl motion-safe:animate-pulse" />
-      <div aria-hidden="true" className="absolute -inset-2 rounded-full border-2 border-dashed border-red-500/75 motion-safe:animate-[spin_9s_linear_infinite]" />
-      <div aria-hidden="true" className="absolute -inset-1 rounded-full border border-[#c9fb60]/65 motion-safe:animate-[spin_6s_linear_infinite_reverse]" />
-      <div className="relative rounded-full border-[3px] border-red-500 bg-[#1b1e1f] p-1 shadow-[0_0_25px_rgba(220,38,38,.38)]"><PodiumAvatar row={row} size="lg"/></div>
-      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-2.5 py-1 text-[10px] font-black text-black shadow-[0_0_18px_rgba(201,251,96,.35)]">#{rank}</span>
+    <div className="relative rounded-full p-[5px]">
+      <div aria-hidden="true" className="absolute -inset-[5px] rounded-full border border-red-400/40 shadow-[0_0_28px_rgba(225,29,72,.26)]" />
+      <div aria-hidden="true" className="absolute -inset-[9px] rounded-full border-t-2 border-r-2 border-transparent border-t-red-400 border-r-red-500/40 motion-safe:animate-[spin_8s_linear_infinite]" />
+      <div className="relative rounded-full border-2 border-white/15 bg-[#101217] p-0.5"><PodiumAvatar row={row} size="lg"/></div>
+      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-[#c9fb60] px-2.5 py-1 text-[10px] font-black text-[#101217]">#{rank}</span>
     </div>
-    <p className="mt-6 w-full truncate text-center text-xs font-black">{row.name}</p>
-    <p className="mt-1 text-sm font-black text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
+    <p className="mt-6 w-full truncate text-center text-xs font-black text-white">{row.name}</p>
+    <p className="mt-1 text-base font-black tabular-nums text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
   </div>
-  return <section className="relative isolate overflow-hidden rounded-[30px] border border-red-500/40 bg-[radial-gradient(ellipse_at_50%_100%,rgba(153,27,27,.32),transparent_70%),linear-gradient(145deg,#200e15,#101418_75%)] p-5 shadow-[0_20px_60px_rgba(185,28,28,.18)] sm:p-7">
+  return <section className="relative isolate overflow-hidden rounded-[30px] border border-red-500/25 bg-[#100f15] p-5 shadow-[0_22px_65px_rgba(110,10,24,.20)] sm:p-7">
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_115%,rgba(185,16,32,.52),transparent_70%)]" />
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 440" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="prRedFireOuter" x1="0" y1="440" x2="0" y2="35" gradientUnits="userSpaceOnUse"><stop stopColor="#9f0716"/><stop offset=".3" stopColor="#e11d2e" stopOpacity=".94"/><stop offset=".67" stopColor="#ef4444" stopOpacity=".56"/><stop offset="1" stopColor="#fb7185" stopOpacity="0"/></linearGradient>
-          <linearGradient id="prRedFireInner" x1="0" y1="440" x2="0" y2="100" gradientUnits="userSpaceOnUse"><stop stopColor="#ff6b35"/><stop offset=".32" stopColor="#fb233f"/><stop offset=".8" stopColor="#ef4444" stopOpacity=".3"/><stop offset="1" stopColor="#ef4444" stopOpacity="0"/></linearGradient>
-          <filter id="prRedFireMotion" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".012 .026" numOctaves="3" seed="8" result="noise"><animate attributeName="baseFrequency" values=".012 .026;.018 .038;.012 .026" dur="5s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="noise" scale="27" xChannelSelector="R" yChannelSelector="G"/></filter>
-          <filter id="prRedFireGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="24"/></filter>
-        </defs>
-        <g opacity=".65" filter="url(#prRedFireGlow)" fill="#e11d48"><ellipse cx="120" cy="405" rx="180" ry="135"/><ellipse cx="770" cy="405" rx="195" ry="145"/><ellipse cx="460" cy="450" rx="255" ry="90"/></g>
-        <g filter="url(#prRedFireMotion)">
-          <path d="M-40 460L-40 310C35 346 50 232 76 178C83 262 135 284 140 225C171 136 160 101 188 64C193 156 275 205 245 295C302 259 312 190 328 167C340 272 395 322 420 460Z" fill="url(#prRedFireOuter)" opacity=".92"/>
-          <path d="M940 460L940 300C870 346 864 228 833 151C816 244 771 271 761 214C742 144 739 107 716 56C713 166 626 208 657 302C601 261 586 186 575 163C562 282 510 330 489 460Z" fill="url(#prRedFireOuter)" opacity=".95"/>
-          <path d="M-20 460C46 372 65 359 88 257C116 349 148 357 161 309C189 258 198 210 202 168C226 302 305 352 349 460Z" fill="url(#prRedFireInner)" opacity=".8"/>
-          <path d="M920 460C849 374 835 361 816 253C783 346 758 365 742 312C711 253 704 208 696 159C674 303 598 357 558 460Z" fill="url(#prRedFireInner)" opacity=".85"/>
-          <path d="M200 460C285 401 296 336 315 274C339 365 368 387 397 331C420 291 425 249 439 209C458 333 526 389 591 460Z" fill="url(#prRedFireOuter)" opacity=".45"/>
-        </g>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_105%,rgba(185,28,28,.30),transparent_62%),linear-gradient(125deg,rgba(70,10,28,.22),transparent_40%,rgba(85,13,25,.23))]" />
+      <div className="absolute -left-20 bottom-0 h-52 w-52 rounded-full bg-red-600/15 blur-[65px] motion-safe:animate-pulse" />
+      <div className="absolute -right-20 bottom-0 h-52 w-52 rounded-full bg-rose-600/15 blur-[65px] motion-safe:animate-pulse" />
+      <svg viewBox="0 0 900 350" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-60">
+        <defs><linearGradient id="duelStreak" x1="0" x2="1"><stop stopColor="#ef4444" stopOpacity="0"/><stop offset=".48" stopColor="#fb7185" stopOpacity=".65"/><stop offset="1" stopColor="#ef4444" stopOpacity="0"/></linearGradient><filter id="duelStreakBlur"><feGaussianBlur stdDeviation="6"/></filter></defs>
+        <path d="M0 290L420 155M900 290L480 155" stroke="url(#duelStreak)" strokeWidth="17" filter="url(#duelStreakBlur)"/>
+        <path d="M0 290L420 155M900 290L480 155" stroke="url(#duelStreak)" strokeWidth="1.5"/>
+        <path d="M0 320L420 169M900 320L480 169" stroke="#fb7185" strokeOpacity=".2" strokeWidth="1"/>
       </svg>
-      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#b91c1c]/35 to-transparent" />
-      <div className="absolute left-[8%] top-[24%] h-1 w-1 rounded-full bg-rose-300 shadow-[0_0_14px_5px_rgba(244,63,94,.45)] motion-safe:animate-ping [animation-duration:3.5s]" />
-      <div className="absolute right-[12%] top-[31%] h-1 w-1 rounded-full bg-red-300 shadow-[0_0_12px_4px_rgba(248,113,113,.5)] motion-safe:animate-ping [animation-duration:4.2s]" />
+      <div className="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/40 to-transparent" />
     </div>
     <div className="relative">
-      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-rose-300">✦ BATALLA POR EL PODIO ✦</p>
-      <h2 className="mt-2 text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-red-500">está en juego</span></h2>
-      <div className="mt-8 flex items-center gap-2 sm:gap-5">
+      <p className="text-center text-[10px] font-black uppercase tracking-[.25em] text-rose-300">BATALLA POR EL PODIO</p>
+      <h2 className="mx-auto mt-2 max-w-[500px] text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-red-400">está en juego</span></h2>
+      <div className="relative mt-9 flex items-center gap-1 sm:gap-5">
         {player(defender,3)}
-        <div className="relative z-10 shrink-0 text-center">
-          <div aria-hidden="true" className="absolute inset-0 scale-150 rounded-full bg-amber-400/20 blur-2xl motion-safe:animate-pulse" />
-          <div aria-hidden="true" className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/35 motion-safe:animate-[spin_7s_linear_infinite]" />
-          <div className="relative mx-auto grid h-20 w-20 place-items-center sm:h-24 sm:w-24" aria-label="Choque de energía">
-            <svg viewBox="0 0 100 100" className="h-full w-full overflow-visible" aria-hidden="true"><defs><filter id="duelBoltGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle cx="50" cy="50" r="32" stroke="#fbbf24" strokeOpacity=".3" strokeWidth="1" fill="none" className="origin-center motion-safe:animate-[spin_5s_linear_infinite]" strokeDasharray="8 9"/><path d="M57 5L31 47H48L37 94L74 41H53Z" fill="#fef3c7" stroke="#f59e0b" strokeWidth="2" filter="url(#duelBoltGlow)" className="origin-center motion-safe:animate-[pulse_.85s_ease-in-out_infinite]"/><path d="M17 23L30 43L14 57M83 23L70 43L87 60M18 75L35 64M83 77L67 65" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" filter="url(#duelBoltGlow)" className="motion-safe:animate-[pulse_1.2s_ease-in-out_infinite]"/></svg>
-          </div>
-          <p className="relative mt-2 text-3xl font-black italic text-[#c9fb60] [text-shadow:0_0_18px_rgba(201,251,96,.45)]">VS</p>
+        <div className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center sm:w-[110px]">
+          <div aria-hidden="true" className="absolute h-24 w-24 rounded-full bg-red-500/20 blur-[30px] motion-safe:animate-pulse"/>
+          <svg viewBox="0 0 100 100" aria-hidden="true" className="absolute h-[105px] w-[105px] overflow-visible opacity-80">
+            <g fill="none" stroke="#fb7185" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M3 49L28 45L39 35M97 51L72 55L61 65" className="motion-safe:animate-[pulse_1.3s_ease-in-out_infinite]"/>
+              <path d="M14 30L33 39M86 70L67 61M25 80L39 64M75 20L61 36" opacity=".55"/>
+              <circle cx="50" cy="50" r="35" strokeDasharray="2 12" opacity=".5" className="origin-center motion-safe:animate-[spin_12s_linear_infinite]"/>
+            </g>
+          </svg>
+          <span className="relative text-[42px] font-black italic leading-none tracking-[-.12em] text-white [text-shadow:0_0_24px_rgba(239,68,68,.8)] sm:text-[58px]">VS</span>
+          <span className="relative mt-1 h-[2px] w-10 bg-gradient-to-r from-transparent via-red-400 to-transparent"/>
         </div>
         {player(challenger,4)}
       </div>
-      <p className="mt-7 text-center text-xs text-white/70">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</p>
+      <div className="relative mx-auto mt-8 max-w-sm rounded-xl border border-red-400/15 bg-black/25 px-3 py-3 text-center text-xs text-white/70">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</div>
     </div>
   </section>
 }
