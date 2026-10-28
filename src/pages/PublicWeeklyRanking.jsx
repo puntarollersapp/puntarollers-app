@@ -4,7 +4,6 @@ import PublicLayout from '../layouts/PublicLayout'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { ROLLERWEEN, isRollerweenActive } from '../lib/rollerween'
 
 function lower(value) {
   return String(value || '').trim().toLowerCase()
@@ -272,32 +271,6 @@ function PodiumDuel({ challenger, defender, gap }) {
   </section>
 }
 
-function RollerweenChallenge({ ranking=[] }) {
-  if (!isRollerweenActive()) return null
-  const total = ranking.reduce((sum,row)=>sum+Number(row.km||0),0)
-  const candy = ROLLERWEEN.weeklyChallengeKm
-  const bombons = ROLLERWEEN.weeklyBombonsKm
-  const pct = Math.min(100, Math.round((total/bombons)*100))
-  const candyReached = total >= candy
-  const bombonsReached = total >= bombons
-  const nextTarget = bombonsReached ? null : candyReached ? bombons : candy
-  const left = nextTarget ? Math.max(0,nextTarget-total) : 0
-  return <section className="pr-rollerween-card rounded-[32px] p-5">
-    <div className="relative z-10">
-      <div className="flex items-start justify-between gap-4">
-        <div><div className="pr-rw-stamp">ROLLERWEEN // WEEKLY DROP</div><p className="mt-4 pr-rw-kicker">DESAFÍO GRUPAL · STRAVA</p><h2 className="pr-rw-title mt-1 text-[38px] text-white">200 → 350 KM<br/><span className={bombonsReached?'pr-rw-acid':'pr-rw-purple'}>{bombonsReached?'BOMBONES ON.':candyReached?'CARAMELOS ON.':'EN JUEGO.'}</span></h2></div>
-        <div className="pr-rw-pumpkin-wheel shrink-0 scale-[.78]" aria-hidden="true"/>
-      </div>
-      <p className="mt-4 text-[11px] leading-5 text-white/45">Cada kilómetro inline del grupo suma esta semana. A los <b className="text-white">200 km</b> desbloqueamos caramelos para la clase del sábado; a los <b className="text-[#BEFF37]">350 km</b>, hacemos upgrade a bombones.</p>
-      <div className="mt-5 rounded-[22px] border border-white/[.07] bg-black/30 p-4">
-        <div className="flex items-end justify-between"><div><p className="font-mono text-[8px] font-black uppercase tracking-[.15em] text-white/25">KM GRUPALES · ESTA SEMANA</p><p className="mt-1 text-[35px] font-black text-white">{total.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="text-base text-white/28"> / {bombons} km</span></p></div><p className="text-2xl font-black text-[#BEFF37]">{pct}%</p></div>
-        <div className="mt-4 grid grid-cols-2 gap-2"><div className={`rounded-[15px] border p-3 ${candyReached?'border-violet-300/30 bg-violet-400/10':'border-white/10 bg-white/[.025]'}`}><p className="text-[8px] font-black text-white/28">NIVEL 01 · 200 KM</p><p className={`mt-1 text-[10px] font-black ${candyReached?'text-violet-200':'text-white/45'}`}>{candyReached?'✓ CARAMELOS':'🍬 CARAMELOS'}</p></div><div className={`rounded-[15px] border p-3 ${bombonsReached?'border-[#BEFF37]/30 bg-[#BEFF37]/10':'border-white/10 bg-white/[.025]'}`}><p className="text-[8px] font-black text-white/28">NIVEL 02 · 350 KM</p><p className={`mt-1 text-[10px] font-black ${bombonsReached?'text-[#BEFF37]':'text-white/45'}`}>{bombonsReached?'✓ BOMBONES':'🍫 BOMBONES'}</p></div></div>
-        <div className="mt-4 h-4 overflow-hidden rounded-full border border-white/[.08] bg-white/[.04] p-[3px]"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-400 to-[#BEFF37]" style={{width:`${Math.max(2,pct)}%`}}/></div>
-        <div className="mt-3 flex items-center justify-between text-[9px] font-black uppercase tracking-[.08em]"><span className="text-white/28">RESET AUTOMÁTICO · LUNES</span><span className={bombonsReached?'text-[#BEFF37]':candyReached?'text-violet-200':'text-white/35'}>{bombonsReached?'BOMBONES DESBLOQUEADOS':candyReached?`FALTAN ${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM PARA BOMBONES`:`FALTAN ${left.toLocaleString('es-UY',{maximumFractionDigits:1})} KM PARA CARAMELOS`}</span></div>
-      </div>
-    </div>
-  </section>
-}
 export default function PublicWeeklyRanking() {
   const { user } = useAuth()
   const ranges = useMemo(() => dateRanges(), [])
@@ -473,9 +446,9 @@ export default function PublicWeeklyRanking() {
           <section className="rounded-[26px] border border-white/10 bg-[#191d21] p-5 sm:p-6">
             <div className="flex items-end justify-between gap-4">
               <div><p className="text-[9px] font-black uppercase tracking-[.17em] text-white/30">{periodLabel}</p><h2 className="mt-1 text-3xl font-black tracking-tight text-[#c9fb60]">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km en juego</h2></div>
-              <div className="text-right"><p className="text-2xl font-black text-orange-300">{ranking.length}</p><p className="text-[8px] font-black uppercase text-white/25">rollers sumando</p></div>
+              <div className="text-right"><p className="text-2xl font-black text-[#c9fb60]">{ranking.length}</p><p className="text-[8px] font-black uppercase text-white/25">rollers sumando</p></div>
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[.06]"><div className="h-full rounded-full bg-gradient-to-r from-orange-400 via-amber-300 to-violet-400" style={{width:`${ranking.length ? 100 : 0}%`}} /></div>
+            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[.06]"><div className="h-full rounded-full bg-gradient-to-r from-[#a4e449] via-[#c9fb60] to-[#e7d48c]" style={{width:`${ranking.length ? 100 : 0}%`}} /></div>
             <p className="mt-3 text-[9px] text-white/28">Período: {longDate(currentRange.start)} → {longDate(currentRange.end)}</p>
           </section>
 
@@ -484,11 +457,11 @@ export default function PublicWeeklyRanking() {
           {unlockCampaign && montevideoToday().date < '2026-11-01' && <div className="rounded-[24px] border border-[#c9fb60]/25 bg-[#c9fb60]/[.065] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.15em] text-[#c9fb60]">LABORATORIO DE DISEÑO · NOVIEMBRE</p><h3 className="mt-1 text-lg font-black">Probá las recompensas antes del lanzamiento.</h3><p className="mt-2 text-[11px] leading-5 text-white/50">Activá una simulación de 580 km para ver los niveles desbloqueados y las cajas sorpresa. El desafío real sigue comenzando el 1.º de noviembre con 0 km.</p></div></div><button type="button" onClick={()=>setDesignDemo(v=>!v)} className="mt-4 min-h-11 w-full rounded-xl bg-[#c9fb60] px-4 py-2 text-xs font-black text-[#111419]">{designDemo ? '↩ VOLVER A VISTA REAL' : '👁 VER DEMO CON PREMIOS DESBLOQUEADOS'}</button></div>}
           <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01' && !designDemo} demo={montevideoToday().date < '2026-11-01' && designDemo} />
 
-          {myRow && <section className="overflow-hidden rounded-[30px] border border-violet-300/20 bg-[radial-gradient(circle_at_100%_0%,rgba(167,139,250,.20),transparent_35%),rgba(139,92,246,.06)] p-5">
-            <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">TU POSICIÓN · {periodLabel}</p>
+          {myRow && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/25 bg-[radial-gradient(circle_at_100%_0%,rgba(201,251,96,.16),transparent_40%),#171d20] p-5">
+            <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#c9fb60]">TU POSICIÓN · {periodLabel}</p>
             <div className="mt-3 flex items-center gap-4">
               <PodiumAvatar row={myRow} />
-              <div className="min-w-0 flex-1"><p className="text-3xl font-black">#{myPosition}</p><p className="truncate text-sm font-black">{myRow.name}</p><p className="mt-1 text-xs font-black text-violet-200">{myRow.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {myRow.sessions} entrenos</p></div>
+              <div className="min-w-0 flex-1"><p className="text-3xl font-black">#{myPosition}</p><p className="truncate text-sm font-black">{myRow.name}</p><p className="mt-1 text-xs font-black text-[#c9fb60]">{myRow.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {myRow.sessions} entrenos</p></div>
             </div>
           </section>}
 
