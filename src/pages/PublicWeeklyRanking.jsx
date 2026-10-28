@@ -465,6 +465,8 @@ export default function PublicWeeklyRanking() {
 
 
 
+          {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
+
           <section className="rounded-[26px] border border-white/10 bg-[#191d21] p-5 sm:p-6">
             <div className="flex items-end justify-between gap-4">
               <div><p className="text-[9px] font-black uppercase tracking-[.17em] text-white/30">{periodLabel}</p><h2 className="mt-1 text-3xl font-black tracking-tight text-[#c9fb60]">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km en juego</h2></div>
@@ -474,7 +476,7 @@ export default function PublicWeeklyRanking() {
             <p className="mt-3 text-[9px] text-white/28">Período: {longDate(currentRange.start)} → {longDate(currentRange.end)}</p>
           </section>
 
-          {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
+
 
 
           {myRow && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/25 bg-[radial-gradient(circle_at_100%_0%,rgba(201,251,96,.16),transparent_40%),#171d20] p-5">
