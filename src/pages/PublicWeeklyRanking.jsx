@@ -159,7 +159,7 @@ function HallOfChampions({ octoberResult, novemberResult }) {
     { key: 'november', name: 'NOVIEMBRE 2026', result: novemberResult, end: '2026-11-30' },
   ]
   const today = montevideoToday().date
-  const champions = editions.filter(({result,end}) => today > end && result?.finalized_at && result?.winner_profile_id)
+  const champions = editions.filter(({result,end}) => today > end && result?.finalized_at && result?.winner_name)
   if (!champions.length) return null
   return <section aria-label="Hall of Champions de PR Unlock" className="relative overflow-hidden rounded-[32px] border border-[#c9fb60]/25 bg-[radial-gradient(ellipse_at_85%_0%,rgba(201,251,96,.13),transparent_45%),linear-gradient(145deg,#1b2322,#0d1216)] p-5 shadow-[0_25px_65px_rgba(0,0,0,.25)] sm:p-7">
     <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full border border-[#c9fb60]/15" aria-hidden="true" />
