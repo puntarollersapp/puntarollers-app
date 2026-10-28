@@ -445,6 +445,8 @@ export default function PublicWeeklyRanking() {
           </div>
         </section>
 
+        {!loading && !message && {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
+
         {!loading && !message && octoberSnapshot && montevideoToday().date <= '2026-11-07' && <section className="relative mt-5 overflow-hidden rounded-[32px] border border-[#c9fb60]/35 bg-[radial-gradient(circle_at_80%_0%,rgba(201,251,96,.19),transparent_45%),linear-gradient(145deg,#252c28,#111719_70%)] p-5 shadow-[0_20px_60px_rgba(0,0,0,.25)] sm:p-7" aria-label="Celebración PR Unlock octubre">
           <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true"><span className="absolute left-[8%] top-[10%] text-2xl opacity-65 motion-safe:animate-bounce">✦</span><span className="absolute right-[12%] top-[15%] text-xl text-[#c9fb60] opacity-70 motion-safe:animate-pulse">✳</span><span className="absolute left-[65%] top-[45%] text-3xl opacity-45 motion-safe:animate-pulse">✦</span><span className="absolute bottom-7 left-[16%] text-lg opacity-50">✳</span><span className="absolute bottom-5 right-[7%] text-2xl opacity-60">✦</span></div>
           <div className="relative"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#c9fb60]">🎉 PR UNLOCK / OCTUBRE 2026</p><span className="rounded-full border border-[#c9fb60]/25 bg-[#c9fb60]/10 px-3 py-1 text-[9px] font-black uppercase text-[#c9fb60]">{octoberResult?.finalized_at && montevideoToday().date > '2026-10-31' ? '🏆 RESULTADO OFICIAL' : montevideoToday().date <= '2026-10-31' ? 'EN CURSO · CIERRA 31/10' : 'CIERRE EN VERIFICACIÓN'}</span></div>
@@ -465,7 +467,6 @@ export default function PublicWeeklyRanking() {
 
 
 
-          {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
 
           <section className="rounded-[26px] border border-white/10 bg-[#191d21] p-5 sm:p-6">
             <div className="flex items-end justify-between gap-4">
