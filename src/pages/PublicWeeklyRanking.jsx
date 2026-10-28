@@ -119,17 +119,28 @@ function PrizeVisual({ campaign, level, totalKm, preview = false }) {
   </div>
 }
 
-function ProgressWheel({ pct, totalKm, maxTarget }) {
-  const radius=74, circumference=2*Math.PI*radius, offset=circumference-(Math.max(0,Math.min(100,pct))/100)*circumference
-  return <div className="relative mx-auto h-[210px] w-[210px]">
-    <svg viewBox="0 0 180 180" className="-rotate-90 h-full w-full">
-      <defs><linearGradient id="prUnlockRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fb923c"/><stop offset="48%" stopColor="#f472b6"/><stop offset="100%" stopColor="#8b5cf6"/></linearGradient></defs>
-      <circle cx="90" cy="90" r={radius} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="13"/>
-      <circle cx="90" cy="90" r={radius} fill="none" stroke="url(#prUnlockRing)" strokeWidth="13" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} className="transition-all duration-700"/>
-    </svg>
-    <div className="absolute inset-0 grid place-items-center text-center">
-      <div><p className="text-[9px] font-black uppercase tracking-[.19em] text-white/32">KM COMUNIDAD</p><p className="mt-1 text-[38px] font-black leading-none">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})}</p><p className="mt-1 text-xs font-black text-fuchsia-300">de {maxTarget.toLocaleString('es-UY')} km</p><p className="mt-2 text-[10px] font-black text-white/45">{pct}% COMPLETADO</p></div>
+function ProgressWheel({ pct, totalKm, maxTarget, targets = [] }) {
+  const radius = 78, circumference = 2 * Math.PI * radius
+  const safePct = Math.max(0, Math.min(100, pct))
+  const milestones = targets.filter(t => Number(t) > 0).map((target, i) => ({target, i, pct: Math.min(100, Number(target) / Math.max(1,maxTarget) * 100)}))
+  return <div className="relative mx-auto w-full max-w-[340px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[300px]">
+      <svg viewBox="0 0 220 220" className="h-full w-full -rotate-90" role="img" aria-label={`Progreso comunitario: ${totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} de ${maxTarget} kilómetros, ${safePct}%`}>
+        <defs><linearGradient id="prUnlockRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#c9fb60"/><stop offset="60%" stopColor="#e1f7a3"/><stop offset="100%" stopColor="#f4d78b"/></linearGradient><filter id="prUnlockGlow"><feGaussianBlur stdDeviation="4"/></filter></defs>
+        <circle cx="110" cy="110" r="94" fill="none" stroke="rgba(255,255,255,.035)" strokeWidth="1" strokeDasharray="2 7"/>
+        <circle cx="110" cy="110" r={radius} fill="none" stroke="rgba(255,255,255,.09)" strokeWidth="16"/>
+        <circle cx="110" cy="110" r={radius} fill="none" stroke="url(#prUnlockRing)" strokeWidth="18" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - safePct / 100)} opacity=".38" filter="url(#prUnlockGlow)" className="transition-all duration-700"/>
+        <circle cx="110" cy="110" r={radius} fill="none" stroke="url(#prUnlockRing)" strokeWidth="12" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - safePct / 100)} className="transition-all duration-700"/>
+        {milestones.map(({target,i,pct:at}) => {const theta = (at / 100) * Math.PI * 2, x = 110 + radius * Math.cos(theta), y = 110 + radius * Math.sin(theta);return <circle key={target} cx={x} cy={y} r="5.5" fill={totalKm >= target ? '#c9fb60' : '#313b3a'} stroke="#12171b" strokeWidth="3" />})}
+      </svg>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+        <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#c9fb60]">KM COMUNIDAD</p>
+        <p className="mt-2 text-[clamp(35px,10vw,52px)] font-black leading-none tracking-tight">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})}</p>
+        <p className="mt-2 text-xs font-bold text-white/45">de {maxTarget.toLocaleString('es-UY')} km</p>
+        <p className="mt-3 rounded-full bg-[#c9fb60]/10 px-3 py-1 text-xs font-black text-[#c9fb60]">{safePct}% COMPLETADO</p>
+      </div>
     </div>
+    <div className="mt-1 grid grid-cols-3 gap-2">{milestones.map(({target,i})=><div key={target} className="text-center"><span className={`mx-auto block h-1.5 w-1.5 rounded-full ${totalKm >= target ? 'bg-[#c9fb60]' : 'bg-white/25'}`}/><p className="mt-2 text-[10px] font-black text-white/65">N{i+1} · {target} km</p></div>)}</div>
   </div>
 }
 
@@ -146,22 +157,22 @@ function PRUnlock({ campaign, ranking = [], result, preview = false }) {
   const activePrizeLevel = unlockedLevel
   const activePrizeTitle = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_title`] : null
   const activePrizeDetail = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_detail`] : null
-  const activePrizeIcon = activePrizeLevel === 1 ? '🍫' : activePrizeLevel === 2 ? '🍷🍷' : activePrizeLevel === 3 ? '🎟️🎟️' : '🔒'
-  const leader = campaignRanking[0]
+  const activePrizeIcon = activePrizeLevel === 1 ? '🍷' : activePrizeLevel === 2 ? '🍫' : activePrizeLevel === 3 ? '🎟️' : '🔒'
+  const leader = preview ? null : campaignRanking[0]
   const today = montevideoToday().date
   const finished = !preview && today > campaign.ends_on
-  const contributors = campaignRanking.slice(0,12)
+  const contributors = preview ? [] : campaignRanking.slice(0,12)
   const official = result && String(result.campaign_id)===String(campaign.id) ? result : null
   return (
-    <section className="relative overflow-hidden rounded-[34px] border border-fuchsia-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(236,72,153,.24),transparent_35%),radial-gradient(circle_at_5%_95%,rgba(124,58,237,.25),transparent_40%),linear-gradient(145deg,#171018,#09090d_65%)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.38)]">
+    <section className="relative overflow-hidden rounded-[34px] border border-[#c9fb60]/25 bg-[radial-gradient(circle_at_90%_0%,rgba(201,251,96,.12),transparent_40%),linear-gradient(145deg,#181e20,#0e1316_65%)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.38)]">
       <div className="absolute -right-14 -top-16 h-48 w-48 rounded-full border border-orange-300/15" />
       <div className="relative">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[.22em] text-fuchsia-300">PR UNLOCK · MISIÓN DEL MES</p>
+            <p className="text-[9px] font-black uppercase tracking-[.22em] text-[#c9fb60]">PR UNLOCK · MISIÓN DEL MES</p>
             <h2 className="mt-1 text-[31px] font-black leading-none">Todos sumamos.<br/><span className="text-[#c9fb60]">Uno gana.</span></h2>
           </div>
-          <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-wider ${finished ? 'border-white/10 bg-white/5 text-white/40' : 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-300'}`}>{finished ? 'CERRADA' : '● EN VIVO'}</span>
+          <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-wider ${finished ? 'border-white/10 bg-white/5 text-white/40' : 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-300'}`}>{preview ? 'PRÓXIMAMENTE · 01 NOV' : finished ? 'CERRADA' : '● EN VIVO'}</span>
         </div>
         <p className="mt-4 text-xs leading-5 text-white/48">Cada kilómetro de patinaje inline suma dos veces: a tu posición personal y al objetivo colectivo. El grupo desbloquea los niveles; al cierre de la misión, el <b className="text-white">#1 del ranking del desafío</b> gana únicamente el premio de mayor nivel alcanzado.</p>
         <div className="mt-4 rounded-[20px] border border-sky-300/20 bg-sky-400/[.07] p-4">
@@ -202,10 +213,10 @@ function PRUnlock({ campaign, ranking = [], result, preview = false }) {
           </div>
         </div>}
 
-        <div className="mt-6 rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_50%_30%,rgba(236,72,153,.10),transparent_45%),rgba(0,0,0,.30)] p-5">
-          <ProgressWheel pct={pct} totalKm={totalKm} maxTarget={maxTarget} />
+        <div className="mt-6 rounded-[30px] border border-[#c9fb60]/15 bg-[radial-gradient(circle_at_50%_30%,rgba(201,251,96,.09),transparent_48%),rgba(0,0,0,.30)] p-5">
+          <ProgressWheel pct={pct} totalKm={totalKm} maxTarget={maxTarget} targets={targets} />
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">PRÓXIMO UNLOCK</p><p className="mt-1 text-lg font-black text-orange-300">{unlockedLevel >= 3 ? 'TODO DESBLOQUEADO' : `${nextLeft.toLocaleString('es-UY',{maximumFractionDigits:1})} km`}</p><p className="text-[9px] text-white/28">{unlockedLevel >= 3 ? 'Misión máxima alcanzada' : 'faltan para el próximo premio'}</p></div>
+            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">PRÓXIMO UNLOCK</p><p className="mt-1 text-lg font-black text-[#c9fb60]">{unlockedLevel >= 3 ? 'TODO DESBLOQUEADO' : `${nextLeft.toLocaleString('es-UY',{maximumFractionDigits:1})} km`}</p><p className="text-[9px] text-white/28">{unlockedLevel >= 3 ? 'Misión máxima alcanzada' : 'faltan para el próximo premio'}</p></div>
             <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">LÍDER DEL DESAFÍO</p>{leader ? <><p className="mt-1 truncate text-sm font-black">{leader.name}</p><p className="text-[9px] text-fuchsia-200/70">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {leader.sessions} entrenos</p></> : <p className="mt-1 text-sm font-black text-white/35">Tabla abierta</p>}</div>
           </div>
         </div>
