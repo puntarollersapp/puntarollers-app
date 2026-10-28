@@ -465,7 +465,7 @@ function SpotifyPlayer({ playlist, accent, isPlaying, setIsPlaying, onController
 
 export default function MusicPage() {
   const { user } = useAuth()
-  const dailyIndex = useMemo(()=>getDayIndex(PLAYLISTS.length),[])
+  const dailyIndex = useMemo(()=>{const available=PLAYLISTS.map((playlist,index)=>playlist.id?index:-1).filter(index=>index>=0);return available[getDayIndex(available.length)]??0},[])
   const dailyPhrase = useMemo(()=>DAILY_PHRASES[getDayIndex(DAILY_PHRASES.length)],[])
 
   const [selectedId,setSelectedId] = useState(PLAYLISTS[dailyIndex].label)
