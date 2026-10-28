@@ -428,21 +428,25 @@ export default function PublicWeeklyRanking() {
     <Shell>
       <div className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 text-[#f3f1e9]">
         <section className="relative isolate overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[#111419] px-5 pb-6 pt-7 shadow-[0_25px_80px_rgba(0,0,0,.38)] sm:px-8 sm:py-9">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#c9fb60]/[.10] blur-[75px]" />
-          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 h-24 w-full bg-gradient-to-t from-[#c9fb60]/[.035] to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -left-24 -top-32 h-80 w-80 rounded-full bg-[#c9fb60]/[.12] blur-[85px] motion-safe:animate-pulse" />
+            <div className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-[#c9fb60]/[.10] blur-[90px] motion-safe:animate-pulse [animation-delay:1.2s]" />
+            <div className="absolute left-1/2 top-[42%] h-[310px] w-[310px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c9fb60]/[.12] motion-safe:animate-[spin_32s_linear_infinite] sm:h-[440px] sm:w-[440px]"><span className="absolute left-1/2 top-0 h-2 w-2 rounded-full bg-[#c9fb60] shadow-[0_0_22px_#c9fb60]" /></div>
+            <div className="absolute left-1/2 top-[42%] h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[.11] motion-safe:animate-[spin_45s_linear_infinite_reverse] sm:h-[340px] sm:w-[340px]" />
+            <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(201,251,96,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(201,251,96,.07)_1px,transparent_1px)] [background-size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+            <span className="absolute left-[11%] top-[32%] text-xl text-[#c9fb60]/60 motion-safe:animate-pulse">✦</span><span className="absolute right-[12%] top-[58%] text-2xl text-[#c9fb60]/50 motion-safe:animate-pulse [animation-delay:1s]">✳</span>
+          </div>
           <div className="relative">
-            <div className="flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]"><span className="h-2 w-2 rounded-full bg-[#c9fb60] shadow-[0_0_15px_#c9fb60]" /> PUNTA ROLLERS / PERFORMANCE</span>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-center">
+              <span className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[.18em] text-[#c9fb60] sm:text-[10px]"><span className="h-2 w-2 rounded-full bg-[#c9fb60] shadow-[0_0_15px_#c9fb60] motion-safe:animate-pulse" /> PUNTA ROLLERS / PERFORMANCE</span>
               <span className="rounded-full border border-[#c9fb60]/25 bg-[#c9fb60]/[.08] px-3 py-1.5 text-[9px] font-black tracking-[.14em] text-[#c9fb60]">● EN VIVO</span>
             </div>
-            <div className="mt-8 flex items-end justify-between gap-2">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-white/45">Cada kilómetro cuenta.</p>
-                <h1 className="mt-2 text-[clamp(55px,12vw,100px)] font-black uppercase italic leading-[.82] tracking-[-.085em] text-[#f3f1e9]">RANK<span className="text-[#c9fb60]">ING.</span></h1>
-              </div>
-              <div aria-hidden="true" className="hidden -rotate-12 text-[80px] leading-none opacity-80 sm:block">🏆</div>
+            <div className="relative mt-10 text-center sm:mt-12">
+              <p className="text-[10px] font-bold uppercase tracking-[.34em] text-white/55 sm:text-xs">Cada kilómetro cuenta.</p>
+              <h1 className="relative mt-4 flex items-baseline justify-center whitespace-nowrap text-[clamp(53px,13vw,118px)] font-black uppercase italic leading-[.9] tracking-[-.095em] drop-shadow-[0_12px_35px_rgba(0,0,0,.4)]" aria-label="RUN KING, ranking de Punta Rollers"><span className="text-[#f3f1e9]">RUN</span><span className="text-[#c9fb60] [text-shadow:0_0_45px_rgba(201,251,96,.25)]">KING.</span></h1>
+              <p className="mt-3 text-[10px] font-black uppercase tracking-[.26em] text-[#c9fb60]/70">RUN THE DISTANCE · OWN THE CROWN</p>
             </div>
-            <p className="mt-6 max-w-xl border-l-2 border-[#c9fb60] pl-4 text-[13px] leading-6 text-white/65">No se trata solo de llegar primero. Se trata de sumar kilómetros, superar tus marcas y avanzar con la comunidad.</p>
+            <p className="mx-auto mt-7 max-w-lg text-center text-[13px] leading-6 text-white/65">No se trata solo de llegar primero. Se trata de sumar kilómetros, superar tus marcas y avanzar con la comunidad.</p>
             <div className="mt-7 grid grid-cols-2 gap-2 rounded-[18px] border border-white/10 bg-black/30 p-1.5" role="group" aria-label="Período del ranking">
               <button type="button" onClick={() => changePeriod('week')} aria-pressed={period === 'week'} className={`min-h-12 rounded-[13px] px-3 text-xs font-black uppercase tracking-[.08em] transition ${period === 'week' ? 'bg-[#c9fb60] text-[#111419] shadow-[0_5px_24px_rgba(201,251,96,.18)]' : 'text-white/55 hover:bg-white/5'}`}>Esta semana</button>
               <button type="button" onClick={() => changePeriod('month')} aria-pressed={period === 'month'} className={`min-h-12 rounded-[13px] px-3 text-xs font-black uppercase tracking-[.08em] transition ${period === 'month' ? 'bg-[#c9fb60] text-[#111419] shadow-[0_5px_24px_rgba(201,251,96,.18)]' : 'text-white/55 hover:bg-white/5'}`}>Este mes</button>
