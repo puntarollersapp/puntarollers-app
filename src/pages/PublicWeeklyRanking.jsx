@@ -263,11 +263,41 @@ function Podium({ ranking, period, statuses }) {
 
 function PodiumDuel({ challenger, defender, gap }) {
   if (!challenger || !defender) return null
-  const player = (row, rank) => <div className="flex min-w-0 flex-1 flex-col items-center"><div className="relative rounded-full border-2 border-[#c9fb60]/40 p-1"><PodiumAvatar row={row} size="lg"/><span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-2 py-0.5 text-[9px] font-black text-black">#{rank}</span></div><p className="mt-4 w-full truncate text-center text-xs font-black">{row.name}</p><p className="mt-1 text-sm font-black text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div>
-  return <section className="relative overflow-hidden rounded-[28px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_50%,rgba(201,251,96,.10),transparent_52%),#171b20] p-5">
-    <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-[#c9fb60]">⚡ BATALLA POR EL PODIO ⚡</p><h2 className="mt-1 text-center text-xl font-black uppercase italic">El próximo puesto está en juego</h2>
-    <div className="mt-6 flex items-center gap-1">{player(defender,3)}<div className="shrink-0 text-center"><div className="text-3xl">👊⚡👊</div><p className="text-3xl font-black italic text-[#c9fb60]">VS</p></div>{player(challenger,4)}</div>
-    <p className="mt-5 text-center text-xs text-white/60">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</p>
+  const player = (row, rank) => <div className="relative z-10 flex min-w-0 flex-1 flex-col items-center">
+    <div className="relative">
+      <div aria-hidden="true" className="absolute -inset-3 rounded-full bg-orange-500/20 blur-xl motion-safe:animate-pulse" />
+      <div aria-hidden="true" className="absolute -inset-2 rounded-full border-2 border-dashed border-orange-400/75 motion-safe:animate-[spin_9s_linear_infinite]" />
+      <div aria-hidden="true" className="absolute -inset-1 rounded-full border border-[#c9fb60]/65 motion-safe:animate-[spin_6s_linear_infinite_reverse]" />
+      <div className="relative rounded-full border-[3px] border-orange-400 bg-[#1b1e1f] p-1 shadow-[0_0_25px_rgba(249,115,22,.38)]"><PodiumAvatar row={row} size="lg"/></div>
+      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-2.5 py-1 text-[10px] font-black text-black shadow-[0_0_18px_rgba(201,251,96,.35)]">#{rank}</span>
+    </div>
+    <p className="mt-6 w-full truncate text-center text-xs font-black">{row.name}</p>
+    <p className="mt-1 text-sm font-black text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
+  </div>
+  return <section className="relative isolate overflow-hidden rounded-[30px] border border-orange-400/35 bg-[radial-gradient(ellipse_at_50%_100%,rgba(234,88,12,.33),transparent_70%),linear-gradient(145deg,#241d1a,#101418_75%)] p-5 shadow-[0_20px_60px_rgba(234,88,12,.10)] sm:p-7">
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute -bottom-32 left-1/2 h-64 w-[85%] -translate-x-1/2 rounded-full bg-orange-600/30 blur-[70px] motion-safe:animate-pulse" />
+      <div className="absolute bottom-0 left-0 h-36 w-full bg-gradient-to-t from-orange-600/20 via-amber-500/5 to-transparent" />
+      <span className="absolute -bottom-4 left-[8%] text-[70px] opacity-35 blur-[2px] motion-safe:animate-bounce [animation-duration:2.7s]">🔥</span>
+      <span className="absolute -bottom-6 right-[7%] text-[80px] opacity-40 blur-[2px] motion-safe:animate-bounce [animation-duration:3.2s]">🔥</span>
+      <span className="absolute left-[18%] top-[28%] text-lg text-orange-300/70 motion-safe:animate-ping [animation-duration:3s]">✦</span>
+      <span className="absolute right-[15%] top-[37%] text-xl text-amber-300/65 motion-safe:animate-pulse">✦</span>
+    </div>
+    <div className="relative">
+      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-orange-300">🔥 BATALLA POR EL PODIO 🔥</p>
+      <h2 className="mt-2 text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-orange-400">está en juego</span></h2>
+      <div className="mt-8 flex items-center gap-2 sm:gap-5">
+        {player(defender,3)}
+        <div className="relative z-10 shrink-0 text-center">
+          <div aria-hidden="true" className="absolute inset-0 scale-150 rounded-full bg-amber-400/20 blur-2xl motion-safe:animate-pulse" />
+          <div aria-hidden="true" className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-300/35 motion-safe:animate-[spin_7s_linear_infinite]" />
+          <div className="relative flex items-center justify-center gap-0 text-[clamp(23px,6vw,44px)] leading-none drop-shadow-[0_0_18px_rgba(251,191,36,.75)]"><span className="inline-block -rotate-12 motion-safe:animate-[pulse_1.2s_ease-in-out_infinite]">👊</span><span className="relative -mx-1 z-10 text-amber-300 motion-safe:animate-[pulse_.6s_ease-in-out_infinite]">⚡</span><span className="inline-block rotate-12 -scale-x-100 motion-safe:animate-[pulse_1.2s_ease-in-out_infinite]">👊</span></div>
+          <p className="relative mt-2 text-3xl font-black italic text-[#c9fb60] [text-shadow:0_0_18px_rgba(201,251,96,.45)]">VS</p>
+        </div>
+        {player(challenger,4)}
+      </div>
+      <p className="mt-7 text-center text-xs text-white/70">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</p>
+    </div>
   </section>
 }
 
