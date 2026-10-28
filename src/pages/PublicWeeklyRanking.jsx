@@ -263,43 +263,28 @@ function Podium({ ranking, period, statuses }) {
 
 function PodiumDuel({ challenger, defender, gap }) {
   if (!challenger || !defender) return null
-  const player = (row, rank) => <div className="relative z-10 flex min-w-0 flex-1 flex-col items-center">
-    <div className="relative rounded-full p-[5px]">
-      <div aria-hidden="true" className="absolute -inset-[5px] rounded-full border border-red-400/40 shadow-[0_0_28px_rgba(225,29,72,.26)]" />
-      <div aria-hidden="true" className="absolute -inset-[9px] rounded-full border-t-2 border-r-2 border-transparent border-t-red-400 border-r-red-500/40 motion-safe:animate-[spin_8s_linear_infinite]" />
-      <div className="relative rounded-full border-2 border-white/15 bg-[#101217] p-0.5"><PodiumAvatar row={row} size="lg"/></div>
-      <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-[#c9fb60] px-2.5 py-1 text-[10px] font-black text-[#101217]">#{rank}</span>
+  const competitor = (row, rank) => <div className="flex min-w-0 flex-1 flex-col items-center text-center">
+    <div className="relative rounded-full border-2 border-[#c9fb60]/70 bg-[#171d20] p-1 shadow-[0_0_22px_rgba(201,251,96,.12)]">
+      <PodiumAvatar row={row} size="lg" />
+      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-3 py-1 text-[11px] font-black text-[#141817]">#{rank}</span>
     </div>
-    <p className="mt-6 w-full truncate text-center text-xs font-black text-white">{row.name}</p>
-    <p className="mt-1 text-base font-black tabular-nums text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
+    <p className="mt-5 w-full truncate text-xs font-bold text-[#f3f1e9] sm:text-sm">{row.name}</p>
+    <p className="mt-1 text-lg font-black tabular-nums text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
   </div>
-  return <section className="relative isolate overflow-hidden rounded-[30px] border border-red-500/25 bg-[#0b0c10] p-5 shadow-[0_22px_65px_rgba(0,0,0,.28)] sm:p-7">
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_80%,rgba(130,16,32,.17),transparent_58%),linear-gradient(125deg,#0b0c10,#15151b_50%,#0b0c10)]" />
-      <div className="absolute -left-20 bottom-0 h-52 w-52 rounded-full bg-red-600/10 blur-[65px] motion-safe:animate-pulse" />
-      <div className="absolute -right-20 bottom-0 h-52 w-52 rounded-full bg-rose-600/10 blur-[65px] motion-safe:animate-pulse" />
-      <svg viewBox="0 0 900 350" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-60">
-        <defs><linearGradient id="duelStreak" x1="0" x2="1"><stop stopColor="#ef4444" stopOpacity="0"/><stop offset=".48" stopColor="#fb7185" stopOpacity=".65"/><stop offset="1" stopColor="#ef4444" stopOpacity="0"/></linearGradient><filter id="duelStreakBlur"><feGaussianBlur stdDeviation="6"/></filter></defs>
-        <path d="M0 290L420 155M900 290L480 155" stroke="url(#duelStreak)" strokeWidth="17" filter="url(#duelStreakBlur)"/>
-        <path d="M0 290L420 155M900 290L480 155" stroke="url(#duelStreak)" strokeWidth="1.5"/>
-        <path d="M0 320L420 169M900 320L480 169" stroke="#fb7185" strokeOpacity=".2" strokeWidth="1"/>
-      </svg>
-      <div className="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/40 to-transparent" />
-    </div>
+  return <section className="relative overflow-hidden rounded-[28px] border border-[#c9fb60]/25 bg-[#151b1c] p-5 sm:p-7">
+    <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#c9fb60] to-transparent" aria-hidden="true"/>
     <div className="relative">
-      <p className="text-center text-[10px] font-black uppercase tracking-[.25em] text-rose-300">BATALLA POR EL PODIO</p>
-      <h2 className="mx-auto mt-2 max-w-[500px] text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-red-400">está en juego</span></h2>
-      <div className="relative mt-10 flex items-center gap-1 sm:gap-5">
-        {player(defender,3)}
-        <div className="relative z-10 flex w-[88px] shrink-0 flex-col items-center justify-center sm:w-[130px]">
-          <div aria-hidden="true" className="absolute h-24 w-24 rounded-full bg-red-500/20 blur-[30px] motion-safe:animate-pulse"/>
-          <img src="/duel-fists.svg" alt="Dos puños enfrentados en una batalla deportiva" width="240" height="101" className="relative z-10 w-[112px] max-w-none object-contain drop-shadow-[0_0_12px_rgba(239,68,68,.28)] sm:w-[170px]" loading="lazy" />
-          <span className="relative z-20 -mt-2 text-2xl font-black italic leading-none text-white [text-shadow:0_0_12px_rgba(239,68,68,.8)] sm:text-3xl">VS</span>
-          <span className="relative mt-1 h-[2px] w-10 bg-gradient-to-r from-transparent via-red-400 to-transparent"/>
+      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-[#c9fb60]">BATALLA POR EL PODIO</p>
+      <h2 className="mt-2 text-center text-[clamp(20px,5vw,30px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-[#c9fb60]">está en juego</span></h2>
+      <div className="mt-8 flex items-center gap-2 sm:gap-5">
+        {competitor(defender,3)}
+        <div className="flex shrink-0 flex-col items-center">
+          <span className="text-3xl font-black italic tracking-tight text-[#c9fb60] sm:text-5xl">VS</span>
+          <span className="mt-2 h-[2px] w-9 rounded-full bg-[#c9fb60]/50"/>
         </div>
-        {player(challenger,4)}
+        {competitor(challenger,4)}
       </div>
-      <div className="relative mx-auto mt-8 max-w-sm rounded-xl border border-red-400/15 bg-black/25 px-3 py-3 text-center text-xs text-white/70">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</div>
+      <p className="mt-7 rounded-xl border border-[#c9fb60]/15 bg-black/20 px-3 py-3 text-center text-xs text-[#f3f1e9]/75">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</p>
     </div>
   </section>
 }
