@@ -38,3 +38,17 @@ export function getBadgeImage(title) {
 
   return BADGE_IMAGES[normalizedTitle] || ''
 }
+
+// Shared official PR insignia catalog. Reuse existing artwork for PR Kids.
+export const PR_KIDS_BADGE_CATALOG = [
+ {title:'Primer evento PR',description:'Participó en su primer evento de Punta Rollers.'},
+ {title:'Rodador frecuente',description:'Reconocimiento a su constancia sobre ruedas.'},
+ {title:'Espíritu PR',description:'Representa los valores de Punta Rollers.'},
+ {title:'Primeros 6K',description:'Completó sus primeros 6 kilómetros.'},
+ {title:'Primeros 10K',description:'Completó sus primeros 10 kilómetros.'},
+ {title:'Ya frena en T',description:'Aprendió a frenar en T.'},
+ {title:'Ya frena con taco',description:'Aprendió a frenar con taco.'},
+ {title:'Buen compañero',description:'Se destacó por acompañar a sus compañeros.'},
+ {title:'Actitud positiva',description:'Se destacó por su actitud positiva.'},
+ {title:'Entrenador potencial',description:'Demostró iniciativa y espíritu de colaboración.'},
+].map(item=>({...item,image:getBadgeImage(item.title)}))
