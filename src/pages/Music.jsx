@@ -596,33 +596,31 @@ export default function MusicPage() {
   }
 
   return <AppLayout title="PR Music" showBack>
-    <style>{`@keyframes prMusicEq{from{transform:scaleY(.34);opacity:.46}to{transform:scaleY(1);opacity:1}} @keyframes prMusicFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}`}</style>
+    <style>{`.pr-music-grid{background-image:linear-gradient(rgba(167,139,250,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.05) 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(to bottom,black,transparent 90%)}.pr-music-headphones{animation:prMusicFloat 3.8s ease-in-out infinite}.pr-music-note{animation:prMusicNote 2.8s ease-in-out infinite alternate}.pr-music-wave span{animation:prMusicWave 900ms ease-in-out infinite alternate;transform-origin:center}.pr-music-heading{text-shadow:0 0 35px rgba(167,139,250,.25)}.pr-music-orbit{animation:prMusicOrbit 16s linear infinite}.pr-music-orbit:after{content:"";position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:#c4b5fd;box-shadow:0 0 16px #a78bfa}@keyframes prMusicWave{to{transform:scaleY(.35);opacity:.5}}@keyframes prMusicNote{to{transform:translateY(-10px) rotate(12deg)}}@keyframes prMusicOrbit{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pr-music-headphones,.pr-music-note,.pr-music-wave span,.pr-music-orbit{animation:none!important}}@keyframes prMusicEq{from{transform:scaleY(.34);opacity:.46}to{transform:scaleY(1);opacity:1}} @keyframes prMusicFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}`}</style>
 
     <div className="overflow-hidden pb-12">
-      <section className="relative mx-4 mt-4 overflow-hidden rounded-[36px] border border-white/[.085] px-5 pb-5 pt-5 shadow-[0_30px_90px_rgba(0,0,0,.46)]" style={{background:`radial-gradient(circle at 86% 2%,${selectedPlaylist.glow},transparent 34%),radial-gradient(circle at 0% 95%,${selectedPlaylist.accentSoft},transparent 34%),linear-gradient(150deg,#16151d 0%,#0b0b10 52%,#08090d 100%)`}}>
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/[.045]"/>
-        <div className="absolute -right-5 top-7 h-40 w-40 rounded-full border border-white/[.045]"/>
-        <div className="relative">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="section-label">El sonido de nuestra comunidad</p>
-              <h1 className="mt-1 font-display text-[40px] font-black leading-none text-white">PR <span style={{color:selectedPlaylist.accent}}>MUSIC</span></h1>
-              <p className="mt-3 max-w-[300px] text-[12px] leading-5 text-white/42">{dailyPhrase}</p>
-            </div>
-            <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-[18px] border border-white/[.08] bg-black/20 text-xl" style={{color:selectedPlaylist.accent,boxShadow:`0 10px 32px ${selectedPlaylist.glow}`}}>♫</div>
+      <section className="pr-music-hero relative mx-4 mt-4 overflow-hidden rounded-[36px] border border-violet-300/25 px-5 pb-6 pt-7 shadow-[0_30px_90px_rgba(0,0,0,.46)]" style={{background:`radial-gradient(circle at 75% 0%,${selectedPlaylist.glow},transparent 50%),radial-gradient(circle at 0% 100%,rgba(130,66,255,.18),transparent 55%),linear-gradient(145deg,#1a1429,#090b13 70%)`}}>
+        <div className="pr-music-grid pointer-events-none absolute inset-0"/>
+        <div className="pr-music-orbit pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border border-violet-300/20"/>
+        <div className="relative z-10 text-center">
+          <p className="text-[9px] font-black uppercase tracking-[.32em] text-violet-200">PUNTA ROLLERS · SOUND EXPERIENCE</p>
+          <div className="pr-music-headphones relative mx-auto mt-5 grid h-24 w-24 place-items-center rounded-full border border-violet-300/30 bg-violet-400/[.09] shadow-[0_0_50px_rgba(167,139,250,.17)]">
+            <span className="pr-music-note absolute -left-6 top-4 text-2xl text-violet-300">♫</span>
+            <span className="pr-music-note absolute -right-5 bottom-4 text-xl text-cyan-300">♪</span>
+            <svg width="58" height="58" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="text-violet-200"><path d="M9 26v-5a15 15 0 0 1 30 0v5"/><rect x="6" y="24" width="9" height="17" rx="4"/><rect x="33" y="24" width="9" height="17" rx="4"/></svg>
           </div>
-
-          <div className="mt-5 grid grid-cols-[112px_1fr] items-center gap-4">
-            <PlaylistArtwork playlist={selectedPlaylist} index={selectedIndex}/>
-            <div className="min-w-0">
-              <p className="text-[8px] font-black uppercase tracking-[.17em]" style={{color:selectedPlaylist.accent}}>{selectedPlaylist.badge}</p>
-              <h2 className="mt-1 font-display text-[22px] font-black leading-[1.03] text-white">{selectedPlaylist.label}</h2>
-              <p className="mt-2 line-clamp-3 text-[10px] leading-[1.6] text-white/38">{selectedPlaylist.description}</p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-white/[.07] bg-black/20 px-2.5 py-1 text-[8px] font-bold text-white/45">🛼 {selectedPlaylist.distance}</span>
-                <span className="rounded-full border border-white/[.07] bg-black/20 px-2.5 py-1 text-[8px] font-bold text-white/45">⚡ {selectedPlaylist.energy}/5</span>
-              </div>
-            </div>
+          <h1 className="pr-music-heading mt-5 font-display text-[clamp(44px,12vw,72px)] font-black leading-none tracking-[-.055em] text-white">PR <span className="text-violet-300">MUSIC</span></h1>
+          <p className="mx-auto mt-3 max-w-[320px] text-[13px] leading-6 text-white/75">Tu música. Tu energía. Tu forma de rodar. Elegí cómo te sentís, descubrí playlists y escuchalas sin salir de PR.</p>
+          <div className="pr-music-wave mx-auto mt-5 flex h-9 items-center justify-center gap-[4px]" aria-hidden="true">{Array.from({length:29},(_,i)=><span key={i} style={{height:`${10+(i*13%26)}px`,animationDelay:`${i*70}ms`}} className="w-[3px] rounded-full bg-gradient-to-t from-violet-600 to-cyan-300"/>)}</div>
+          <p className="mt-3 text-[10px] font-medium text-white/55">{dailyPhrase}</p>
+        </div>
+        <div className="relative z-10 mt-6 flex items-center gap-3 rounded-[25px] border border-white/10 bg-black/30 p-3 backdrop-blur-sm">
+          <div className="w-[94px] shrink-0"><PlaylistArtwork playlist={selectedPlaylist} index={selectedIndex} compact/></div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-black uppercase tracking-[.15em]" style={{color:selectedPlaylist.accent}}>{selectedPlaylist.badge}</p>
+            <h2 className="mt-1 font-display text-lg font-black leading-tight text-white">{selectedPlaylist.label}</h2>
+            <p className="mt-2 line-clamp-3 text-[11px] leading-4 text-white/65">{selectedPlaylist.description}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[9px] text-white/55"><span>🛼 {selectedPlaylist.distance}</span><span>⚡ {selectedPlaylist.energy}/5</span></div>
           </div>
         </div>
       </section>
