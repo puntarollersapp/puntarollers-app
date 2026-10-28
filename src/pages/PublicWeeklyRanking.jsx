@@ -109,7 +109,7 @@ function PrizeVisual({ campaign, level, totalKm, preview = false }) {
   const revealed = level === 1 || unlocked
   const progress = Math.min(100, Math.max(0, totalKm / Math.max(1,target) * 100))
   const prize = campaign?.[`prize_${level}_title`] || 'Premio'
-  const prizeImages = ['/premios/Vino.png', '/premios/Ferrerorocher.png', '/premios/Mystery.png']
+  const prizeImages = ['/premios/Vino.png', '/premios/Ferrerorocher.png', '/premios/Entradasdecine.png']
   return <article className={`group relative overflow-hidden rounded-[24px] border p-4 transition-colors sm:p-5 ${unlocked ? 'border-[#c9fb60]/45 bg-[#c9fb60]/[.09]' : 'border-white/10 bg-[#171c20]'}`}>
     <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-[#c9fb60]/[.055] blur-2xl"/>
     <div className="relative flex items-center gap-4">
@@ -166,7 +166,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false, demo = fals
   const activePrizeLevel = unlockedLevel
   const activePrizeTitle = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_title`] : null
   const activePrizeDetail = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_detail`] : null
-  const activePrizeImage = activePrizeLevel === 1 ? '/premios/Vino.png' : activePrizeLevel === 2 ? '/premios/Ferrerorocher.png' : '/premios/Mystery.png'
+  const activePrizeImage = activePrizeLevel === 1 ? '/premios/Vino.png' : activePrizeLevel === 2 ? '/premios/Ferrerorocher.png' : activePrizeLevel === 3 ? '/premios/Entradasdecine.png' : '/premios/Mystery.png'
   const leader = demo || preview ? null : campaignRanking[0]
   const today = montevideoToday().date
   const finished = !preview && today > campaign.ends_on
