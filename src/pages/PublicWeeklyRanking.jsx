@@ -312,6 +312,7 @@ export default function PublicWeeklyRanking() {
   const [statuses, setStatuses] = useState({})
   const [unlockCampaign, setUnlockCampaign] = useState(null)
   const [octoberResult, setOctoberResult] = useState(null)
+  const [octoberSnapshot, setOctoberSnapshot] = useState(null)
   const [unlockResult, setUnlockResult] = useState(null)
   function changePeriod(next) {
     setPeriod(next)
@@ -324,7 +325,7 @@ export default function PublicWeeklyRanking() {
       if (!silent) setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse, octoberResultResponse] = await Promise.all([
+        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse, octoberResultResponse, octoberCampaignResponse, octoberRankingResponse] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.week.start, p_end_date: ranges.week.end }),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.month.start, p_end_date: ranges.month.end }),
@@ -332,6 +333,8 @@ export default function PublicWeeklyRanking() {
           supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
           supabase.from('pr_unlock_campaigns').select('*').eq('slug', 'pr-unlock-noviembre-2026').maybeSingle(),
           supabase.from('pr_unlock_results').select('*').eq('campaign_id','cae7fa65-2dfc-4e02-ac23-dd50f78d0ac9').maybeSingle(),
+          supabase.from('pr_unlock_campaigns').select('*').eq('slug','pr-unlock-2026-09-25').maybeSingle(),
+          supabase.rpc('pr_get_inline_ranking', { p_start_date:'2026-09-25', p_end_date:'2026-10-31' }),
         ])
         if (!active) return
         if (weekResponse.error) throw weekResponse.error
@@ -358,6 +361,13 @@ export default function PublicWeeklyRanking() {
         setProfiles(profileMap)
         setUnlockCampaign(unlockResponse.data || null)
         setOctoberResult(octoberResultResponse.data || null)
+        if (!octoberRankingResponse.error && octoberCampaignResponse.data) {
+          const rows = hydrateRanking(octoberRankingResponse.data)
+          const total = rows.reduce((sum,row)=>sum+row.km,0)
+          const campaign = octoberCampaignResponse.data
+          const level = [1,2,3].reduce((acc,n)=>total>=Number(campaign[`prize_${n}_target_km`]||Infinity)?n:acc,0)
+          setOctoberSnapshot({total,participants:rows.length,level,prize:level?campaign[`prize_${level}_title`]:null})
+        }
         if (unlockResponse.data?.id) {
           const [unlockRankingResponse, resultResponse] = await Promise.all([
             supabase.rpc('pr_get_inline_ranking', {
@@ -473,6 +483,8 @@ export default function PublicWeeklyRanking() {
               return <div key={row.alumnoId} className={`flex items-center gap-2.5 px-3 py-2.5 sm:px-5 ${String(row.alumnoId)===myId?'bg-[#c9fb60]/[.07]':''}`}><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[11px] font-black ${rank===1?'bg-[#c9fb60] text-black':rank===2?'bg-slate-200 text-black':rank===3?'bg-orange-700 text-white':'bg-white/[.06] text-white/45'}`}>{rank}</span><PodiumAvatar row={row} size="sm"/><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="truncate text-[9px] text-white/30">{row.sessions} entreno{row.sessions===1?'':'s'}{status?` · “${status}”`:''}</p></div><div className="text-right"><p className={`whitespace-nowrap text-xs font-black sm:text-sm ${rank<=3?'text-[#c9fb60]':'text-white'}`}>{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div></div>
             })}</div> : <div className="p-8 text-center text-xs text-white/30">Todavía no hay kilómetros para este período.</div>}
           </section>
+
+          {montevideoToday().date <= '2026-10-31' && octoberSnapshot && <section className="rounded-[26px] border border-[#c9fb60]/20 bg-[#171d20] p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[#c9fb60]">🏁 ÚLTIMOS DÍAS · PR UNLOCK OCTUBRE</p><h3 className="mt-2 text-xl font-black">La comunidad sigue sumando.</h3></div><span className="rounded-full bg-[#c9fb60]/10 px-3 py-1 text-[10px] font-black text-[#c9fb60]">CIERRA 31/10</span></div><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-black/25 p-3"><p className="text-[9px] uppercase tracking-widest text-white/40">KM ACUMULADOS</p><p className="mt-1 text-2xl font-black">{octoberSnapshot.total.toLocaleString('es-UY',{maximumFractionDigits:1})}</p></div><div className="rounded-2xl bg-black/25 p-3"><p className="text-[9px] uppercase tracking-widest text-white/40">PREMIO EN JUEGO</p><p className="mt-1 text-sm font-black text-[#c9fb60]">{octoberSnapshot.prize || 'Por desbloquear'}</p><p className="mt-1 text-[10px] text-white/40">{octoberSnapshot.participants} participantes · Nivel {octoberSnapshot.level}</p></div></div><p className="mt-3 text-[11px] text-white/45">Los resultados son provisionales hasta el cierre y la verificación oficial. Los kilómetros del desafío se calculan con Strava.</p></section>}
 
           {montevideoToday().date >= '2026-11-01' && octoberResult?.finalized_at && octoberResult?.winner_profile_id && <section className="rounded-[28px] border border-[#c9fb60]/30 bg-[#c9fb60]/[.07] p-5"><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#c9fb60]">🏆 GANADOR OFICIAL · PR UNLOCK OCTUBRE</p><div className="mt-4 flex items-center gap-4"><PodiumAvatar row={{name:octoberResult.winner_name,photo:octoberResult.winner_photo}}/><div className="min-w-0"><h3 className="text-xl font-black">¡Felicitaciones, {octoberResult.winner_name}!</h3><p className="mt-1 text-sm text-white/75">Premio obtenido: <b className="text-[#c9fb60]">{octoberResult.prize_title || 'Premio desbloqueado'}</b></p><p className="mt-2 text-[11px] text-white/45">(Nos pondremos en contacto con la persona ganadora).</p></div></div></section>}
 
