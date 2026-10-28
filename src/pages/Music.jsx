@@ -228,7 +228,47 @@ const PLAYLISTS = [
     icon: '🎸',
     badge: 'Rock & corazón',
     recommendation: 'Respirá. No todo entrenamiento consiste en ir más rápido.',
+  },,
+  {
+    id: '1PkP21Pgy6A0IDUiUk4LTu',
+    label: 'Streets',
+    shortLabel: 'Streets',
+    eyebrow: 'Lo que escucha Claudini cuando sale a la calle',
+    description: 'La selección personal de Claudini para salir a rodar por la calle: electrónica, ritmos intensos y temas bien arriba para acompañar cada kilómetro.',
+    when: 'Para salir a patinar por la calle, activar el cuerpo y mantener el ritmo durante toda la rodada.',
+    energy: 5,
+    distance: '8–25 km',
+    mood: 'Adrenalina, libertad y energía',
+    moods: ['all', 'happy', 'motivated', 'competition', 'night', 'distance'],
+    accent: '#a78bfa',
+    accent2: '#67e8f9',
+    accentSoft: 'rgba(167,139,250,.18)',
+    glow: 'rgba(167,139,250,.26)',
+    icon: '⚡',
+    badge: 'Claudini recomienda',
+    recommendation: 'Así suena una salida a la calle con Claudini.',
+    isNew: true,
   },
+  {
+    id: '5aBFH4sisvMbnMvSoy20bn',
+    label: 'Una clase normal de sábados',
+    shortLabel: 'Sábados en pista',
+    eyebrow: 'Los hits de nuestros sábados',
+    description: 'Los temas que más disfrutan los alumnos durante las clases de los sábados en la pista. Una mezcla de hits para entrenar, cantar y compartir.',
+    when: 'Para revivir la energía de los sábados en la pista, entrenar con amigos o llevarte el ambiente de clase a donde vayas.',
+    energy: 4,
+    distance: '5–15 km',
+    mood: 'Pista, comunidad y diversión',
+    moods: ['all', 'happy', 'motivated', 'friends'],
+    accent: '#c4b5fd',
+    accent2: '#7dd3fc',
+    accentSoft: 'rgba(196,181,253,.17)',
+    glow: 'rgba(196,181,253,.24)',
+    icon: '🛼',
+    badge: 'Hits de los sábados',
+    recommendation: 'Si estuviste un sábado en la pista, seguro conocés estas canciones.',
+    isNew: true,
+  }
 ]
 
 const DAILY_PHRASES = [
@@ -596,7 +636,7 @@ export default function MusicPage() {
   }
 
   return <AppLayout title="PR Music" showBack>
-    <style>{`.pr-zodiac-aura{background:radial-gradient(ellipse at 50% 38%,rgba(139,92,246,.2),transparent 52%),radial-gradient(circle at 85% 85%,rgba(34,211,238,.08),transparent 42%),linear-gradient(rgba(167,139,250,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.04) 1px,transparent 1px);background-size:auto,auto,26px 26px,26px 26px}.pr-zodiac-title{font-family:Impact,"Arial Black",system-ui,sans-serif;font-size:clamp(37px,10.3vw,72px);font-weight:900;letter-spacing:-.045em;color:#f8f7ff;text-shadow:0 0 30px rgba(167,139,250,.27)}.pr-zodiac-sign{animation:prZodiacFloat 3.5s ease-in-out infinite alternate}.pr-zodiac-banner{box-shadow:inset 0 0 55px rgba(139,92,246,.06),0 18px 55px rgba(0,0,0,.35)}@keyframes prZodiacFloat{to{transform:translateY(-9px) rotate(8deg);box-shadow:0 0 20px rgba(167,139,250,.3)}}@media(prefers-reduced-motion:reduce){.pr-zodiac-sign{animation:none}}.pr-music-page .section-label{color:#c4b5fd!important}.pr-music-word{font-family:Impact,"Arial Black",system-ui,sans-serif;font-weight:1000;letter-spacing:-.045em;font-stretch:condensed;text-shadow:0 0 25px rgba(167,139,250,.42)}.pr-music-page .pr-music-mood-section{background:linear-gradient(180deg,rgba(139,92,246,.055),transparent)}.pr-music-action{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-action:hover,.pr-music-action:focus-visible{transform:translateY(-3px);border-color:rgba(196,181,253,.5);box-shadow:0 16px 35px rgba(124,58,237,.15)}.pr-music-action:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-playlist-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-playlist-card:hover,.pr-music-playlist-card:focus-visible{transform:translateY(-4px);border-color:rgba(196,181,253,.5);box-shadow:0 12px 30px rgba(124,58,237,.13)}.pr-music-playlist-card:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-player{box-shadow:0 18px 50px rgba(124,58,237,.1),0 24px 70px rgba(0,0,0,.35)}.pr-music-grid{background-image:linear-gradient(rgba(167,139,250,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.05) 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(to bottom,black,transparent 90%)}.pr-music-headphones{animation:prMusicFloat 3.8s ease-in-out infinite}.pr-music-note{animation:prMusicNote 2.8s ease-in-out infinite alternate}.pr-music-wave span{animation:prMusicWave 900ms ease-in-out infinite alternate;transform-origin:center}.pr-music-heading{text-shadow:0 0 35px rgba(167,139,250,.25)}.pr-music-orbit{animation:prMusicOrbit 16s linear infinite}.pr-music-orbit:after{content:"";position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:#c4b5fd;box-shadow:0 0 16px #a78bfa}@keyframes prMusicWave{to{transform:scaleY(.35);opacity:.5}}@keyframes prMusicNote{to{transform:translateY(-10px) rotate(12deg)}}@keyframes prMusicOrbit{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pr-music-headphones,.pr-music-note,.pr-music-wave span,.pr-music-orbit{animation:none!important}}@keyframes prMusicEq{from{transform:scaleY(.34);opacity:.46}to{transform:scaleY(1);opacity:1}} @keyframes prMusicFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}`}</style>
+    <style>{`.pr-music-featured:hover,.pr-music-featured:focus-visible{transform:translateY(-4px);border-color:rgba(196,181,253,.6);box-shadow:0 16px 35px rgba(139,92,246,.2)}.pr-music-featured:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-mini-wave{animation:prMusicWave .85s ease-in-out infinite alternate;transform-origin:center}@media(prefers-reduced-motion:reduce){.pr-music-mini-wave{animation:none}}.pr-zodiac-aura{background:radial-gradient(ellipse at 50% 38%,rgba(139,92,246,.2),transparent 52%),radial-gradient(circle at 85% 85%,rgba(34,211,238,.08),transparent 42%),linear-gradient(rgba(167,139,250,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.04) 1px,transparent 1px);background-size:auto,auto,26px 26px,26px 26px}.pr-zodiac-title{font-family:Impact,"Arial Black",system-ui,sans-serif;font-size:clamp(37px,10.3vw,72px);font-weight:900;letter-spacing:-.045em;color:#f8f7ff;text-shadow:0 0 30px rgba(167,139,250,.27)}.pr-zodiac-sign{animation:prZodiacFloat 3.5s ease-in-out infinite alternate}.pr-zodiac-banner{box-shadow:inset 0 0 55px rgba(139,92,246,.06),0 18px 55px rgba(0,0,0,.35)}@keyframes prZodiacFloat{to{transform:translateY(-9px) rotate(8deg);box-shadow:0 0 20px rgba(167,139,250,.3)}}@media(prefers-reduced-motion:reduce){.pr-zodiac-sign{animation:none}}.pr-music-page .section-label{color:#c4b5fd!important}.pr-music-word{font-family:Impact,"Arial Black",system-ui,sans-serif;font-weight:1000;letter-spacing:-.045em;font-stretch:condensed;text-shadow:0 0 25px rgba(167,139,250,.42)}.pr-music-page .pr-music-mood-section{background:linear-gradient(180deg,rgba(139,92,246,.055),transparent)}.pr-music-action{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-action:hover,.pr-music-action:focus-visible{transform:translateY(-3px);border-color:rgba(196,181,253,.5);box-shadow:0 16px 35px rgba(124,58,237,.15)}.pr-music-action:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-playlist-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-playlist-card:hover,.pr-music-playlist-card:focus-visible{transform:translateY(-4px);border-color:rgba(196,181,253,.5);box-shadow:0 12px 30px rgba(124,58,237,.13)}.pr-music-playlist-card:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-player{box-shadow:0 18px 50px rgba(124,58,237,.1),0 24px 70px rgba(0,0,0,.35)}.pr-music-grid{background-image:linear-gradient(rgba(167,139,250,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.05) 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(to bottom,black,transparent 90%)}.pr-music-headphones{animation:prMusicFloat 3.8s ease-in-out infinite}.pr-music-note{animation:prMusicNote 2.8s ease-in-out infinite alternate}.pr-music-wave span{animation:prMusicWave 900ms ease-in-out infinite alternate;transform-origin:center}.pr-music-heading{text-shadow:0 0 35px rgba(167,139,250,.25)}.pr-music-orbit{animation:prMusicOrbit 16s linear infinite}.pr-music-orbit:after{content:"";position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:#c4b5fd;box-shadow:0 0 16px #a78bfa}@keyframes prMusicWave{to{transform:scaleY(.35);opacity:.5}}@keyframes prMusicNote{to{transform:translateY(-10px) rotate(12deg)}}@keyframes prMusicOrbit{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pr-music-headphones,.pr-music-note,.pr-music-wave span,.pr-music-orbit{animation:none!important}}@keyframes prMusicEq{from{transform:scaleY(.34);opacity:.46}to{transform:scaleY(1);opacity:1}} @keyframes prMusicFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}`}</style>
 
     <div className="pr-music-page overflow-hidden pb-12">
       <section className="pr-music-hero relative mx-4 mt-4 overflow-hidden rounded-[36px] border border-violet-300/25 px-5 pb-6 pt-7 shadow-[0_30px_90px_rgba(0,0,0,.46)]" style={{background:`radial-gradient(circle at 75% 0%,${selectedPlaylist.glow},transparent 50%),radial-gradient(circle at 0% 100%,rgba(130,66,255,.18),transparent 55%),linear-gradient(145deg,#1a1429,#090b13 70%)`}}>
@@ -653,26 +693,50 @@ export default function MusicPage() {
         </div>
       </section>
 
-      <section className="pr-music-mood-section mt-8">
-        <div className="flex items-end justify-between gap-3 px-5">
-          <div><p className="section-label">Tu mood, tu soundtrack</p><h2 className="mt-1 font-display text-[25px] font-black text-white">¿Cómo te sentís hoy?</h2><p className="mt-1 max-w-[265px] text-[11px] leading-5 text-white/60">Elegí una emoción y PR Music te propone el ritmo ideal para rodar.</p></div>
-          <p className="pb-1 text-[9px] text-white/22">Deslizá →</p>
+      <section className="mx-4 mt-8" aria-labelledby="pr-music-new-title">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div><p className="text-[9px] font-black uppercase tracking-[.2em] text-cyan-300">NOVEDADES · PR MUSIC</p><h2 id="pr-music-new-title" className="mt-1 font-display text-[27px] font-black tracking-tight text-white">Recién llegadas <span className="text-violet-300">✦</span></h2><p className="mt-1 text-[11px] text-white/60">Dos nuevas formas de ponerle música a tus kilómetros.</p></div>
+          <span className="rounded-full border border-violet-300/25 bg-violet-400/10 px-2.5 py-1 text-[9px] font-black text-violet-200">NEW DROP</span>
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MOODS.map((mood)=><MoodChip key={mood.id} mood={mood} selected={selectedMood===mood.id} accent="#b9a4ff" onClick={()=>selectMood(mood.id)}/>) }
+        <div className="grid grid-cols-2 gap-3">
+          {PLAYLISTS.filter(item=>item.isNew).map((playlist)=>{
+            const index=PLAYLISTS.findIndex(item=>item.id===playlist.id)
+            return <button key={playlist.id} type="button" onClick={()=>selectPlaylist(playlist.label)} className="pr-music-featured relative min-w-0 overflow-hidden rounded-[25px] border border-violet-300/20 bg-[#141021] p-3 text-left transition-transform active:scale-[.97]" style={{background:`radial-gradient(circle at 85% 0%,${playlist.glow},transparent 55%),linear-gradient(150deg,#1b1730,#0c0c14)`}}>
+              <span className="absolute right-3 top-3 z-10 rounded-full border border-cyan-200/30 bg-[#0e1020]/90 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-cyan-200">Nuevo</span>
+              <div className="w-full max-w-[145px]"><PlaylistArtwork playlist={playlist} index={index}/></div>
+              <p className="mt-3 text-[8px] font-black uppercase tracking-[.13em] text-violet-300">{playlist.badge}</p>
+              <h3 className="mt-1 font-display text-[17px] font-black leading-tight text-white">{playlist.label}</h3>
+              <p className="mt-2 line-clamp-3 text-[10px] leading-[1.55] text-white/60">{playlist.description}</p>
+              <span className="mt-3 inline-flex items-center gap-2 text-[10px] font-black text-cyan-200"><PlayIcon size={12}/> Escuchar ahora</span>
+            </button>
+          })}
         </div>
       </section>
 
-      <section className="mt-7">
-        <div className="mb-3 flex items-end justify-between gap-3 px-5">
-          <div><p className="section-label">La colección oficial · PR Music</p><h2 className="mt-1 font-display text-[25px] font-black text-white">Elegí tu banda sonora</h2><p className="mt-1 max-w-[265px] text-[11px] leading-5 text-white/60">Explorá cada selección, descubrí su historia y reproducila desde Spotify.</p></div>
-          <p className="pb-1 text-[9px] text-white/22">{PLAYLISTS.filter((item)=>item.id).length} playlists</p>
+      <section className="pr-music-mood-section mx-4 mt-8 overflow-hidden rounded-[29px] border border-violet-300/20 bg-[#141124] pb-4 pt-5" style={{background:'radial-gradient(circle at 92% 0%,rgba(139,92,246,.22),transparent 53%),linear-gradient(145deg,#1a1530,#0c0c16)'}}>
+        <div className="relative px-4">
+          <div className="absolute right-5 top-1 flex h-12 items-end gap-[3px] opacity-50" aria-hidden="true">{[14,25,38,21,33,16,29].map((height,i)=><span key={i} className="pr-music-mini-wave w-[3px] rounded-full bg-violet-300" style={{height,animationDelay:`${i*100}ms`}}/>)}</div>
+          <p className="text-[9px] font-black uppercase tracking-[.2em] text-cyan-300">SENTÍ EL RITMO</p>
+          <h2 className="mt-2 max-w-[235px] font-display text-[27px] font-black leading-tight tracking-tight text-white">¿Cómo te sentís <span className="text-violet-300">hoy?</span></h2>
+          <p className="mt-2 max-w-[270px] text-[11px] leading-5 text-white/65">Tu estado de ánimo tiene su propio soundtrack. Elegí una vibra y encontrá tu música.</p>
+        </div>
+        <div className="mt-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {MOODS.map((mood)=><MoodChip key={mood.id} mood={mood} selected={selectedMood===mood.id} accent="#b9a4ff" onClick={()=>selectMood(mood.id)}/>)}
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <div className="mx-4 mb-3 overflow-hidden rounded-[25px] border border-violet-300/15 bg-gradient-to-br from-violet-400/[.13] to-cyan-300/[.025] px-4 py-5">
+          <p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">LA COLECCIÓN OFICIAL</p>
+          <div className="mt-1 flex items-end justify-between gap-3"><h2 className="font-display text-[27px] font-black leading-tight tracking-tight text-white">Elegí tu <span className="text-violet-300">banda sonora</span></h2><span className="shrink-0 text-[10px] font-bold text-white/50">{PLAYLISTS.filter(item=>item.id).length} playlists</span></div>
+          <p className="mt-2 max-w-[290px] text-[11px] leading-5 text-white/60">Explorá las selecciones PR, descubrí su historia y ponelas a sonar en Spotify.</p>
+          <div className="mt-3 flex h-5 items-center gap-[3px] opacity-50" aria-hidden="true">{[6,13,8,19,11,16,8,18,12,7,15,9,19,10,6,14,8,17,11,7].map((height,i)=><span key={i} className="pr-music-mini-wave w-[3px] rounded-full bg-cyan-300" style={{height,animationDelay:`${i*65}ms`}}/>)}</div>
         </div>
         <div className="flex gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {orderedPlaylists.map((playlist)=>{
             const index=PLAYLISTS.findIndex((item)=>item.label===playlist.label)
             const selected=playlist.label===selectedPlaylist.label
-            return <button key={playlist.label} type="button" onClick={()=>selectPlaylist(playlist.label)} className={`pr-music-playlist-card w-[132px] flex-shrink-0 rounded-[25px] border p-2.5 text-left transition-all active:scale-[.97] ${selected?'border-white/20 bg-white/[.075]':'border-white/[.055] bg-white/[.02]'}`} style={{boxShadow:selected?"0 15px 38px rgba(167,139,250,.2)":'none'}}>
+            return <button key={playlist.label} type="button" onClick={()=>selectPlaylist(playlist.label)} className={`pr-music-playlist-card w-[132px] flex-shrink-0 rounded-[25px] border p-2.5 text-left transition-all active:scale-[.97] ${selected?'border-violet-300/40 bg-violet-300/[.09]':'border-violet-300/10 bg-[#12101c]'}`} style={{boxShadow:selected?"0 15px 38px rgba(167,139,250,.2)":'none'}}>
               <PlaylistArtwork playlist={playlist} index={index} compact/>
               <p className="mt-2 truncate text-[8px] font-black uppercase tracking-[.12em]" style={{color:selected?"#c4b5fd":'rgba(255,255,255,.48)'}}>{playlist.badge}</p>
               <p className="mt-1 line-clamp-2 min-h-[32px] font-display text-[13px] font-black leading-tight text-white/88">{playlist.shortLabel}</p>
