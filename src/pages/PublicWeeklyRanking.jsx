@@ -291,16 +291,10 @@ function PodiumDuel({ challenger, defender, gap }) {
       <h2 className="mx-auto mt-2 max-w-[500px] text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-red-400">está en juego</span></h2>
       <div className="relative mt-10 flex items-center gap-1 sm:gap-5">
         {player(defender,3)}
-        <div className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center sm:w-[110px]">
+        <div className="relative z-10 flex w-[88px] shrink-0 flex-col items-center justify-center sm:w-[130px]">
           <div aria-hidden="true" className="absolute h-24 w-24 rounded-full bg-red-500/20 blur-[30px] motion-safe:animate-pulse"/>
-          <svg viewBox="0 0 100 100" aria-hidden="true" className="absolute h-[105px] w-[105px] overflow-visible opacity-80">
-            <g fill="none" stroke="#fb7185" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M3 49L28 45L39 35M97 51L72 55L61 65" className="motion-safe:animate-[pulse_1.3s_ease-in-out_infinite]"/>
-              <path d="M14 30L33 39M86 70L67 61M25 80L39 64M75 20L61 36" opacity=".55"/>
-              <circle cx="50" cy="50" r="35" strokeDasharray="2 12" opacity=".5" className="origin-center motion-safe:animate-[spin_12s_linear_infinite]"/>
-            </g>
-          </svg>
-          <span className="relative text-[42px] font-black italic leading-none tracking-[-.12em] text-white [text-shadow:0_0_24px_rgba(239,68,68,.8)] sm:text-[58px]">VS</span>
+          <img src="/duel-fists.svg" alt="Dos puños enfrentados en una batalla deportiva" width="240" height="101" className="relative z-10 w-[112px] max-w-none object-contain drop-shadow-[0_0_12px_rgba(239,68,68,.28)] sm:w-[170px]" loading="lazy" />
+          <span className="relative z-20 -mt-2 text-2xl font-black italic leading-none text-white [text-shadow:0_0_12px_rgba(239,68,68,.8)] sm:text-3xl">VS</span>
           <span className="relative mt-1 h-[2px] w-10 bg-gradient-to-r from-transparent via-red-400 to-transparent"/>
         </div>
         {player(challenger,4)}
