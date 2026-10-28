@@ -283,6 +283,20 @@ function PodiumDuel({ challenger, defender, gap }) {
         <g filter="url(#duelFlameSoft)"><path className="origin-bottom motion-safe:animate-[pulse_2.8s_ease-in-out_infinite]" d="M0 330V210C90 260 112 98 171 74C150 170 257 207 277 330Z" fill="url(#duelFlameGradient)"/><path className="origin-bottom motion-safe:animate-[pulse_3.7s_ease-in-out_infinite]" d="M900 330V180C811 241 802 80 728 52C760 157 655 221 640 330Z" fill="url(#duelFlameGradient)"/><path className="motion-safe:animate-[pulse_4.3s_ease-in-out_infinite]" d="M180 330C230 241 300 265 341 145C363 234 448 236 475 330Z" fill="url(#duelFlameGradient)"/><path className="motion-safe:animate-[pulse_3.1s_ease-in-out_infinite]" d="M490 330C546 246 581 250 611 143C644 244 716 262 740 330Z" fill="url(#duelFlameGradient)"/></g>
       </svg>
       <div className="absolute bottom-0 h-24 w-full bg-[linear-gradient(to_top,rgba(249,115,22,.19),transparent)] motion-safe:animate-pulse" />
+      <svg aria-hidden="true" viewBox="0 0 900 330" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-70">
+        <defs><filter id="duelSparkGlow"><feGaussianBlur stdDeviation="2.5" result="soft"/><feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <g fill="#fbbf24" filter="url(#duelSparkGlow)">
+          <circle cx="96" cy="265" r="2.5" className="motion-safe:animate-[ping_3.7s_ease-in-out_infinite]"/>
+          <circle cx="190" cy="204" r="1.8" className="motion-safe:animate-[ping_4.1s_ease-in-out_infinite]"/>
+          <circle cx="308" cy="276" r="2.2" className="motion-safe:animate-[ping_3.3s_ease-in-out_infinite]"/>
+          <circle cx="575" cy="257" r="2.2" className="motion-safe:animate-[ping_4.6s_ease-in-out_infinite]"/>
+          <circle cx="734" cy="192" r="2" className="motion-safe:animate-[ping_3.9s_ease-in-out_infinite]"/>
+          <circle cx="826" cy="278" r="2.7" className="motion-safe:animate-[ping_4.3s_ease-in-out_infinite]"/>
+        </g>
+        <g stroke="#fb923c" strokeWidth="1.5" strokeLinecap="round" opacity=".65">
+          <path d="M110 235l7 -14M225 277l9 -19M674 270l-7 -15M796 230l-9 -16" className="motion-safe:animate-[pulse_2.4s_ease-in-out_infinite]"/>
+        </g>
+      </svg>
       <span className="absolute left-[18%] top-[28%] text-lg text-orange-300/70 motion-safe:animate-ping [animation-duration:3s]">✦</span>
       <span className="absolute right-[15%] top-[37%] text-xl text-amber-300/65 motion-safe:animate-pulse">✦</span>
     </div>
