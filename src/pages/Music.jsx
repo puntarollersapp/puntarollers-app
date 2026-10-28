@@ -580,6 +580,8 @@ export default function MusicPage() {
     if (next.company==='solo'&&next.vibe==='emotion') resultIndex=4
     if (next.company==='friends'&&next.vibe==='nostalgia') resultIndex=1
     if (next.goal==='enjoy'&&next.company==='friends') resultIndex=5
+    if (next.goal==='activate'&&next.company==='solo') resultIndex=PLAYLISTS.findIndex(item=>item.id==='1PkP21Pgy6A0IDUiUk4LTu')
+    if (next.company==='class'&&next.vibe==='party') resultIndex=PLAYLISTS.findIndex(item=>item.id==='5aBFH4sisvMbnMvSoy20bn')
     const result=PLAYLISTS[resultIndex]
     setTestResult(result)
     setSelectedId(result.label)
