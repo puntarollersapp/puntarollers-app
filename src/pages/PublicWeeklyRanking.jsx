@@ -240,33 +240,25 @@ function PRUnlock({ campaign, ranking = [], result, preview = false }) {
 }
 
 function Podium({ ranking, period, statuses }) {
-  const first = ranking[0], second = ranking[1], third = ranking[2]
-  const card = (row, order) => row ? (
-    <div key={row.alumnoId} className={`flex min-w-0 flex-1 flex-col items-center ${order === 1 ? '-translate-y-3' : ''}`}>
-      <div className="relative">
-        {order === 1 && <div className="absolute -inset-6 rounded-full bg-amber-300/10 blur-2xl" />}
-        <PodiumAvatar row={row} size={order === 1 ? 'xl' : 'lg'} />
-        <span className={`absolute -bottom-2 left-1/2 z-30 grid -translate-x-1/2 place-items-center rounded-full border-[3px] border-[#0b0c10] font-black ${order === 1 ? 'h-8 w-8 bg-amber-300 text-black' : order === 2 ? 'h-7 w-7 bg-slate-200 text-black' : 'h-7 w-7 bg-orange-700 text-white'}`}>{order}</span>
-      </div>
-      <p className="mt-5 max-w-[115px] truncate text-center text-sm font-black">{row.name}</p>
-      <p className={`mt-1 text-xl font-black ${order === 1 ? 'text-amber-300' : 'text-white'}`}>{row.km.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km</p>
-      <p className="mt-1 text-[9px] uppercase tracking-[.13em] text-white/30">{row.sessions} entreno{row.sessions === 1 ? '' : 's'}</p>
-      {statuses?.[String(row.alumnoId)] ? <p className="mt-2 max-w-[125px] break-words rounded-xl border border-white/[.07] bg-black/25 px-2 py-2 text-center text-[9px] font-bold leading-3 text-white/60">“{statuses[String(row.alumnoId)]}”</p> : null}
-      <div className={`mt-3 flex w-full items-start justify-center rounded-t-[18px] border border-white/10 bg-gradient-to-b pt-3 text-2xl ${order === 1 ? 'h-28 from-amber-400/20 to-white/[.03]' : order === 2 ? 'h-20 from-slate-300/10 to-white/[.02]' : 'h-16 from-orange-700/15 to-white/[.02]'}`}>{order === 1 ? '👑' : order === 2 ? '🥈' : '🥉'}</div>
-    </div>
-  ) : <div key={`empty-${order}`} className="min-w-0 flex-1" />
-  return (
-    <div>
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">TOP 3 · {period === 'week' ? 'ESTA SEMANA' : 'ESTE MES'}</p>
-          <h2 className="mt-1 text-2xl font-black">El podio PR</h2>
-        </div>
-        <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.07] px-3 py-1 text-[9px] font-black text-emerald-300">STRAVA</span>
-      </div>
-      <div className="grid grid-cols-3 items-end gap-2">{card(second, 2)}{card(first, 1)}{card(third, 3)}</div>
-    </div>
-  )
+  const cards = [ranking[1],ranking[0],ranking[2]]
+  return <div>
+    <div className="mb-7 flex items-end justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.22em] text-[#c9fb60]">TOP 03 / {period === 'week' ? 'SEMANA' : 'MES'}</p><h2 className="mt-1 text-3xl font-black uppercase italic tracking-tight">El podio<span className="text-[#c9fb60]">.</span></h2></div><span className="rounded-full border border-[#c9fb60]/20 px-3 py-1 text-[9px] font-black text-[#c9fb60]">STRAVA / LIVE</span></div>
+    <div className="grid grid-cols-3 items-end gap-2 sm:gap-4">{cards.map((row,index)=>{const rank=[2,1,3][index];return row?<div key={row.alumnoId} className={`min-w-0 rounded-[20px] border px-2 pb-0 pt-4 text-center sm:px-4 ${rank===1?'border-[#c9fb60]/40 bg-[#c9fb60]/[.09]':'border-white/10 bg-white/[.035]'}`}>
+      <div className="relative mx-auto w-fit"><div className={`overflow-hidden rounded-full border-2 ${rank===1?'border-[#c9fb60]':'border-white/20'}`}><div className="scale-[.85]"><PodiumAvatar row={row} size={rank===1?'xl':'lg'}/></div></div><span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-2.5 py-1 text-[10px] font-black ${rank===1?'bg-[#c9fb60] text-[#111419]':'bg-[#353c40] text-white'}`}>#{rank}</span></div>
+      <p className="mt-5 truncate text-[11px] font-black sm:text-sm">{row.name}</p><p className={`mt-1 text-lg font-black sm:text-2xl ${rank===1?'text-[#c9fb60]':'text-[#f3f1e9]'}`}>{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})}<span className="ml-1 text-[10px] text-white/45">km</span></p>
+      <p className="mt-1 truncate text-[9px] text-white/40">{row.sessions} entrenos</p><div className={`mt-4 grid place-items-center rounded-t-[12px] border-t border-white/10 font-black ${rank===1?'h-20 bg-[#c9fb60]/15 text-4xl text-[#c9fb60]':'h-12 bg-white/5 text-2xl text-white/40'}`}>{String(rank).padStart(2,'0')}</div>
+    </div>:<div key={rank} className="min-w-0" />})}</div>
+  </div>
+}
+
+function PodiumDuel({ challenger, defender, gap }) {
+  if (!challenger || !defender) return null
+  const player = (row, rank) => <div className="flex min-w-0 flex-1 flex-col items-center"><div className="relative rounded-full border-2 border-[#c9fb60]/40 p-1"><PodiumAvatar row={row} size="lg"/><span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-2 py-0.5 text-[9px] font-black text-black">#{rank}</span></div><p className="mt-4 w-full truncate text-center text-xs font-black">{row.name}</p><p className="mt-1 text-sm font-black text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div>
+  return <section className="relative overflow-hidden rounded-[28px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_50%,rgba(201,251,96,.10),transparent_52%),#171b20] p-5">
+    <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-[#c9fb60]">⚡ BATALLA POR EL PODIO ⚡</p><h2 className="mt-1 text-center text-xl font-black uppercase italic">El próximo puesto está en juego</h2>
+    <div className="mt-6 flex items-center gap-1">{player(defender,3)}<div className="shrink-0 text-center"><div className="text-3xl">👊⚡👊</div><p className="text-3xl font-black italic text-[#c9fb60]">VS</p></div>{player(challenger,4)}</div>
+    <p className="mt-5 text-center text-xs text-white/60">A solo <b className="text-[#c9fb60]">{gap.toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> de cambiar el podio.</p>
+  </section>
 }
 
 function RollerweenChallenge({ ranking=[] }) {
@@ -309,7 +301,7 @@ export default function PublicWeeklyRanking() {
   const [message, setMessage] = useState('')
   const [statuses, setStatuses] = useState({})
   const [unlockCampaign, setUnlockCampaign] = useState(null)
-  const [octoberCampaign, setOctoberCampaign] = useState(null)
+  const [octoberResult, setOctoberResult] = useState(null)
   const [unlockResult, setUnlockResult] = useState(null)
   function changePeriod(next) {
     setPeriod(next)
@@ -322,13 +314,14 @@ export default function PublicWeeklyRanking() {
       if (!silent) setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse] = await Promise.all([
+        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse, octoberResultResponse] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.week.start, p_end_date: ranges.week.end }),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.month.start, p_end_date: ranges.month.end }),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.previousMonth.start, p_end_date: ranges.previousMonth.end }),
           supabase.from('pr_ranking_statuses').select('alumno_id,status_text,updated_at'),
           supabase.from('pr_unlock_campaigns').select('*').eq('slug', 'pr-unlock-noviembre-2026').maybeSingle(),
+          supabase.from('pr_unlock_results').select('*').eq('campaign_id','cae7fa65-2dfc-4e02-ac23-dd50f78d0ac9').maybeSingle(),
         ])
         if (!active) return
         if (weekResponse.error) throw weekResponse.error
@@ -354,6 +347,7 @@ export default function PublicWeeklyRanking() {
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(profileMap)
         setUnlockCampaign(unlockResponse.data || null)
+        setOctoberResult(octoberResultResponse.data || null)
         if (unlockResponse.data?.id) {
           const [unlockRankingResponse, resultResponse] = await Promise.all([
             supabase.rpc('pr_get_inline_ranking', {
@@ -460,13 +454,7 @@ export default function PublicWeeklyRanking() {
             </div>
           </section>}
 
-          {fourth && <section className="rounded-[28px] border border-orange-300/15 bg-orange-400/[.05] p-4">
-            <p className="text-[9px] font-black uppercase tracking-[.16em] text-orange-300">🔥 LA PELEA POR EL PODIO</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-3"><p className="text-[8px] font-black text-white/25">#4 {fourth.name}</p><p className="mt-1 text-lg font-black">{fourth.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p><p className="text-[9px] text-white/30">{gapToPodium !== null ? `a ${gapToPodium.toLocaleString('es-UY',{maximumFractionDigits:1})} km del #3` : 'peleando el podio'}</p></div>
-              <div className="rounded-[18px] border border-white/[.07] bg-black/20 p-3"><p className="text-[8px] font-black text-white/25">PRESIÓN DESDE ABAJO</p><p className="mt-1 text-lg font-black">{fifth ? fifth.name : 'Tabla abierta'}</p><p className="text-[9px] text-white/30">{fifth && fourthGap !== null ? `a ${fourthGap.toLocaleString('es-UY',{maximumFractionDigits:1})} km del #4` : 'cada km puede cambiar todo'}</p></div>
-            </div>
-          </section>}
+          <PodiumDuel challenger={fourth} defender={third} gap={gapToPodium || 0} />
 
           <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#191d21]">
             <div className="flex items-center justify-between border-b border-[#c9fb60]/15 px-5 py-5"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">CLASIFICACIÓN COMPLETA</p><h2 className="mt-1 text-2xl font-black tracking-tight text-[#f3f1e9]">{periodLabel}</h2></div><span className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-[9px] font-black text-white/40">{ranking.length}</span></div>
@@ -475,6 +463,8 @@ export default function PublicWeeklyRanking() {
               return <div key={row.alumnoId} className={`flex items-center gap-3 px-4 py-3 ${String(row.alumnoId)===myId?'bg-violet-400/[.07]':''}`}><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-black ${rank===1?'bg-amber-300 text-black':rank===2?'bg-slate-200 text-black':rank===3?'bg-orange-700 text-white':'bg-white/[.06] text-white/45'}`}>{rank}</span><PodiumAvatar row={row}/><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="text-[9px] text-white/30">{row.sessions} entreno{row.sessions===1?'':'s'}{status?` · “${status}”`:''}</p></div><div className="text-right"><p className={`text-sm font-black ${rank<=3?'text-amber-300':'text-white'}`}>{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div></div>
             })}</div> : <div className="p-8 text-center text-xs text-white/30">Todavía no hay kilómetros para este período.</div>}
           </section>
+
+          {montevideoToday().date >= '2026-11-01' && octoberResult?.winner_profile_id && <section className="rounded-[28px] border border-[#c9fb60]/30 bg-[#c9fb60]/[.07] p-5"><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#c9fb60]">🏆 GANADOR OFICIAL · PR UNLOCK OCTUBRE</p><div className="mt-4 flex items-center gap-4"><PodiumAvatar row={{name:octoberResult.winner_name,photo:octoberResult.winner_photo}}/><div className="min-w-0"><h3 className="text-xl font-black">¡Felicitaciones, {octoberResult.winner_name}!</h3><p className="mt-1 text-sm text-white/75">Premio obtenido: <b className="text-[#c9fb60]">{octoberResult.prize_title || 'Premio desbloqueado'}</b></p><p className="mt-2 text-[11px] text-white/45">(Nos pondremos en contacto con la persona ganadora).</p></div></div></section>}
 
           {period === 'month' && previousWinner && <section className="rounded-[28px] border border-sky-300/15 bg-sky-400/[.045] p-4"><p className="text-[9px] font-black uppercase tracking-[.17em] text-sky-300">🏆 CIERRE DEL MES ANTERIOR</p><div className="mt-3 flex items-center gap-3"><PodiumAvatar row={previousWinner}/><div><p className="text-sm font-black">{previousWinner.name}</p><p className="mt-1 text-[10px] text-white/40">cerró #1 con {previousWinner.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km registrados</p></div></div></section>}
 
