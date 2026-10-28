@@ -63,7 +63,7 @@
             const anchor = document.createElement('a')
             anchor.href = '/ranking-semanal'
             anchor.className = 'pr-weekly-ranking-shortcut'
-            anchor.innerHTML = '<span class="pr-ranking-trophy">🏆</span><span><strong>Ranking + premios</strong><small>PR Unlock · Km</small></span>'
+            anchor.innerHTML = '<span class="pr-ranking-trophy" aria-hidden="true">🏆</span><span class="pr-ranking-vertical">RANKING</span>'
             anchor.setAttribute('aria-label', 'Ver ranking PR, premios y PR Unlock')
             document.body.appendChild(anchor)
           }
@@ -118,6 +118,15 @@
       body:has(textarea:focus) .pr-weekly-ranking-shortcut{display:none!important;pointer-events:none!important}
       .pr-weekly-ranking-shortcut{position:fixed;right:14px;bottom:92px;z-index:90;display:flex;align-items:center;gap:9px;min-height:52px;padding:7px 13px 7px 9px;border-radius:18px;border:1px solid rgba(251,191,36,.28);background:linear-gradient(135deg,rgba(45,25,7,.97),rgba(15,12,10,.97));color:#fde68a;font:900 12px/1 system-ui,-apple-system,sans-serif;text-decoration:none;box-shadow:0 18px 48px rgba(0,0,0,.45),0 0 28px rgba(245,158,11,.09);backdrop-filter:blur(16px)}
       .pr-weekly-ranking-shortcut .pr-ranking-trophy{display:grid;width:36px;height:36px;place-items:center;border-radius:13px;background:rgba(251,191,36,.12);font-size:18px}.pr-weekly-ranking-shortcut strong{display:block;font-size:11px;color:#fff}.pr-weekly-ranking-shortcut small{display:block;margin-top:4px;font-size:8px;letter-spacing:.08em;color:rgba(255,255,255,.42)}
+
+      /* Compact fixed edge tab for ranking; preserves the existing destination and visibility rules. */
+      .pr-weekly-ranking-shortcut{right:0!important;top:32%!important;bottom:auto!important;width:46px!important;min-height:168px!important;padding:22px 6px 12px!important;gap:0!important;flex-direction:column!important;justify-content:center!important;overflow:visible!important;border-radius:18px 0 0 18px!important;border-right:0!important;border-color:rgba(251,191,36,.48)!important;background:linear-gradient(165deg,rgba(58,39,19,.98),rgba(22,20,27,.98) 48%,rgba(13,15,23,.98))!important;box-shadow:-7px 10px 30px rgba(0,0,0,.32),-2px 0 18px rgba(245,158,11,.13)!important;transition:width .2s ease,box-shadow .2s ease!important}
+      .pr-weekly-ranking-shortcut::before{content:'';position:absolute;inset:5px 4px 5px 5px;border:1px solid rgba(255,221,136,.14);border-right:0;border-radius:14px 0 0 14px;pointer-events:none}
+      .pr-weekly-ranking-shortcut .pr-ranking-trophy{position:absolute!important;top:-18px!important;left:1px!important;width:44px!important;height:43px!important;background:none!important;font-size:30px!important;filter:drop-shadow(0 4px 7px rgba(251,191,36,.35));animation:prRankFloat 4s ease-in-out infinite}
+      .pr-weekly-ranking-shortcut .pr-ranking-vertical{display:block;writing-mode:vertical-rl;transform:rotate(180deg);font:900 12px/1 system-ui,-apple-system,sans-serif;letter-spacing:.19em;color:#f9dfa0;text-shadow:0 0 12px rgba(251,191,36,.22)}
+      .pr-weekly-ranking-shortcut:hover,.pr-weekly-ranking-shortcut:focus-visible{width:53px!important;box-shadow:-8px 12px 35px rgba(0,0,0,.42),-3px 0 25px rgba(251,191,36,.3)!important}
+      @keyframes prRankFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+      @media(prefers-reduced-motion:reduce){.pr-weekly-ranking-shortcut .pr-ranking-trophy{animation:none}}
       .pr-feed-ranking{position:relative;overflow:hidden;border:1px solid rgba(250,204,21,.28);border-radius:28px;background:radial-gradient(circle at 75% 0%,rgba(93,63,211,.24),transparent 40%),linear-gradient(135deg,#201603 0%,#10101b 44%,#110719 100%);box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 35px rgba(168,85,247,.07)}
       .pr-feed-ranking:before{content:"";position:absolute;inset:-60% -30%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.05) 50%,transparent 60%);transform:translateX(-55%);animation:prRankShine 7s ease-in-out infinite;pointer-events:none}.pr-feed-ranking-glow{position:absolute;width:150px;height:150px;left:50%;top:70px;transform:translateX(-50%);border-radius:999px;background:rgba(251,191,36,.12);filter:blur(40px);pointer-events:none}
       @keyframes prRankShine{0%,72%,100%{transform:translateX(-65%)}85%{transform:translateX(65%)}}
