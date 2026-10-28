@@ -106,17 +106,27 @@ function PodiumAvatar({ row, size = 'lg' }) {
 
 function PrizeVisual({ campaign, level, totalKm, preview = false }) {
   const target = Number(campaign?.[`prize_${level}_target_km`] || 0)
-  const unlocked = !preview && totalKm >= target
+  const unlocked = !preview && target > 0 && totalKm >= target
   const revealed = level === 1 || unlocked
   const progress = Math.min(100, Math.max(0, totalKm / Math.max(1,target) * 100))
-  return <div className={`rounded-[22px] border p-4 ${unlocked ? 'border-[#c9fb60]/35 bg-[#c9fb60]/10' : 'border-white/10 bg-[#171c20]'}`}>
-    <div className="flex items-center gap-3"><div className="grid h-16 w-16 shrink-0 place-items-center rounded-[18px] border border-white/10 bg-black/25 text-3xl">{revealed ? level === 1 ? '🍷' : level === 2 ? '🍫' : '🎟️' : '🎁'}</div>
-    <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><span className="text-[10px] font-black uppercase tracking-widest text-[#c9fb60]">NIVEL 0{level} · {target} KM</span><span className="text-[9px] font-black text-white/50">{unlocked ? '✓ UNLOCKED' : preview ? 'PRÓXIMAMENTE' : '🔒'}</span></div>
-    <h3 className="mt-1 text-base font-black">{revealed ? campaign?.[`prize_${level}_title`] : '🎀 CAJA SORPRESA · ?'}</h3>
-    <p className="mt-1 text-[11px] text-white/45">{revealed ? campaign?.[`prize_${level}_detail`] : 'Desbloqueá el nivel anterior para revelar este premio.'}</p></div></div>
-    <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-gradient-to-r from-[#c9fb60] to-[#e4c37e] transition-all duration-700" style={{width:`${progress}%`}} /></div>
-    <div className="mt-2 flex justify-between text-[10px] text-white/40"><span>{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km</span><span>{target} km</span></div>
-  </div>
+  const prize = campaign?.[`prize_${level}_title`] || 'Premio'
+  const icons = ['🍷','🍫','🎟️']
+  return <article className={`group relative overflow-hidden rounded-[24px] border p-4 transition-colors sm:p-5 ${unlocked ? 'border-[#c9fb60]/45 bg-[#c9fb60]/[.09]' : 'border-white/10 bg-[#171c20]'}`}>
+    <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-[#c9fb60]/[.055] blur-2xl"/>
+    <div className="relative flex items-center gap-4">
+      <div className={`relative grid h-[84px] w-[84px] shrink-0 place-items-center overflow-hidden rounded-[22px] border text-[39px] shadow-[inset_0_1px_0_rgba(255,255,255,.06)] ${unlocked ? 'border-[#c9fb60]/40 bg-[#c9fb60]/10' : 'border-white/10 bg-gradient-to-br from-[#30383a] to-[#111518]'}`} aria-hidden="true">
+        {revealed ? <span className="drop-shadow-[0_6px_10px_rgba(0,0,0,.25)]">{icons[level-1]}</span> : <div className="relative"><span className="text-[50px] drop-shadow-lg">🎁</span><span className="absolute -right-1 top-3 grid h-6 w-6 place-items-center rounded-full border border-[#c9fb60]/50 bg-[#171c20] text-base font-black text-[#c9fb60]">?</span></div>}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center justify-between gap-1.5"><span className="text-[10px] font-black uppercase tracking-[.16em] text-[#c9fb60]">RECOMPENSA 0{level}</span><span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${unlocked?'bg-[#c9fb60] text-[#111419]':'bg-white/[.07] text-white/50'}`}>{unlocked?'✓ Desbloqueada':preview?'Próximamente':'🔒 Bloqueada'}</span></div>
+        <h3 className="mt-2 text-[17px] font-black leading-tight text-[#f3f1e9]">{revealed ? prize : 'Regalo misterioso'}</h3>
+        <p className="mt-1 text-[11px] leading-4 text-white/50">{revealed ? campaign?.[`prize_${level}_detail`] : 'La sorpresa se revela cuando la comunidad alcanza este nivel.'}</p>
+      </div>
+    </div>
+    <div className="relative mt-4 flex items-center justify-between gap-2"><span className="text-[10px] font-bold text-white/45">Progreso del equipo</span><span className="text-[11px] font-black text-[#c9fb60]">{target.toLocaleString('es-UY')} KM</span></div>
+    <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label={`Progreso para desbloquear el premio ${level}`} aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-gradient-to-r from-[#a4e449] via-[#c9fb60] to-[#f1d48e] transition-all duration-700" style={{width:`${progress}%`}} /></div>
+    <div className="mt-2 flex justify-between text-[10px] text-white/40"><span>{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km reunidos</span><span>{Math.round(progress)}%</span></div>
+  </article>
 }
 
 function ProgressWheel({ pct, totalKm, maxTarget, targets = [] }) {
@@ -162,7 +172,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false }) {
   const today = montevideoToday().date
   const finished = !preview && today > campaign.ends_on
   const contributors = preview ? [] : campaignRanking.slice(0,12)
-  const official = result && String(result.campaign_id)===String(campaign.id) ? result : null
+  const official = !preview && finished && result?.finalized_at && String(result.campaign_id)===String(campaign.id) ? result : null
   return (
     <section className="relative overflow-hidden rounded-[34px] border border-[#c9fb60]/25 bg-[radial-gradient(circle_at_90%_0%,rgba(201,251,96,.12),transparent_40%),linear-gradient(145deg,#181e20,#0e1316_65%)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.38)]">
       <div className="absolute -right-14 -top-16 h-48 w-48 rounded-full border border-orange-300/15" />
@@ -217,7 +227,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false }) {
           <ProgressWheel pct={pct} totalKm={totalKm} maxTarget={maxTarget} targets={targets} />
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">PRÓXIMO UNLOCK</p><p className="mt-1 text-lg font-black text-[#c9fb60]">{unlockedLevel >= 3 ? 'TODO DESBLOQUEADO' : `${nextLeft.toLocaleString('es-UY',{maximumFractionDigits:1})} km`}</p><p className="text-[9px] text-white/28">{unlockedLevel >= 3 ? 'Misión máxima alcanzada' : 'faltan para el próximo premio'}</p></div>
-            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">LÍDER DEL DESAFÍO</p>{leader ? <><p className="mt-1 truncate text-sm font-black">{leader.name}</p><p className="text-[9px] text-fuchsia-200/70">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {leader.sessions} entrenos</p></> : <p className="mt-1 text-sm font-black text-white/35">Tabla abierta</p>}</div>
+            <div className="rounded-[18px] border border-white/[.07] bg-white/[.025] p-3"><p className="text-[8px] font-black uppercase text-white/25">LÍDER DEL DESAFÍO</p>{leader ? <><p className="mt-1 truncate text-sm font-black">{leader.name}</p><p className="text-[9px] text-[#c9fb60]/75">{leader.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km · {leader.sessions} entrenos</p></> : <p className="mt-1 text-sm font-black text-white/35">Tabla abierta</p>}</div>
           </div>
         </div>
 
@@ -464,9 +474,9 @@ export default function PublicWeeklyRanking() {
             })}</div> : <div className="p-8 text-center text-xs text-white/30">Todavía no hay kilómetros para este período.</div>}
           </section>
 
-          {montevideoToday().date >= '2026-11-01' && octoberResult?.winner_profile_id && <section className="rounded-[28px] border border-[#c9fb60]/30 bg-[#c9fb60]/[.07] p-5"><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#c9fb60]">🏆 GANADOR OFICIAL · PR UNLOCK OCTUBRE</p><div className="mt-4 flex items-center gap-4"><PodiumAvatar row={{name:octoberResult.winner_name,photo:octoberResult.winner_photo}}/><div className="min-w-0"><h3 className="text-xl font-black">¡Felicitaciones, {octoberResult.winner_name}!</h3><p className="mt-1 text-sm text-white/75">Premio obtenido: <b className="text-[#c9fb60]">{octoberResult.prize_title || 'Premio desbloqueado'}</b></p><p className="mt-2 text-[11px] text-white/45">(Nos pondremos en contacto con la persona ganadora).</p></div></div></section>}
+          {montevideoToday().date >= '2026-11-01' && octoberResult?.finalized_at && octoberResult?.winner_profile_id && <section className="rounded-[28px] border border-[#c9fb60]/30 bg-[#c9fb60]/[.07] p-5"><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#c9fb60]">🏆 GANADOR OFICIAL · PR UNLOCK OCTUBRE</p><div className="mt-4 flex items-center gap-4"><PodiumAvatar row={{name:octoberResult.winner_name,photo:octoberResult.winner_photo}}/><div className="min-w-0"><h3 className="text-xl font-black">¡Felicitaciones, {octoberResult.winner_name}!</h3><p className="mt-1 text-sm text-white/75">Premio obtenido: <b className="text-[#c9fb60]">{octoberResult.prize_title || 'Premio desbloqueado'}</b></p><p className="mt-2 text-[11px] text-white/45">(Nos pondremos en contacto con la persona ganadora).</p></div></div></section>}
 
-          {period === 'month' && previousWinner && <section className="rounded-[28px] border border-sky-300/15 bg-sky-400/[.045] p-4"><p className="text-[9px] font-black uppercase tracking-[.17em] text-sky-300">🏆 CIERRE DEL MES ANTERIOR</p><div className="mt-3 flex items-center gap-3"><PodiumAvatar row={previousWinner}/><div><p className="text-sm font-black">{previousWinner.name}</p><p className="mt-1 text-[10px] text-white/40">cerró #1 con {previousWinner.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km registrados</p></div></div></section>}
+          {period === 'month' && previousWinner && <section className="rounded-[28px] border border-sky-300/15 bg-sky-400/[.045] p-4"><p className="text-[9px] font-black uppercase tracking-[.17em] text-sky-300">📊 LÍDER DEL RANKING DEL MES ANTERIOR</p><div className="mt-3 flex items-center gap-3"><PodiumAvatar row={previousWinner}/><div><p className="text-sm font-black">{previousWinner.name}</p><p className="mt-1 text-[10px] text-white/40">registró el primer puesto con {previousWinner.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km registrados</p></div></div></section>}
 
           <section className="rounded-[28px] border border-white/[.07] bg-black/20 p-4 text-[10px] leading-5 text-white/35"><b className="text-white/65">Cómo suma:</b> entran únicamente actividades de patinaje inline registradas en PR. Las actividades rechazadas o eliminadas no cuentan. Los deberes de Shifter que llegan desde Strava también forman parte del mismo kilometraje: no se duplican.</section>
         </div>}
