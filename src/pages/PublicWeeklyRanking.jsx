@@ -273,11 +273,11 @@ function PodiumDuel({ challenger, defender, gap }) {
     <p className="mt-6 w-full truncate text-center text-xs font-black text-white">{row.name}</p>
     <p className="mt-1 text-base font-black tabular-nums text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
   </div>
-  return <section className="relative isolate overflow-hidden rounded-[30px] border border-red-500/25 bg-[#100f15] p-5 shadow-[0_22px_65px_rgba(110,10,24,.20)] sm:p-7">
+  return <section className="relative isolate overflow-hidden rounded-[30px] border border-red-500/25 bg-[#0b0c10] p-5 shadow-[0_22px_65px_rgba(0,0,0,.28)] sm:p-7">
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_105%,rgba(185,28,28,.30),transparent_62%),linear-gradient(125deg,rgba(70,10,28,.22),transparent_40%,rgba(85,13,25,.23))]" />
-      <div className="absolute -left-20 bottom-0 h-52 w-52 rounded-full bg-red-600/15 blur-[65px] motion-safe:animate-pulse" />
-      <div className="absolute -right-20 bottom-0 h-52 w-52 rounded-full bg-rose-600/15 blur-[65px] motion-safe:animate-pulse" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_80%,rgba(130,16,32,.17),transparent_58%),linear-gradient(125deg,#0b0c10,#15151b_50%,#0b0c10)]" />
+      <div className="absolute -left-20 bottom-0 h-52 w-52 rounded-full bg-red-600/10 blur-[65px] motion-safe:animate-pulse" />
+      <div className="absolute -right-20 bottom-0 h-52 w-52 rounded-full bg-rose-600/10 blur-[65px] motion-safe:animate-pulse" />
       <svg viewBox="0 0 900 350" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-60">
         <defs><linearGradient id="duelStreak" x1="0" x2="1"><stop stopColor="#ef4444" stopOpacity="0"/><stop offset=".48" stopColor="#fb7185" stopOpacity=".65"/><stop offset="1" stopColor="#ef4444" stopOpacity="0"/></linearGradient><filter id="duelStreakBlur"><feGaussianBlur stdDeviation="6"/></filter></defs>
         <path d="M0 290L420 155M900 290L480 155" stroke="url(#duelStreak)" strokeWidth="17" filter="url(#duelStreakBlur)"/>
@@ -289,7 +289,7 @@ function PodiumDuel({ challenger, defender, gap }) {
     <div className="relative">
       <p className="text-center text-[10px] font-black uppercase tracking-[.25em] text-rose-300">BATALLA POR EL PODIO</p>
       <h2 className="mx-auto mt-2 max-w-[500px] text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-red-400">está en juego</span></h2>
-      <div className="relative mt-9 flex items-center gap-1 sm:gap-5">
+      <div className="relative mt-10 flex items-center gap-1 sm:gap-5">
         {player(defender,3)}
         <div className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center sm:w-[110px]">
           <div aria-hidden="true" className="absolute h-24 w-24 rounded-full bg-red-500/20 blur-[30px] motion-safe:animate-pulse"/>
