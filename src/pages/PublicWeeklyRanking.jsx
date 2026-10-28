@@ -424,40 +424,47 @@ export default function PublicWeeklyRanking() {
 
   return (
     <Shell>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5">
-        <section className="relative overflow-hidden rounded-[34px] border border-amber-300/20 bg-[radial-gradient(circle_at_90%_0%,rgba(251,191,36,.16),transparent_32%),radial-gradient(circle_at_5%_100%,rgba(124,58,237,.24),transparent_40%),linear-gradient(145deg,#1a1206,#0a0b10_55%,#100919)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.42)]">
-          <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full border border-amber-300/10" />
+      <div className="mx-auto w-full max-w-4xl px-4 pb-28 pt-6 text-[#f3f1e9]">
+        <section className="relative isolate overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[#111419] px-5 pb-6 pt-7 shadow-[0_25px_80px_rgba(0,0,0,.38)] sm:px-8 sm:py-9">
+          <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#c9fb60]/[.10] blur-[75px]" />
+          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 h-24 w-full bg-gradient-to-t from-[#c9fb60]/[.035] to-transparent" />
           <div className="relative">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[.22em] text-amber-300">PR KM CHALLENGE · STRAVA</p>
-                <h1 className="mt-1 text-[34px] font-black leading-none">RANKING<br/><span className="text-orange-400">SOBRE RUEDAS.</span></h1>
-                <p className="mt-3 max-w-[440px] text-[11px] leading-5 text-white/45">Cada kilómetro de patinaje inline cuenta. También tus deberes de entrenamiento: una sola actividad alimenta tu perfil, tu evolución y esta tabla.</p>
-              </div>
-              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/[.08] px-3 py-2 text-[8px] font-black uppercase tracking-wider text-emerald-300">● LIVE</span>
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]"><span className="h-2 w-2 rounded-full bg-[#c9fb60] shadow-[0_0_15px_#c9fb60]" /> PUNTA ROLLERS / PERFORMANCE</span>
+              <span className="rounded-full border border-[#c9fb60]/25 bg-[#c9fb60]/[.08] px-3 py-1.5 text-[9px] font-black tracking-[.14em] text-[#c9fb60]">● EN VIVO</span>
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-2 rounded-[20px] border border-white/[.08] bg-black/25 p-1.5">
-              <button onClick={() => changePeriod('week')} className={`rounded-[15px] px-4 py-3 text-[10px] font-black transition ${period === 'week' ? 'bg-gradient-to-r from-amber-300 to-orange-400 text-black shadow-[0_10px_30px_rgba(251,146,60,.18)]' : 'text-white/40'}`}>ESTA SEMANA</button>
-              <button onClick={() => changePeriod('month')} className={`rounded-[15px] px-4 py-3 text-[10px] font-black transition ${period === 'month' ? 'bg-gradient-to-r from-violet-400 to-fuchsia-400 text-black shadow-[0_10px_30px_rgba(192,132,252,.18)]' : 'text-white/40'}`}>ESTE MES</button>
+            <div className="mt-8 flex items-end justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-white/45">Cada kilómetro cuenta.</p>
+                <h1 className="mt-2 text-[clamp(55px,12vw,100px)] font-black uppercase italic leading-[.82] tracking-[-.085em] text-[#f3f1e9]">RANK<span className="text-[#c9fb60]">ING.</span></h1>
+              </div>
+              <div aria-hidden="true" className="hidden -rotate-12 text-[80px] leading-none opacity-80 sm:block">🏆</div>
+            </div>
+            <p className="mt-6 max-w-xl border-l-2 border-[#c9fb60] pl-4 text-[13px] leading-6 text-white/65">No se trata solo de llegar primero. Se trata de sumar kilómetros, superar tus marcas y avanzar con la comunidad.</p>
+            <div className="mt-7 grid grid-cols-2 gap-2 rounded-[18px] border border-white/10 bg-black/30 p-1.5" role="group" aria-label="Período del ranking">
+              <button type="button" onClick={() => changePeriod('week')} aria-pressed={period === 'week'} className={`min-h-12 rounded-[13px] px-3 text-xs font-black uppercase tracking-[.08em] transition ${period === 'week' ? 'bg-[#c9fb60] text-[#111419] shadow-[0_5px_24px_rgba(201,251,96,.18)]' : 'text-white/55 hover:bg-white/5'}`}>Esta semana</button>
+              <button type="button" onClick={() => changePeriod('month')} aria-pressed={period === 'month'} className={`min-h-12 rounded-[13px] px-3 text-xs font-black uppercase tracking-[.08em] transition ${period === 'month' ? 'bg-[#c9fb60] text-[#111419] shadow-[0_5px_24px_rgba(201,251,96,.18)]' : 'text-white/55 hover:bg-white/5'}`}>Este mes</button>
             </div>
           </div>
         </section>
 
-        {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-4 space-y-4">
+        {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-5 space-y-5">
           <RollerweenChallenge ranking={rankingRows.week} />
 
-          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} />
 
-          <section className="rounded-[30px] border border-white/[.08] bg-white/[.03] p-5">
+
+          <section className="rounded-[26px] border border-white/10 bg-[#191d21] p-5 sm:p-6">
             <div className="flex items-end justify-between gap-4">
-              <div><p className="text-[9px] font-black uppercase tracking-[.17em] text-white/30">{periodLabel}</p><h2 className="mt-1 text-2xl font-black">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km en juego</h2></div>
+              <div><p className="text-[9px] font-black uppercase tracking-[.17em] text-white/30">{periodLabel}</p><h2 className="mt-1 text-3xl font-black tracking-tight text-[#c9fb60]">{totalKm.toLocaleString('es-UY',{maximumFractionDigits:1})} km en juego</h2></div>
               <div className="text-right"><p className="text-2xl font-black text-orange-300">{ranking.length}</p><p className="text-[8px] font-black uppercase text-white/25">rollers sumando</p></div>
             </div>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[.06]"><div className="h-full rounded-full bg-gradient-to-r from-orange-400 via-amber-300 to-violet-400" style={{width:`${ranking.length ? 100 : 0}%`}} /></div>
             <p className="mt-3 text-[9px] text-white/28">Período: {longDate(currentRange.start)} → {longDate(currentRange.end)}</p>
           </section>
 
-          {ranking.length > 0 && <section className="rounded-[32px] border border-white/[.08] bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,.09),transparent_35%),rgba(255,255,255,.025)] p-5"><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
+          {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
+
+          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} />
 
           {myRow && <section className="overflow-hidden rounded-[30px] border border-violet-300/20 bg-[radial-gradient(circle_at_100%_0%,rgba(167,139,250,.20),transparent_35%),rgba(139,92,246,.06)] p-5">
             <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">TU POSICIÓN · {periodLabel}</p>
@@ -475,8 +482,8 @@ export default function PublicWeeklyRanking() {
             </div>
           </section>}
 
-          <section className="overflow-hidden rounded-[32px] border border-white/[.08] bg-white/[.025]">
-            <div className="flex items-center justify-between border-b border-white/[.07] px-5 py-4"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">CLASIFICACIÓN COMPLETA</p><h2 className="mt-1 text-xl font-black">{periodLabel}</h2></div><span className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-[9px] font-black text-white/40">{ranking.length}</span></div>
+          <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#191d21]">
+            <div className="flex items-center justify-between border-b border-[#c9fb60]/15 px-5 py-5"><div><p className="text-[9px] font-black uppercase tracking-[.16em] text-white/30">CLASIFICACIÓN COMPLETA</p><h2 className="mt-1 text-2xl font-black tracking-tight text-[#f3f1e9]">{periodLabel}</h2></div><span className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-[9px] font-black text-white/40">{ranking.length}</span></div>
             {ranking.length ? <div className="divide-y divide-white/[.06]">{ranking.map((row,index)=>{
               const rank=index+1, status=statuses[String(row.alumnoId)] || ''
               return <div key={row.alumnoId} className={`flex items-center gap-3 px-4 py-3 ${String(row.alumnoId)===myId?'bg-violet-400/[.07]':''}`}><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-black ${rank===1?'bg-amber-300 text-black':rank===2?'bg-slate-200 text-black':rank===3?'bg-orange-700 text-white':'bg-white/[.06] text-white/45'}`}>{rank}</span><PodiumAvatar row={row}/><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{row.name}</p><p className="text-[9px] text-white/30">{row.sessions} entreno{row.sessions===1?'':'s'}{status?` · “${status}”`:''}</p></div><div className="text-right"><p className={`text-sm font-black ${rank<=3?'text-amber-300':'text-white'}`}>{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div></div>
