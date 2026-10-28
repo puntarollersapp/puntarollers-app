@@ -228,7 +228,7 @@ const PLAYLISTS = [
     icon: '🎸',
     badge: 'Rock & corazón',
     recommendation: 'Respirá. No todo entrenamiento consiste en ir más rápido.',
-  },,
+  },
   {
     id: '1PkP21Pgy6A0IDUiUk4LTu',
     label: 'Streets',
