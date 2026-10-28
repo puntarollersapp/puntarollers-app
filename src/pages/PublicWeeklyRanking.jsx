@@ -154,10 +154,10 @@ function ProgressWheel({ pct, totalKm, maxTarget, targets = [] }) {
   </div>
 }
 
-function PRUnlock({ campaign, ranking = [], result, preview = false }) {
+function PRUnlock({ campaign, ranking = [], result, preview = false, demo = false }) {
   if (!campaign) return null
   const campaignRanking = ranking
-  const totalKm = preview ? 0 : campaignRanking.reduce((sum, row) => sum + row.km, 0)
+  const totalKm = demo ? 580 : preview ? 0 : campaignRanking.reduce((sum, row) => sum + row.km, 0)
   const maxTarget = Number(campaign.prize_3_target_km || 1)
   const pct = Math.min(100, Math.round((totalKm / maxTarget) * 100))
   const targets = [1,2,3].map((level) => Number(campaign[`prize_${level}_target_km`] || 0))
@@ -168,21 +168,22 @@ function PRUnlock({ campaign, ranking = [], result, preview = false }) {
   const activePrizeTitle = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_title`] : null
   const activePrizeDetail = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_detail`] : null
   const activePrizeIcon = activePrizeLevel === 1 ? '🍷' : activePrizeLevel === 2 ? '🍫' : activePrizeLevel === 3 ? '🎟️' : '🔒'
-  const leader = preview ? null : campaignRanking[0]
+  const leader = demo || preview ? null : campaignRanking[0]
   const today = montevideoToday().date
   const finished = !preview && today > campaign.ends_on
-  const contributors = preview ? [] : campaignRanking.slice(0,12)
-  const official = !preview && finished && result?.finalized_at && String(result.campaign_id)===String(campaign.id) ? result : null
+  const contributors = demo || preview ? [] : campaignRanking.slice(0,12)
+  const official = !demo && !preview && finished && result?.finalized_at && String(result.campaign_id)===String(campaign.id) ? result : null
   return (
     <section className="relative overflow-hidden rounded-[34px] border border-[#c9fb60]/25 bg-[radial-gradient(circle_at_90%_0%,rgba(201,251,96,.12),transparent_40%),linear-gradient(145deg,#181e20,#0e1316_65%)] p-5 shadow-[0_30px_90px_rgba(0,0,0,.38)]">
       <div className="absolute -right-14 -top-16 h-48 w-48 rounded-full border border-orange-300/15" />
       <div className="relative">
+        {demo && <div className="mb-4 rounded-[18px] border border-[#c9fb60]/50 bg-[#c9fb60]/15 px-4 py-3 text-[11px] font-black leading-5 text-[#c9fb60]">👁️ VISTA DEMO DE DISEÑO · 580 KM SIMULADOS. No modifica kilómetros, premios, fechas ni ganadores reales.</div>}
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[9px] font-black uppercase tracking-[.22em] text-[#c9fb60]">PR UNLOCK · MISIÓN DEL MES</p>
             <h2 className="mt-1 text-[31px] font-black leading-none">Todos sumamos.<br/><span className="text-[#c9fb60]">Uno gana.</span></h2>
           </div>
-          <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-wider ${finished ? 'border-white/10 bg-white/5 text-white/40' : 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-300'}`}>{preview ? 'PRÓXIMAMENTE · 01 NOV' : finished ? 'CERRADA' : '● EN VIVO'}</span>
+          <span className={`rounded-full border px-3 py-1.5 text-[8px] font-black uppercase tracking-wider ${finished ? 'border-white/10 bg-white/5 text-white/40' : 'border-emerald-300/20 bg-emerald-400/[.08] text-emerald-300'}`}>{demo ? '● DEMOSTRACIÓN' : preview ? 'PRÓXIMAMENTE · 01 NOV' : finished ? 'CERRADA' : '● EN VIVO'}</span>
         </div>
         <p className="mt-4 text-xs leading-5 text-white/48">Cada kilómetro de patinaje inline suma dos veces: a tu posición personal y al objetivo colectivo. El grupo desbloquea los niveles; al cierre de la misión, el <b className="text-white">#1 del ranking del desafío</b> gana únicamente el premio de mayor nivel alcanzado.</p>
         <div className="mt-4 rounded-[20px] border border-sky-300/20 bg-sky-400/[.07] p-4">
@@ -314,6 +315,7 @@ export default function PublicWeeklyRanking() {
   const [octoberResult, setOctoberResult] = useState(null)
   const [octoberSnapshot, setOctoberSnapshot] = useState(null)
   const [unlockResult, setUnlockResult] = useState(null)
+  const [designDemo, setDesignDemo] = useState(false)
   function changePeriod(next) {
     setPeriod(next)
     setParams({ period: next })
@@ -464,7 +466,8 @@ export default function PublicWeeklyRanking() {
 
           {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
 
-          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01'} />
+          {unlockCampaign && montevideoToday().date < '2026-11-01' && <div className="rounded-[24px] border border-[#c9fb60]/25 bg-[#c9fb60]/[.065] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.15em] text-[#c9fb60]">LABORATORIO DE DISEÑO · NOVIEMBRE</p><h3 className="mt-1 text-lg font-black">Probá las recompensas antes del lanzamiento.</h3><p className="mt-2 text-[11px] leading-5 text-white/50">Activá una simulación de 580 km para ver los niveles desbloqueados y las cajas sorpresa. El desafío real sigue comenzando el 1.º de noviembre con 0 km.</p></div></div><button type="button" onClick={()=>setDesignDemo(v=>!v)} className="mt-4 min-h-11 w-full rounded-xl bg-[#c9fb60] px-4 py-2 text-xs font-black text-[#111419]">{designDemo ? '↩ VOLVER A VISTA REAL' : '👁 VER DEMO CON PREMIOS DESBLOQUEADOS'}</button></div>}
+          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01' && !designDemo} demo={montevideoToday().date < '2026-11-01' && designDemo} />
 
           {myRow && <section className="overflow-hidden rounded-[30px] border border-violet-300/20 bg-[radial-gradient(circle_at_100%_0%,rgba(167,139,250,.20),transparent_35%),rgba(139,92,246,.06)] p-5">
             <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">TU POSICIÓN · {periodLabel}</p>
