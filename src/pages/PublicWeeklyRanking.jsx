@@ -166,7 +166,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false, demo = fals
   const activePrizeLevel = unlockedLevel
   const activePrizeTitle = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_title`] : null
   const activePrizeDetail = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_detail`] : null
-  const activePrizeIcon = activePrizeLevel === 1 ? '🍷' : activePrizeLevel === 2 ? '🍫' : activePrizeLevel === 3 ? '🎟️' : '🔒'
+  const activePrizeImage = activePrizeLevel === 1 ? '/premios/Vino.png' : activePrizeLevel === 2 ? '/premios/Ferrerorocher.png' : '/premios/Mystery.png'
   const leader = demo || preview ? null : campaignRanking[0]
   const today = montevideoToday().date
   const finished = !preview && today > campaign.ends_on
@@ -196,7 +196,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false, demo = fals
         <div className={`mt-5 overflow-hidden rounded-[28px] border p-4 ${activePrizeLevel ? 'border-amber-300/25 bg-[radial-gradient(circle_at_90%_10%,rgba(251,191,36,.18),transparent_34%),linear-gradient(135deg,rgba(249,115,22,.12),rgba(124,58,237,.10))]' : 'border-white/10 bg-white/[.035]'}`}>
           <p className="text-[9px] font-black uppercase tracking-[.18em] text-amber-300">{activePrizeLevel >= 3 ? '🏆 PREMIO MÁXIMO DESBLOQUEADO' : activePrizeLevel ? '🏆 PREMIO ACTUAL EN JUEGO' : '🔒 TODAVÍA NO HAY PREMIO DESBLOQUEADO'}</p>
           <div className="mt-3 flex items-center gap-4">
-            <div className={`grid h-20 w-20 shrink-0 place-items-center rounded-[24px] border text-4xl ${activePrizeLevel ? 'border-amber-300/25 bg-amber-300/10 shadow-[0_0_35px_rgba(251,191,36,.10)]' : 'border-white/10 bg-black/25'}`}>{activePrizeIcon}</div>
+            <div className={`grid h-20 w-20 shrink-0 place-items-center rounded-[24px] border text-4xl ${activePrizeLevel ? 'border-amber-300/25 bg-amber-300/10 shadow-[0_0_35px_rgba(251,191,36,.10)]' : 'border-white/10 bg-black/25'}`}><img src={activePrizeImage} alt={activePrizeLevel ? activePrizeTitle : 'Premio por desbloquear'} className="h-full w-full object-contain" loading="lazy" /></div>
             <div className="min-w-0 flex-1">
               <h3 className="text-xl font-black">{activePrizeLevel ? activePrizeTitle : `Faltan ${Math.max(0,targets[0]-totalKm).toLocaleString('es-UY',{maximumFractionDigits:1})} km para activar el Nivel 1`}</h3>
               <p className="mt-1 text-[10px] leading-4 text-white/40">{activePrizeLevel ? activePrizeDetail : 'Cuando el grupo llegue al primer checkpoint, el premio empieza a estar oficialmente en juego.'}</p>
