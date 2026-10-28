@@ -596,9 +596,9 @@ export default function MusicPage() {
   }
 
   return <AppLayout title="PR Music" showBack>
-    <style>{`.pr-music-action{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-action:hover,.pr-music-action:focus-visible{transform:translateY(-3px);border-color:rgba(196,181,253,.5);box-shadow:0 16px 35px rgba(124,58,237,.15)}.pr-music-action:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-playlist-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-playlist-card:hover,.pr-music-playlist-card:focus-visible{transform:translateY(-4px);border-color:rgba(196,181,253,.5);box-shadow:0 12px 30px rgba(124,58,237,.13)}.pr-music-playlist-card:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-player{box-shadow:0 18px 50px rgba(124,58,237,.1),0 24px 70px rgba(0,0,0,.35)}.pr-music-grid{background-image:linear-gradient(rgba(167,139,250,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.05) 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(to bottom,black,transparent 90%)}.pr-music-headphones{animation:prMusicFloat 3.8s ease-in-out infinite}.pr-music-note{animation:prMusicNote 2.8s ease-in-out infinite alternate}.pr-music-wave span{animation:prMusicWave 900ms ease-in-out infinite alternate;transform-origin:center}.pr-music-heading{text-shadow:0 0 35px rgba(167,139,250,.25)}.pr-music-orbit{animation:prMusicOrbit 16s linear infinite}.pr-music-orbit:after{content:"";position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:#c4b5fd;box-shadow:0 0 16px #a78bfa}@keyframes prMusicWave{to{transform:scaleY(.35);opacity:.5}}@keyframes prMusicNote{to{transform:translateY(-10px) rotate(12deg)}}@keyframes prMusicOrbit{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pr-music-headphones,.pr-music-note,.pr-music-wave span,.pr-music-orbit{animation:none!important}}@keyframes prMusicEq{from{transform:scaleY(.34);opacity:.46}to{transform:scaleY(1);opacity:1}} @keyframes prMusicFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}`}</style>
+    <style>{`.pr-music-page .section-label{color:#c4b5fd!important}.pr-music-word{font-family:Impact,"Arial Black",system-ui,sans-serif;font-weight:1000;letter-spacing:-.045em;font-stretch:condensed;text-shadow:0 0 25px rgba(167,139,250,.42)}.pr-music-page .pr-music-mood-section{background:linear-gradient(180deg,rgba(139,92,246,.055),transparent)}.pr-music-action{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-action:hover,.pr-music-action:focus-visible{transform:translateY(-3px);border-color:rgba(196,181,253,.5);box-shadow:0 16px 35px rgba(124,58,237,.15)}.pr-music-action:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-playlist-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.pr-music-playlist-card:hover,.pr-music-playlist-card:focus-visible{transform:translateY(-4px);border-color:rgba(196,181,253,.5);box-shadow:0 12px 30px rgba(124,58,237,.13)}.pr-music-playlist-card:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}.pr-music-player{box-shadow:0 18px 50px rgba(124,58,237,.1),0 24px 70px rgba(0,0,0,.35)}.pr-music-grid{background-image:linear-gradient(rgba(167,139,250,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.05) 1px,transparent 1px);background-size:25px 25px;mask-image:linear-gradient(to bottom,black,transparent 90%)}.pr-music-headphones{animation:prMusicFloat 3.8s ease-in-out infinite}.pr-music-note{animation:prMusicNote 2.8s ease-in-out infinite alternate}.pr-music-wave span{animation:prMusicWave 900ms ease-in-out infinite alternate;transform-origin:center}.pr-music-heading{text-shadow:0 0 35px rgba(167,139,250,.25)}.pr-music-orbit{animation:prMusicOrbit 16s linear infinite}.pr-music-orbit:after{content:"";position:absolute;left:50%;top:-4px;width:8px;height:8px;border-radius:50%;background:#c4b5fd;box-shadow:0 0 16px #a78bfa}@keyframes prMusicWave{to{transform:scaleY(.35);opacity:.5}}@keyframes prMusicNote{to{transform:translateY(-10px) rotate(12deg)}}@keyframes prMusicOrbit{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pr-music-headphones,.pr-music-note,.pr-music-wave span,.pr-music-orbit{animation:none!important}}@keyframes prMusicEq{from{transform:scaleY(.34);opacity:.46}to{transform:scaleY(1);opacity:1}} @keyframes prMusicFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}`}</style>
 
-    <div className="overflow-hidden pb-12">
+    <div className="pr-music-page overflow-hidden pb-12">
       <section className="pr-music-hero relative mx-4 mt-4 overflow-hidden rounded-[36px] border border-violet-300/25 px-5 pb-6 pt-7 shadow-[0_30px_90px_rgba(0,0,0,.46)]" style={{background:`radial-gradient(circle at 75% 0%,${selectedPlaylist.glow},transparent 50%),radial-gradient(circle at 0% 100%,rgba(130,66,255,.18),transparent 55%),linear-gradient(145deg,#1a1429,#090b13 70%)`}}>
         <div className="pr-music-grid pointer-events-none absolute inset-0"/>
         <div className="pr-music-orbit pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border border-violet-300/20"/>
@@ -609,7 +609,7 @@ export default function MusicPage() {
             <span className="pr-music-note absolute -right-5 bottom-4 text-xl text-cyan-300">♪</span>
             <svg width="58" height="58" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="text-violet-200"><path d="M9 26v-5a15 15 0 0 1 30 0v5"/><rect x="6" y="24" width="9" height="17" rx="4"/><rect x="33" y="24" width="9" height="17" rx="4"/></svg>
           </div>
-          <h1 className="pr-music-heading mt-5 font-display text-[clamp(44px,12vw,72px)] font-black leading-none tracking-[-.055em] text-white">PR <span className="text-violet-300">MUSIC</span></h1>
+          <h1 className="pr-music-heading mt-5 font-display text-[clamp(44px,12vw,72px)] font-black leading-none tracking-[-.055em] text-white">PR <span className="pr-music-word text-violet-300">MUSIC</span></h1>
           <p className="mx-auto mt-3 max-w-[320px] text-[13px] leading-6 text-white/75">Tu música. Tu energía. Tu forma de rodar. Elegí cómo te sentís, descubrí playlists y escuchalas sin salir de PR.</p>
           <div className="pr-music-wave mx-auto mt-5 flex h-9 items-center justify-center gap-[4px]" aria-hidden="true">{Array.from({length:29},(_,i)=><span key={i} style={{height:`${10+(i*13%26)}px`,animationDelay:`${i*70}ms`}} className="w-[3px] rounded-full bg-gradient-to-t from-violet-600 to-cyan-300"/>)}</div>
           <p className="mt-3 text-[10px] font-medium text-white/55">{dailyPhrase}</p>
@@ -626,7 +626,7 @@ export default function MusicPage() {
       </section>
 
       <section id="pr-music-player" className="pr-music-feature scroll-mt-24 px-4 pt-5"><div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">ESTACIÓN DE ESCUCHA</p><h2 className="mt-1 font-display text-2xl font-black text-white">Dale play a tu momento</h2></div><span className="rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1.5 text-[9px] font-bold text-violet-200">Spotify integrado</span></div>
-        <SpotifyPlayer playlist={selectedPlaylist} accent={selectedPlaylist.accent} isPlaying={isPlaying} setIsPlaying={setIsPlaying}/>
+        <SpotifyPlayer playlist={{...selectedPlaylist,accent:"#b9a4ff",glow:"rgba(167,139,250,.27)"}} accent="#b9a4ff" isPlaying={isPlaying} setIsPlaying={setIsPlaying}/>
       </section>
 
       <section className="pr-music-mood-section mt-8">
@@ -635,7 +635,7 @@ export default function MusicPage() {
           <p className="pb-1 text-[9px] text-white/22">Deslizá →</p>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MOODS.map((mood)=><MoodChip key={mood.id} mood={mood} selected={selectedMood===mood.id} accent={selectedPlaylist.accent} onClick={()=>selectMood(mood.id)}/>) }
+          {MOODS.map((mood)=><MoodChip key={mood.id} mood={mood} selected={selectedMood===mood.id} accent="#b9a4ff" onClick={()=>selectMood(mood.id)}/>) }
         </div>
       </section>
 
@@ -648,9 +648,9 @@ export default function MusicPage() {
           {orderedPlaylists.map((playlist)=>{
             const index=PLAYLISTS.findIndex((item)=>item.label===playlist.label)
             const selected=playlist.label===selectedPlaylist.label
-            return <button key={playlist.label} type="button" onClick={()=>selectPlaylist(playlist.label)} className={`pr-music-playlist-card w-[132px] flex-shrink-0 rounded-[25px] border p-2.5 text-left transition-all active:scale-[.97] ${selected?'border-white/20 bg-white/[.075]':'border-white/[.055] bg-white/[.02]'}`} style={{boxShadow:selected?`0 15px 38px ${playlist.glow}`:'none'}}>
+            return <button key={playlist.label} type="button" onClick={()=>selectPlaylist(playlist.label)} className={`pr-music-playlist-card w-[132px] flex-shrink-0 rounded-[25px] border p-2.5 text-left transition-all active:scale-[.97] ${selected?'border-white/20 bg-white/[.075]':'border-white/[.055] bg-white/[.02]'}`} style={{boxShadow:selected?"0 15px 38px rgba(167,139,250,.2)":'none'}}>
               <PlaylistArtwork playlist={playlist} index={index} compact/>
-              <p className="mt-2 truncate text-[8px] font-black uppercase tracking-[.12em]" style={{color:selected?playlist.accent:'rgba(255,255,255,.28)'}}>{playlist.badge}</p>
+              <p className="mt-2 truncate text-[8px] font-black uppercase tracking-[.12em]" style={{color:selected?"#c4b5fd":'rgba(255,255,255,.48)'}}>{playlist.badge}</p>
               <p className="mt-1 line-clamp-2 min-h-[32px] font-display text-[13px] font-black leading-tight text-white/88">{playlist.shortLabel}</p>
             </button>
           })}
@@ -658,11 +658,11 @@ export default function MusicPage() {
       </section>
 
       <section className="mx-4 mt-6">
-        <button type="button" onClick={()=>selectPlaylist(dailyPlaylist.label)} className="relative w-full overflow-hidden rounded-[28px] border border-white/[.075] p-4 text-left active:scale-[.99]" style={{background:`radial-gradient(circle at 92% 12%,${dailyPlaylist.glow},transparent 35%),linear-gradient(140deg,${dailyPlaylist.accentSoft},rgba(255,255,255,.018) 58%,rgba(0,0,0,.18))`}}>
+        <button type="button" onClick={()=>selectPlaylist(dailyPlaylist.label)} className="relative w-full overflow-hidden rounded-[28px] border border-white/[.075] p-4 text-left active:scale-[.99]" style={{background:"radial-gradient(circle at 92% 12%,rgba(167,139,250,.24),transparent 42%),linear-gradient(140deg,rgba(139,92,246,.16),rgba(255,255,255,.018) 58%,rgba(0,0,0,.18))"}}>
           <div className="relative flex items-center gap-3.5">
             <PlaylistArtwork playlist={dailyPlaylist} index={dailyIndex} compact/>
-            <div className="min-w-0 flex-1"><p className="text-[8px] font-black uppercase tracking-[.18em]" style={{color:dailyPlaylist.accent}}>🎧 Soundtrack de hoy</p><h3 className="mt-1 font-display text-lg font-black text-white">{dailyPlaylist.label}</h3><p className="mt-1 line-clamp-2 text-[10px] leading-4 text-white/38">{dailyPlaylist.recommendation}</p></div>
-            <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-[#08090c]" style={{background:dailyPlaylist.accent,boxShadow:`0 10px 24px ${dailyPlaylist.glow}`}}><PlayIcon size={14}/></span>
+            <div className="min-w-0 flex-1"><p className="text-[8px] font-black uppercase tracking-[.18em]" style={{color:"#c4b5fd"}}>🎧 Soundtrack de hoy</p><h3 className="mt-1 font-display text-lg font-black text-white">{dailyPlaylist.label}</h3><p className="mt-1 line-clamp-2 text-[10px] leading-4 text-white/38">{dailyPlaylist.recommendation}</p></div>
+            <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-[#08090c]" style={{background:"#b9a4ff",boxShadow:"0 10px 24px rgba(167,139,250,.25)"}}><PlayIcon size={14}/></span>
           </div>
         </button>
       </section>
@@ -679,7 +679,7 @@ export default function MusicPage() {
       <section className="pr-music-context mx-4 mt-5 rounded-[28px] border border-violet-300/15 bg-gradient-to-br from-violet-400/[.09] to-[#0b0c13] p-4">
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-[16px] border border-white/[.07] bg-white/[.035] text-lg">⚡</span>
-          <div><p className="text-[8px] font-black uppercase tracking-[.16em] text-white/27">Ideal para esta playlist</p><p className="mt-1 text-[12px] font-bold text-white/72">{selectedPlaylist.mood}</p><p className="mt-1 text-[10px] leading-5 text-white/35">{selectedPlaylist.when}</p><div className="mt-3"><EnergyDots value={selectedPlaylist.energy} accent={selectedPlaylist.accent}/></div></div>
+          <div><p className="text-[8px] font-black uppercase tracking-[.16em] text-white/27">Ideal para esta playlist</p><p className="mt-1 text-[12px] font-bold text-white/72">{selectedPlaylist.mood}</p><p className="mt-1 text-[10px] leading-5 text-white/35">{selectedPlaylist.when}</p><div className="mt-3"><EnergyDots value={selectedPlaylist.energy} accent="#b9a4ff"/></div></div>
         </div>
       </section>
 
