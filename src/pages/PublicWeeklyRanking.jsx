@@ -456,6 +456,10 @@ export default function PublicWeeklyRanking() {
           </div>
         </section>}
 
+          {unlockCampaign && montevideoToday().date < '2026-11-01' && <div className="rounded-[24px] border border-[#c9fb60]/25 bg-[#c9fb60]/[.065] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.15em] text-[#c9fb60]">LABORATORIO DE DISEÑO · NOVIEMBRE</p><h3 className="mt-1 text-lg font-black">Probá las recompensas antes del lanzamiento.</h3><p className="mt-2 text-[11px] leading-5 text-white/50">Activá una simulación de 580 km para ver los niveles desbloqueados y las cajas sorpresa. El desafío real sigue comenzando el 1.º de noviembre con 0 km.</p></div></div><button type="button" onClick={()=>setDesignDemo(v=>!v)} className="mt-4 min-h-11 w-full rounded-xl bg-[#c9fb60] px-4 py-2 text-xs font-black text-[#111419]">{designDemo ? '↩ VOLVER A VISTA REAL' : '👁 VER DEMO CON PREMIOS DESBLOQUEADOS'}</button></div>}
+          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01' && !designDemo} demo={montevideoToday().date < '2026-11-01' && designDemo} />
+
+
         {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-5 space-y-5">
 
 
@@ -472,8 +476,6 @@ export default function PublicWeeklyRanking() {
 
           {ranking.length > 0 && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/20 bg-[radial-gradient(circle_at_50%_0%,rgba(201,251,96,.12),transparent_48%),#14181b] p-5 sm:p-7"><div className="mb-5 flex items-center justify-between"><span className="text-[10px] font-black uppercase tracking-[.24em] text-[#c9fb60]">01 / LOS QUE MARCAN EL RITMO</span><span className="text-xl">🏆</span></div><Podium ranking={ranking} period={period} statuses={statuses} /></section>}
 
-          {unlockCampaign && montevideoToday().date < '2026-11-01' && <div className="rounded-[24px] border border-[#c9fb60]/25 bg-[#c9fb60]/[.065] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.15em] text-[#c9fb60]">LABORATORIO DE DISEÑO · NOVIEMBRE</p><h3 className="mt-1 text-lg font-black">Probá las recompensas antes del lanzamiento.</h3><p className="mt-2 text-[11px] leading-5 text-white/50">Activá una simulación de 580 km para ver los niveles desbloqueados y las cajas sorpresa. El desafío real sigue comenzando el 1.º de noviembre con 0 km.</p></div></div><button type="button" onClick={()=>setDesignDemo(v=>!v)} className="mt-4 min-h-11 w-full rounded-xl bg-[#c9fb60] px-4 py-2 text-xs font-black text-[#111419]">{designDemo ? '↩ VOLVER A VISTA REAL' : '👁 VER DEMO CON PREMIOS DESBLOQUEADOS'}</button></div>}
-          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01' && !designDemo} demo={montevideoToday().date < '2026-11-01' && designDemo} />
 
           {myRow && <section className="overflow-hidden rounded-[30px] border border-[#c9fb60]/25 bg-[radial-gradient(circle_at_100%_0%,rgba(201,251,96,.16),transparent_40%),#171d20] p-5">
             <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#c9fb60]">TU POSICIÓN · {periodLabel}</p>
