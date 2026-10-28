@@ -265,44 +265,41 @@ function PodiumDuel({ challenger, defender, gap }) {
   if (!challenger || !defender) return null
   const player = (row, rank) => <div className="relative z-10 flex min-w-0 flex-1 flex-col items-center">
     <div className="relative">
-      <div aria-hidden="true" className="absolute -inset-3 rounded-full bg-orange-500/20 blur-xl motion-safe:animate-pulse" />
-      <div aria-hidden="true" className="absolute -inset-2 rounded-full border-2 border-dashed border-orange-400/75 motion-safe:animate-[spin_9s_linear_infinite]" />
+      <div aria-hidden="true" className="absolute -inset-3 rounded-full bg-red-600/20 blur-xl motion-safe:animate-pulse" />
+      <div aria-hidden="true" className="absolute -inset-2 rounded-full border-2 border-dashed border-red-500/75 motion-safe:animate-[spin_9s_linear_infinite]" />
       <div aria-hidden="true" className="absolute -inset-1 rounded-full border border-[#c9fb60]/65 motion-safe:animate-[spin_6s_linear_infinite_reverse]" />
-      <div className="relative rounded-full border-[3px] border-orange-400 bg-[#1b1e1f] p-1 shadow-[0_0_25px_rgba(249,115,22,.38)]"><PodiumAvatar row={row} size="lg"/></div>
+      <div className="relative rounded-full border-[3px] border-red-500 bg-[#1b1e1f] p-1 shadow-[0_0_25px_rgba(220,38,38,.38)]"><PodiumAvatar row={row} size="lg"/></div>
       <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-2.5 py-1 text-[10px] font-black text-black shadow-[0_0_18px_rgba(201,251,96,.35)]">#{rank}</span>
     </div>
     <p className="mt-6 w-full truncate text-center text-xs font-black">{row.name}</p>
     <p className="mt-1 text-sm font-black text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
   </div>
-  return <section className="relative isolate overflow-hidden rounded-[30px] border border-orange-400/35 bg-[radial-gradient(ellipse_at_50%_100%,rgba(234,88,12,.33),transparent_70%),linear-gradient(145deg,#241d1a,#101418_75%)] p-5 shadow-[0_20px_60px_rgba(234,88,12,.10)] sm:p-7">
+  return <section className="relative isolate overflow-hidden rounded-[30px] border border-red-500/40 bg-[radial-gradient(ellipse_at_50%_100%,rgba(153,27,27,.32),transparent_70%),linear-gradient(145deg,#200e15,#101418_75%)] p-5 shadow-[0_20px_60px_rgba(185,28,28,.18)] sm:p-7">
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -bottom-32 left-1/2 h-64 w-[85%] -translate-x-1/2 rounded-full bg-orange-600/30 blur-[70px] motion-safe:animate-pulse" />
-      <div className="absolute bottom-0 left-0 h-36 w-full bg-gradient-to-t from-orange-600/20 via-amber-500/5 to-transparent" />
-      <svg className="absolute inset-x-0 bottom-0 h-[75%] w-full opacity-70" viewBox="0 0 900 330" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs><linearGradient id="duelFlameGradient" x1="0" y1="330" x2="0" y2="35" gradientUnits="userSpaceOnUse"><stop stopColor="#ea580c" stopOpacity=".75"/><stop offset=".38" stopColor="#f97316" stopOpacity=".35"/><stop offset="1" stopColor="#fbbf24" stopOpacity="0"/></linearGradient><filter id="duelFlameSoft"><feGaussianBlur stdDeviation="13"/></filter></defs>
-        <g filter="url(#duelFlameSoft)"><path className="origin-bottom motion-safe:animate-[pulse_2.8s_ease-in-out_infinite]" d="M0 330V210C90 260 112 98 171 74C150 170 257 207 277 330Z" fill="url(#duelFlameGradient)"/><path className="origin-bottom motion-safe:animate-[pulse_3.7s_ease-in-out_infinite]" d="M900 330V180C811 241 802 80 728 52C760 157 655 221 640 330Z" fill="url(#duelFlameGradient)"/><path className="motion-safe:animate-[pulse_4.3s_ease-in-out_infinite]" d="M180 330C230 241 300 265 341 145C363 234 448 236 475 330Z" fill="url(#duelFlameGradient)"/><path className="motion-safe:animate-[pulse_3.1s_ease-in-out_infinite]" d="M490 330C546 246 581 250 611 143C644 244 716 262 740 330Z" fill="url(#duelFlameGradient)"/></g>
-      </svg>
-      <div className="absolute bottom-0 h-24 w-full bg-[linear-gradient(to_top,rgba(249,115,22,.19),transparent)] motion-safe:animate-pulse" />
-      <svg aria-hidden="true" viewBox="0 0 900 330" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-70">
-        <defs><filter id="duelSparkGlow"><feGaussianBlur stdDeviation="2.5" result="soft"/><feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-        <g fill="#fbbf24" filter="url(#duelSparkGlow)">
-          <circle cx="96" cy="265" r="2.5" className="motion-safe:animate-[ping_3.7s_ease-in-out_infinite]"/>
-          <circle cx="190" cy="204" r="1.8" className="motion-safe:animate-[ping_4.1s_ease-in-out_infinite]"/>
-          <circle cx="308" cy="276" r="2.2" className="motion-safe:animate-[ping_3.3s_ease-in-out_infinite]"/>
-          <circle cx="575" cy="257" r="2.2" className="motion-safe:animate-[ping_4.6s_ease-in-out_infinite]"/>
-          <circle cx="734" cy="192" r="2" className="motion-safe:animate-[ping_3.9s_ease-in-out_infinite]"/>
-          <circle cx="826" cy="278" r="2.7" className="motion-safe:animate-[ping_4.3s_ease-in-out_infinite]"/>
-        </g>
-        <g stroke="#fb923c" strokeWidth="1.5" strokeLinecap="round" opacity=".65">
-          <path d="M110 235l7 -14M225 277l9 -19M674 270l-7 -15M796 230l-9 -16" className="motion-safe:animate-[pulse_2.4s_ease-in-out_infinite]"/>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_115%,rgba(185,16,32,.52),transparent_70%)]" />
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 900 440" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="prRedFireOuter" x1="0" y1="440" x2="0" y2="35" gradientUnits="userSpaceOnUse"><stop stopColor="#9f0716"/><stop offset=".3" stopColor="#e11d2e" stopOpacity=".94"/><stop offset=".67" stopColor="#ef4444" stopOpacity=".56"/><stop offset="1" stopColor="#fb7185" stopOpacity="0"/></linearGradient>
+          <linearGradient id="prRedFireInner" x1="0" y1="440" x2="0" y2="100" gradientUnits="userSpaceOnUse"><stop stopColor="#ff6b35"/><stop offset=".32" stopColor="#fb233f"/><stop offset=".8" stopColor="#ef4444" stopOpacity=".3"/><stop offset="1" stopColor="#ef4444" stopOpacity="0"/></linearGradient>
+          <filter id="prRedFireMotion" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".012 .026" numOctaves="3" seed="8" result="noise"><animate attributeName="baseFrequency" values=".012 .026;.018 .038;.012 .026" dur="5s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="noise" scale="27" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="prRedFireGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="24"/></filter>
+        </defs>
+        <g opacity=".65" filter="url(#prRedFireGlow)" fill="#e11d48"><ellipse cx="120" cy="405" rx="180" ry="135"/><ellipse cx="770" cy="405" rx="195" ry="145"/><ellipse cx="460" cy="450" rx="255" ry="90"/></g>
+        <g filter="url(#prRedFireMotion)">
+          <path d="M-40 460L-40 310C35 346 50 232 76 178C83 262 135 284 140 225C171 136 160 101 188 64C193 156 275 205 245 295C302 259 312 190 328 167C340 272 395 322 420 460Z" fill="url(#prRedFireOuter)" opacity=".92"/>
+          <path d="M940 460L940 300C870 346 864 228 833 151C816 244 771 271 761 214C742 144 739 107 716 56C713 166 626 208 657 302C601 261 586 186 575 163C562 282 510 330 489 460Z" fill="url(#prRedFireOuter)" opacity=".95"/>
+          <path d="M-20 460C46 372 65 359 88 257C116 349 148 357 161 309C189 258 198 210 202 168C226 302 305 352 349 460Z" fill="url(#prRedFireInner)" opacity=".8"/>
+          <path d="M920 460C849 374 835 361 816 253C783 346 758 365 742 312C711 253 704 208 696 159C674 303 598 357 558 460Z" fill="url(#prRedFireInner)" opacity=".85"/>
+          <path d="M200 460C285 401 296 336 315 274C339 365 368 387 397 331C420 291 425 249 439 209C458 333 526 389 591 460Z" fill="url(#prRedFireOuter)" opacity=".45"/>
         </g>
       </svg>
-      <span className="absolute left-[18%] top-[28%] text-lg text-orange-300/70 motion-safe:animate-ping [animation-duration:3s]">✦</span>
-      <span className="absolute right-[15%] top-[37%] text-xl text-amber-300/65 motion-safe:animate-pulse">✦</span>
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#b91c1c]/35 to-transparent" />
+      <div className="absolute left-[8%] top-[24%] h-1 w-1 rounded-full bg-rose-300 shadow-[0_0_14px_5px_rgba(244,63,94,.45)] motion-safe:animate-ping [animation-duration:3.5s]" />
+      <div className="absolute right-[12%] top-[31%] h-1 w-1 rounded-full bg-red-300 shadow-[0_0_12px_4px_rgba(248,113,113,.5)] motion-safe:animate-ping [animation-duration:4.2s]" />
     </div>
     <div className="relative">
-      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-orange-300">✦ BATALLA POR EL PODIO ✦</p>
-      <h2 className="mt-2 text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-orange-400">está en juego</span></h2>
+      <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-rose-300">✦ BATALLA POR EL PODIO ✦</p>
+      <h2 className="mt-2 text-center text-[clamp(20px,5vw,31px)] font-black uppercase italic leading-tight text-[#f3f1e9]">El próximo puesto <span className="text-red-500">está en juego</span></h2>
       <div className="mt-8 flex items-center gap-2 sm:gap-5">
         {player(defender,3)}
         <div className="relative z-10 shrink-0 text-center">
