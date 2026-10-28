@@ -306,7 +306,6 @@ export default function PublicWeeklyRanking() {
   const [octoberResult, setOctoberResult] = useState(null)
   const [octoberSnapshot, setOctoberSnapshot] = useState(null)
   const [unlockResult, setUnlockResult] = useState(null)
-  const [designDemo, setDesignDemo] = useState(false)
   function changePeriod(next) {
     setPeriod(next)
     setParams({ period: next })
@@ -458,8 +457,7 @@ export default function PublicWeeklyRanking() {
           </div>
         </section>}
 
-          {unlockCampaign && montevideoToday().date < '2026-11-01' && <div className="rounded-[24px] border border-[#c9fb60]/25 bg-[#c9fb60]/[.065] p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.15em] text-[#c9fb60]">LABORATORIO DE DISEÑO · NOVIEMBRE</p><h3 className="mt-1 text-lg font-black">Probá las recompensas antes del lanzamiento.</h3><p className="mt-2 text-[11px] leading-5 text-white/50">Activá una simulación de 580 km para ver los niveles desbloqueados y las cajas sorpresa. El desafío real sigue comenzando el 1.º de noviembre con 0 km.</p></div></div><button type="button" onClick={()=>setDesignDemo(v=>!v)} className="mt-4 min-h-11 w-full rounded-xl bg-[#c9fb60] px-4 py-2 text-xs font-black text-[#111419]">{designDemo ? '↩ VOLVER A VISTA REAL' : '👁 VER DEMO CON PREMIOS DESBLOQUEADOS'}</button></div>}
-          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01' && !designDemo} demo={montevideoToday().date < '2026-11-01' && designDemo} />
+          <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01'} demo={false} />
 
 
         {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-5 space-y-5">
