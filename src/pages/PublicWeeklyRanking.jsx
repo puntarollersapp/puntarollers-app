@@ -153,6 +153,30 @@ function ProgressWheel({ pct, totalKm, maxTarget, targets = [] }) {
   </div>
 }
 
+function HallOfChampions({ octoberResult, novemberResult }) {
+  const editions = [
+    { key: 'october', name: 'OCTUBRE 2026', result: octoberResult, end: '2026-10-31' },
+    { key: 'november', name: 'NOVIEMBRE 2026', result: novemberResult, end: '2026-11-30' },
+  ]
+  const today = montevideoToday().date
+  const champions = editions.filter(({result,end}) => today > end && result?.finalized_at && result?.winner_profile_id)
+  if (!champions.length) return null
+  return <section aria-label="Hall of Champions de PR Unlock" className="relative overflow-hidden rounded-[32px] border border-[#c9fb60]/25 bg-[radial-gradient(ellipse_at_85%_0%,rgba(201,251,96,.13),transparent_45%),linear-gradient(145deg,#1b2322,#0d1216)] p-5 shadow-[0_25px_65px_rgba(0,0,0,.25)] sm:p-7">
+    <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full border border-[#c9fb60]/15" aria-hidden="true" />
+    <div className="relative"><p className="text-[10px] font-black uppercase tracking-[.25em] text-[#c9fb60]">PR UNLOCK · LEGADO</p>
+      <h2 className="mt-2 text-[clamp(27px,7vw,42px)] font-black uppercase italic leading-none text-[#f3f1e9]">HALL OF <span className="text-[#c9fb60]">CHAMPIONS.</span></h2>
+      <p className="mt-3 max-w-lg text-xs leading-5 text-white/50">Hay kilómetros que se recorren. Y nombres que quedan en la historia.</p>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">{champions.map(({key,name,result})=><article key={key} className="relative overflow-hidden rounded-[26px] border border-[#c9fb60]/20 bg-black/25 p-5">
+        <div className="flex items-center justify-between gap-2"><span className="text-[9px] font-black uppercase tracking-[.17em] text-[#c9fb60]">{name}</span><span className="rounded-full border border-[#c9fb60]/25 bg-[#c9fb60]/10 px-2.5 py-1 text-[8px] font-black text-[#c9fb60]">CAMPEÓN OFICIAL</span></div>
+        <div className="mt-5 flex items-center gap-4"><div className="relative shrink-0">{result.winner_photo?<img src={result.winner_photo} alt={result.winner_name||'Campeón'} className="h-20 w-20 rounded-full border-[3px] border-[#c9fb60]/50 object-cover shadow-[0_0_28px_rgba(201,251,96,.15)]"/>:<div className="grid h-20 w-20 place-items-center rounded-full border-[3px] border-[#c9fb60]/50 bg-[#c9fb60]/10 text-xl font-black">{initials(result.winner_name)}</div>}<span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-3 py-1 text-[9px] font-black text-[#121719]">#1</span></div>
+          <div className="min-w-0"><h3 className="truncate text-xl font-black text-[#f3f1e9]">{result.winner_name||'Campeón PR'}</h3><p className="mt-1 text-lg font-black text-[#c9fb60]">{Number(result.winner_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} <span className="text-xs">km</span></p><p className="mt-1 text-[10px] text-white/40">Nivel {result.unlocked_level||0} · {Number(result.group_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km colectivos</p></div></div>
+        <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-[#c9fb60]/15 bg-[#c9fb60]/[.055] p-3"><span className="text-xl" aria-hidden="true">🏆</span><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-white/40">Premio conseguido</p><p className="mt-1 text-sm font-black text-[#f3f1e9]">{result.prize_title||'Misión completada'}</p></div></div>
+      </article>)}</div>
+      <p className="mt-5 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/25">El esfuerzo se recuerda. El legado permanece.</p>
+    </div>
+  </section>
+}
+
 function PRUnlock({ campaign, ranking = [], result, preview = false, demo = false }) {
   if (!campaign) return null
   const campaignRanking = ranking
@@ -458,6 +482,7 @@ export default function PublicWeeklyRanking() {
         </section>}
 
           <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01'} demo={false} />
+          <HallOfChampions octoberResult={octoberResult} novemberResult={unlockResult} />
 
 
         {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-5 space-y-5">
