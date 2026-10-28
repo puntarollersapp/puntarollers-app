@@ -62,7 +62,7 @@ export default function Home() {
 
   const isLoggedIn = Boolean(user)
   const isStaff = user?.role === 'admin' || user?.role === 'profesor'
-  const privateDestination = isStaff ? '/admin' : '/app/dashboard'
+  const privateDestination = '/app/perfil'
 
   useEffect(() => {
     if (!window.location.hash) return
