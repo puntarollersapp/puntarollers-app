@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
 export function usePRCardBenefits(enabled) {
-  const [result, setResult] = useState({ benefits: [], loading: false, eligible: false })
+  const [result, setResult] = useState({ benefits: [], loading: false, eligible: false, error: false })
   useEffect(() => {
     let cancelled = false
     if (!enabled) {
-      setResult({ benefits: [], loading: false, eligible: false })
+      setResult({ benefits: [], loading: false, eligible: false, error: false })
       return
     }
-    setResult({ benefits: [], loading: true, eligible: false })
+    setResult({ benefits: [], loading: true, eligible: false, error: false })
     supabase.functions.invoke('prcard-benefits', { method: 'GET' })
       .then(({ data, error }) => {
         if (cancelled) return
@@ -18,10 +18,11 @@ export function usePRCardBenefits(enabled) {
           eligible,
           benefits: eligible && Array.isArray(data?.benefits) ? data.benefits : [],
           loading: false,
+          error: Boolean(error) || !data || typeof data.eligible !== 'boolean',
         })
       })
       .catch(() => {
-        if (!cancelled) setResult({ benefits: [], loading: false, eligible: false })
+        if (!cancelled) setResult({ benefits: [], loading: false, eligible: false, error: true })
       })
     return () => { cancelled = true }
   }, [enabled])
