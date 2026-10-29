@@ -10,7 +10,7 @@ const screens=[
 export default function LaunchWelcome(){
  const {user}=useAuth(),navigate=useNavigate(),[step,setStep]=useState(0),[hidden,setHidden]=useState(false)
  const key=VERSION+':'+user?.id
- const [seen,setSeen]=useState(()=>{try{return Boolean(user?.id&&localStorage.getItem(VERSION+':'+user.id))}catch{return true}})
+ let seen=true;try{seen=Boolean(user?.id&&localStorage.getItem(key))}catch{seen=true}
  if(!user?.id||seen||hidden)return null
  const item=screens[step]
  function close(){try{localStorage.setItem(key,'1')}catch{}setHidden(true);navigate('/app/perfil',{replace:true})}

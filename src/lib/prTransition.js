@@ -1,4 +1,6 @@
 // Presentation-only transition. Public pages, databases and integrations stay unchanged.
+// Manual launch switch: keep false until Claudio explicitly authorizes the public release.
+export const PR_PUBLIC_LAUNCH_ENABLED = false
 export const TRANSITION_ENABLED = true
 export const TRANSITION_END = Date.parse('2026-11-01T15:00:00-03:00')
 const NEW_ACCOUNT_CUTOFF = Date.parse('2026-10-27T00:00:00-03:00')
@@ -12,7 +14,7 @@ function isNewAccountDuringTesting(user) {
 }
 
 export function isTransitionStudent(user) {
-  return TRANSITION_ENABLED && Date.now() < TRANSITION_END && Boolean(user?.id) && user?.role !== 'familiar' &&
+  return TRANSITION_ENABLED && !PR_PUBLIC_LAUNCH_ENABLED && Boolean(user?.id) && user?.role !== 'familiar' &&
     !STAFF_PROFILE_IDS.has(String(user.id)) && !isNewAccountDuringTesting(user)
 }
 export function isTransitionPrivatePath(path) {
