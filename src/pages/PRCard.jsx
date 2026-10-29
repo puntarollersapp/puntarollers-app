@@ -202,7 +202,7 @@ export default function PRCardPage() {
           </div>
         </div>
 
-        <PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} />
+        <div id="beneficios-prcard"><PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} /></div>
 
         {cardVerified ? (
           <div
@@ -216,25 +216,14 @@ export default function PRCardPage() {
             <div>
               <p className="section-label">Plataforma externa</p>
               <h2 className="text-white text-xl font-semibold mt-2">
-                Acceder a mi PRCard
+                Tu PR Card está integrada
               </h2>
               <p className="text-white/45 text-sm mt-2">
-                Consultá comercios adheridos, beneficios disponibles y detalles actualizados de tu tarjeta.
+                Consultá tus comercios y descuentos directamente en Punta Rollers, sin cambiar de plataforma.
               </p>
             </div>
 
-            <a
-              href={u.prcard?.link || 'https://puntarollerscard.com/'}
-              target="_blank"
-              rel="noreferrer"
-              className="block w-full rounded-2xl py-4 text-center text-sm font-bold active:scale-[0.98]"
-              style={{
-                background: '#C9A84C',
-                color: '#08080d',
-              }}
-            >
-              Ir a mi PRCard
-            </a>
+            <a href="#beneficios-prcard" className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] active:scale-[0.98]">Ver mis beneficios</a>
           </div>
         ) : (
           <div
