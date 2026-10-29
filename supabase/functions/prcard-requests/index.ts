@@ -4,6 +4,7 @@ const json = (value: unknown, status = 200) => new Response(JSON.stringify(value
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   if (!['GET', 'POST'].includes(req.method)) return json({ error: 'Method not allowed' }, 405)
+  if (req.method === 'POST' && !req.headers.get('content-type')?.toLowerCase().includes('application/json')) return json({ error: 'JSON required' }, 415)
   const token = req.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1]
   if (!token) return json({ error: 'Authentication required' }, 401)
   const url = Deno.env.get('SUPABASE_URL')
@@ -45,6 +46,9 @@ Deno.serve(async (req: Request) => {
   }
   if (body.action !== 'request') return json({ error: 'Invalid action' }, 400)
   if (profile.prcard_activa) return json({ error: 'Already a member' }, 409)
+  const { data: links, error: linksError } = await admin.from('prcard_membership_links').select('id,review_status,card_status').eq('profile_id', profile.id).limit(5)
+  if (linksError) return json({ error: 'Membership status unavailable' }, 503)
+  if (links?.some(link => link.review_status === 'verified' && link.card_status === 'active')) return json({ error: 'Already a verified member' }, 409)
   const firstName = String(profile.nombre || '').trim()
   const lastName = String(profile.apellido || '').trim()
   const document = String(profile.documento || '').trim()
