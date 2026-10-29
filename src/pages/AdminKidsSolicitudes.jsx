@@ -24,7 +24,7 @@ export default function AdminKidsSolicitudes(){
  const publishKidAlbum=async()=>{setAlbumBusy(true);setAlbumNotice('');try{
  if(albumTitle.trim().length<3||!albumChildIds.length||!albumFiles.length)throw Error('Ingresá título, elegí niños y fotos.')
  if(albumFiles.some(f=>!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>10485760))throw Error('Solo JPG, PNG o WEBP hasta 10 MB.')
- const result=await invoke({action:'album-create',title:albumTitle,child_ids:albumChildIds,photo_count:albumFiles.length})
+ const result=await invoke({action:'album-create',title:albumTitle,child_ids:albumChildIds,photo_count:albumFiles.length,photo_types:albumFiles.map(f=>f.type)})
  for(let i=0;i<albumFiles.length;i++){const item=result.uploads[i];const {error}=await supabase.storage.from('pr-kids-albums').uploadToSignedUrl(item.path,item.token,albumFiles[i],{contentType:albumFiles[i].type});if(error)throw error;await invoke({action:'album-photo-confirm',album_id:result.album_id,path:item.path})}
  await invoke({action:'album-publish',album_id:result.album_id})
  setAlbumNotice('Álbum publicado para '+albumChildIds.length+' niños.');setAlbumTitle('');setAlbumFiles([]);setAlbumChildIds([])
