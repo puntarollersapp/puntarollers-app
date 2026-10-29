@@ -729,7 +729,8 @@ export default function Profile() {
   }, [profileId, location.search])
 
   const prFramesIsAdmin = base.role === 'admin'
-  const prFramesEquipped = avatarObject(profileAvatar.frames).equipped || 'original'
+  const prFramesEquippedSaved = avatarObject(profileAvatar.frames).equipped || 'original'
+  const prFramesEquipped = prFrames.find(frame => frame.id === prFramesEquippedSaved && frame.unlocked) ? prFramesEquippedSaved : 'original'
 
   async function refreshPrFrames() {
     const [attendance, sports] = await Promise.all([
