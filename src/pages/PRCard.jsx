@@ -69,8 +69,8 @@ export default function PRCardPage() {
 
   const prcardActive = Boolean(u.prcardActiva || u.prcard?.activa)
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
-  const cardVerified = prcardActive && prcardBenefits.eligible
-  const cardChecking = prcardActive && (loading || prcardBenefits.loading)
+  const cardVerified = !profileError && prcardActive && prcardBenefits.eligible
+  const cardChecking = !profileError && prcardActive && (loading || prcardBenefits.loading)
   const cardStatus = profileError || prcardBenefits.error ? 'NO DISPONIBLE' : cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
 
   return (
