@@ -5,6 +5,7 @@ export default function PRCardMembershipAudit() {
   const [data,setData] = useState(null)
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState('')
+  const [search,setSearch] = useState('')
   async function refresh() {
     setLoading(true)
     setError('')
@@ -25,7 +26,8 @@ export default function PRCardMembershipAudit() {
     {data && !loading && <><div className="grid grid-cols-2 gap-3">
       {[['Tarjetas marcadas activas',data.summary.flagged],['Vínculos verificados',data.summary.verified],['Por revisar',data.summary.withoutVerifiedLink],['Beneficios activos',data.summary.activeBenefits]].map(([label,value])=><div key={label} className="rounded-xl bg-black/25 p-3"><p className="text-2xl font-bold text-yellow-200">{value}</p><p className="text-xs text-white/60">{label}</p></div>)}
     </div><h3 className="font-semibold text-white">Perfiles activos sin vínculo verificado</h3>
-    {data.pending.length === 0 ? <p className="text-sm text-emerald-200">No hay perfiles pendientes de vinculación.</p> : <div className="max-h-80 space-y-2 overflow-y-auto">{data.pending.map(p=><div key={p.profile_id} className="rounded-lg border border-white/10 p-3"><p className="text-sm text-white">{p.name}</p><p className="break-all text-xs text-white/40">Perfil: {p.profile_id}</p></div>)}</div>}
-    <p className="text-xs text-white/50">Para habilitar descuentos se requiere verificar la identidad y la membresía original. No se utiliza el nombre como prueba de coincidencia.</p></>}
+    <label className="block text-xs text-white/60">Buscar perfil pendiente<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Nombre o identificador" className="mt-2 w-full rounded-xl border border-white/20 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-white/30" /></label>
+    {data.pending.length === 0 ? <p className="text-sm text-emerald-200">No hay perfiles pendientes de vinculación.</p> : <div className="max-h-80 space-y-2 overflow-y-auto">{data.pending.filter(p => (p.name + ' ' + p.profile_id).toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))).map(p=><div key={p.profile_id} className="rounded-lg border border-white/10 p-3"><p className="text-sm text-white">{p.name}</p><p className="break-all text-xs text-white/40">Perfil: {p.profile_id}</p></div>)}</div>}
+    <p className="text-xs text-white/50">Para habilitar descuentos se requiere verificar la identidad y la membresía original. No se utiliza el nombre como prueba de coincidencia. Los perfiles sin coincidencia documental, telefónica ni por correo deben revisarse individualmente con documentación comprobable antes de cualquier vinculación.</p></>}
   </section>
 }
