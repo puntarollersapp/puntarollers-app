@@ -11,6 +11,7 @@ export default function PRCardBenefitsAdmin() {
   const [filter,setFilter] = useState('all')
   const [search,setSearch] = useState('')
   const [notice,setNotice] = useState('')
+  const withoutValidity = items.filter(item => item.active && !String(item.valid_until_label || '').trim()).length
   const visibleItems = items.filter(item => (filter === 'all' || (filter === 'active' ? item.active : !item.active)) && [item.commerce,item.title,item.category].some(value => String(value || '').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))).sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0) || a.id - b.id)
   async function load() {
     setLoading(true)
@@ -42,6 +43,7 @@ export default function PRCardBenefitsAdmin() {
       <button type="button" onClick={load} className="text-sm text-yellow-200 underline">Actualizar</button>
     </div>
     <p className="text-sm text-white/60">Administrá la visibilidad y el orden del catálogo central. Los cambios requieren confirmación del servidor.</p>
+    {!loading && !error && withoutValidity > 0 && <p role="status" className="rounded-xl border border-amber-300/25 bg-amber-300/5 p-3 text-sm text-amber-100">Atención: {withoutValidity} beneficios visibles no tienen una vigencia registrada. Confirmá las condiciones con cada comercio y completá la vigencia en «Editar información». No se cambió su estado automáticamente.</p>}
     {loading && <p role="status" className="text-sm text-white/50">Cargando comercios…</p>}
     {notice && <p role="status" className="text-sm text-emerald-200">{notice}</p>}
     {error && <p role="alert" className="text-sm text-amber-200">{error}</p>}
@@ -55,6 +57,7 @@ export default function PRCardBenefitsAdmin() {
           <div className="min-w-0 flex-1"><p className="font-semibold text-white">{item.commerce}</p><p className="text-xs text-white/60">{item.title}</p></div>
           <span className={item.active ? 'text-xs text-emerald-200' : 'text-xs text-white/40'}>{item.active ? 'Visible' : 'Oculto'}</span>
         </div>
+        {item.active && !String(item.valid_until_label || '').trim() && <p className="mt-2 text-xs text-amber-200">Vigencia sin confirmar</p>}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button type="button" onClick={()=>{setEditing(item.id);setDraft({commerce:item.commerce||'',title:item.title||'',description:item.description||'',redeem:item.redeem||'',category:item.category||'',valid_until_label:item.valid_until_label||'',logo_url:item.logo_url||'',phone:item.phone||'',social:item.social||''})}} className="rounded-lg border border-yellow-300/30 px-3 py-2 text-xs text-yellow-200">Editar información</button>
           <button type="button" disabled={busy === item.id} onClick={()=>update(item.id,{active:!item.active})} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">{item.active ? 'Ocultar' : 'Activar'}</button>
