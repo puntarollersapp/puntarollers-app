@@ -7,8 +7,6 @@ import PRCardBenefitsCarousel from '../components/prcard/PRCardBenefitsCarousel'
 import { usePRCardBenefits } from '../lib/usePRCardBenefits'
 import { usePRCardRequests } from '../lib/usePRCardRequests'
 
-const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-' // Temporal hasta habilitar solicitudes internas
-
 function loadSavedUser() {
   try {
     const saved = localStorage.getItem('pr_user')
@@ -257,6 +255,8 @@ export default function PRCardPage() {
             <p className="text-amber-100 font-semibold">Tu membresía está en verificación</p>
             <p className="text-sm text-white/60">Todavía no podemos habilitar tus descuentos. El equipo de Punta Rollers debe confirmar tu tarjeta antes de activarlos.</p>
           </div>
+        ) : requests.loading ? (
+          <div role="status" className="rounded-2xl border border-white/10 p-5 text-sm text-white/60">Consultando el estado de tu solicitud…</div>
         ) : pendingRequest ? (
           <div role="status" className="rounded-3xl border border-yellow-300/20 bg-yellow-300/5 p-5 text-sm text-yellow-100">Tu solicitud de PR Card está pendiente de revisión. No necesitás enviarla nuevamente.</div>
         ) : (
@@ -283,7 +283,8 @@ export default function PRCardPage() {
             <button type="button" disabled={requestSaving || requests.loading || Boolean(requests.error) || requestProfileIncomplete} onClick={requestCard} className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] disabled:opacity-50">
               {requestSaving ? 'Enviando solicitud…' : 'Solicitar mi tarjeta de beneficios'}
             </button>
-            {requests.error && <p role="alert" className="text-sm text-amber-100">La solicitud interna todavía no está disponible. <a href={PRCARD_REQUEST_URL} target="_blank" rel="noreferrer" className="underline">Abrir formulario actual</a>.</p>}
+            {requests.error && <p role="alert" className="text-sm text-amber-100">No pudimos comprobar si ya tenés una solicitud. Por seguridad, no enviaremos otra hasta recuperar la conexión.</p>}
+            {requests.requests.some(item => item.status === 'approved') && <p className="text-sm text-emerald-200">Tu solicitud fue aprobada. Falta verificar la vinculación de tu membresía antes de habilitar los beneficios.</p>}
           </div>
         )}
 
