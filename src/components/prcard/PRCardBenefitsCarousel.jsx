@@ -37,22 +37,22 @@ export default function PRCardBenefitsCarousel({ benefits = [], cardActive = fal
         </div>
         <span className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[.13em] ${cardActive && verified ? 'border-emerald-300/35 bg-emerald-400/10 text-emerald-200' : 'border-yellow-300/25 bg-yellow-300/[.07] text-yellow-100'}`}>
           <span aria-hidden="true" className={`h-2 w-2 rounded-full ${cardActive && verified ? 'bg-emerald-300' : 'bg-yellow-300'}`}/>
-          {cardActive && verified ? 'Tu PR Card está activa' : cardActive ? 'Tarjeta en verificación' : 'Solicitá tu PR Card'}
+          {cardActive && verified ? 'Tu PR Card está activa' : cardActive ? 'Tarjeta en verificación' : 'PR Card inactiva'}
         </span>
         <p className="mt-5 text-[10px] font-bold uppercase tracking-[.24em] text-white/40">DESCUBRÍ TUS BENEFICIOS</p>
         <span aria-hidden="true" className="mt-2 text-xl text-[#e8c77a]">⌄</span>
       </div>
       <style>{`@keyframes prcardFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(-1deg)}}@keyframes prcardShine{0%,28%{transform:translateX(-150%)}55%,100%{transform:translateX(170%)}}@keyframes prcardGlow{50%{opacity:.5;transform:translateX(-50%) scale(1.15)}}.prcard-showcase-card{animation:prcardFloat 4.2s ease-in-out infinite}.prcard-showcase-shine{background:linear-gradient(105deg,transparent 30%,rgba(255,245,204,.22) 48%,transparent 65%);animation:prcardShine 5s ease-in-out infinite}.prcard-showcase-glow{animation:prcardGlow 4s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.prcard-showcase-card,.prcard-showcase-shine,.prcard-showcase-glow{animation:none!important}}`}</style>
-      {!cardActive ? (
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/65">
-          Todavía no tenés una PR Card activa. <Link to="/app/prcard" className="font-semibold text-yellow-200 underline underline-offset-4">Solicitar mi tarjeta de beneficios</Link>.
-        </div>
-      ) : loading ? (
+      {!verified && <div className="mb-5 rounded-[22px] border border-yellow-300/25 bg-gradient-to-br from-yellow-300/[.11] to-black/25 p-5 text-center">
+        <p className="text-[10px] font-black uppercase tracking-[.2em] text-yellow-200/75">{cardActive ? 'MEMBRESÍA EN VERIFICACIÓN' : 'TU PR CARD ESTÁ INACTIVA'}</p>
+        <p className="mx-auto mt-2 max-w-sm text-base font-bold leading-6 text-white">Muy pronto podés disfrutar los beneficios que Punta Rollers tiene para vos.</p>
+        <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-white/55">Explorá los descuentos y comercios disponibles. Para utilizarlos necesitás tu PR Card activa y verificada.</p>
+        <Link to="/app/prcard" className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-yellow-300 px-5 py-2.5 text-xs font-black text-[#17140b]">{cardActive ? 'Ver estado de mi tarjeta →' : 'Solicitar mi PR Card →'}</Link>
+      </div>}
+      {loading ? (
         <p className="py-5 text-sm text-white/50" role="status">Cargando beneficios…</p>
       ) : error ? (
-        <p role="alert" className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm text-amber-100">No pudimos consultar los beneficios en este momento. Tu membresía no cambió; volvé a intentarlo más tarde.</p>
-      ) : !verified ? (
-        <p className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/60">Estamos verificando tu membresía para mostrar los beneficios disponibles.</p>
+        <p role="alert" className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm text-amber-100">No pudimos consultar el catálogo en este momento. Tu membresía no cambió; volvé a intentarlo más tarde.</p>
       ) : activeBenefits.length ? (
         <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3" aria-label="Deslizá para ver beneficios">
           {activeBenefits.map((item) => (
@@ -65,14 +65,14 @@ export default function PRCardBenefitsCarousel({ benefits = [], cardActive = fal
               {commerceDescription(item) && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/45">{commerceDescription(item)}</p>}
               {item.description && <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-white/60">{item.description}</p>}
               {item.until && <p className="mt-3 text-[11px] text-white/45">Vigencia: {item.until}</p>}
-              {item.redeem && <p className="mt-2 text-xs text-white/70">{item.redeem}</p>}
+              {verified && item.redeem && <p className="mt-2 text-xs text-white/70">{item.redeem}</p>}
             </button>
           ))}
         </div>
       ) : (
         <p className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/60">Todavía no hay beneficios disponibles para mostrar.</p>
       )}
-      <Link to="/app/prcard" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-yellow-200">Explorar mi PR Card <span aria-hidden="true">→</span></Link>
+      <Link to="/app/prcard" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-yellow-200">{verified ? 'Explorar mi PR Card' : 'Conocer PR Card'} <span aria-hidden="true">→</span></Link>
       {selectedBenefit && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedBenefit(null) }}>
           <div role="dialog" aria-modal="true" aria-label={`Beneficio ${shortCommerce(selectedBenefit)}`} className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-yellow-300/20 bg-[#171b19] p-5 text-white shadow-2xl">
