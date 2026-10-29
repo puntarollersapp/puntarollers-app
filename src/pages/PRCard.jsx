@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
@@ -39,7 +40,7 @@ export default function PRCardPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id,nombre,documento,miembro_desde,prcard_activa')
+        .select('id,nombre,apellido,documento,email,fecha_nacimiento,miembro_desde,prcard_activa')
         .eq('id', profileId)
         .maybeSingle()
 
@@ -48,6 +49,9 @@ export default function PRCardPage() {
         const updated = {
           ...base,
           nombre: data.nombre || base.nombre,
+          apellido: data.apellido || base.apellido,
+          email: data.email || base.email,
+          fechaNacimiento: data.fecha_nacimiento || base.fechaNacimiento,
           documento: data.documento || base.documento,
           miembroDesde: data.miembro_desde || base.miembroDesde || '2026',
           prcardActiva: Boolean(data.prcard_activa),
@@ -74,6 +78,7 @@ export default function PRCardPage() {
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
   const requests = usePRCardRequests(!loading && !prcardActive && !profileError)
   const pendingRequest = requests.requests.some(item => item.status === 'pending')
+  const requestProfileIncomplete = !String(u.nombre || '').trim() || !String(u.apellido || '').trim() || !String(u.documento || '').trim() || !/^\S+@\S+\.\S+$/.test(String(u.email || '')) || !/^\d{4}-\d{2}-\d{2}$/.test(String(u.fechaNacimiento || u.fecha_nacimiento || ''))
   async function requestCard() {
     setRequestSaving(true)
     setRequestMessage('')
@@ -274,7 +279,8 @@ export default function PRCardPage() {
             </div>
 
             {requestMessage && <p role="status" className="text-sm text-yellow-100">{requestMessage}</p>}
-            <button type="button" disabled={requestSaving || requests.loading || Boolean(requests.error)} onClick={requestCard} className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] disabled:opacity-50">
+            {requestProfileIncomplete && <p className="text-sm text-amber-100">Para solicitar tu tarjeta, primero completá nombre, apellido, documento, correo y fecha de nacimiento. <Link to="/app/perfil#editar" className="font-semibold underline">Actualizar mi perfil</Link>.</p>}
+            <button type="button" disabled={requestSaving || requests.loading || Boolean(requests.error) || requestProfileIncomplete} onClick={requestCard} className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] disabled:opacity-50">
               {requestSaving ? 'Enviando solicitud…' : 'Solicitar mi tarjeta de beneficios'}
             </button>
             {requests.error && <p role="alert" className="text-sm text-amber-100">La solicitud interna todavía no está disponible. <a href={PRCARD_REQUEST_URL} target="_blank" rel="noreferrer" className="underline">Abrir formulario actual</a>.</p>}
