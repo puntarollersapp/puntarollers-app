@@ -8,19 +8,32 @@ export default function PRCardRequestsAdmin() {
   const [loading, setLoading] = useState(true)
   async function load() {
     setLoading(true)
-    const { data, error: failure } = await supabase.functions.invoke('prcard-requests?admin=1', { method: 'GET' })
-    if (failure || !Array.isArray(data?.requests)) { setError('No se pudieron cargar las solicitudes.'); setLoading(false); return }
-    setError('')
-    setRequests(data.requests)
-    setLoading(false)
+    try {
+      const { data, error: failure } = await supabase.functions.invoke('prcard-requests?admin=1', { method: 'GET' })
+      if (failure || !Array.isArray(data?.requests)) throw new Error('No se pudieron cargar las solicitudes.')
+      setError('')
+      setRequests(data.requests)
+    } catch {
+      setError('No se pudieron cargar las solicitudes.')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { load() }, [])
   async function review(id, status) {
+    if (!window.confirm(status === 'approved' ? '¿Registrar esta aprobación? La tarjeta NO se activa automáticamente.' : '¿Rechazar esta solicitud?')) return
     setBusy(id)
-    const { data, error: failure } = await supabase.functions.invoke('prcard-requests', { body: { action: 'review', requestId: id, status } })
-    if (failure || !data?.request?.id) setError('No se pudo guardar la decisión.')
-    else await load()
-    setBusy(null)
+    setError('')
+    try {
+      const { data, error: failure } = await supabase.functions.invoke('prcard-requests', { body: { action: 'review', requestId: id, status } })
+      if (failure || !data?.request?.id) throw new Error('No se pudo guardar la decisión.')
+      setRequests(previous => previous.map(item => item.id === id ? { ...item, status } : item))
+      await load()
+    } catch {
+      setError('No se pudo guardar la decisión. Actualizá antes de volver a intentar.')
+    } finally {
+      setBusy(null)
+    }
   }
   return <section className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-4">
     <h2 className="text-lg font-bold text-white">Solicitudes PR Card</h2>
