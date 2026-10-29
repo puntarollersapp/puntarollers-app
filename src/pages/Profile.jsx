@@ -765,6 +765,7 @@ export default function Profile() {
         if (manual.error || students.error) throw new Error('Admin catalog unavailable')
         setPrFramesAdmin(manual.data || [])
         setPrFramesStudents(students.data || [])
+        setPrFramesAdminMessage(previous => previous.startsWith('No se pudo cargar') ? '' : previous)
       } catch {
         setPrFramesAdmin([])
         setPrFramesStudents([])
@@ -1795,7 +1796,7 @@ export default function Profile() {
             <div className="flex flex-wrap gap-2">
               {['grant','revoke','hide','show'].map(action => <button type="button" key={action} disabled={prFramesBusy || !prFramesSelected || (['grant','revoke'].includes(action) && !prFramesStudent)} onClick={() => managePrFrame(action)} className="rounded-xl border border-white/15 px-3 py-2 text-xs text-white disabled:opacity-40">{({grant:'Asignar',revoke:'Retirar',hide:'Ocultar',show:'Mostrar'})[action]}</button>)}
             </div>
-            {prFramesAdminMessage && <p role="status" className="text-sm text-white/65">{prFramesAdminMessage}</p>}
+            {prFramesAdminMessage && <div role="status" className="flex flex-wrap items-center gap-3 text-sm text-white/65"><span>{prFramesAdminMessage}</span>{prFramesAdminMessage.startsWith('No se pudo cargar') && <button type="button" disabled={prFramesLoading || prFramesBusy} onClick={() => refreshPrFrames()} className="rounded-lg border border-white/20 px-3 py-1.5 text-white disabled:opacity-40">Reintentar panel</button>}</div>}
           </div>}
         </section>
 
