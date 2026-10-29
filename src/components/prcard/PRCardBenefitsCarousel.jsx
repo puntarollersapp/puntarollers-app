@@ -15,7 +15,7 @@ export default function PRCardBenefitsCarousel({ benefits = [], cardActive = fal
     return () => window.removeEventListener('keydown', onEscape)
   }, [selectedBenefit])
   const activeBenefits = benefits.filter((item) => item && item.active !== false)
-  const shortCommerce = (item) => /^LH\\s+Pod[oó]loga/i.test(String(item?.commerce || '')) ? 'LH Podología' : (item?.commerce || item?.title)
+  const shortCommerce = (item) => /^LH\s+Pod[oó]loga/i.test(String(item?.commerce || '')) ? 'LH Podología' : (item?.commerce || item?.title)
   const commerceDescription = (item) => shortCommerce(item) === 'LH Podología' && item?.commerce !== 'LH Podología' ? item.commerce : ''
   return (
     <section aria-label="Beneficios PR Card" className="prcard-showcase relative isolate overflow-hidden rounded-[30px] border border-yellow-300/25 bg-[#0c0d12] p-4 pb-5 shadow-[0_18px_50px_rgba(0,0,0,.3)] sm:p-6">
