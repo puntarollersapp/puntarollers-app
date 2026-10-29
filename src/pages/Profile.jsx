@@ -732,6 +732,7 @@ export default function Profile() {
   const prFramesIsAdmin = base.role === 'admin'
   const prFramesEquippedSaved = avatarObject(profileAvatar.frames).equipped || 'original'
   const prFramesEquipped = prFrames.find(frame => frame.id === prFramesEquippedSaved && frame.unlocked) ? prFramesEquippedSaved : 'original'
+  const prBadgeEquipped = prFramesEquipped === 'original' ? null : prFrames.find(frame => frame.id === prFramesEquipped && frame.unlocked && frame.image_url)
 
   async function refreshPrFrames() {
     setPrFramesLoading(true)
@@ -769,12 +770,12 @@ export default function Profile() {
       } catch {
         setPrFramesAdmin([])
         setPrFramesStudents([])
-        setPrFramesAdminMessage('No se pudo cargar el panel de marcos. Volvé a intentarlo.')
+        setPrFramesAdminMessage('No se pudo cargar el panel de badges. Volvé a intentarlo.')
       }
     }
     } catch {
       setPrFrames([])
-      setPrFramesError('No se pudo conectar para verificar tus marcos. Intentá nuevamente.')
+      setPrFramesError('No se pudo conectar para verificar tus badges. Intentá nuevamente.')
       setPrFramesAdmin([])
       setPrFramesStudents([])
     } finally {
@@ -801,7 +802,7 @@ export default function Profile() {
       setMessage('Marco actualizado correctamente.')
       await refreshPrFrames()
     } catch {
-      setPrFramesError('No se pudo equipar el marco. Volvé a intentarlo.')
+      setPrFramesError('No se pudo equipar el badge. Volvé a intentarlo.')
     } finally {
       setPrFramesBusy(false)
     }
@@ -1493,12 +1494,12 @@ export default function Profile() {
                 </div>
               )}
               </span>
-              {prFrames.find(frame => frame.id === prFramesEquipped && frame.unlocked)?.image_url && (
+              {prBadgeEquipped?.image_url && (
                 <img
-                  src={prFrames.find(frame => frame.id === prFramesEquipped && frame.unlocked).image_url}
+                  src={prBadgeEquipped.image_url}
                   alt=""
                   aria-hidden="true"
-                  className="pointer-events-none absolute -inset-4 z-10 h-[calc(100%+32px)] w-[calc(100%+32px)] object-contain"
+                  className="pointer-events-none absolute -right-2 -bottom-2 z-20 h-12 w-12 object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,.55)]"
                 />
               )}
 
@@ -1747,14 +1748,14 @@ export default function Profile() {
           goals={storyGoals}
         />
 
-        <section className="pr-panel p-5 space-y-4" aria-label="Colección PR Frames">
+        <section className="pr-panel p-5 space-y-4" aria-label="Colección PR Badges">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">PR Frames</p>
-            <h2 className="text-2xl font-black tracking-tight text-white">Tu colección de marcos</h2>
-            <p className="mt-1 text-sm leading-relaxed text-white/60">Cada marco representa un logro y forma parte de tu historia sobre ruedas. Desbloquealos, coleccionalos y elegí cuál llevar en tu perfil.</p>
-            <p className="mt-2 text-xs text-white/40">Los marcos en marca de agua todavía no están disponibles. Podés verlos, pero solo equipar los que hayas desbloqueado.</p>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">PR Badges</p>
+            <h2 className="text-2xl font-black tracking-tight text-white">Tu colección de accesorios</h2>
+            <p className="mt-1 text-sm leading-relaxed text-white/60">Cada badge es un accesorio que se coloca sobre una esquina de tu foto o Chibi. Desbloquealos por tus logros y elegí cuál lucir.</p>
+            <p className="mt-2 text-xs text-white/40">Los accesorios bloqueados se muestran atenuados. Las condiciones de asistencia, kilómetros, Shifter y fechas especiales se mantienen.</p>
           </div>
-          {prFramesLoading && <p role="status" className="text-xs text-white/50">Verificando tus logros y marcos disponibles…</p>}
+          {prFramesLoading && <p role="status" className="text-xs text-white/50">Verificando tus logros y accesorios disponibles…</p>}
           {prFramesError && <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200"><span>{prFramesError}</span><button type="button" disabled={prFramesLoading || prFramesBusy} onClick={() => refreshPrFrames()} className="rounded-lg border border-amber-300/30 px-3 py-1.5 font-semibold text-amber-100 disabled:opacity-40">Reintentar verificación</button></div>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy={prFramesLoading}>
             {prFrames.map(frame => (
@@ -1767,7 +1768,7 @@ export default function Profile() {
                   ) : profile.foto ? (
                     <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-[29px] object-cover" />
                   ) : null}
-                  {frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -inset-4 h-[calc(100%+32px)] w-[calc(100%+32px)] object-contain" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
+                  {frame.id === 'original' ? <span className="absolute -right-2 -bottom-2 rounded-lg border border-white/20 bg-slate-900 px-2 py-1 text-[9px] font-bold text-white">SIN BADGE</span> : frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -right-2 -bottom-2 z-20 h-12 w-12 object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,.55)]" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
                   {!frame.unlocked && <span className="absolute inset-0 grid place-items-center rounded-[36px] bg-black/20 text-xl text-white/90" aria-label="Marco bloqueado">🔒</span>}
                 </div>
                 <p className="text-center text-sm font-bold text-white">{frame.name}</p>
@@ -1779,14 +1780,14 @@ export default function Profile() {
             ))}
           </div>
           {prFramesIsAdmin && <div className="space-y-3 rounded-2xl border border-white/10 bg-black/20 p-4">
-            <h3 className="font-bold text-white">Administrar marcos</h3>
+            <h3 className="font-bold text-white">Administrar badges</h3>
             <div className="grid gap-2 sm:grid-cols-2">
-              <input aria-label="Identificador del marco nuevo" value={prFramesNewId} onChange={e => setPrFramesNewId(e.target.value)} placeholder="ID del marco nuevo" className="rounded-xl bg-white/10 p-3 text-sm text-white" />
-              <input aria-label="Nombre del marco nuevo" value={prFramesNewName} onChange={e => setPrFramesNewName(e.target.value)} placeholder="Nombre del marco nuevo" className="rounded-xl bg-white/10 p-3 text-sm text-white" />
+              <input aria-label="Identificador del badge nuevo" value={prFramesNewId} onChange={e => setPrFramesNewId(e.target.value)} placeholder="ID del badge nuevo" className="rounded-xl bg-white/10 p-3 text-sm text-white" />
+              <input aria-label="Nombre del badge nuevo" value={prFramesNewName} onChange={e => setPrFramesNewName(e.target.value)} placeholder="Nombre del marco nuevo" className="rounded-xl bg-white/10 p-3 text-sm text-white" />
             </div>
-            <button type="button" disabled={prFramesBusy} onClick={() => managePrFrame('create')} className="rounded-xl bg-emerald-500/20 px-4 py-2 text-sm text-emerald-200">Crear marco</button>
-            <select aria-label="Marco manual" value={prFramesSelected} onChange={e => setPrFramesSelected(e.target.value)} className="w-full rounded-xl bg-[#252a30] p-3 text-sm text-white">
-              <option value="">Seleccioná un marco manual</option>
+            <button type="button" disabled={prFramesBusy} onClick={() => managePrFrame('create')} className="rounded-xl bg-emerald-500/20 px-4 py-2 text-sm text-emerald-200">Crear badge</button>
+            <select aria-label="Badge manual" value={prFramesSelected} onChange={e => setPrFramesSelected(e.target.value)} className="w-full rounded-xl bg-[#252a30] p-3 text-sm text-white">
+              <option value="">Seleccioná un badge manual</option>
               {prFramesAdmin.map(frame => <option key={frame.id} value={frame.id}>{frame.name}{frame.visible ? '' : ' · Oculto'}</option>)}
             </select>
             <select aria-label="Alumno para asignación" value={prFramesStudent} onChange={e => setPrFramesStudent(e.target.value)} className="w-full rounded-xl bg-[#252a30] p-3 text-sm text-white">
