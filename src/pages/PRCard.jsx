@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
 import PRCardBenefitsCarousel from '../components/prcard/PRCardBenefitsCarousel'
+import { usePRCardBenefits } from '../lib/usePRCardBenefits'
 
 const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-'
 
@@ -64,6 +65,7 @@ export default function PRCardPage() {
   }, [user?.id])
 
   const prcardActive = Boolean(u.prcardActiva || u.prcard?.activa)
+  const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
 
   return (
     <AppLayout title="Mi PRCard" showBack>
@@ -197,7 +199,7 @@ export default function PRCardPage() {
           </div>
         </div>
 
-        <PRCardBenefitsCarousel cardActive={prcardActive} benefits={[]} />
+        <PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} />
 
         {prcardActive ? (
           <div
