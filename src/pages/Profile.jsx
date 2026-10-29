@@ -1313,13 +1313,25 @@ export default function Profile() {
       ...chibiSelection,
       useAsProfilePhoto: !useChibiPhoto,
     }
-    const nextAvatar = {
+    let nextAvatar = {
       ...profileAvatar,
       chibi: nextChibi,
     }
 
     try {
       setSavingAvatarIdentity(true)
+      // Re-read server state so changing the PR Roller cannot overwrite a frame
+      // equipped from another session or a concurrent profile update.
+      const { data: latestAvatar, error: latestAvatarError } = await supabase
+        .from('profiles')
+        .select('pr_avatar')
+        .eq('id', profileId)
+        .maybeSingle()
+      if (latestAvatarError || !latestAvatar) throw latestAvatarError || new Error('Perfil no disponible.')
+      nextAvatar = {
+        ...avatarObject(latestAvatar.pr_avatar),
+        chibi: nextChibi,
+      }
       setMessage(
         useChibiPhoto
           ? 'Volviendo a tu foto…'
