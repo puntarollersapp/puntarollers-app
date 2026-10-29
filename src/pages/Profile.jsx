@@ -1498,7 +1498,7 @@ export default function Profile() {
                   src={prFrames.find(frame => frame.id === prFramesEquipped && frame.unlocked).image_url}
                   alt=""
                   aria-hidden="true"
-                  className="pointer-events-none absolute -inset-2 z-10 h-[calc(100%+16px)] w-[calc(100%+16px)] object-contain"
+                  className="pointer-events-none absolute -inset-4 z-10 h-[calc(100%+32px)] w-[calc(100%+32px)] object-contain"
                 />
               )}
 
@@ -1759,16 +1759,16 @@ export default function Profile() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy={prFramesLoading}>
             {prFrames.map(frame => (
               <div key={frame.id} className={`rounded-2xl border p-4 space-y-3 shadow-[0_12px_36px_rgba(0,0,0,0.22)] ${prFramesEquipped === frame.id && frame.unlocked ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-400/10 to-[#101722]' : 'border-white/10 bg-gradient-to-b from-[#1b2633] to-[#101722]'}`}>
-                <div className={`relative mx-auto my-2 flex h-32 w-32 items-center justify-center rounded-full border-[5px] shadow-[0_0_22px_rgba(0,0,0,0.35)] ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
+                <div className={`relative mx-auto my-5 flex h-32 w-32 items-center justify-center rounded-[36px] border-[5px] shadow-[0_0_22px_rgba(0,0,0,0.35)] ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
                   {useChibiPhoto ? (
-                    <div className="absolute inset-1 overflow-hidden rounded-full">
+                    <div className="absolute inset-1 overflow-hidden rounded-[29px]">
                       <ChibiAvatarPortrait selection={chibiSelection} className="h-full w-full" />
                     </div>
                   ) : profile.foto ? (
-                    <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-full object-cover" />
+                    <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-[29px] object-cover" />
                   ) : null}
-                  {frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -inset-2 h-[calc(100%+16px)] w-[calc(100%+16px)] object-contain" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
-                  {!frame.unlocked && <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-xl text-white/90" aria-label="Marco bloqueado">🔒</span>}
+                  {frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -inset-4 h-[calc(100%+32px)] w-[calc(100%+32px)] object-contain" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
+                  {!frame.unlocked && <span className="absolute inset-0 grid place-items-center rounded-[36px] bg-black/20 text-xl text-white/90" aria-label="Marco bloqueado">🔒</span>}
                 </div>
                 <p className="text-center text-sm font-bold text-white">{frame.name}</p>
                 <p className="min-h-8 text-center text-xs text-white/50">{frame.description}</p>
