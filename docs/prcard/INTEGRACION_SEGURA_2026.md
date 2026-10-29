@@ -39,3 +39,19 @@ Identificar primero todas las rutas de lectura/escritura existentes; determinar 
 
 ## Estado
 Documento de implementación, no una migración ejecutada. Ningún cambio a las bases de producción fue realizado por este PR.
+
+## Inventario de paridad obligatoria — 29/10/2026
+No dar por finalizada la unificación hasta verificar cada punto:
+- **Comercios y promociones:** los 22 registros del origen, logos, categorías, títulos, descripciones, condiciones, instrucciones de canje, vigencias, teléfono, redes, orden, destacados y estados activos/inactivos. La copia staging es una instantánea, **no** sincronización automática.
+- **Tarjeta digital:** nombre y documento obtenidos del perfil principal, estado real verificado en backend, vigencia sin fechas inventadas, presentación responsive; la foto del perfil principal tiene prioridad absoluta.
+- **Perfil principal:** aviso para completar datos debajo de redes sociales y antes de amigos; PR Card después de estadísticas y antes de actividad; botón de solicitud para no titulares y carrusel/modal para titulares validados.
+- **Solicitudes:** precarga desde perfil de nombre, apellido, documento, correo y nacimiento; faltantes editables mediante editor de perfil; recepción confirmada solo después de guardar; una solicitud pendiente por persona; cola administrativa para aprobar/rechazar sin activar automáticamente.
+- **Administración:** alta/edición/pausa de comercios y promociones, logos, contacto, orden, estado y vencimientos; búsqueda de solicitudes, revisión de identidad, conciliación de miembros, historial/auditoría y permisos administrativos.
+- **Membresías antiguas:** conservar los miembros exclusivos de la web PR Card, sin copiar PINs ni insignias legadas ni reemplazar fotos; conciliación manual para conflictos; no retirar acceso legado antes de verificar paridad.
+- **Seguridad:** no cambiar PIN principal, RLS y API cerradas por defecto, no exponer datos personales, pruebas de perfiles activos/inactivos y regresión de clases, pagos, reservas, asistencia, amigos y badges.
+- **Publicación:** integrar por etapas y comprobar la versión actual de main antes de merge; no confundir despliegues de vista previa con producción; conservar rollback.
+
+### Estado real
+- Implementados en rama de desarrollo: carrusel/modal, posiciones del perfil, aviso de actualización, consulta protegida de beneficios y navegación interna de titulares verificados.
+- Preparado, pero sin aplicar: diseño de cola de solicitudes en staging. Las operaciones de escritura de base y función de solicitud fueron bloqueadas por controles de seguridad.
+- Pendientes: solicitud real, administración completa, conciliación verificada, sincronización continua, pruebas E2E y publicación en producción.
