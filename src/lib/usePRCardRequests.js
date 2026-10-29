@@ -18,7 +18,7 @@ export function usePRCardRequests(enabled = true) {
   const submit = async () => {
     const { data, error } = await supabase.functions.invoke('prcard-requests', { body: { action: 'request' } })
     if (error || !data?.request?.id) throw new Error('No pudimos guardar la solicitud. Intentá nuevamente.')
-    await refresh()
+    setState(prev => ({ ...prev, requests: [data.request, ...prev.requests.filter(item => item.id !== data.request.id)], error: '', loading: false }))
     return data.request
   }
   return { ...state, refresh, submit }
