@@ -1739,7 +1739,7 @@ export default function Profile() {
             <p className="mt-2 text-xs text-white/40">Los marcos en marca de agua todavía no están disponibles. Podés verlos, pero solo equipar los que hayas desbloqueado.</p>
           </div>
           {prFramesLoading && <p role="status" className="text-xs text-white/50">Verificando tus logros y marcos disponibles…</p>}
-          {prFramesError && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">{prFramesError}</p>}
+          {prFramesError && <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200"><span>{prFramesError}</span><button type="button" disabled={prFramesLoading || prFramesBusy} onClick={() => refreshPrFrames()} className="rounded-lg border border-amber-300/30 px-3 py-1.5 font-semibold text-amber-100 disabled:opacity-40">Reintentar verificación</button></div>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy={prFramesLoading}>
             {prFrames.map(frame => (
               <div key={frame.id} className={`rounded-2xl border p-4 space-y-3 shadow-[0_12px_36px_rgba(0,0,0,0.22)] ${prFramesEquipped === frame.id && frame.unlocked ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-400/10 to-[#101722]' : 'border-white/10 bg-gradient-to-b from-[#1b2633] to-[#101722]'}`}>
