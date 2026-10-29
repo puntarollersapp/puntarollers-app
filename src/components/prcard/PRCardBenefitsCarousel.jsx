@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
  * Los datos deben venir de un catálogo autorizado del proyecto PR principal.
  * Nunca consultar el proyecto legado desde el navegador ni usar el PIN como identificador.
  */
-export default function PRCardBenefitsCarousel({ benefits = [], cardActive = false, loading = false, verified = false }) {
+export default function PRCardBenefitsCarousel({ benefits = [], cardActive = false, loading = false, verified = false, error = false }) {
   const [selectedBenefit, setSelectedBenefit] = useState(null)
   useEffect(() => {
     if (!selectedBenefit) return
@@ -33,6 +33,8 @@ export default function PRCardBenefitsCarousel({ benefits = [], cardActive = fal
         </div>
       ) : loading ? (
         <p className="py-5 text-sm text-white/50" role="status">Cargando beneficios…</p>
+      ) : error ? (
+        <p role="alert" className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm text-amber-100">No pudimos consultar los beneficios en este momento. Tu membresía no cambió; volvé a intentarlo más tarde.</p>
       ) : !verified ? (
         <p className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/60">Estamos verificando tu membresía para mostrar los beneficios disponibles.</p>
       ) : activeBenefits.length ? (
