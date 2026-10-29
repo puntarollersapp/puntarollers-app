@@ -757,18 +757,18 @@ export default function Profile() {
     setPrFramesError('')
     setPrFramesLoading(false)
     if (prFramesIsAdmin) {
-      const [manual, students] = await Promise.all([
-        supabase.rpc('pr_frames_admin_catalog'),
-        supabase.rpc('pr_frames_admin_students'),
-      ])
-      if (manual.error || students.error) {
+      try {
+        const [manual, students] = await Promise.all([
+          supabase.rpc('pr_frames_admin_catalog'),
+          supabase.rpc('pr_frames_admin_students'),
+        ])
+        if (manual.error || students.error) throw new Error('Admin catalog unavailable')
+        setPrFramesAdmin(manual.data || [])
+        setPrFramesStudents(students.data || [])
+      } catch {
         setPrFramesAdmin([])
         setPrFramesStudents([])
         setPrFramesAdminMessage('No se pudo cargar el panel de marcos. Volvé a intentarlo.')
-      } else {
-        setPrFramesAdmin(manual.data || [])
-        setPrFramesStudents(students.data || [])
-        setPrFramesAdminMessage('')
       }
     }
     } catch {
@@ -788,7 +788,7 @@ export default function Profile() {
   }, [profileId, loading])
 
   async function equipPrFrame(frameId) {
-    if (prFramesBusy || prFramesError || !prFrames.some(f => f.id === frameId && f.unlocked)) return
+    if (prFramesBusy || prFramesLoading || prFramesError || !prFrames.some(f => f.id === frameId && f.unlocked)) return
     setPrFramesBusy(true)
     try {
       const result = await supabase.rpc('pr_frames_equip', { p_frame_id: frameId })
