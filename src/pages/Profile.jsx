@@ -1454,6 +1454,14 @@ export default function Profile() {
                 </div>
               )}
               </span>
+              {prFrames.find(frame => frame.id === prFramesEquipped && frame.unlocked)?.image_url && (
+                <img
+                  src={prFrames.find(frame => frame.id === prFramesEquipped && frame.unlocked).image_url}
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-2 z-10 h-[calc(100%+16px)] w-[calc(100%+16px)] object-contain"
+                />
+              )}
 
               {!useChibiPhoto && (
                 <label
