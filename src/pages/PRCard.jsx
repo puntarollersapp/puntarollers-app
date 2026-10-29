@@ -74,7 +74,7 @@ export default function PRCardPage() {
 
   const prcardActive = !loading && !profileError && Boolean(u.prcardActiva || u.prcard?.activa)
   const prcardBenefits = usePRCardBenefits(!loading && !profileError)
-  const requests = usePRCardRequests(!loading && !prcardActive && !profileError)
+  const requests = usePRCardRequests(!loading && !profileError)
   const pendingRequest = requests.requests.some(item => item.status === 'pending')
   const approvedRequest = requests.requests.some(item => item.status === 'approved')
   const requestProfileIncomplete = !String(u.nombre || '').trim() || !String(u.apellido || '').trim() || !String(u.documento || '').trim() || !/^\S+@\S+\.\S+$/.test(String(u.email || '')) || !/^\d{4}-\d{2}-\d{2}$/.test(String(u.fechaNacimiento || u.fecha_nacimiento || ''))
@@ -92,7 +92,7 @@ export default function PRCardPage() {
   }
   const cardVerified = !profileError && prcardActive && prcardBenefits.eligible
   const cardChecking = !profileError && prcardActive && (loading || prcardBenefits.loading)
-  const cardStatus = profileError || prcardBenefits.error ? 'NO DISPONIBLE' : cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
+  const cardStatus = profileError || prcardBenefits.error ? 'NO DISPONIBLE' : cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : approvedRequest ? 'SOLICITUD APROBADA' : pendingRequest ? 'SOLICITUD PENDIENTE' : 'SIN ACTIVAR'
 
   return (
     <AppLayout title="Mi PRCard" showBack>
