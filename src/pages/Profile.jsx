@@ -804,13 +804,6 @@ export default function Profile() {
         p_profile_id: ['grant','revoke'].includes(action) ? prFramesStudent : null,
       })
       if (result.error) throw result.error
-      if (action === 'hide' || action === 'revoke') {
-        const repair = await supabase.rpc('pr_frames_reset_invalid_manual_equips', {
-          p_frame_id: frameId,
-          p_profile_id: action === 'revoke' ? prFramesStudent : null,
-        })
-        if (repair.error) throw repair.error
-      }
       setPrFramesAdminMessage('Operación realizada correctamente.')
       await refreshPrFrames()
     } catch {
