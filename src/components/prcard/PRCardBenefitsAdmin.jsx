@@ -10,6 +10,7 @@ export default function PRCardBenefitsAdmin() {
   const [draft,setDraft] = useState({})
   const [filter,setFilter] = useState('all')
   const [search,setSearch] = useState('')
+  const [notice,setNotice] = useState('')
   const visibleItems = items.filter(item => (filter === 'all' || (filter === 'active' ? item.active : !item.active)) && [item.commerce,item.title,item.category].some(value => String(value || '').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))).sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0) || a.id - b.id)
   async function load() {
     setLoading(true)
@@ -25,10 +26,12 @@ export default function PRCardBenefitsAdmin() {
   async function update(id, changes) {
     setBusy(id)
     setError('')
+    setNotice('')
     try {
       const { data,error: failure } = await supabase.functions.invoke('prcard-admin-benefits',{body:{id,...changes}})
       if (failure || !data?.benefit?.id) throw new Error('No se pudo guardar el cambio.')
       setItems(previous => previous.map(item => item.id === id ? {...item,...changes,...data.benefit} : item))
+      setNotice('Cambios guardados correctamente.')
       return true
     } catch { setError('No se pudo guardar el cambio. Volvé a cargar el catálogo antes de intentar nuevamente.'); return false }
     finally { setBusy(null) }
@@ -40,6 +43,7 @@ export default function PRCardBenefitsAdmin() {
     </div>
     <p className="text-sm text-white/60">Administrá la visibilidad y el orden del catálogo central. Los cambios requieren confirmación del servidor.</p>
     {loading && <p role="status" className="text-sm text-white/50">Cargando comercios…</p>}
+    {notice && <p role="status" className="text-sm text-emerald-200">{notice}</p>}
     {error && <p role="alert" className="text-sm text-amber-200">{error}</p>}
     {!loading && !error && items.length === 0 && <p className="text-sm text-white/50">No hay comercios cargados.</p>}
     <div className="flex flex-wrap gap-2"><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Buscar comercio o beneficio" aria-label="Buscar comercio" className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/20 p-2 text-sm text-white" /><select value={filter} onChange={event=>setFilter(event.target.value)} aria-label="Filtrar comercios" className="rounded-xl border border-white/20 bg-neutral-900 p-2 text-sm text-white"><option value="all">Todos ({items.length})</option><option value="active">Activos ({items.filter(item=>item.active).length})</option><option value="inactive">Inactivos ({items.filter(item=>!item.active).length})</option></select></div>
