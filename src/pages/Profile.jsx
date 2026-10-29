@@ -1717,9 +1717,11 @@ export default function Profile() {
           {prFramesError && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">{prFramesError}</p>}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {prFrames.map(frame => (
-              <div key={frame.id} className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-2">
-                <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4" style={{ borderColor: frame.accent || '#65a7ff' }}>
-                  {frame.image_url ? <img src={frame.image_url} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <span className="text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
+              <div key={frame.id} className={`rounded-2xl border p-3 space-y-2 ${prFramesEquipped === frame.id && frame.unlocked ? 'border-emerald-400/70 bg-emerald-400/10' : 'border-white/10 bg-white/5'}`}>
+                <div className={`relative mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
+                  {profile.foto && <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-full object-cover" />}
+                  {frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -inset-2 h-[calc(100%+16px)] w-[calc(100%+16px)] object-contain" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
+                  {!frame.unlocked && <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-xl text-white/90" aria-label="Marco bloqueado">🔒</span>}
                 </div>
                 <p className="text-center text-sm font-bold text-white">{frame.name}</p>
                 <p className="min-h-8 text-center text-xs text-white/50">{frame.description}</p>
