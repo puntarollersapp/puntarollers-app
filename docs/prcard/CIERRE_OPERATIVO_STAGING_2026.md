@@ -5,17 +5,17 @@ Actualizado: 2026-10-29. **No confundir código en rama con funcionalidad public
 ## Estado comprobado
 - Rama: `feature/prcard-unificacion-2026`; PR de revisión #79. No fusionar antes de pruebas.
 - Staging: `nvrapvbbenyojkjgxfkj`. `prcard_benefits` tiene **22 registros** y RLS habilitado; `prcard_membership_links` está vacía.
-- Staging: `prcard_requests` **NO existe** en la última inspección; no hay que declarar solicitudes operativas.
-- Staging: solo `prcard-benefits` está desplegada, versión 1. `prcard-requests` y `prcard-admin-benefits` NO están desplegadas.
-- Las operaciones de escritura en Supabase fueron bloqueadas por controles del entorno. No se debe intentar eludir ese bloqueo ni modificar producción para resolverlo.
+- Staging: `prcard_requests` **creada** el 2026-10-29 mediante migración `prcard_requests_private_staging_20261029`; cero solicitudes en comprobación posterior.
+- Staging: las tres funciones están **ACTIVE** con JWT requerido: `prcard-benefits` v2, `prcard-requests` v1 y `prcard-admin-benefits` v1.
+- Las operaciones autorizadas de migración y despliegue en staging **se completaron**. Producción permanece intacta.
 - El catálogo está preparado, pero ningún perfil de staging tiene un vínculo PR Card verificado; la API de beneficios debe denegar el acceso en ese caso.
 
 ## Orden de activación — solo en staging
 1. Revisar que `public.profiles` tenga `id`, `auth_user_id`, `role`, `nombre`, `apellido`, `documento`, `email`, `fecha_nacimiento`, `prcard_activa`. Si algún campo difiere, adaptar la función antes de desplegar.
-2. Revisar y aplicar `docs/prcard/staging_requests_schema_review.sql` exclusivamente en staging. Confirmar RLS activado, ausencia de políticas públicas, privilegios anon/auth revocados e índice único para solicitudes pendientes.
-3. Desplegar `supabase/functions/prcard-requests/index.ts` con JWT requerido.
-4. Desplegar `supabase/functions/prcard-admin-benefits/index.ts` con JWT requerido.
-5. Actualizar `supabase/functions/prcard-benefits/index.ts` con JWT requerido; verificar que los headers CORS permitan el cliente actual.
+2. **HECHO EN STAGING:** migración de `prcard_requests`; RLS activado y comprobado. La consulta de privilegios de `anon` y `authenticated` sobre las tres tablas PR Card devolvió cero concesiones.
+3. **HECHO EN STAGING:** desplegada `prcard-requests` v1 con JWT requerido.
+4. **HECHO EN STAGING:** desplegada `prcard-admin-benefits` v1 con JWT requerido.
+5. **HECHO EN STAGING:** actualizada `prcard-benefits` v2 con JWT requerido. **PENDIENTE:** probar CORS y peticiones reales desde navegador autenticado.
 6. Confirmar que la beta está conectada **solo** al proyecto staging. Nunca apuntar una beta de pruebas a producción sin revisión.
 7. Verificar en sesión autenticada: GET de solicitudes propias, POST de solicitud completa, duplicado rechazado, GET admin denegado a alumnos, GET admin autorizado, aprobación sin activación automática y rechazo.
 8. Verificar catálogo: GET admin, edición de comercio, logo, términos, vigencia, orden, destacados y visibilidad. Un alumno no puede leer ni editar el catálogo administrativo.
@@ -33,4 +33,4 @@ Actualizado: 2026-10-29. **No confundir código en rama con funcionalidad public
 ## Publicación
 Recién con todas las pruebas en verde: respaldos, migración revisada y autorizada para producción, despliegue de funciones, sincronización de catálogo, reconciliación de miembros verificada, pruebas con cuenta administradora y cuenta alumna y, finalmente, revisión del PR y publicación. Mantener `puntarollerscard.com` accesible hasta paridad comprobada.
 
-**Bloqueo actual:** falta autorización/capacidad de escritura efectiva en Supabase desde este entorno. No hay prueba E2E real hasta resolverlo por un canal autorizado.
+**Estado actual:** backend y esquema en staging instalados; falta prueba E2E autenticada. El entorno de ejecución local no pudo establecer conexión HTTP externa a las funciones, por lo que no se atribuye una prueba de endpoint exitosa. Faltan vinculación segura de miembros, revisión de identidad, validación de frontend y autorización final antes de producción.
