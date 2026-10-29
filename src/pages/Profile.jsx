@@ -387,6 +387,7 @@ export default function Profile() {
     avatarObject(base.pr_avatar)
   )
   const [prFrames, setPrFrames] = useState([])
+  const [prFramesLoading, setPrFramesLoading] = useState(true)
   const [prFramesError, setPrFramesError] = useState('')
   const [prFramesBusy, setPrFramesBusy] = useState(false)
   const [prFramesAdmin, setPrFramesAdmin] = useState([])
@@ -733,6 +734,7 @@ export default function Profile() {
   const prFramesEquipped = prFrames.find(frame => frame.id === prFramesEquippedSaved && frame.unlocked) ? prFramesEquippedSaved : 'original'
 
   async function refreshPrFrames() {
+    setPrFramesLoading(true)
     const [attendance, sports] = await Promise.all([
       supabase.rpc('pr_frames_my_unlocks'),
       supabase.rpc('pr_frames_sync_sports'),
@@ -740,16 +742,19 @@ export default function Profile() {
     if (attendance.error || sports.error) {
       setPrFrames([])
       setPrFramesError('No pudimos verificar todos tus logros. Intentá nuevamente.')
+      setPrFramesLoading(false)
       return
     }
     const catalog = await supabase.rpc('pr_frames_catalog')
     if (catalog.error) {
       setPrFrames([])
       setPrFramesError('La colección no está disponible por el momento.')
+      setPrFramesLoading(false)
       return
     }
     setPrFrames(catalog.data || [])
     setPrFramesError('')
+    setPrFramesLoading(false)
     if (prFramesIsAdmin) {
       const [manual, students] = await Promise.all([
         supabase.rpc('pr_frames_admin_catalog'),
@@ -1730,8 +1735,9 @@ export default function Profile() {
             <p className="mt-1 text-sm leading-relaxed text-white/60">Cada marco representa un logro y forma parte de tu historia sobre ruedas. Desbloquealos, coleccionalos y elegí cuál llevar en tu perfil.</p>
             <p className="mt-2 text-xs text-white/40">Los marcos en marca de agua todavía no están disponibles. Podés verlos, pero solo equipar los que hayas desbloqueado.</p>
           </div>
+          {prFramesLoading && <p role="status" className="text-xs text-white/50">Verificando tus logros y marcos disponibles…</p>}
           {prFramesError && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">{prFramesError}</p>}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy={prFramesLoading}>
             {prFrames.map(frame => (
               <div key={frame.id} className={`rounded-2xl border p-4 space-y-3 shadow-[0_12px_36px_rgba(0,0,0,0.22)] ${prFramesEquipped === frame.id && frame.unlocked ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-400/10 to-[#101722]' : 'border-white/10 bg-gradient-to-b from-[#1b2633] to-[#101722]'}`}>
                 <div className={`relative mx-auto my-2 flex h-32 w-32 items-center justify-center rounded-full border-[5px] shadow-[0_0_22px_rgba(0,0,0,0.35)] ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
@@ -1741,7 +1747,7 @@ export default function Profile() {
                 </div>
                 <p className="text-center text-sm font-bold text-white">{frame.name}</p>
                 <p className="min-h-8 text-center text-xs text-white/50">{frame.description}</p>
-                <button type="button" disabled={prFramesBusy || Boolean(prFramesError) || !frame.unlocked || prFramesEquipped === frame.id} onClick={() => equipPrFrame(frame.id)} className="w-full rounded-xl bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40">
+                <button type="button" disabled={prFramesBusy || prFramesLoading || Boolean(prFramesError) || !frame.unlocked || prFramesEquipped === frame.id} onClick={() => equipPrFrame(frame.id)} className="w-full rounded-xl bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40">
                   {!frame.unlocked ? 'Bloqueado' : prFramesEquipped === frame.id ? 'Equipado' : 'Equipar'}
                 </button>
               </div>
