@@ -74,7 +74,7 @@ export default function PRCardPage() {
     loadProfile()
   }, [user?.id])
 
-  const prcardActive = Boolean(u.prcardActiva || u.prcard?.activa)
+  const prcardActive = !loading && !profileError && Boolean(u.prcardActiva || u.prcard?.activa)
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
   const requests = usePRCardRequests(!loading && !prcardActive && !profileError)
   const pendingRequest = requests.requests.some(item => item.status === 'pending')
