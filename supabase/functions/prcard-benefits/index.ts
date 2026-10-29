@@ -49,8 +49,8 @@ Deno.serve(async (req: Request) => {
   if (benefitsError) return json({ error: 'Catalog unavailable' }, 503)
   return json({ eligible, benefits: (benefits || []).map((b) => ({
     id: b.id, commerce: b.commerce, title: b.title, description: b.description,
-    redeem: b.redeem, category: b.category, until: b.valid_until_label,
-    logo: b.logo_url, phone: b.phone, social: b.social, active: b.active,
+    redeem: eligible ? b.redeem : null, category: b.category, until: b.valid_until_label,
+    logo: b.logo_url, phone: eligible ? b.phone : null, social: b.social, active: b.active,
     featured: b.featured
   })) })
 })
