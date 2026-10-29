@@ -5,11 +5,14 @@ export default function PRCardRequestsAdmin() {
   const [requests, setRequests] = useState([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(null)
+  const [loading, setLoading] = useState(true)
   async function load() {
+    setLoading(true)
     const { data, error: failure } = await supabase.functions.invoke('prcard-requests?admin=1', { method: 'GET' })
-    if (failure || !Array.isArray(data?.requests)) { setError('No se pudieron cargar las solicitudes.'); return }
+    if (failure || !Array.isArray(data?.requests)) { setError('No se pudieron cargar las solicitudes.'); setLoading(false); return }
     setError('')
     setRequests(data.requests)
+    setLoading(false)
   }
   useEffect(() => { load() }, [])
   async function review(id, status) {
@@ -22,6 +25,7 @@ export default function PRCardRequestsAdmin() {
   return <section className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-4">
     <h2 className="text-lg font-bold text-white">Solicitudes PR Card</h2>
     <p className="text-sm text-white/60">Aprobar una solicitud registra la revisión; no activa automáticamente la tarjeta. La vinculación se verifica por separado.</p>
+    {loading && <p role="status" className="text-sm text-white/50">Cargando solicitudes…</p>}
     {error && <p role="alert" className="text-amber-200 text-sm">{error}</p>}
     <button type="button" onClick={load} className="text-sm text-yellow-200 underline">Actualizar solicitudes</button>
     {requests.filter(r => r.status === 'pending').map(r => <div key={r.id} className="rounded-xl border border-white/10 p-3">
@@ -32,6 +36,6 @@ export default function PRCardRequestsAdmin() {
         <button type="button" disabled={busy === r.id} onClick={() => review(r.id, 'rejected')} className="rounded-lg border border-white/20 px-3 py-2 text-sm text-white disabled:opacity-50">Rechazar</button>
       </div>
     </div>)}
-    {!requests.some(r => r.status === 'pending') && <p className="text-sm text-white/50">No hay solicitudes pendientes en esta consulta.</p>}
+    {!loading && !error && !requests.some(r => r.status === 'pending') && <p className="text-sm text-white/50">No hay solicitudes pendientes en esta consulta.</p>}
   </section>
 }
