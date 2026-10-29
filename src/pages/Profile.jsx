@@ -1710,15 +1710,16 @@ export default function Profile() {
 
         <section className="pr-panel p-5 space-y-4" aria-label="Colección PR Frames">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">PR Frames</p>
-            <h2 className="text-xl font-black text-white">Tus marcos de colección</h2>
-            <p className="text-sm text-white/55">Desbloqueá marcos con tus logros y elegí cuál llevar en tu perfil.</p>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">PR Frames</p>
+            <h2 className="text-2xl font-black tracking-tight text-white">Tu colección de marcos</h2>
+            <p className="mt-1 text-sm leading-relaxed text-white/60">Cada marco representa un logro y forma parte de tu historia sobre ruedas. Desbloquealos, coleccionalos y elegí cuál llevar en tu perfil.</p>
+            <p className="mt-2 text-xs text-white/40">Los marcos en marca de agua todavía no están disponibles. Podés verlos, pero solo equipar los que hayas desbloqueado.</p>
           </div>
           {prFramesError && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">{prFramesError}</p>}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {prFrames.map(frame => (
-              <div key={frame.id} className={`rounded-2xl border p-3 space-y-2 ${prFramesEquipped === frame.id && frame.unlocked ? 'border-emerald-400/70 bg-emerald-400/10' : 'border-white/10 bg-white/5'}`}>
-                <div className={`relative mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
+              <div key={frame.id} className={`rounded-2xl border p-4 space-y-3 shadow-[0_12px_36px_rgba(0,0,0,0.22)] ${prFramesEquipped === frame.id && frame.unlocked ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-400/10 to-[#101722]' : 'border-white/10 bg-gradient-to-b from-[#1b2633] to-[#101722]'}`}>
+                <div className={`relative mx-auto my-2 flex h-32 w-32 items-center justify-center rounded-full border-[5px] shadow-[0_0_22px_rgba(0,0,0,0.35)] ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
                   {profile.foto && <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-full object-cover" />}
                   {frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -inset-2 h-[calc(100%+16px)] w-[calc(100%+16px)] object-contain" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
                   {!frame.unlocked && <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-xl text-white/90" aria-label="Marco bloqueado">🔒</span>}
