@@ -184,7 +184,7 @@ export default function PRCardPage() {
           <div className="space-y-2 text-sm font-body">
             {[
               { label: 'Tipo', value: prcardActive ? 'PRCard Elite' : 'Sin activar' },
-              { label: 'Vencimiento', value: prcardActive ? 'Enero 2027' : 'No disponible' },
+              { label: 'Vigencia', value: prcardActive ? 'Consultar en PRCard' : 'No disponible' },
               { label: 'Beneficios', value: prcardActive ? 'Descuentos activos' : 'Pendiente de solicitud' },
               { label: 'Plataforma', value: prcardActive ? 'Disponible' : 'No disponible' },
             ].map(r => (
