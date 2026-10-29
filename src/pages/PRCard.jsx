@@ -5,7 +5,7 @@ import AppLayout from '../layouts/AppLayout'
 import PRCardBenefitsCarousel from '../components/prcard/PRCardBenefitsCarousel'
 import { usePRCardBenefits } from '../lib/usePRCardBenefits'
 
-const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-'
+const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-' // Temporal hasta habilitar solicitudes internas
 
 function loadSavedUser() {
   try {
@@ -20,6 +20,7 @@ export default function PRCardPage() {
   const { user, updateUser } = useAuth()
   const [u, setU] = useState({ ...loadSavedUser(), ...user })
   const [loading, setLoading] = useState(true)
+  const [profileError, setProfileError] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -38,6 +39,7 @@ export default function PRCardPage() {
         .eq('id', profileId)
         .maybeSingle()
 
+      setProfileError(Boolean(error) || !data)
       if (!error && data) {
         const updated = {
           ...base,
@@ -204,7 +206,9 @@ export default function PRCardPage() {
 
         <div id="beneficios-prcard"><PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} /></div>
 
-        {cardVerified ? (
+        {profileError ? (
+          <div role="alert" className="rounded-2xl border border-red-300/20 bg-red-300/5 p-4 text-sm text-white/75">No pudimos confirmar tu perfil en este momento. Por seguridad, no se habilitan solicitudes ni descuentos hasta recuperar la conexión.</div>
+        ) : cardVerified ? (
           <div
             className="animate-fade-up stagger-2 rounded-3xl p-5 space-y-4"
             style={{
