@@ -282,7 +282,7 @@ export default function PRCardPage() {
             </div>
 
             {requestMessage && <p role="status" className="text-sm text-yellow-100">{requestMessage}</p>}
-            {requestProfileIncomplete && <p className="text-sm text-amber-100">Para solicitar tu tarjeta, primero completá nombre, apellido, documento, correo y fecha de nacimiento. <Link to="/app/perfil#editar" className="font-semibold underline">Actualizar mi perfil</Link>.</p>}
+            {requestProfileIncomplete && <p className="text-sm text-amber-100">Para solicitar tu tarjeta, primero completá nombre, apellido, documento, correo y fecha de nacimiento. <Link to="/app/perfil?editar=1" className="font-semibold underline">Actualizar mi perfil</Link>.</p>}
             <button type="button" disabled={requestSaving || requests.loading || Boolean(requests.error) || requestProfileIncomplete} onClick={requestCard} className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] disabled:opacity-50">
               {requestSaving ? 'Enviando solicitud…' : 'Solicitar mi tarjeta de beneficios'}
             </button>
