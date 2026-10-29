@@ -16,6 +16,26 @@ Deno.serve(async (req: Request) => {
   const { data: profiles, error: profileError } = await admin.from('profiles').select('id,role').eq('auth_user_id',identity.user.id).limit(2)
   if (profileError) return json({ error: 'Profile unavailable' }, 503)
   if (!profiles || profiles.length !== 1 || profiles[0].role !== 'admin') return json({ error: 'Forbidden' }, 403)
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('audit') === '1') {
+    const [profilesResult, linksResult, catalogResult, requestsResult] = await Promise.all([
+      admin.from('profiles').select('id,nombre,apellido,prcard_activa').eq('prcard_activa',true).limit(1000),
+      admin.from('prcard_membership_links').select('profile_id,review_status,card_status').limit(1000),
+      admin.from('prcard_benefits').select('id,active').limit(1000),
+      admin.from('prcard_requests').select('id,status').limit(1000),
+    ])
+    if (profilesResult.error || linksResult.error || catalogResult.error || requestsResult.error) return json({ error: 'Audit unavailable' }, 503)
+    const links = linksResult.data || []
+    const verified = new Set(links.filter(l => l.review_status === 'verified' && l.card_status === 'active').map(l => l.profile_id))
+    const pending = (profilesResult.data || []).filter(p => !verified.has(p.id)).map(p => ({
+      profile_id: p.id, name: [p.nombre,p.apellido].filter(Boolean).join(' ') || 'Sin nombre'
+    }))
+    return json({ summary: {
+      flagged: (profilesResult.data || []).length, verified: verified.size,
+      withoutVerifiedLink: pending.length, benefits: (catalogResult.data || []).length,
+      activeBenefits: (catalogResult.data || []).filter(b => b.active).length,
+      pendingRequests: (requestsResult.data || []).filter(q => q.status === 'pending').length,
+    }, pending })
+  }
   if (req.method === 'GET') {
     const { data, error } = await admin.from('prcard_benefits').select('id,commerce,title,description,redeem,category,valid_until_label,logo_url,phone,social,active,featured,sort_order').order('sort_order',{ascending:true}).order('id',{ascending:true}).limit(200)
     return error ? json({ error: 'Catalog unavailable' }, 503) : json({ benefits: data || [] })
