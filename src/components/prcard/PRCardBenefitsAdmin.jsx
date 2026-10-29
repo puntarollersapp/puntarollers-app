@@ -6,6 +6,8 @@ export default function PRCardBenefitsAdmin() {
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState('')
   const [busy,setBusy] = useState(null)
+  const [editing,setEditing] = useState(null)
+  const [draft,setDraft] = useState({})
   async function load() {
     setLoading(true)
     try {
@@ -44,11 +46,16 @@ export default function PRCardBenefitsAdmin() {
           <span className={item.active ? 'text-xs text-emerald-200' : 'text-xs text-white/40'}>{item.active ? 'Visible' : 'Oculto'}</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={()=>{setEditing(item.id);setDraft({commerce:item.commerce||'',title:item.title||'',description:item.description||'',redeem:item.redeem||'',category:item.category||'',valid_until_label:item.valid_until_label||'',logo_url:item.logo_url||'',phone:item.phone||'',social:item.social||''})}} className="rounded-lg border border-yellow-300/30 px-3 py-2 text-xs text-yellow-200">Editar información</button>
           <button type="button" disabled={busy === item.id} onClick={()=>update(item.id,{active:!item.active})} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">{item.active ? 'Ocultar' : 'Activar'}</button>
           <button type="button" disabled={busy === item.id} onClick={()=>update(item.id,{featured:!item.featured})} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40">{item.featured ? 'Quitar destacado' : 'Destacar'}</button>
           <button type="button" disabled={busy === item.id} onClick={()=>update(item.id,{sort_order:(item.sort_order || 0)-1})} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40" aria-label={'Subir orden de '+item.commerce}>↑ Orden</button>
           <button type="button" disabled={busy === item.id} onClick={()=>update(item.id,{sort_order:(item.sort_order || 0)+1})} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white disabled:opacity-40" aria-label={'Bajar orden de '+item.commerce}>↓ Orden</button>
         </div>
+        {editing === item.id && <div className="mt-4 grid gap-3 rounded-xl border border-yellow-300/20 p-3">
+          {Object.entries({commerce:'Comercio',title:'Beneficio',description:'Descripción y condiciones',redeem:'Cómo canjear',category:'Categoría',valid_until_label:'Vigencia',logo_url:'Logo HTTPS',phone:'Contacto',social:'Red social HTTPS'}).map(([key,label])=><label key={key} className="grid gap-1 text-xs text-white/70">{label}<textarea rows={key === 'description' || key === 'redeem' ? 3 : 1} value={draft[key]||''} onChange={event=>setDraft(previous=>({...previous,[key]:event.target.value}))} className="w-full rounded-lg border border-white/15 bg-black/30 p-2 text-sm text-white" /></label>)}
+          <div className="flex gap-2"><button type="button" disabled={busy === item.id} onClick={async()=>{await update(item.id,draft);setEditing(null)}} className="rounded-lg bg-yellow-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50">Guardar cambios</button><button type="button" onClick={()=>setEditing(null)} className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white">Cancelar</button></div>
+        </div>}
       </div>)}
     </div>
   </section>
