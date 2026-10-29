@@ -214,7 +214,7 @@ export default function PRCardPage() {
             }}
           >
             <div>
-              <p className="section-label">Plataforma externa</p>
+              <p className="section-label">Dentro de Punta Rollers</p>
               <h2 className="text-white text-xl font-semibold mt-2">
                 Tu PR Card está integrada
               </h2>
@@ -224,6 +224,11 @@ export default function PRCardPage() {
             </div>
 
             <a href="#beneficios-prcard" className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] active:scale-[0.98]">Ver mis beneficios</a>
+          </div>
+        ) : prcardActive ? (
+          <div className="animate-fade-up stagger-2 rounded-3xl border border-amber-300/20 bg-amber-300/5 p-5 space-y-2" role="status">
+            <p className="text-amber-100 font-semibold">Tu membresía está en verificación</p>
+            <p className="text-sm text-white/60">Todavía no podemos habilitar tus descuentos. El equipo de Punta Rollers debe confirmar tu tarjeta antes de activarlos.</p>
           </div>
         ) : (
           <div
