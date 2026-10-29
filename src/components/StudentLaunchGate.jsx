@@ -1,4 +1,4 @@
-import { isTransitionStudent, TRANSITION_ENABLED, TRANSITION_END } from '../lib/prTransition'
+import { isTransitionStudent, TRANSITION_ENABLED, PR_PUBLIC_LAUNCH_ENABLED } from '../lib/prTransition'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -58,7 +58,7 @@ export default function StudentLaunchGate({ user, children }) {
   useEffect(() => {
     let active = true
     async function ensureTrainingChoice() {
-      if (!user?.id || (TRANSITION_ENABLED && Date.now() < TRANSITION_END)) { if (active) setTrainingChecked(true); return }
+      if (!user?.id || (TRANSITION_ENABLED && !PR_PUBLIC_LAUNCH_ENABLED)) { if (active) setTrainingChecked(true); return }
       const isTreasury = user?.esTesoreria === true || user?.es_tesoreria === true
       const isStaff = user?.role === 'admin' || user?.role === 'profesor'
       const shouldAsk = !isTreasury && (!isStaff || user?.documento === '48036677')
