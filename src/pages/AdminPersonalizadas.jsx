@@ -203,10 +203,12 @@ export default function AdminPersonalizadas() {
         const { error } = await supabase.from('profiles').update({ particulares_habilitadas: true, telefono: phone }).eq('id', profile.id)
         if (error) throw error
       }
-      const { data: pass, error } = await supabase.from('cuponeras_particulares').insert({ alumno_id: profile.id, clases_cargadas: total, clases_utilizadas: 0, clases_disponibles: total, habilitada: true, estado: 'activa', nombre_cuponera: `PR Pass · ${total} clase${total === 1 ? '' : 's'}`, fecha_inicio: new Date().toISOString().slice(0, 10), visible_al_alumno: true }).select('*').single()
+      const { error } = await supabase.rpc('pr_personal_admin_crear_pase', {
+        p_alumno_id: profile.id,
+        p_cantidad: total,
+        p_observacion: 'Alta de PR Pass desde PR Personal',
+      })
       if (error) throw error
-      const { error: historyError } = await supabase.from('clases_particulares_historial').insert({ alumno_id: profile.id, cuponera_id: pass.id, tipo: 'carga', cantidad: total, saldo_anterior: 0, saldo_despues: total, observacion: 'Alta de PR Pass desde PR Personal' })
-        if (historyError) throw new Error('ATENCIÓN: el saldo de clases ya fue actualizado, pero no se pudo registrar el movimiento en el historial. No repitas la carga. Contactá al administrador para conciliar el registro. Detalle: ' + historyError.message)
       setStudent({ nombre: '', apellido: '', telefono: '', email: '', clases: 4 })
       setSelectedStudentId(profile.id)
       setNotice(`PR Pass creada para ${profile.nombre}.`)
@@ -227,10 +229,12 @@ export default function AdminPersonalizadas() {
         })
         if (error) throw error
       } else {
-        const { data: pass, error } = await supabase.from('cuponeras_particulares').insert({ alumno_id: selectedStudent.id, clases_cargadas: amount, clases_utilizadas: 0, clases_disponibles: amount, habilitada: true, estado: 'activa', nombre_cuponera: `PR Pass · ${amount} clase${amount === 1 ? '' : 's'}`, fecha_inicio: new Date().toISOString().slice(0, 10), visible_al_alumno: true }).select('*').single()
+        const { error } = await supabase.rpc('pr_personal_admin_crear_pase', {
+          p_alumno_id: selectedStudent.id,
+          p_cantidad: amount,
+          p_observacion: 'Nueva PR Pass desde ficha de alumno',
+        })
         if (error) throw error
-        const { error: historyError } = await supabase.from('clases_particulares_historial').insert({ alumno_id: selectedStudent.id, cuponera_id: pass.id, tipo: 'carga', cantidad: amount, saldo_anterior: 0, saldo_despues: amount, observacion: 'Nueva PR Pass desde ficha de alumno' })
-        if (historyError) throw new Error('ATENCIÓN: el saldo de clases ya fue actualizado, pero no se pudo registrar el movimiento en el historial. No repitas la carga. Contactá al administrador para conciliar el registro. Detalle: ' + historyError.message)
       }
       setNotice(`${amount} clase${amount === 1 ? '' : 's'} cargada${amount === 1 ? '' : 's'} a ${selectedStudent.nombre}.`)
       await load()
