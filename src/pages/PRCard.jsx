@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
+import PRCardBenefitsCarousel from '../components/prcard/PRCardBenefitsCarousel'
 
 const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-'
 
@@ -184,7 +185,7 @@ export default function PRCardPage() {
           <div className="space-y-2 text-sm font-body">
             {[
               { label: 'Tipo', value: prcardActive ? 'PRCard Elite' : 'Sin activar' },
-              { label: 'Vencimiento', value: prcardActive ? 'Enero 2027' : 'No disponible' },
+              { label: 'Vencimiento', value: 'Consultá la vigencia en tu tarjeta' },
               { label: 'Beneficios', value: prcardActive ? 'Descuentos activos' : 'Pendiente de solicitud' },
               { label: 'Plataforma', value: prcardActive ? 'Disponible' : 'No disponible' },
             ].map(r => (
@@ -195,6 +196,8 @@ export default function PRCardPage() {
             ))}
           </div>
         </div>
+
+        <PRCardBenefitsCarousel cardActive={prcardActive} benefits={[]} />
 
         {prcardActive ? (
           <div
