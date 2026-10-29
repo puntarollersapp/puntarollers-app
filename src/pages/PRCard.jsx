@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
-
-const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-'
+import PRCardBenefitsCarousel from '../components/prcard/PRCardBenefitsCarousel'
+import { usePRCardBenefits } from '../lib/usePRCardBenefits'
+import { usePRCardRequests } from '../lib/usePRCardRequests'
 
 function loadSavedUser() {
   try {
@@ -18,6 +20,9 @@ export default function PRCardPage() {
   const { user, updateUser } = useAuth()
   const [u, setU] = useState({ ...loadSavedUser(), ...user })
   const [loading, setLoading] = useState(true)
+  const [profileError, setProfileError] = useState(false)
+  const [requestSaving, setRequestSaving] = useState(false)
+  const [requestMessage, setRequestMessage] = useState('')
 
   useEffect(() => {
     async function loadProfile() {
@@ -25,6 +30,7 @@ export default function PRCardPage() {
       const profileId = base.id
 
       if (!profileId) {
+        setProfileError(true)
         setU(base)
         setLoading(false)
         return
@@ -32,14 +38,18 @@ export default function PRCardPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id,nombre,apellido,documento,email,fecha_nacimiento,miembro_desde,prcard_activa')
         .eq('id', profileId)
         .maybeSingle()
 
+      setProfileError(Boolean(error) || !data)
       if (!error && data) {
         const updated = {
           ...base,
           nombre: data.nombre || base.nombre,
+          apellido: data.apellido || base.apellido,
+          email: data.email || base.email,
+          fechaNacimiento: data.fecha_nacimiento || base.fechaNacimiento,
           documento: data.documento || base.documento,
           miembroDesde: data.miembro_desde || base.miembroDesde || '2026',
           prcardActiva: Boolean(data.prcard_activa),
@@ -62,7 +72,26 @@ export default function PRCardPage() {
     loadProfile()
   }, [user?.id])
 
-  const prcardActive = Boolean(u.prcardActiva || u.prcard?.activa)
+  const prcardActive = !loading && !profileError && Boolean(u.prcardActiva || u.prcard?.activa)
+  const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
+  const requests = usePRCardRequests(!loading && !prcardActive && !profileError)
+  const pendingRequest = requests.requests.some(item => item.status === 'pending')
+  const requestProfileIncomplete = !String(u.nombre || '').trim() || !String(u.apellido || '').trim() || !String(u.documento || '').trim() || !/^\S+@\S+\.\S+$/.test(String(u.email || '')) || !/^\d{4}-\d{2}-\d{2}$/.test(String(u.fechaNacimiento || u.fecha_nacimiento || ''))
+  async function requestCard() {
+    setRequestSaving(true)
+    setRequestMessage('')
+    try {
+      await requests.submit()
+      setRequestMessage('Hemos recibido tus datos. El equipo de Punta Rollers revisará tu solicitud.')
+    } catch (error) {
+      setRequestMessage(error?.message || 'No se pudo enviar la solicitud.')
+    } finally {
+      setRequestSaving(false)
+    }
+  }
+  const cardVerified = !profileError && prcardActive && prcardBenefits.eligible
+  const cardChecking = !profileError && prcardActive && (loading || prcardBenefits.loading)
+  const cardStatus = profileError || prcardBenefits.error ? 'NO DISPONIBLE' : cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
 
   return (
     <AppLayout title="Mi PRCard" showBack>
@@ -85,7 +114,7 @@ export default function PRCardPage() {
               aspectRatio: '1.586',
               boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(201,168,76,0.15)',
               border: '1px solid rgba(201,168,76,0.3)',
-              opacity: prcardActive ? 1 : 0.65,
+              opacity: cardVerified ? 1 : 0.65,
             }}
           >
             <div
@@ -145,12 +174,12 @@ export default function PRCardPage() {
                   <div
                     className="px-2.5 py-1 rounded-lg text-xs font-body font-bold"
                     style={{
-                      background: prcardActive ? 'rgba(201,168,76,0.2)' : 'rgba(239,68,68,0.14)',
-                      color: prcardActive ? '#E8D48E' : '#fca5a5',
-                      border: prcardActive ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(239,68,68,0.35)',
+                      background: cardVerified ? 'rgba(201,168,76,0.2)' : 'rgba(239,68,68,0.14)',
+                      color: cardVerified ? '#E8D48E' : '#fca5a5',
+                      border: cardVerified ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(239,68,68,0.35)',
                     }}
                   >
-                    {prcardActive ? 'ACTIVA' : 'INACTIVA'}
+                    {cardStatus}
                   </div>
                 </div>
               </div>
@@ -172,21 +201,21 @@ export default function PRCardPage() {
             <span
               className="text-xs px-2 py-0.5 rounded-full font-body"
               style={{
-                background: prcardActive ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)',
-                color: prcardActive ? '#6ee7b7' : '#fca5a5',
-                border: prcardActive ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)',
+                background: cardVerified ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)',
+                color: cardVerified ? '#6ee7b7' : '#fca5a5',
+                border: cardVerified ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)',
               }}
             >
-              {prcardActive ? 'Activa' : 'Inactiva'}
+              {cardStatus}
             </span>
           </div>
 
           <div className="space-y-2 text-sm font-body">
             {[
-              { label: 'Tipo', value: prcardActive ? 'PRCard Elite' : 'Sin activar' },
-              { label: 'Vigencia', value: prcardActive ? 'Consultar en PRCard' : 'No disponible' },
-              { label: 'Beneficios', value: prcardActive ? 'Descuentos activos' : 'Pendiente de solicitud' },
-              { label: 'Plataforma', value: prcardActive ? 'Disponible' : 'No disponible' },
+              { label: 'Tipo', value: cardVerified ? 'PR Card' : 'Pendiente de verificación' },
+              { label: 'Vencimiento', value: 'Consultá la vigencia en tu tarjeta' },
+              { label: 'Beneficios', value: cardVerified ? 'Descuentos disponibles' : 'No habilitados todavía' },
+              { label: 'Plataforma', value: cardVerified ? 'Disponible' : 'Pendiente' },
             ].map(r => (
               <div key={r.label} className="flex justify-between gap-4">
                 <span className="text-white/40">{r.label}</span>
@@ -196,7 +225,11 @@ export default function PRCardPage() {
           </div>
         </div>
 
-        {prcardActive ? (
+        <div id="beneficios-prcard"><PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} error={prcardBenefits.error} /></div>
+
+        {profileError || prcardBenefits.error ? (
+          <div role="alert" className="rounded-2xl border border-red-300/20 bg-red-300/5 p-4 text-sm text-white/75">No pudimos verificar tu perfil o tus beneficios en este momento. Por seguridad, no habilitamos descuentos ni nuevas solicitudes hasta recuperar la conexión.</div>
+        ) : cardVerified ? (
           <div
             className="animate-fade-up stagger-2 rounded-3xl p-5 space-y-4"
             style={{
@@ -206,28 +239,26 @@ export default function PRCardPage() {
             }}
           >
             <div>
-              <p className="section-label">Plataforma externa</p>
+              <p className="section-label">Dentro de Punta Rollers</p>
               <h2 className="text-white text-xl font-semibold mt-2">
-                Acceder a mi PRCard
+                Tu PR Card está integrada
               </h2>
               <p className="text-white/45 text-sm mt-2">
-                Consultá comercios adheridos, beneficios disponibles y detalles actualizados de tu tarjeta.
+                Consultá tus comercios y descuentos directamente en Punta Rollers, sin cambiar de plataforma.
               </p>
             </div>
 
-            <a
-              href={u.prcard?.link || 'https://puntarollerscard.com/'}
-              target="_blank"
-              rel="noreferrer"
-              className="block w-full rounded-2xl py-4 text-center text-sm font-bold active:scale-[0.98]"
-              style={{
-                background: '#C9A84C',
-                color: '#08080d',
-              }}
-            >
-              Ir a mi PRCard
-            </a>
+            <a href="#beneficios-prcard" className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] active:scale-[0.98]">Ver mis beneficios</a>
           </div>
+        ) : prcardActive ? (
+          <div className="animate-fade-up stagger-2 rounded-3xl border border-amber-300/20 bg-amber-300/5 p-5 space-y-2" role="status">
+            <p className="text-amber-100 font-semibold">Tu membresía está en verificación</p>
+            <p className="text-sm text-white/60">Todavía no podemos habilitar tus descuentos. El equipo de Punta Rollers debe confirmar tu tarjeta antes de activarlos.</p>
+          </div>
+        ) : requests.loading ? (
+          <div role="status" className="rounded-2xl border border-white/10 p-5 text-sm text-white/60">Consultando el estado de tu solicitud…</div>
+        ) : pendingRequest ? (
+          <div role="status" className="rounded-3xl border border-yellow-300/20 bg-yellow-300/5 p-5 text-sm text-yellow-100">Tu solicitud de PR Card está pendiente de revisión. No necesitás enviarla nuevamente.</div>
         ) : (
           <div
             className="animate-fade-up stagger-2 rounded-3xl p-5 space-y-4"
@@ -247,18 +278,13 @@ export default function PRCardPage() {
               </p>
             </div>
 
-            <a
-              href={PRCARD_REQUEST_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="block w-full rounded-2xl py-4 text-center text-sm font-bold active:scale-[0.98]"
-              style={{
-                background: '#C9A84C',
-                color: '#08080d',
-              }}
-            >
-              Solicitar la mía
-            </a>
+            {requestMessage && <p role="status" className="text-sm text-yellow-100">{requestMessage}</p>}
+            {requestProfileIncomplete && <p className="text-sm text-amber-100">Para solicitar tu tarjeta, primero completá nombre, apellido, documento, correo y fecha de nacimiento. <Link to="/app/perfil#editar" className="font-semibold underline">Actualizar mi perfil</Link>.</p>}
+            <button type="button" disabled={requestSaving || requests.loading || Boolean(requests.error) || requestProfileIncomplete} onClick={requestCard} className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] disabled:opacity-50">
+              {requestSaving ? 'Enviando solicitud…' : 'Solicitar mi tarjeta de beneficios'}
+            </button>
+            {requests.error && <p role="alert" className="text-sm text-amber-100">No pudimos comprobar si ya tenés una solicitud. Por seguridad, no enviaremos otra hasta recuperar la conexión.</p>}
+            {requests.requests.some(item => item.status === 'approved') && <p className="text-sm text-emerald-200">Tu solicitud fue aprobada. Falta verificar la vinculación de tu membresía antes de habilitar los beneficios.</p>}
           </div>
         )}
 
