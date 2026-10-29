@@ -8,6 +8,9 @@ export default function PRCardBenefitsAdmin() {
   const [busy,setBusy] = useState(null)
   const [editing,setEditing] = useState(null)
   const [draft,setDraft] = useState({})
+  const [filter,setFilter] = useState('all')
+  const [search,setSearch] = useState('')
+  const visibleItems = items.filter(item => (filter === 'all' || (filter === 'active' ? item.active : !item.active)) && [item.commerce,item.title,item.category].some(value => String(value || '').toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))).sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0) || a.id - b.id)
   async function load() {
     setLoading(true)
     try {
@@ -39,8 +42,10 @@ export default function PRCardBenefitsAdmin() {
     {loading && <p role="status" className="text-sm text-white/50">Cargando comercios…</p>}
     {error && <p role="alert" className="text-sm text-amber-200">{error}</p>}
     {!loading && !error && items.length === 0 && <p className="text-sm text-white/50">No hay comercios cargados.</p>}
+    <div className="flex flex-wrap gap-2"><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Buscar comercio o beneficio" aria-label="Buscar comercio" className="min-w-0 flex-1 rounded-xl border border-white/20 bg-black/20 p-2 text-sm text-white" /><select value={filter} onChange={event=>setFilter(event.target.value)} aria-label="Filtrar comercios" className="rounded-xl border border-white/20 bg-neutral-900 p-2 text-sm text-white"><option value="all">Todos ({items.length})</option><option value="active">Activos ({items.filter(item=>item.active).length})</option><option value="inactive">Inactivos ({items.filter(item=>!item.active).length})</option></select></div>
+    {!loading && !error && visibleItems.length === 0 && items.length > 0 && <p className="text-sm text-white/50">No hay coincidencias con los filtros.</p>}
     <div className="space-y-3">
-      {items.map(item => <div key={item.id} className="rounded-2xl border border-white/10 p-3">
+      {visibleItems.map(item => <div key={item.id} className="rounded-2xl border border-white/10 p-3">
         <div className="flex items-center gap-3">
           {item.logo_url && <img src={item.logo_url} alt="" className="h-12 w-12 rounded-lg bg-white/10 object-contain" />}
           <div className="min-w-0 flex-1"><p className="font-semibold text-white">{item.commerce}</p><p className="text-xs text-white/60">{item.title}</p></div>
