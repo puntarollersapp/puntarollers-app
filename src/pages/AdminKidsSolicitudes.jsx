@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
-import {Link} from 'react-router-dom'
+import {Link,useSearchParams} from 'react-router-dom'
 import {supabase} from '../lib/supabase'
 import {PR_KIDS_BADGE_CATALOG} from '../lib/badges'
 import {suggestUniqueTreasuryProfile,validateKidsTreasuryAssignments} from '../lib/prKidsTreasuryMatching'
@@ -12,7 +12,8 @@ function Children({request}){
  return <div className="mt-4 grid gap-2 sm:grid-cols-2">{children.map((child,i)=><div key={i} className="rounded-xl border border-violet-300/20 bg-violet-300/10 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-violet-200/70">Niño/a {i+1}</p><p className="mt-1 font-bold text-white">{child.nombre||'Sin nombre'}</p><p className="mt-1 text-xs text-white/50">Tesorería: pendiente de conciliación</p></div>)}</div>
 }
 export default function AdminKidsSolicitudes(){
- const [adminSection,setAdminSection]=useState('solicitudes')
+ const [searchParams]=useSearchParams()
+ const [adminSection,setAdminSection]=useState(()=>searchParams.get('seccion')==='publicaciones'?'publicaciones':'solicitudes')
  const [approvalNotice,setApprovalNotice]=useState('')
  const [checkIdAudit,setCheckIdAudit]=useState(null),[checkIdBusy,setCheckIdBusy]=useState(false),[issueChildId,setIssueChildId]=useState(''),[issuePreview,setIssuePreview]=useState(null),[issueResult,setIssueResult]=useState(''),[issueBusy,setIssueBusy]=useState(false)
  const [postClasses,setPostClasses]=useState([]),[postClassId,setPostClassId]=useState(''),[postTitle,setPostTitle]=useState(''),[postSummary,setPostSummary]=useState(''),[postNote,setPostNote]=useState(''),[postError,setPostError]=useState(''),[postBusy,setPostBusy]=useState(false)
