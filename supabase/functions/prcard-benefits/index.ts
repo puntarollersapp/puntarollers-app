@@ -30,31 +30,24 @@ Deno.serve(async (req: Request) => {
   const { data: profiles, error: profileError } = await admin.from('profiles')
     .select('id,prcard_activa').eq('auth_user_id', auth.user.id).limit(2)
   if (profileError) return json({ error: 'Profile lookup unavailable' }, 503)
-  if (!profiles || profiles.length !== 1) return json({ eligible: false, benefits: [] })
-
-  const profile = profiles[0]
-  if (!profile.prcard_activa) return json({ eligible: false, benefits: [] })
-
-  const { data: links, error: linkError } = await admin.from('prcard_membership_links')
-    .select('review_status,card_status,expires_date').eq('profile_id', profile.id).limit(2)
-  if (linkError) return json({ error: 'Membership lookup unavailable' }, 503)
-  if (!links || links.length !== 1 || links[0].review_status !== 'verified') {
-    return json({ eligible: false, benefits: [] })
-  }
-
-  const link = links[0]
-  if (String(link.card_status || '').toLowerCase() !== 'active') {
-    return json({ eligible: false, benefits: [] })
-  }
-  if (link.expires_date && link.expires_date < new Date().toISOString().slice(0, 10)) {
-    return json({ eligible: false, benefits: [] })
+  let eligible = false
+  if (profiles?.length === 1 && profiles[0].prcard_activa) {
+    const { data: links, error: linkError } = await admin.from('prcard_membership_links')
+      .select('review_status,card_status,expires_date').eq('profile_id', profiles[0].id).limit(2)
+    if (linkError) return json({ error: 'Membership lookup unavailable' }, 503)
+    if (links?.length === 1) {
+      const link = links[0]
+      eligible = link.review_status === 'verified' &&
+        String(link.card_status || '').toLowerCase() === 'active' &&
+        (!link.expires_date || link.expires_date >= new Date().toISOString().slice(0, 10))
+    }
   }
 
   const { data: benefits, error: benefitsError } = await admin.from('prcard_benefits')
     .select('id,commerce,title,description,redeem,category,valid_until_label,logo_url,phone,social,active,featured,sort_order')
     .eq('active', true).order('sort_order', { ascending: true }).order('id', { ascending: true })
   if (benefitsError) return json({ error: 'Catalog unavailable' }, 503)
-  return json({ eligible: true, benefits: (benefits || []).map((b) => ({
+  return json({ eligible, benefits: (benefits || []).map((b) => ({
     id: b.id, commerce: b.commerce, title: b.title, description: b.description,
     redeem: b.redeem, category: b.category, until: b.valid_until_label,
     logo: b.logo_url, phone: b.phone, social: b.social, active: b.active,
