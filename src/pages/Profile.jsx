@@ -814,8 +814,13 @@ export default function Profile() {
         p_profile_id: ['grant','revoke'].includes(action) ? prFramesStudent : null,
       })
       if (result.error) throw result.error
-      setPrFramesAdminMessage('Operación realizada correctamente.')
       await refreshPrFrames()
+      setPrFramesAdminMessage('Operación realizada correctamente.')
+      if (action === 'create') {
+        setPrFramesSelected(frameId)
+        setPrFramesNewId('')
+        setPrFramesNewName('')
+      }
     } catch {
       setPrFramesAdminMessage('No se pudo completar la operación. Revisá los datos e intentá nuevamente.')
     } finally {
