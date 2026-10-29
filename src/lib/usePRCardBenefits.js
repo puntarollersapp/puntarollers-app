@@ -16,7 +16,7 @@ export function usePRCardBenefits(enabled) {
         const eligible = !error && data?.eligible === true
         setResult({
           eligible,
-          benefits: eligible && Array.isArray(data?.benefits) ? data.benefits : [],
+          benefits: Array.isArray(data?.benefits) ? data.benefits : [],
           loading: false,
           error: Boolean(error) || !data || typeof data.eligible !== 'boolean',
         })
