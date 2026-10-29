@@ -28,6 +28,7 @@ export default function PRCardPage() {
       const profileId = base.id
 
       if (!profileId) {
+        setProfileError(true)
         setU(base)
         setLoading(false)
         return
@@ -70,7 +71,7 @@ export default function PRCardPage() {
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
   const cardVerified = prcardActive && prcardBenefits.eligible
   const cardChecking = prcardActive && (loading || prcardBenefits.loading)
-  const cardStatus = cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
+  const cardStatus = profileError || prcardBenefits.error ? 'NO DISPONIBLE' : cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
 
   return (
     <AppLayout title="Mi PRCard" showBack>
