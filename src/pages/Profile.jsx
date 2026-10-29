@@ -735,6 +735,7 @@ export default function Profile() {
 
   async function refreshPrFrames() {
     setPrFramesLoading(true)
+    try {
     const [attendance, sports] = await Promise.all([
       supabase.rpc('pr_frames_my_unlocks'),
       supabase.rpc('pr_frames_sync_sports'),
@@ -770,7 +771,16 @@ export default function Profile() {
         setPrFramesAdminMessage('')
       }
     }
+    } catch {
+      setPrFrames([])
+      setPrFramesError('No se pudo conectar para verificar tus marcos. Intentá nuevamente.')
+      setPrFramesAdmin([])
+      setPrFramesStudents([])
+    } finally {
+      setPrFramesLoading(false)
+    }
   }
+
 
   useEffect(() => {
     if (!profileId || loading) return
