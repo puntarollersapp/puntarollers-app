@@ -204,10 +204,10 @@ export default function PRCardPage() {
           </div>
         </div>
 
-        <div id="beneficios-prcard"><PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} /></div>
+        <div id="beneficios-prcard"><PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} error={prcardBenefits.error} /></div>
 
-        {profileError ? (
-          <div role="alert" className="rounded-2xl border border-red-300/20 bg-red-300/5 p-4 text-sm text-white/75">No pudimos confirmar tu perfil en este momento. Por seguridad, no se habilitan solicitudes ni descuentos hasta recuperar la conexión.</div>
+        {profileError || prcardBenefits.error ? (
+          <div role="alert" className="rounded-2xl border border-red-300/20 bg-red-300/5 p-4 text-sm text-white/75">No pudimos verificar tu perfil o tus beneficios en este momento. Por seguridad, no habilitamos descuentos ni nuevas solicitudes hasta recuperar la conexión.</div>
         ) : cardVerified ? (
           <div
             className="animate-fade-up stagger-2 rounded-3xl p-5 space-y-4"
