@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'GET') {
     if (new URL(req.url).searchParams.get('admin') === '1') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
-      const { data, error } = await admin.from('prcard_requests').select('id,profile_id,first_name,last_name,email,status,requested_at,reviewed_at').order('requested_at', { ascending: false }).limit(100)
+      const { data, error } = await admin.from('prcard_requests').select('id,profile_id,first_name,last_name,document,email,birthdate,status,requested_at,reviewed_at').order('requested_at', { ascending: false }).limit(100)
       return error ? json({ error: 'Requests unavailable' }, 503) : json({ requests: data || [] })
     }
     const { data, error } = await admin.from('prcard_requests').select('id,status,requested_at').eq('profile_id', profile.id).order('requested_at', { ascending: false }).limit(10)
