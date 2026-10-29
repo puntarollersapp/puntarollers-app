@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import PRCardBenefitsCarousel from '../prcard/PRCardBenefitsCarousel'
+import { usePRCardBenefits } from '../../lib/usePRCardBenefits'
 import VerifiedBadge from '../VerifiedBadge'
 import ProfileAvatar from '../ProfileAvatar'
 import { getBadgeImage, normalizeBadgeTitle } from '../../lib/badges'
