@@ -33,7 +33,7 @@ export default function PRCardPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id,nombre,documento,miembro_desde,prcard_activa')
         .eq('id', profileId)
         .maybeSingle()
 
