@@ -76,6 +76,7 @@ export default function PRCardPage() {
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
   const requests = usePRCardRequests(!loading && !prcardActive && !profileError)
   const pendingRequest = requests.requests.some(item => item.status === 'pending')
+  const approvedRequest = requests.requests.some(item => item.status === 'approved')
   const requestProfileIncomplete = !String(u.nombre || '').trim() || !String(u.apellido || '').trim() || !String(u.documento || '').trim() || !/^\S+@\S+\.\S+$/.test(String(u.email || '')) || !/^\d{4}-\d{2}-\d{2}$/.test(String(u.fechaNacimiento || u.fecha_nacimiento || ''))
   async function requestCard() {
     setRequestSaving(true)
@@ -257,6 +258,8 @@ export default function PRCardPage() {
           </div>
         ) : requests.loading ? (
           <div role="status" className="rounded-2xl border border-white/10 p-5 text-sm text-white/60">Consultando el estado de tu solicitud…</div>
+        ) : approvedRequest ? (
+          <div role="status" className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-5 text-sm text-emerald-100">Tu solicitud de PR Card fue aprobada. Estamos verificando la vinculación de tu tarjeta; no necesitás solicitarla nuevamente.</div>
         ) : pendingRequest ? (
           <div role="status" className="rounded-3xl border border-yellow-300/20 bg-yellow-300/5 p-5 text-sm text-yellow-100">Tu solicitud de PR Card está pendiente de revisión. No necesitás enviarla nuevamente.</div>
         ) : (
@@ -284,7 +287,6 @@ export default function PRCardPage() {
               {requestSaving ? 'Enviando solicitud…' : 'Solicitar mi tarjeta de beneficios'}
             </button>
             {requests.error && <p role="alert" className="text-sm text-amber-100">No pudimos comprobar si ya tenés una solicitud. Por seguridad, no enviaremos otra hasta recuperar la conexión.</p>}
-            {requests.requests.some(item => item.status === 'approved') && <p className="text-sm text-emerald-200">Tu solicitud fue aprobada. Falta verificar la vinculación de tu membresía antes de habilitar los beneficios.</p>}
           </div>
         )}
 
