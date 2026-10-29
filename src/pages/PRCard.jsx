@@ -66,6 +66,9 @@ export default function PRCardPage() {
 
   const prcardActive = Boolean(u.prcardActiva || u.prcard?.activa)
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
+  const cardVerified = prcardActive && prcardBenefits.eligible
+  const cardChecking = prcardActive && (loading || prcardBenefits.loading)
+  const cardStatus = cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
 
   return (
     <AppLayout title="Mi PRCard" showBack>
@@ -88,7 +91,7 @@ export default function PRCardPage() {
               aspectRatio: '1.586',
               boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(201,168,76,0.15)',
               border: '1px solid rgba(201,168,76,0.3)',
-              opacity: prcardActive ? 1 : 0.65,
+              opacity: cardVerified ? 1 : 0.65,
             }}
           >
             <div
@@ -148,12 +151,12 @@ export default function PRCardPage() {
                   <div
                     className="px-2.5 py-1 rounded-lg text-xs font-body font-bold"
                     style={{
-                      background: prcardActive ? 'rgba(201,168,76,0.2)' : 'rgba(239,68,68,0.14)',
-                      color: prcardActive ? '#E8D48E' : '#fca5a5',
-                      border: prcardActive ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(239,68,68,0.35)',
+                      background: cardVerified ? 'rgba(201,168,76,0.2)' : 'rgba(239,68,68,0.14)',
+                      color: cardVerified ? '#E8D48E' : '#fca5a5',
+                      border: cardVerified ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(239,68,68,0.35)',
                     }}
                   >
-                    {prcardActive ? 'ACTIVA' : 'INACTIVA'}
+                    {cardStatus}
                   </div>
                 </div>
               </div>
@@ -175,21 +178,21 @@ export default function PRCardPage() {
             <span
               className="text-xs px-2 py-0.5 rounded-full font-body"
               style={{
-                background: prcardActive ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)',
-                color: prcardActive ? '#6ee7b7' : '#fca5a5',
-                border: prcardActive ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)',
+                background: cardVerified ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)',
+                color: cardVerified ? '#6ee7b7' : '#fca5a5',
+                border: cardVerified ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)',
               }}
             >
-              {prcardActive ? 'Activa' : 'Inactiva'}
+              {cardStatus}
             </span>
           </div>
 
           <div className="space-y-2 text-sm font-body">
             {[
-              { label: 'Tipo', value: prcardActive ? 'PRCard Elite' : 'Sin activar' },
+              { label: 'Tipo', value: cardVerified ? 'PR Card' : 'Pendiente de verificación' },
               { label: 'Vencimiento', value: 'Consultá la vigencia en tu tarjeta' },
-              { label: 'Beneficios', value: prcardActive ? 'Descuentos activos' : 'Pendiente de solicitud' },
-              { label: 'Plataforma', value: prcardActive ? 'Disponible' : 'No disponible' },
+              { label: 'Beneficios', value: cardVerified ? 'Descuentos disponibles' : 'No habilitados todavía' },
+              { label: 'Plataforma', value: cardVerified ? 'Disponible' : 'Pendiente' },
             ].map(r => (
               <div key={r.label} className="flex justify-between gap-4">
                 <span className="text-white/40">{r.label}</span>
@@ -201,7 +204,7 @@ export default function PRCardPage() {
 
         <PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} />
 
-        {prcardActive ? (
+        {cardVerified ? (
           <div
             className="animate-fade-up stagger-2 rounded-3xl p-5 space-y-4"
             style={{
