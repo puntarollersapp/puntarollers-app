@@ -386,6 +386,16 @@ export default function Profile() {
   const [profileAvatar, setProfileAvatar] = useState(
     avatarObject(base.pr_avatar)
   )
+  const [prFrames, setPrFrames] = useState([])
+  const [prFramesError, setPrFramesError] = useState('')
+  const [prFramesBusy, setPrFramesBusy] = useState(false)
+  const [prFramesAdmin, setPrFramesAdmin] = useState([])
+  const [prFramesStudents, setPrFramesStudents] = useState([])
+  const [prFramesSelected, setPrFramesSelected] = useState('')
+  const [prFramesStudent, setPrFramesStudent] = useState('')
+  const [prFramesNewId, setPrFramesNewId] = useState('')
+  const [prFramesNewName, setPrFramesNewName] = useState('')
+  const [prFramesAdminMessage, setPrFramesAdminMessage] = useState('')
   const [fotoFile, setFotoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
   const [savedMedia, setSavedMedia] = useState({
@@ -717,6 +727,90 @@ export default function Profile() {
 
     loadAll()
   }, [profileId, location.search])
+
+  const prFramesIsAdmin = base.role === 'admin'
+  const prFramesEquipped = avatarObject(profileAvatar.frames).equipped || 'original'
+
+  async function refreshPrFrames() {
+    const [attendance, sports] = await Promise.all([
+      supabase.rpc('pr_frames_my_unlocks'),
+      supabase.rpc('pr_frames_sync_sports'),
+    ])
+    if (attendance.error || sports.error) {
+      setPrFramesError('No pudimos verificar todos tus logros. Intentá nuevamente.')
+      return
+    }
+    const catalog = await supabase.rpc('pr_frames_catalog')
+    if (catalog.error) {
+      setPrFramesError('La colección no está disponible por el momento.')
+      return
+    }
+    setPrFrames(catalog.data || [])
+    setPrFramesError('')
+    if (prFramesIsAdmin) {
+      const [manual, students] = await Promise.all([
+        supabase.rpc('pr_frames_admin_catalog'),
+        supabase.rpc('pr_frames_admin_students'),
+      ])
+      if (!manual.error) setPrFramesAdmin(manual.data || [])
+      if (!students.error) setPrFramesStudents(students.data || [])
+    }
+  }
+
+  useEffect(() => {
+    if (!profileId || loading) return
+    refreshPrFrames()
+  }, [profileId, loading])
+
+  async function equipPrFrame(frameId) {
+    if (prFramesBusy || prFramesError || !prFrames.some(f => f.id === frameId && f.unlocked)) return
+    setPrFramesBusy(true)
+    try {
+      const result = await supabase.rpc('pr_frames_equip', { p_frame_id: frameId })
+      if (result.error) throw result.error
+      setProfileAvatar(previous => ({
+        ...previous,
+        frames: { ...avatarObject(previous.frames), equipped: frameId },
+      }))
+      setMessage('Marco actualizado correctamente.')
+      await refreshPrFrames()
+    } catch {
+      setPrFramesError('No se pudo equipar el marco. Volvé a intentarlo.')
+    } finally {
+      setPrFramesBusy(false)
+    }
+  }
+
+  async function managePrFrame(action) {
+    if (!prFramesIsAdmin || prFramesBusy) return
+    const frameId = action === 'create' ? prFramesNewId.trim() : prFramesSelected
+    if (!frameId) return
+    setPrFramesBusy(true)
+    setPrFramesAdminMessage('')
+    try {
+      const result = await supabase.rpc('pr_frames_admin_manage', {
+        p_action: action,
+        p_frame_id: frameId,
+        p_name: action === 'create' ? prFramesNewName.trim() : null,
+        p_description: null,
+        p_profile_id: ['grant','revoke'].includes(action) ? prFramesStudent : null,
+      })
+      if (result.error) throw result.error
+      if (action === 'hide' || action === 'revoke') {
+        const repair = await supabase.rpc('pr_frames_reset_invalid_manual_equips', {
+          p_frame_id: frameId,
+          p_profile_id: action === 'revoke' ? prFramesStudent : null,
+        })
+        if (repair.error) throw repair.error
+      }
+      setPrFramesAdminMessage('Operación realizada correctamente.')
+      await refreshPrFrames()
+    } catch {
+      setPrFramesAdminMessage('No se pudo completar la operación. Revisá los datos e intentá nuevamente.')
+    } finally {
+      setPrFramesBusy(false)
+    }
+  }
 
   const profile = {
     ...base,
@@ -1605,6 +1699,49 @@ export default function Profile() {
           activityTrend={activityTrend}
           goals={storyGoals}
         />
+
+        <section className="pr-panel p-5 space-y-4" aria-label="Colección PR Frames">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">PR Frames</p>
+            <h2 className="text-xl font-black text-white">Tus marcos de colección</h2>
+            <p className="text-sm text-white/55">Desbloqueá marcos con tus logros y elegí cuál llevar en tu perfil.</p>
+          </div>
+          {prFramesError && <p role="status" className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200">{prFramesError}</p>}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {prFrames.map(frame => (
+              <div key={frame.id} className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-2">
+                <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full border-4" style={{ borderColor: frame.accent || '#65a7ff' }}>
+                  {frame.image_url ? <img src={frame.image_url} alt="" className="absolute inset-0 h-full w-full object-contain" /> : <span className="text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
+                </div>
+                <p className="text-center text-sm font-bold text-white">{frame.name}</p>
+                <p className="min-h-8 text-center text-xs text-white/50">{frame.description}</p>
+                <button type="button" disabled={prFramesBusy || Boolean(prFramesError) || !frame.unlocked || prFramesEquipped === frame.id} onClick={() => equipPrFrame(frame.id)} className="w-full rounded-xl bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-40">
+                  {!frame.unlocked ? 'Bloqueado' : prFramesEquipped === frame.id ? 'Equipado' : 'Equipar'}
+                </button>
+              </div>
+            ))}
+          </div>
+          {prFramesIsAdmin && <div className="space-y-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+            <h3 className="font-bold text-white">Administrar marcos</h3>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input aria-label="Identificador del marco nuevo" value={prFramesNewId} onChange={e => setPrFramesNewId(e.target.value)} placeholder="ID del marco nuevo" className="rounded-xl bg-white/10 p-3 text-sm text-white" />
+              <input aria-label="Nombre del marco nuevo" value={prFramesNewName} onChange={e => setPrFramesNewName(e.target.value)} placeholder="Nombre del marco nuevo" className="rounded-xl bg-white/10 p-3 text-sm text-white" />
+            </div>
+            <button type="button" disabled={prFramesBusy} onClick={() => managePrFrame('create')} className="rounded-xl bg-emerald-500/20 px-4 py-2 text-sm text-emerald-200">Crear marco</button>
+            <select aria-label="Marco manual" value={prFramesSelected} onChange={e => setPrFramesSelected(e.target.value)} className="w-full rounded-xl bg-[#252a30] p-3 text-sm text-white">
+              <option value="">Seleccioná un marco manual</option>
+              {prFramesAdmin.map(frame => <option key={frame.id} value={frame.id}>{frame.name}{frame.visible ? '' : ' · Oculto'}</option>)}
+            </select>
+            <select aria-label="Alumno para asignación" value={prFramesStudent} onChange={e => setPrFramesStudent(e.target.value)} className="w-full rounded-xl bg-[#252a30] p-3 text-sm text-white">
+              <option value="">Seleccioná un alumno</option>
+              {prFramesStudents.map(student => <option key={student.profile_id} value={student.profile_id}>{student.display_name}</option>)}
+            </select>
+            <div className="flex flex-wrap gap-2">
+              {['grant','revoke','hide','show'].map(action => <button type="button" key={action} disabled={prFramesBusy || !prFramesSelected || (['grant','revoke'].includes(action) && !prFramesStudent)} onClick={() => managePrFrame(action)} className="rounded-xl border border-white/15 px-3 py-2 text-xs text-white disabled:opacity-40">{({grant:'Asignar',revoke:'Retirar',hide:'Ocultar',show:'Mostrar'})[action]}</button>)}
+            </div>
+            {prFramesAdminMessage && <p role="status" className="text-sm text-white/65">{prFramesAdminMessage}</p>}
+          </div>}
+        </section>
 
         <ProfileLaunchSuite
           profile={profile}
