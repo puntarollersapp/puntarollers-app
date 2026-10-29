@@ -1758,6 +1758,15 @@ export default function Profile() {
           {prFramesLoading && <p role="status" className="text-xs text-white/50">Verificando tus logros y accesorios disponibles…</p>}
           {prFramesError && <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-amber-500/10 p-3 text-sm text-amber-200"><span>{prFramesError}</span><button type="button" disabled={prFramesLoading || prFramesBusy} onClick={() => refreshPrFrames()} className="rounded-lg border border-amber-300/30 px-3 py-1.5 font-semibold text-amber-100 disabled:opacity-40">Reintentar verificación</button></div>}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy={prFramesLoading}>
+            <div className="rounded-2xl border border-orange-300/20 bg-gradient-to-b from-orange-400/10 to-[#101722] p-4 space-y-3">
+              <div className="relative mx-auto my-5 flex h-32 w-32 items-center justify-center rounded-[36px] border-[5px] border-orange-300/30 bg-slate-800">
+                {useChibiPhoto ? <div className="absolute inset-1 overflow-hidden rounded-[29px]"><ChibiAvatarPortrait selection={chibiSelection} className="h-full w-full" /></div> : profile.foto ? <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-[29px] object-cover" /> : null}
+                <img src="/rollerween-pumpkin-transparent-20261002-r3.png" alt="" className="pointer-events-none absolute -right-2 -bottom-2 z-20 h-12 w-12 object-contain" />
+              </div>
+              <p className="text-center text-sm font-bold text-white">RollerWeen 🎃</p>
+              <p className="min-h-8 text-center text-xs text-white/50">Decoración especial de Halloween. Se muestra durante la temporada RollerWeen.</p>
+              <p className="rounded-xl border border-orange-300/20 px-3 py-2 text-center text-xs font-semibold text-orange-200">Decoración de temporada</p>
+            </div>
             {prFrames.map(frame => (
               <div key={frame.id} className={`rounded-2xl border p-4 space-y-3 shadow-[0_12px_36px_rgba(0,0,0,0.22)] ${prFramesEquipped === frame.id && frame.unlocked ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-400/10 to-[#101722]' : 'border-white/10 bg-gradient-to-b from-[#1b2633] to-[#101722]'}`}>
                 <div className={`relative mx-auto my-5 flex h-32 w-32 items-center justify-center rounded-[36px] border-[5px] shadow-[0_0_22px_rgba(0,0,0,0.35)] ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
