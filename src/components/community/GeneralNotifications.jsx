@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/auth'
 import VerifiedBadge from '../VerifiedBadge'
 
 export default function GeneralNotifications({showSection=true,showPopup=true}){
- const {user}=useAuth(),[items,setItems]=useState([]),[celebration,setCelebration]=useState(null),[error,setError]=useState('')
+ const {user}=useAuth();const [items,setItems]=useState([]),[celebration,setCelebration]=useState(null),[error,setError]=useState('')
  useEffect(()=>{if(!user?.id)return;let live=true
  async function load(){const {data,error}=await supabase.from('community_notifications').select('id,kind,text,read_at,created_at').eq('recipient_id',user.id).or('kind.eq.pr_profile_verified,kind.like.pr_general_%').order('created_at',{ascending:false}).limit(100);if(!live)return;if(error){setError('No se pudieron cargar las notificaciones.');return}const general=(data||[]).filter(x=>x.kind==='pr_profile_verified'||String(x.kind).startsWith('pr_general_'));setItems(general);const unreadVerified=general.find(x=>x.kind==='pr_profile_verified'&&!x.read_at);setCelebration(old=>old||unreadVerified||null)}
  load();const timer=setInterval(load,30000);const channel=supabase.channel('pr-general-notifications-'+user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'community_notifications',filter:'recipient_id=eq.'+user.id},load).subscribe();return()=>{live=false;clearInterval(timer);supabase.removeChannel(channel)}},[user?.id])
