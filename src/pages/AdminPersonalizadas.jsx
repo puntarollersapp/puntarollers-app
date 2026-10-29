@@ -205,7 +205,8 @@ export default function AdminPersonalizadas() {
       }
       const { data: pass, error } = await supabase.from('cuponeras_particulares').insert({ alumno_id: profile.id, clases_cargadas: total, clases_utilizadas: 0, clases_disponibles: total, habilitada: true, estado: 'activa', nombre_cuponera: `PR Pass · ${total} clase${total === 1 ? '' : 's'}`, fecha_inicio: new Date().toISOString().slice(0, 10), visible_al_alumno: true }).select('*').single()
       if (error) throw error
-      await supabase.from('clases_particulares_historial').insert({ alumno_id: profile.id, cuponera_id: pass.id, tipo: 'carga', cantidad: total, saldo_anterior: 0, saldo_despues: total, observacion: 'Alta de PR Pass desde PR Personal' })
+      const { error: historyError } = await supabase.from('clases_particulares_historial').insert({ alumno_id: profile.id, cuponera_id: pass.id, tipo: 'carga', cantidad: total, saldo_anterior: 0, saldo_despues: total, observacion: 'Alta de PR Pass desde PR Personal' })
+        if (historyError) throw new Error('ATENCIÓN: el saldo de clases ya fue actualizado, pero no se pudo registrar el movimiento en el historial. No repitas la carga. Contactá al administrador para conciliar el registro. Detalle: ' + historyError.message)
       setStudent({ nombre: '', apellido: '', telefono: '', email: '', clases: 4 })
       setSelectedStudentId(profile.id)
       setNotice(`PR Pass creada para ${profile.nombre}.`)
@@ -225,11 +226,13 @@ export default function AdminPersonalizadas() {
         const loaded = Number(activePass.clases_cargadas || 0)
         const { error } = await supabase.from('cuponeras_particulares').update({ clases_cargadas: loaded + amount, clases_utilizadas: used, clases_disponibles: before + amount, updated_at: new Date().toISOString() }).eq('id', activePass.id)
         if (error) throw error
-        await supabase.from('clases_particulares_historial').insert({ alumno_id: selectedStudent.id, cuponera_id: activePass.id, tipo: 'carga', cantidad: amount, saldo_anterior: before, saldo_despues: before + amount, observacion: 'Carga manual desde PR Personal' })
+        const { error: historyError } = await supabase.from('clases_particulares_historial').insert({ alumno_id: selectedStudent.id, cuponera_id: activePass.id, tipo: 'carga', cantidad: amount, saldo_anterior: before, saldo_despues: before + amount, observacion: 'Carga manual desde PR Personal' })
+        if (historyError) throw new Error('ATENCIÓN: el saldo de clases ya fue actualizado, pero no se pudo registrar el movimiento en el historial. No repitas la carga. Contactá al administrador para conciliar el registro. Detalle: ' + historyError.message)
       } else {
         const { data: pass, error } = await supabase.from('cuponeras_particulares').insert({ alumno_id: selectedStudent.id, clases_cargadas: amount, clases_utilizadas: 0, clases_disponibles: amount, habilitada: true, estado: 'activa', nombre_cuponera: `PR Pass · ${amount} clase${amount === 1 ? '' : 's'}`, fecha_inicio: new Date().toISOString().slice(0, 10), visible_al_alumno: true }).select('*').single()
         if (error) throw error
-        await supabase.from('clases_particulares_historial').insert({ alumno_id: selectedStudent.id, cuponera_id: pass.id, tipo: 'carga', cantidad: amount, saldo_anterior: 0, saldo_despues: amount, observacion: 'Nueva PR Pass desde ficha de alumno' })
+        const { error: historyError } = await supabase.from('clases_particulares_historial').insert({ alumno_id: selectedStudent.id, cuponera_id: pass.id, tipo: 'carga', cantidad: amount, saldo_anterior: 0, saldo_despues: amount, observacion: 'Nueva PR Pass desde ficha de alumno' })
+        if (historyError) throw new Error('ATENCIÓN: el saldo de clases ya fue actualizado, pero no se pudo registrar el movimiento en el historial. No repitas la carga. Contactá al administrador para conciliar el registro. Detalle: ' + historyError.message)
       }
       setNotice(`${amount} clase${amount === 1 ? '' : 's'} cargada${amount === 1 ? '' : 's'} a ${selectedStudent.nombre}.`)
       await load()
