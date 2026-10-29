@@ -737,11 +737,13 @@ export default function Profile() {
       supabase.rpc('pr_frames_sync_sports'),
     ])
     if (attendance.error || sports.error) {
+      setPrFrames([])
       setPrFramesError('No pudimos verificar todos tus logros. Intentá nuevamente.')
       return
     }
     const catalog = await supabase.rpc('pr_frames_catalog')
     if (catalog.error) {
+      setPrFrames([])
       setPrFramesError('La colección no está disponible por el momento.')
       return
     }
