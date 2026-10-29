@@ -25,8 +25,9 @@ export default function PRCardBenefitsAdmin() {
     try {
       const { data,error: failure } = await supabase.functions.invoke('prcard-admin-benefits',{body:{id,...changes}})
       if (failure || !data?.benefit?.id) throw new Error('No se pudo guardar el cambio.')
-      setItems(previous => previous.map(item => item.id === id ? {...item,...data.benefit} : item))
-    } catch { setError('No se pudo guardar el cambio. Volvé a cargar el catálogo antes de intentar nuevamente.') }
+      setItems(previous => previous.map(item => item.id === id ? {...item,...changes,...data.benefit} : item))
+      return true
+    } catch { setError('No se pudo guardar el cambio. Volvé a cargar el catálogo antes de intentar nuevamente.'); return false }
     finally { setBusy(null) }
   }
   return <section className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-4">
@@ -54,7 +55,7 @@ export default function PRCardBenefitsAdmin() {
         </div>
         {editing === item.id && <div className="mt-4 grid gap-3 rounded-xl border border-yellow-300/20 p-3">
           {Object.entries({commerce:'Comercio',title:'Beneficio',description:'Descripción y condiciones',redeem:'Cómo canjear',category:'Categoría',valid_until_label:'Vigencia',logo_url:'Logo HTTPS',phone:'Contacto',social:'Red social HTTPS'}).map(([key,label])=><label key={key} className="grid gap-1 text-xs text-white/70">{label}<textarea rows={key === 'description' || key === 'redeem' ? 3 : 1} value={draft[key]||''} onChange={event=>setDraft(previous=>({...previous,[key]:event.target.value}))} className="w-full rounded-lg border border-white/15 bg-black/30 p-2 text-sm text-white" /></label>)}
-          <div className="flex gap-2"><button type="button" disabled={busy === item.id} onClick={async()=>{await update(item.id,draft);setEditing(null)}} className="rounded-lg bg-yellow-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50">Guardar cambios</button><button type="button" onClick={()=>setEditing(null)} className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white">Cancelar</button></div>
+          <div className="flex gap-2"><button type="button" disabled={busy === item.id} onClick={async()=>{if(await update(item.id,draft))setEditing(null)}} className="rounded-lg bg-yellow-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50">Guardar cambios</button><button type="button" onClick={()=>setEditing(null)} className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white">Cancelar</button></div>
         </div>}
       </div>)}
     </div>
