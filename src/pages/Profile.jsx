@@ -1759,7 +1759,13 @@ export default function Profile() {
             {prFrames.map(frame => (
               <div key={frame.id} className={`rounded-2xl border p-4 space-y-3 shadow-[0_12px_36px_rgba(0,0,0,0.22)] ${prFramesEquipped === frame.id && frame.unlocked ? 'border-cyan-400/80 bg-gradient-to-b from-cyan-400/10 to-[#101722]' : 'border-white/10 bg-gradient-to-b from-[#1b2633] to-[#101722]'}`}>
                 <div className={`relative mx-auto my-2 flex h-32 w-32 items-center justify-center rounded-full border-[5px] shadow-[0_0_22px_rgba(0,0,0,0.35)] ${frame.unlocked ? '' : 'grayscale opacity-35'}`} style={{ borderColor: frame.accent || '#65a7ff' }}>
-                  {profile.foto && <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-full object-cover" />}
+                  {useChibiPhoto ? (
+                    <div className="absolute inset-1 overflow-hidden rounded-full">
+                      <ChibiAvatarPortrait selection={chibiSelection} className="h-full w-full" />
+                    </div>
+                  ) : profile.foto ? (
+                    <img src={profile.foto} alt="" className="absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] rounded-full object-cover" />
+                  ) : null}
                   {frame.image_url ? <img src={frame.image_url} alt="" className="pointer-events-none absolute -inset-2 h-[calc(100%+16px)] w-[calc(100%+16px)] object-contain" /> : <span className="relative text-2xl">{frame.unlocked ? '✦' : '🔒'}</span>}
                   {!frame.unlocked && <span className="absolute inset-0 grid place-items-center rounded-full bg-black/20 text-xl text-white/90" aria-label="Marco bloqueado">🔒</span>}
                 </div>
