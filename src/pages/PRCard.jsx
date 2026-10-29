@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
 import PRCardBenefitsCarousel from '../components/prcard/PRCardBenefitsCarousel'
 import { usePRCardBenefits } from '../lib/usePRCardBenefits'
+import { usePRCardRequests } from '../lib/usePRCardRequests'
 
 const PRCARD_REQUEST_URL = 'https://form.jotform.com/Claudinio/club-de-beneficios-prcard-' // Temporal hasta habilitar solicitudes internas
 
@@ -21,6 +22,8 @@ export default function PRCardPage() {
   const [u, setU] = useState({ ...loadSavedUser(), ...user })
   const [loading, setLoading] = useState(true)
   const [profileError, setProfileError] = useState(false)
+  const [requestSaving, setRequestSaving] = useState(false)
+  const [requestMessage, setRequestMessage] = useState('')
 
   useEffect(() => {
     async function loadProfile() {
@@ -69,6 +72,20 @@ export default function PRCardPage() {
 
   const prcardActive = Boolean(u.prcardActiva || u.prcard?.activa)
   const prcardBenefits = usePRCardBenefits(!loading && prcardActive)
+  const requests = usePRCardRequests(!loading && !prcardActive && !profileError)
+  const pendingRequest = requests.requests.some(item => item.status === 'pending')
+  async function requestCard() {
+    setRequestSaving(true)
+    setRequestMessage('')
+    try {
+      await requests.submit()
+      setRequestMessage('Hemos recibido tus datos. El equipo de Punta Rollers revisará tu solicitud.')
+    } catch (error) {
+      setRequestMessage(error?.message || 'No se pudo enviar la solicitud.')
+    } finally {
+      setRequestSaving(false)
+    }
+  }
   const cardVerified = !profileError && prcardActive && prcardBenefits.eligible
   const cardChecking = !profileError && prcardActive && (loading || prcardBenefits.loading)
   const cardStatus = profileError || prcardBenefits.error ? 'NO DISPONIBLE' : cardChecking ? 'VERIFICANDO' : cardVerified ? 'ACTIVA' : prcardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'
@@ -235,6 +252,8 @@ export default function PRCardPage() {
             <p className="text-amber-100 font-semibold">Tu membresía está en verificación</p>
             <p className="text-sm text-white/60">Todavía no podemos habilitar tus descuentos. El equipo de Punta Rollers debe confirmar tu tarjeta antes de activarlos.</p>
           </div>
+        ) : pendingRequest ? (
+          <div role="status" className="rounded-3xl border border-yellow-300/20 bg-yellow-300/5 p-5 text-sm text-yellow-100">Tu solicitud de PR Card está pendiente de revisión. No necesitás enviarla nuevamente.</div>
         ) : (
           <div
             className="animate-fade-up stagger-2 rounded-3xl p-5 space-y-4"
@@ -254,18 +273,11 @@ export default function PRCardPage() {
               </p>
             </div>
 
-            <a
-              href={PRCARD_REQUEST_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="block w-full rounded-2xl py-4 text-center text-sm font-bold active:scale-[0.98]"
-              style={{
-                background: '#C9A84C',
-                color: '#08080d',
-              }}
-            >
-              Solicitar la mía
-            </a>
+            {requestMessage && <p role="status" className="text-sm text-yellow-100">{requestMessage}</p>}
+            <button type="button" disabled={requestSaving || requests.loading || Boolean(requests.error)} onClick={requestCard} className="block w-full rounded-2xl bg-[#C9A84C] py-4 text-center text-sm font-bold text-[#08080d] disabled:opacity-50">
+              {requestSaving ? 'Enviando solicitud…' : 'Solicitar mi tarjeta de beneficios'}
+            </button>
+            {requests.error && <p role="alert" className="text-sm text-amber-100">La solicitud interna todavía no está disponible. <a href={PRCARD_REQUEST_URL} target="_blank" rel="noreferrer" className="underline">Abrir formulario actual</a>.</p>}
           </div>
         )}
 
