@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
  * Los datos deben venir de un catálogo autorizado del proyecto PR principal.
  * Nunca consultar el proyecto legado desde el navegador ni usar el PIN como identificador.
  */
-export default function PRCardBenefitsCarousel({ benefits = [], cardActive = false, loading = false }) {
+export default function PRCardBenefitsCarousel({ benefits = [], cardActive = false, loading = false, verified = false }) {
   const [selectedBenefit, setSelectedBenefit] = useState(null)
   useEffect(() => {
     if (!selectedBenefit) return
@@ -23,8 +23,8 @@ export default function PRCardBenefitsCarousel({ benefits = [], cardActive = fal
           <h2 className="mt-1 text-xl font-bold text-white">Tus beneficios PR Card</h2>
           <p className="mt-1 text-xs text-white/55">Estos son tus beneficios activos en tu PR Card.</p>
         </div>
-        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${cardActive ? 'border-emerald-300/25 bg-emerald-400/10 text-emerald-200' : 'border-white/15 bg-white/5 text-white/50'}`}>
-          {cardActive ? 'ACTIVA' : 'SIN ACTIVAR'}
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${cardActive && verified ? 'border-emerald-300/25 bg-emerald-400/10 text-emerald-200' : 'border-white/15 bg-white/5 text-white/50'}`}>
+          {cardActive && verified ? 'ACTIVA' : cardActive ? 'EN VERIFICACIÓN' : 'SIN ACTIVAR'}
         </span>
       </div>
       {!cardActive ? (
@@ -33,6 +33,8 @@ export default function PRCardBenefitsCarousel({ benefits = [], cardActive = fal
         </div>
       ) : loading ? (
         <p className="py-5 text-sm text-white/50" role="status">Cargando beneficios…</p>
+      ) : !verified ? (
+        <p className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/60">Estamos verificando tu membresía para mostrar los beneficios disponibles.</p>
       ) : activeBenefits.length ? (
         <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3" aria-label="Deslizá para ver beneficios">
           {activeBenefits.map((item) => (
