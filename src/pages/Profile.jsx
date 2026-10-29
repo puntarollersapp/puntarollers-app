@@ -760,8 +760,15 @@ export default function Profile() {
         supabase.rpc('pr_frames_admin_catalog'),
         supabase.rpc('pr_frames_admin_students'),
       ])
-      if (!manual.error) setPrFramesAdmin(manual.data || [])
-      if (!students.error) setPrFramesStudents(students.data || [])
+      if (manual.error || students.error) {
+        setPrFramesAdmin([])
+        setPrFramesStudents([])
+        setPrFramesAdminMessage('No se pudo cargar el panel de marcos. Volvé a intentarlo.')
+      } else {
+        setPrFramesAdmin(manual.data || [])
+        setPrFramesStudents(students.data || [])
+        setPrFramesAdminMessage('')
+      }
     }
   }
 
@@ -792,7 +799,10 @@ export default function Profile() {
   async function managePrFrame(action) {
     if (!prFramesIsAdmin || prFramesBusy) return
     const frameId = action === 'create' ? prFramesNewId.trim() : prFramesSelected
-    if (!frameId) return
+    if (!frameId || (action === 'create' && prFramesNewName.trim().length < 2) || (['grant','revoke'].includes(action) && !prFramesStudent)) {
+      setPrFramesAdminMessage('Completá los datos necesarios antes de continuar.')
+      return
+    }
     setPrFramesBusy(true)
     setPrFramesAdminMessage('')
     try {
