@@ -6,7 +6,7 @@ export default function PRCardRequestsAdmin() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(null)
   async function load() {
-    const { data, error: failure } = await supabase.functions.invoke('prcard-requests', { method: 'GET', headers: {}, query: { admin: '1' } })
+    const { data, error: failure } = await supabase.functions.invoke('prcard-requests?admin=1', { method: 'GET' })
     if (failure || !Array.isArray(data?.requests)) { setError('No se pudieron cargar las solicitudes.'); return }
     setError('')
     setRequests(data.requests)
