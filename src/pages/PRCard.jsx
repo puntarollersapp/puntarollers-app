@@ -199,7 +199,7 @@ export default function PRCardPage() {
           </div>
         </div>
 
-        <PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} />
+        <PRCardBenefitsCarousel cardActive={prcardActive} benefits={prcardBenefits.benefits} loading={prcardBenefits.loading} verified={prcardBenefits.eligible} />
 
         {prcardActive ? (
           <div
