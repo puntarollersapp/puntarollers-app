@@ -1,10 +1,17 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.0'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+}
+
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), {
-  status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+  status, headers: { ...corsHeaders, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
 })
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders })
   if (req.method !== 'GET') return json({ error: 'Method not allowed' }, 405)
   const token = req.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1]
   if (!token) return json({ error: 'Authentication required' }, 401)
