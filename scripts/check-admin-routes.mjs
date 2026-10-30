@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 
 const hub = readFileSync(new URL('../src/components/admin/PRControlHub.jsx', import.meta.url), 'utf8')
 const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-const areaBlock = hub.match(/const AREAS=\[([\s\S]*?)\];const GROUPS=/)?.[1]
+const areaBlock = hub.match(/const AREAS=\[([\s\S]*?)\]\s*const GROUPS=/)?.[1]
 assert.ok(areaBlock, 'Cannot find Command Center area catalog')
 const paths = [...areaBlock.matchAll(/\bp:'(\/admin[^']*)'/g)].map(match => match[1])
 assert.ok(paths.length >= 20, 'Command Center catalog unexpectedly small')
