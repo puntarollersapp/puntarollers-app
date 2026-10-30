@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:admin-routes": "node scripts/check-admin-routes.mjs",
+    "prebuild": "npm run check:admin-routes"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
