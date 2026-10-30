@@ -15,11 +15,11 @@ function isNewAccountDuringTesting(user) {
 
 export function isTransitionStudent(user) {
   return TRANSITION_ENABLED && !PR_PUBLIC_LAUNCH_ENABLED && Boolean(user?.id) && user?.role !== 'familiar' &&
-    !STAFF_PROFILE_IDS.has(String(user.id)) && !isNewAccountDuringTesting(user)
+    !STAFF_PROFILE_IDS.has(String(user.id)) 
 }
 export function isTransitionPrivatePath(path) {
   return path.startsWith('/app/') || path.startsWith('/admin/') || path === '/tesoreria'
 }
 export function transitionDestination(user, requested) {
-  return user?.role === 'familiar' ? '/kids' : requested === '/app/perfil' ? '/app/perfil' : isTransitionStudent(user) ? '/app/shifter' : requested
+  return user?.role === 'familiar' ? '/kids' : isTransitionStudent(user) ? '/app/shifter' : requested
 }
