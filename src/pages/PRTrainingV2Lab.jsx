@@ -312,7 +312,7 @@ function PRTareasHome({user}){
   <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -left-24 h-80 w-80 animate-[prHeroOrbit_20s_ease-in-out_infinite_reverse] rounded-full border-[38px] border-[#8DCBFF]/[.08] motion-reduce:animate-none"/>
   <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-[#C4FF24]/70 to-transparent"/>
   <p className="relative text-[10px] font-black uppercase tracking-[.30em] text-[#B7EDCF]">PUNTA ROLLERS / TU ESPACIO</p>
-  <h1 className="relative mx-auto mt-5 w-fit bg-gradient-to-r from-white via-[#E4DCFF] to-[#9BE9EE] bg-clip-text text-[clamp(3.2rem,13vw,7.5rem)] font-black italic leading-[.95] tracking-[-.085em] text-transparent drop-shadow-[0_8px_24px_rgba(0,0,0,.22)]">Tareas<span className="text-[#B5F94B]">.</span></h1>
+  <h1 className="relative mx-auto mt-5 w-fit -rotate-2 bg-gradient-to-r from-white via-violet-200 to-cyan-200 bg-clip-text text-[clamp(64px,16vw,100px)] font-black italic leading-none tracking-[-.075em] text-transparent" style={{fontFamily:'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif'}}>Tareas!</h1>
   <div aria-hidden="true" className="relative mx-auto mt-5 h-[3px] w-28 rounded-full bg-gradient-to-r from-transparent via-[#B9D6FF] to-transparent shadow-[0_0_16px_rgba(185,214,255,.55)]"/>
   <h2 className="relative mt-6 text-xl font-black tracking-tight text-white sm:text-2xl">Tus deberes están aquí.</h2>
   <p className="relative mt-2 text-xs font-black uppercase tracking-[.16em] text-[#C4FF24] sm:text-sm">La clase continúa</p>
