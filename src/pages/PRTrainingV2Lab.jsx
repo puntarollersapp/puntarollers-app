@@ -290,7 +290,7 @@ function PRTareasHome({user}){
  const percent=tasks.length?Math.round(done/tasks.length*100):0
  const previouslyWorked=tasks.reduce((max,t,i)=>t.latest_status&&t.latest_status!=='not_submitted'?Math.max(max,i+1):max,0)
  const discovered=tasks.length===6?Math.min(Math.max(revealed,previouslyWorked),6):0
- const nextPending=tasks.find(t=>!['approved','submitted','under_review'].includes(t.latest_status))
+ const nextPending=tasks.slice(0,discovered).find(t=>['returned','rejected','changes_requested'].includes(t.latest_status)) || tasks.slice(0,discovered).find(t=>!['approved','submitted','under_review'].includes(t.latest_status))
  const inReview=tasks.filter(t=>['submitted','under_review'].includes(t.latest_status)).length
  const toCorrect=tasks.filter(t=>['returned','rejected','changes_requested'].includes(t.latest_status)).length
  const awaiting=tasks.filter(t=>!t.latest_status||t.latest_status==='not_submitted').length
@@ -307,7 +307,7 @@ function PRTareasHome({user}){
    <div className="border-x border-white/10"><p className="text-xl font-black text-white">{String(inReview).padStart(2,'0')}</p><p className="text-[10px] text-white/60">En revisión</p></div>
    <div><p className="text-xl font-black text-white">{percent}%</p><p className="text-[10px] text-white/60">Completado</p></div>
   </div>
-  {nextPending&&<p className="mt-3 rounded-xl border border-[#C4FF24]/20 bg-[#C4FF24]/[.055] px-4 py-3 text-xs leading-5 text-white/75"><strong className="text-[#C4FF24]">Tu próximo paso:</strong> {nextPending.title}. Practicá con calma y enviá tu evidencia cuando estés listo.</p>}
+  {nextPending&&<p className="mt-3 rounded-xl border border-[#C4FF24]/20 bg-[#C4FF24]/[.055] px-4 py-3 text-xs leading-5 text-white/75"><strong className="text-[#C4FF24]">Tu próximo paso:</strong> {nextPending.title}. {['returned','rejected','changes_requested'].includes(nextPending.latest_status)?'Revisá la devolución de tu profesor, corregí el ejercicio y enviá una nueva evidencia.':'Practicá con calma y enviá tu evidencia cuando estés listo.'}</p>}
   <nav className="mt-5 grid grid-cols-3 gap-2" aria-label="Información de tareas">
    {[['como','Cómo funciona'],['estados','Estados'],['recorrido','Tu recorrido']].map(([key,label])=><button key={key} type="button" onClick={()=>setInfo(info===key?'':key)} className={`rounded-xl border px-2 py-3 text-xs font-bold ${info===key?'border-[#C4FF24] bg-[#C4FF24]/15 text-[#C4FF24]':'border-white/15 bg-white/5'}`}>{label}</button>)}
   </nav>
