@@ -185,7 +185,7 @@ function TrainingReviewQueue(){
   if(status==='approved'&&!window.confirm('¿Confirmás que revisaste la evidencia y querés aprobar este ejercicio?'))return
   if(status==='returned'&&!window.confirm('¿Devolver este ejercicio al alumno para que lo corrija?'))return
   setBusy(id);setError('');setReviewNotice('');const {error:e}=await supabase.rpc('pr_training_v2_review_submission',{p_submission_id:id,p_status:status,p_note:note});
-  if(e)setError(e.message);else {await refresh();setReviewNotice(status==='approved'?'Ejercicio aprobado y revisión registrada.':status==='returned'?'Devolución enviada: el alumno podrá corregir su ejercicio.':'Entrega marcada en revisión.')}setBusy('')
+  if(e)setError(e.message);else {setItems(prev=>prev.map(entry=>entry.id===id?{...entry,status,reviewer_note:note}:entry));setReviewNotice(status==='approved'?'Ejercicio aprobado y revisión registrada.':status==='returned'?'Devolución enviada: el alumno podrá corregir su ejercicio.':'Entrega marcada en revisión.');await refresh()}setBusy('')
  }
  async function openEvidence(item,path){
   const popup=window.open('','_blank');if(popup){popup.opener=null;popup.document.title='Cargando evidencia · Punta Rollers';popup.document.body.textContent='Preparando evidencia privada…'}
