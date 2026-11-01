@@ -36,6 +36,15 @@ export async function createConversationMark(studentId) {
   return data;
 }
 
+export async function addConversationMarks(studentId,quantity=1) {
+  const amount=Number(quantity);
+  if (!studentId || !Number.isInteger(amount) || amount<1 || amount>25) throw new Error('Cantidad inválida');
+  const rows=Array.from({length:amount},()=>({student_id:String(studentId)}));
+  const {data,error}=await supabase.from(TABLE).insert(rows).select('id,student_id,created_at,voided_at');
+  if(error) throw error;
+  return data || [];
+}
+
 export async function undoConversationMark(studentId) {
   if (!studentId) throw new Error('Seleccioná un alumno');
   // Undo only the newest active mark; RLS verifies the teacher role.
