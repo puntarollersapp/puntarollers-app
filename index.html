@@ -69,7 +69,7 @@
           }
           if (!rankingVisible || location.pathname === '/ranking-semanal') document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
           // Conversómetro: symmetric left-side companion to the existing ranking tab.
-          if (rankingVisible && !document.querySelector('.pr-conversometro-shortcut')) {
+          if (rankingVisible && location.pathname !== '/app/conversometro' && !document.querySelector('.pr-conversometro-shortcut')) {
             const tab = document.createElement('a')
             tab.href = '/app/conversometro'
             tab.className = 'pr-conversometro-shortcut'
