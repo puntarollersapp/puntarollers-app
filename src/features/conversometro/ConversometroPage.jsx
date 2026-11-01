@@ -36,12 +36,12 @@ export default function ConversometroPage() {
     }
   };
   if (state.loading) return <div role="status" style={{minHeight:'60vh',display:'grid',placeItems:'center',background:'#100927',color:'#fff'}}>💬 Preparando el Conversómetro…</div>;
-  if (!state.ready) return <>
-    <div role="status" style={{padding:'12px 18px',background:'#29164b',color:'#f5d8ff',textAlign:'center'}}>
-      🧪 Modo demostración: el almacenamiento de marcas todavía no está disponible en este entorno. No se guardarán cambios.
-    </div>
-    <ConversometroPrototype/>
-  </>;
+  if (!state.ready) return <main role="alert" style={{minHeight:'65vh',padding:'40px 18px',background:'#100927',color:'#fff',textAlign:'center'}}>
+    <h1>💬 Conversómetro temporalmente no disponible</h1>
+    <p>No se pudieron cargar las marcas. No se mostrarán datos simulados como si fueran reales.</p>
+    <p style={{color:'#e4b6ff'}}>{state.error}</p>
+    <button type="button" onClick={refresh} style={{padding:'12px 22px',borderRadius:12,border:0,background:'#d9ff7d',fontWeight:800}}>Reintentar</button>
+  </main>;
   return <>
     {state.error && <div role="alert" style={{padding:12,background:'#451a45',color:'#fff'}}>{state.error}</div>}
     <ConversometroPrototype students={state.students} marks={state.marks} canMark={authorized(user)&&!saving}
