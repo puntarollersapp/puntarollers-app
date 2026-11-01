@@ -160,7 +160,7 @@ export default function ConversometroPrototype({ students = demo, marks = [], on
     </header>
     {isDemo && <p className="cm-demo-notice" role="status">🎨 Demostración visual: 25 marcas simuladas para mostrar cómo se llena el frasco. No se guardan como llamadas de atención reales.</p>}
     {allowMark && <section className="cm-student-picker">
-      <label htmlFor="cm-search">💬 Simular primera marca de un alumno</label>
+      <label htmlFor="cm-search">💬 {isDemo?"Simular primera marca de un alumno":"Sumar la primera bolita a un alumno"}</label>
       <input id="cm-search" autoComplete="off" type="search" placeholder="Buscar alumno…" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/>
       {matches.map(p=><button type="button" key={p.id} onClick={()=>isDemo?addStudent(p):onMark?.(p.id)}>{p.name} <b>+1</b></button>)}
     </section>}
