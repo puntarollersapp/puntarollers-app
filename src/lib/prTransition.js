@@ -1,6 +1,6 @@
 // Presentation-only transition. Public pages, databases and integrations stay unchanged.
 // Manual launch switch: keep false until Claudio explicitly authorizes the public release.
-export const PR_PUBLIC_LAUNCH_ENABLED = false
+export const PR_PUBLIC_LAUNCH_ENABLED = true
 export const TRANSITION_ENABLED = true
 export const TRANSITION_END = Date.parse('2026-11-01T15:00:00-03:00')
 const NEW_ACCOUNT_CUTOFF = Date.parse('2026-10-27T00:00:00-03:00')
