@@ -672,6 +672,8 @@ export default function Activity() {
   const [legacyItems, setLegacyItems] = useState([])
   const [socialPosts, setSocialPosts] = useState([])
   const [shifterAlbums, setShifterAlbums] = useState([])
+  const [expandedShifterAlbums, setExpandedShifterAlbums] = useState([])
+  const [shifterViewer, setShifterViewer] = useState(null)
   const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
   const [moments, setMoments] = useState([])
@@ -1346,18 +1348,42 @@ export default function Activity() {
 
           {filter === 'Todos' && shifterAlbums.length > 0 && (
             <div className="mb-4 space-y-3">
-              {shifterAlbums.map(album => (
-                <button key={album.id} type="button" onClick={() => navigate('/app/comunidad')} className="w-full overflow-hidden rounded-[26px] border border-orange-400/30 bg-[#161017] text-left shadow-lg">
+              {shifterAlbums.map(album => {
+                const photos = album.photos || []
+                const expanded = expandedShifterAlbums.includes(album.id)
+                return <article key={album.id} className="overflow-hidden rounded-[26px] border border-orange-400/30 bg-[#161017] shadow-lg">
                   <div className="p-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">🛼 Álbum público · Punta Rollers</p>
                     <h3 className="mt-1 text-lg font-black text-white">{album.title}</h3>
-                    <p className="mt-1 text-xs text-white/60">{(album.photos || []).length} fotos · Tocá para ver el álbum en Comunidad</p>
+                    <p className="mt-1 text-xs text-white/60">{photos.length} fotos · Miralas acá en RollerFeed</p>
                   </div>
-                  {(album.photos || []).length > 0 && <div className="grid grid-cols-3 gap-1">{album.photos.slice(0,3).map(photo => <img key={photo.id} src={photo.url} alt="Foto del álbum Shifter" loading="lazy" className="h-28 w-full object-cover" />)}</div>}
-                </button>
-              ))}
-            </div>
+                  <div className={expanded ? 'grid grid-cols-3 gap-1 p-1' : 'grid grid-cols-3 gap-1'}>
+                    {(expanded ? photos : photos.slice(0, 3)).map((photo, index) => (
+                      <button key={photo.id} type="button" onClick={() => setShifterViewer({ album, index })} className="relative aspect-square overflow-hidden bg-black/30" aria-label={'Ampliar foto ' + (index + 1)}>
+                        <img src={photo.url} alt={'Foto ' + (index + 1) + ' de ' + album.title} loading="lazy" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                  {photos.length > 3 && <button type="button" onClick={() => setExpandedShifterAlbums(ids => expanded ? ids.filter(id => id !== album.id) : [...ids, album.id])} className="w-full border-t border-white/10 px-4 py-3 text-center text-sm font-bold text-orange-200">{expanded ? 'Mostrar menos fotos ↑' : 'Ver las ' + photos.length + ' fotos acá ↓'}</button>}
+                </article>
+              })}            </div>
           )}
+          {shifterViewer && (() => {
+            const photos = shifterViewer.album.photos || []
+            const photo = photos[shifterViewer.index]
+            return <div className="fixed inset-0 z-[250] flex flex-col bg-black/95" role="dialog" aria-modal="true" aria-label="Galería de Shifter">
+              <div className="flex items-center justify-between gap-3 px-4 py-4 text-white">
+                <div className="min-w-0"><p className="truncate text-sm font-bold">{shifterViewer.album.title}</p><p className="text-xs text-white/60">{shifterViewer.index + 1} de {photos.length}</p></div>
+                <button type="button" onClick={() => setShifterViewer(null)} className="rounded-full bg-white/15 px-4 py-2 text-sm font-bold" aria-label="Cerrar galería">Cerrar ✕</button>
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-between gap-1 px-2">
+                <button type="button" disabled={shifterViewer.index === 0} onClick={() => setShifterViewer(v => ({ ...v, index: v.index - 1 }))} className="shrink-0 rounded-full bg-white/15 px-3 py-3 text-xl text-white disabled:opacity-20" aria-label="Foto anterior">‹</button>
+                {photo && <img src={photo.url} alt={'Foto ' + (shifterViewer.index + 1)} className="max-h-full min-w-0 flex-1 object-contain" />}
+                <button type="button" disabled={shifterViewer.index === photos.length - 1} onClick={() => setShifterViewer(v => ({ ...v, index: v.index + 1 }))} className="shrink-0 rounded-full bg-white/15 px-3 py-3 text-xl text-white disabled:opacity-20" aria-label="Foto siguiente">›</button>
+              </div>
+              <p className="px-4 py-4 text-center text-xs text-white/50">Galería de RollerFeed · Punta Rollers</p>
+            </div>
+          })()}
           {loading ? (
             <div className="space-y-4" aria-hidden="true">
               <LoadingFeedCard />
