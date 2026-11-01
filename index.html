@@ -72,7 +72,7 @@
           if (rankingVisible && !document.querySelector('.pr-conversometro-shortcut')) {
             const tab = document.createElement('a')
             tab.href = '/app/conversometro'
-            tab.className = 'pr-weekly-ranking-shortcut pr-conversometro-shortcut'
+            tab.className = 'pr-conversometro-shortcut'
             // Mirror the right-hand RANKING tab's narrow vertical geometry, never a horizontal pill.
             tab.style.cssText = 'position:fixed!important;left:0!important;right:auto!important;top:37%!important;bottom:auto!important;width:38px!important;min-width:38px!important;max-width:38px!important;height:119px!important;min-height:119px!important;max-height:119px!important;padding:0!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;overflow:visible!important;border-radius:0 15px 15px 0!important;z-index:90!important;'
             tab.innerHTML = '<span class="pr-ranking-trophy" aria-hidden="true">💬</span><span class="pr-ranking-vertical">CONVERSÓMETRO</span>'
