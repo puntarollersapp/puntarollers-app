@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/auth';
 /** Conversómetro PR — isolated visual prototype. No production writes. */
 const demo = [{id:'preview-teacher',name:'Claudio',count:25,color:'#d48aff'}];
 function isAuthorizedPreviewUser(user) { return Boolean(user && (user.role === 'admin' || user.role === 'profesor' || user.esProfesor)); }
-export default function ConversometroPrototype({ students = demo, onMark, canMark = false }) {
+export default function ConversometroPrototype({ students = demo, marks = [], onMark, canMark = false }) {
   const { user } = useAuth();
   const [local, setLocal] = useState({});
   const [extraStudents, setExtraStudents] = useState([]);
@@ -34,6 +34,22 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
     : students;
   const ranking = useMemo(() => previewStudents.map(s=>({...s,count:(s.count||0)+(local[s.id]||0)})).filter(s=>s.count>0).sort((a,b)=>b.count-a.count),[previewStudents,local]);
   const total = ranking.reduce((n,s)=>n+s.count,0);
+  const monthly = useMemo(() => {
+    const counts = new Map();
+    for (const item of marks) {
+      if (item.voided_at || !item.created_at) continue;
+      const date = new Date(item.created_at);
+      if (!Number.isFinite(date.getTime()) || date > new Date()) continue;
+      const uy = new Date(date.getTime() - 3 * 60 * 60 * 1000);
+      const key = uy.getUTCFullYear() + '-' + String(uy.getUTCMonth() + 1).padStart(2,'0');
+      counts.set(key,(counts.get(key)||0)+1);
+    }
+    return [...counts].sort(([a],[b])=>a.localeCompare(b)).slice(-12).map(([key,count])=>({
+      key,count,label:new Intl.DateTimeFormat('es-UY',{month:'short',year:'2-digit',timeZone:'UTC'}).format(new Date(key+'-01T12:00:00Z'))
+    }));
+  },[marks]);
+  const maxMonth = Math.max(1,...monthly.map(m=>m.count));
+  const peak = monthly.reduce((best,m)=>!best||m.count>best.count?m:best,null);
   useEffect(() => {
     if (!isDemo || !previewEditor) return;
     let active = true;
@@ -63,6 +79,22 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
       @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;700;800;900&display=swap');
       .cm-root{min-height:100vh;background:radial-gradient(ellipse at 50% 5%,#35115d 0%,#100927 45%,#080c1e 100%);color:white;padding:clamp(16px,4vw,50px);font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
       .cm-root *{box-sizing:border-box}
+      .cm-analytics{max-width:1050px;margin:30px auto;padding:clamp(16px,3vw,28px);border:1px solid #9e55e877;border-radius:24px;background:linear-gradient(135deg,#2a1248dd,#0c1029ee)}
+      .cm-analytics h2{font-family:'Archivo Black',system-ui;font-size:clamp(19px,3vw,28px);margin:0 0 8px}
+      .cm-analytics-desc{color:#d7c4e9;font-size:13px;line-height:1.6}
+      .cm-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px}
+      .cm-chart-card{padding:16px;border:1px solid #ffffff25;border-radius:18px;background:#120d2d}
+      .cm-chart-card h3{font-size:16px;margin:0 0 15px}
+      .cm-chart-row{display:grid;grid-template-columns:minmax(65px,115px) 1fr 35px;align-items:center;gap:9px;margin:12px 0;font-size:12px}
+      .cm-chart-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .cm-chart-track{height:14px;background:#312148;border-radius:30px;overflow:hidden}
+      .cm-chart-fill{height:100%;background:linear-gradient(90deg,#9343ee,#d5ff70);border-radius:30px}
+      .cm-month-bars{display:flex;gap:8px;align-items:end;min-height:175px;overflow-x:auto;padding:10px 0}
+      .cm-month-item{flex:1;min-width:45px;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:6px;font-size:11px}
+      .cm-month-item .cm-month-bar{width:80%;max-width:35px;min-height:4px;background:linear-gradient(#d5ff70,#a03eff);border-radius:8px 8px 2px 2px}
+      .cm-chart-empty{padding:28px 10px;text-align:center;color:#cab3df;font-size:13px;line-height:1.6}
+      @media(max-width:650px){.cm-chart-grid{grid-template-columns:1fr}}
+
       .cm-student-picker{max-width:700px;margin:15px auto 25px;padding:18px;border:1px solid #a85df877;border-radius:20px;background:#24103e}
       .cm-student-picker label{display:block;font-weight:900;margin-bottom:10px}
       .cm-student-picker input{width:100%;padding:13px;border:1px solid #a85df8;border-radius:12px;background:#110a24;color:white;font:inherit}
@@ -130,6 +162,18 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
     <div className="cm-stats"><div className="cm-pill">💬 Total de conversaciones: <strong>{total}</strong></div><div className="cm-period">{['Semana','Mes','Histórico'].map(p=><button key={p} aria-pressed={period===p} onClick={()=>setPeriod(p)} disabled={isDemo} title={isDemo?'Disponible cuando se conecten los registros reales':undefined}>{p}</button>)}</div></div>
     <section className="cm-jars" aria-label="Frascos de conversaciones">{ranking.slice(0,5).map((s,i)=><div className="cm-item" key={s.id} style={{'--glow':s.color||'#a45aff'}}><div className="cm-count">{i===0?'👑 ':''}{s.count}</div><div className="cm-jar">{Array.from({length:Math.min(s.count,100)},(_,j)=><div className="cm-ball" key={j} style={{animationDelay:Math.min(j*25,300)+'ms'}}>{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</div>)}</div><div className="cm-name">{s.name}</div></div>)}</section>
     <section className="cm-panel"><h2>🏆 Ranking de conversadores</h2><p className="cm-ranking-help">Los alumnos aparecerán acá cuando reciban su primera marca. Los que tengan cero no ocupan lugar.</p>{ranking.map((s,i)=><div className="cm-row" key={s.id} style={{'--glow':s.color||'#a45aff'}}><b>{i+1}</b><span className="cm-avatar">{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</span><strong>{s.name}</strong><div className="cm-bar"><div className="cm-fill" style={{width:(ranking[0].count?100*s.count/ranking[0].count:0)+'%'}}/></div><b>{s.count}</b><span className="cm-actions"><button className="cm-add cm-sub" disabled={!allowMark || !isDemo || s.count<=0} onClick={()=>undo(s)} aria-label={'Quitar una marca de '+s.name}>−1</button><button className="cm-add" disabled={!allowMark} onClick={()=>mark(s)} aria-label={'Sumar una llamada de atención a '+s.name}>+1</button></span></div>)}</section>
+    <section className="cm-analytics" aria-label="Estadísticas del Conversómetro">
+      <h2>📊 EL LABORATORIO DEL BLA BLA BLA</h2>
+      <p className="cm-analytics-desc">¿Quién habla más? ¿En qué mes volaron más bolitas? Las estadísticas crecen con las marcas registradas. {isDemo?'Los datos de este ejemplo son simulados.':''}</p>
+      <div className="cm-chart-grid">
+        <div className="cm-chart-card"><h3>🏆 Los más charlatanes</h3>
+          {ranking.length ? ranking.slice(0,7).map(s=><div className="cm-chart-row" key={s.id}><span title={s.name}>{s.name}</span><div className="cm-chart-track"><div className="cm-chart-fill" style={{width:(ranking[0].count?100*s.count/ranking[0].count:0)+'%'}}/></div><strong>{s.count}</strong></div>) : <p className="cm-chart-empty">Aún no hay marcas.</p>}
+        </div>
+        <div className="cm-chart-card"><h3>📅 Mes a mes</h3>
+          {monthly.length ? <><div className="cm-month-bars">{monthly.map(m=><div className="cm-month-item" key={m.key}><b>{m.count}</b><div className="cm-month-bar" style={{height:(10+135*m.count/maxMonth)+'px'}}/><span>{m.label}</span></div>)}</div><p className="cm-analytics-desc">👑 Mes más charlatán: <strong>{peak.label}</strong> ({peak.count} marcas)</p></> : <p className="cm-chart-empty">🗓️ Este gráfico se activará cuando haya marcas reales con fecha. Todavía no existe un historial mensual para mostrar.</p>}
+        </div>
+      </div>
+    </section>
     <p className="cm-foot">Punta Rollers · Un juego para mejorar la atención en clase</p>
   </main>;
 }
