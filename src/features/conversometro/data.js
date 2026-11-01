@@ -5,17 +5,28 @@ import { buildConversationRanking } from './ranking';
 // It never reads or writes attendance, bookings, payments or training data.
 const TABLE = 'pr_conversometro_marks';
 
-export async function loadConversationData() {
-  const [people, marks] = await Promise.all([
-    supabase.from('profiles').select('id,nombre,apellido,foto,role,participa_como_alumno').limit(500),
-    supabase.from(TABLE).select('id,student_id,created_at,voided_at').order('created_at',{ascending:false}).limit(10000)
+export async function loadConversationData(isStaff = false) {
+  // Non-staff see only the minimal public projection of participants.
+  // They must not query private profile fields or depend on staff RLS.
+  const [participants, marks, directory] = await Promise.all([
+    supabase.rpc('pr_conversometro_participants'),
+    supabase.from(TABLE).select('id,student_id,created_at,voided_at').order('created_at',{ascending:false}).limit(10000),
+    isStaff ? supabase.from('profiles').select('id,nombre,apellido,foto,role,participa_como_alumno').limit(500) : Promise.resolve({data:[],error:null})
   ]);
-  if (people.error) throw people.error;
+  if (participants.error) throw participants.error;
   if (marks.error) throw marks.error;
-  const students = (people.data || [])
-    .filter(p => p.role === 'alumno' || p.participa_como_alumno)
-    .map(p => ({id:p.id,name:[p.nombre,p.apellido].filter(Boolean).join(' ') || 'Alumno',avatar_url:p.foto,color:'#b25aff'}));
-  return {students,marks:marks.data || []};
+  if (isStaff && directory.error) throw directory.error;
+  const profiles = new Map((participants.data || []).map(p => [String(p.id),{
+    id:p.id,name:p.name || 'Alumno',avatar_url:p.avatar_url,color:'#b25aff'
+  }]));
+  if (isStaff) for (const p of directory.data || []) {
+    if (p.role === 'alumno' || p.participa_como_alumno) {
+      profiles.set(String(p.id),{
+        id:p.id,name:[p.nombre,p.apellido].filter(Boolean).join(' ') || 'Alumno',avatar_url:p.foto,color:'#b25aff'
+      });
+    }
+  }
+  return {students:[...profiles.values()],marks:marks.data || []};
 }
 
 export async function createConversationMark(studentId) {
