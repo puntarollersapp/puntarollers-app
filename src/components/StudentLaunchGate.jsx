@@ -75,7 +75,7 @@ export default function StudentLaunchGate({ user, children }) {
       if (!error && data?.category && data.category !== 'NO') window.localStorage.setItem('pr_training_visible','1')
       if (!error && data?.category === 'NO') window.localStorage.removeItem('pr_training_visible')
 
-      if (!error && !data && location.pathname !== '/app/deberes') {
+      if (!error && !data && !PR_PUBLIC_LAUNCH_ENABLED && location.pathname !== '/app/deberes') {
         navigate('/app/deberes', { replace: true })
         return
       }
