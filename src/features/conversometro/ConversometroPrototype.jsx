@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth';
+import { buildConversationRanking } from './ranking';
 
 /** Conversómetro PR — isolated visual prototype. No production writes. */
 const demo = [{id:'preview-teacher',name:'Claudio',count:25,color:'#d48aff'}];
 function isAuthorizedPreviewUser(user) { return Boolean(user && (user.role === 'admin' || user.role === 'profesor' || user.esProfesor)); }
-export default function ConversometroPrototype({ students = demo, marks = [], onMark, canMark = false }) {
+export default function ConversometroPrototype({ students = demo, marks = [], onMark, onUndo, canMark = false }) {
   const { user } = useAuth();
   const [local, setLocal] = useState({});
   const [extraStudents, setExtraStudents] = useState([]);
@@ -27,12 +28,15 @@ export default function ConversometroPrototype({ students = demo, marks = [], on
   }, [students,user?.id,user?.nombre,user?.apellido,user?.foto]);
   const [period, setPeriod] = useState('Mes');
   const previewEditor = isAuthorizedPreviewUser(user);
-  const allowMark = canMark || (students === demo && previewEditor);
+  const allowMark = previewEditor && (canMark || students === demo);
   const isDemo = students === demo;
   const previewStudents = isDemo
     ? [...(teacherProfile ? [{...demo[0],id:teacherProfile.id,name:[teacherProfile.nombre,teacherProfile.apellido].filter(Boolean).join(' ')||'Claudio',avatar_url:teacherProfile.foto}] : demo), ...extraStudents]
     : students;
-  const ranking = useMemo(() => previewStudents.map(s=>({...s,count:(s.count||0)+(local[s.id]||0)})).filter(s=>s.count>0).sort((a,b)=>b.count-a.count),[previewStudents,local]);
+  const ranking = useMemo(() => (isDemo
+    ? previewStudents.map(s=>({...s,count:(s.count||0)+(local[s.id]||0)})).filter(s=>s.count>0).sort((a,b)=>b.count-a.count)
+    : buildConversationRanking(previewStudents,marks,period==='Semana'?'semana':period==='Mes'?'mes':'historico').filter(s=>s.count>0)
+  ),[isDemo,previewStudents,local,marks,period]);
   const total = ranking.reduce((n,s)=>n+s.count,0);
   const monthly = useMemo(() => {
     const counts = new Map();
@@ -60,16 +64,17 @@ export default function ConversometroPrototype({ students = demo, marks = [], on
     });
     return () => {active=false};
   },[isDemo,previewEditor]);
-  const matches = studentSearch.trim() ? directory.filter(p=>p.name.toLowerCase().includes(studentSearch.trim().toLowerCase()) && !ranking.some(s=>s.id===p.id)).slice(0,8) : [];
+  const matches = studentSearch.trim() ? (isDemo?directory:students).filter(p=>p.name.toLowerCase().includes(studentSearch.trim().toLowerCase()) && !ranking.some(s=>s.id===p.id)).slice(0,8) : [];
   const addStudent = p => {setExtraStudents(old=>old.some(s=>s.id===p.id)?old:[...old,p]);setLocal(old=>({...old,[p.id]:Math.max(1,(old[p.id]||0)+1)}));setStudentSearch('');};
   const undo = s => {
-    if (!allowMark || !isDemo) return;
+    if (!allowMark) return;
+    if (!isDemo) { if (onUndo) onUndo(s.id); return; }
     setLocal(p => ({...p,[s.id]:Math.max(-s.count,(p[s.id]||0)-1)}));
   };
   const mark = s => {
     if (!allowMark) return;
-    if (onMark) onMark(s.id);
-    else setLocal(p=>({...p,[s.id]:(p[s.id]||0)+1}));
+    if (!isDemo) { if (onMark) onMark(s.id); return; }
+    setLocal(p=>({...p,[s.id]:(p[s.id]||0)+1}));
   };
   return <main className="cm-root">
     <div className="cm-spark cm-spark-a" aria-hidden="true">😂</div>
@@ -154,14 +159,14 @@ export default function ConversometroPrototype({ students = demo, marks = [], on
       <div className="cm-mini-marquee" aria-hidden="true"><span>💬 BLA BLA BLA</span><span>😂 JA JA JA</span><span>🎤 ¡TE ESCUCHAMOS!</span><span>🤫 SHHH…</span></div>
     </header>
     {isDemo && <p className="cm-demo-notice" role="status">🎨 Demostración visual: 25 marcas simuladas para mostrar cómo se llena el frasco. No se guardan como llamadas de atención reales.</p>}
-    {isDemo && previewEditor && <section className="cm-student-picker">
+    {allowMark && <section className="cm-student-picker">
       <label htmlFor="cm-search">💬 Simular primera marca de un alumno</label>
       <input id="cm-search" autoComplete="off" type="search" placeholder="Buscar alumno…" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/>
-      {matches.map(p=><button type="button" key={p.id} onClick={()=>addStudent(p)}>{p.name} <b>+1</b></button>)}
+      {matches.map(p=><button type="button" key={p.id} onClick={()=>isDemo?addStudent(p):onMark?.(p.id)}>{p.name} <b>+1</b></button>)}
     </section>}
     <div className="cm-stats"><div className="cm-pill">💬 Total de conversaciones: <strong>{total}</strong></div><div className="cm-period">{['Semana','Mes','Histórico'].map(p=><button key={p} aria-pressed={period===p} onClick={()=>setPeriod(p)} disabled={isDemo} title={isDemo?'Disponible cuando se conecten los registros reales':undefined}>{p}</button>)}</div></div>
     <section className="cm-jars" aria-label="Frascos de conversaciones">{ranking.slice(0,5).map((s,i)=><div className="cm-item" key={s.id} style={{'--glow':s.color||'#a45aff'}}><div className="cm-count">{i===0?'👑 ':''}{s.count}</div><div className="cm-jar">{Array.from({length:Math.min(s.count,100)},(_,j)=><div className="cm-ball" key={j} style={{animationDelay:Math.min(j*25,300)+'ms'}}>{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</div>)}</div><div className="cm-name">{s.name}</div></div>)}</section>
-    <section className="cm-panel"><h2>🏆 Ranking de conversadores</h2><p className="cm-ranking-help">Los alumnos aparecerán acá cuando reciban su primera marca. Los que tengan cero no ocupan lugar.</p>{ranking.map((s,i)=><div className="cm-row" key={s.id} style={{'--glow':s.color||'#a45aff'}}><b>{i+1}</b><span className="cm-avatar">{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</span><strong>{s.name}</strong><div className="cm-bar"><div className="cm-fill" style={{width:(ranking[0].count?100*s.count/ranking[0].count:0)+'%'}}/></div><b>{s.count}</b><span className="cm-actions"><button className="cm-add cm-sub" disabled={!allowMark || !isDemo || s.count<=0} onClick={()=>undo(s)} aria-label={'Quitar una marca de '+s.name}>−1</button><button className="cm-add" disabled={!allowMark} onClick={()=>mark(s)} aria-label={'Sumar una llamada de atención a '+s.name}>+1</button></span></div>)}</section>
+    <section className="cm-panel"><h2>🏆 Ranking de conversadores</h2><p className="cm-ranking-help">Los alumnos aparecerán acá cuando reciban su primera marca. Los que tengan cero no ocupan lugar.</p>{ranking.map((s,i)=><div className="cm-row" key={s.id} style={{'--glow':s.color||'#a45aff'}}><b>{i+1}</b><span className="cm-avatar">{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</span><strong>{s.name}</strong><div className="cm-bar"><div className="cm-fill" style={{width:(ranking[0].count?100*s.count/ranking[0].count:0)+'%'}}/></div><b>{s.count}</b><span className="cm-actions"><button className="cm-add cm-sub" disabled={!allowMark || s.count<=0} onClick={()=>undo(s)} aria-label={'Quitar una marca de '+s.name}>−1</button><button className="cm-add" disabled={!allowMark} onClick={()=>mark(s)} aria-label={'Sumar una llamada de atención a '+s.name}>+1</button></span></div>)}</section>
     <section className="cm-analytics" aria-label="Estadísticas del Conversómetro">
       <h2>📊 EL LABORATORIO DEL BLA BLA BLA</h2>
       <p className="cm-analytics-desc">¿Quién habla más? ¿En qué mes volaron más bolitas? Las estadísticas crecen con las marcas registradas. {isDemo?'Los datos de este ejemplo son simulados.':''}</p>
