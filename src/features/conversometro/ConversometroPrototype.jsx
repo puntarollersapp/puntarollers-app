@@ -59,7 +59,7 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
     <header className="cm-hero">
       <div className="cm-eyebrow"><span className="cm-live-dot"/> PUNTA ROLLERS PRESENTA <span>✦</span> EL EXPERIMENTO MÁS CHARLATÁN</div>
       <div className="cm-title-wrap"><span className="cm-title-emoji" aria-hidden="true">🗣️</span><h1>CONVERS<span>Ó</span>METRO</h1><span className="cm-title-emoji cm-title-emoji-right" aria-hidden="true">😂</span></div>
-      <p className="cm-tagline">¡Se armó la charla! <span>Y el frasco lo sabe.</span></p>
+      
       <div className="cm-intro"><strong>En Punta Rollers las ruedas giran… ¡y las conversaciones también! 🤭</strong><p>Cada vez que alguien se distrae charlando en clase, el profe suma una bolita a su frasco. Cuantas más charlas, más se llena. ¿Quién se lleva la corona de la lengua más rápida? 👑</p><span className="cm-intro-note">Una competencia en broma, con mucho humor y cero drama. 💜</span></div>
       <div className="cm-mini-marquee" aria-hidden="true"><span>💬 BLA BLA BLA</span><span>😂 JA JA JA</span><span>🎤 ¡TE ESCUCHAMOS!</span><span>🤫 SHHH…</span></div>
     </header>
