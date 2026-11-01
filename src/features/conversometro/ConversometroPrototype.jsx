@@ -45,6 +45,7 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
     <div className="cm-spark cm-spark-b" aria-hidden="true">💬</div>
     <div className="cm-spark cm-spark-c" aria-hidden="true">🤣</div>
     <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;700;800;900&display=swap');
       .cm-root{min-height:100vh;background:radial-gradient(ellipse at 50% 5%,#35115d 0%,#100927 45%,#080c1e 100%);color:white;padding:clamp(16px,4vw,50px);font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
       .cm-root *{box-sizing:border-box}
 
