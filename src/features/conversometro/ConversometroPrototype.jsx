@@ -8,6 +8,9 @@ function isAuthorizedPreviewUser(user) { return Boolean(user && (user.role === '
 export default function ConversometroPrototype({ students = demo, onMark, canMark = false }) {
   const { user } = useAuth();
   const [local, setLocal] = useState({});
+  const [extraStudents, setExtraStudents] = useState([]);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [directory, setDirectory] = useState([]);
   const [teacherProfile, setTeacherProfile] = useState(null);
   useEffect(() => {
     let alive = true;
@@ -26,11 +29,23 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
   const previewEditor = isAuthorizedPreviewUser(user);
   const allowMark = canMark || (students === demo && previewEditor);
   const isDemo = students === demo;
-  const previewStudents = isDemo && teacherProfile
-    ? [{...demo[0],id:teacherProfile.id,name:[teacherProfile.nombre,teacherProfile.apellido].filter(Boolean).join(' ')||'Claudio',avatar_url:teacherProfile.foto}]
+  const previewStudents = isDemo
+    ? [...(teacherProfile ? [{...demo[0],id:teacherProfile.id,name:[teacherProfile.nombre,teacherProfile.apellido].filter(Boolean).join(' ')||'Claudio',avatar_url:teacherProfile.foto}] : demo), ...extraStudents]
     : students;
   const ranking = useMemo(() => previewStudents.map(s=>({...s,count:(s.count||0)+(local[s.id]||0)})).filter(s=>s.count>0).sort((a,b)=>b.count-a.count),[previewStudents,local]);
   const total = ranking.reduce((n,s)=>n+s.count,0);
+  useEffect(() => {
+    if (!isDemo || !previewEditor) return;
+    let active = true;
+    supabase.from('profiles').select('id,nombre,apellido,foto,role,participa_como_alumno').order('nombre').limit(250).then(({data,error}) => {
+      if (active && !error) setDirectory((data||[]).filter(p=>p.role==='alumno'||p.participa_como_alumno).map(p=>({
+        id:p.id,name:[p.nombre,p.apellido].filter(Boolean).join(' ')||'Alumno',avatar_url:p.foto,count:0,color:'#b25aff'
+      })));
+    });
+    return () => {active=false};
+  },[isDemo,previewEditor]);
+  const matches = studentSearch.trim() ? directory.filter(p=>p.name.toLowerCase().includes(studentSearch.trim().toLowerCase()) && !previewStudents.some(s=>s.id===p.id)).slice(0,8) : [];
+  const addStudent = p => {setExtraStudents(old=>[...old,p]);setLocal(old=>({...old,[p.id]:1}));setStudentSearch('');};
   const undo = s => {
     if (!allowMark || !isDemo) return;
     setLocal(p => ({...p,[s.id]:Math.max(-s.count,(p[s.id]||0)-1)}));
@@ -48,6 +63,11 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
       @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;700;800;900&display=swap');
       .cm-root{min-height:100vh;background:radial-gradient(ellipse at 50% 5%,#35115d 0%,#100927 45%,#080c1e 100%);color:white;padding:clamp(16px,4vw,50px);font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
       .cm-root *{box-sizing:border-box}
+      .cm-student-picker{max-width:700px;margin:15px auto 25px;padding:18px;border:1px solid #a85df877;border-radius:20px;background:#24103e}
+      .cm-student-picker label{display:block;font-weight:900;margin-bottom:10px}
+      .cm-student-picker input{width:100%;padding:13px;border:1px solid #a85df8;border-radius:12px;background:#110a24;color:white;font:inherit}
+      .cm-student-picker button{display:flex;justify-content:space-between;width:100%;padding:12px;border:0;border-bottom:1px solid #ffffff22;background:transparent;color:white;text-align:left;cursor:pointer}
+      .cm-student-picker button b{color:#d5ff70}
 
       .cm-root{position:relative;font-family:'DM Sans',system-ui,sans-serif}
       .cm-root:before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(#d9adff 1px,transparent 1px);background-size:29px 29px;opacity:.11;mask-image:linear-gradient(#000,transparent 65%)}
@@ -89,6 +109,11 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
       <div className="cm-mini-marquee" aria-hidden="true"><span>💬 BLA BLA BLA</span><span>😂 JA JA JA</span><span>🎤 ¡TE ESCUCHAMOS!</span><span>🤫 SHHH…</span></div>
     </header>
     {isDemo && <p className="cm-demo-notice" role="status">🎨 Demostración visual: 25 marcas simuladas para mostrar cómo se llena el frasco. No se guardan como llamadas de atención reales.</p>}
+    {isDemo && previewEditor && <section className="cm-student-picker">
+      <label htmlFor="cm-search">💬 Simular primera marca de un alumno</label>
+      <input id="cm-search" type="search" placeholder="Buscar alumno…" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/>
+      {matches.map(p=><button type="button" key={p.id} onClick={()=>addStudent(p)}>{p.name} <b>+1</b></button>)}
+    </section>}
     <div className="cm-stats"><div className="cm-pill">💬 Total de conversaciones: <strong>{total}</strong></div><div className="cm-period">{['Semana','Mes','Histórico'].map(p=><button key={p} aria-pressed={period===p} onClick={()=>setPeriod(p)} disabled={isDemo} title={isDemo?'Disponible cuando se conecten los registros reales':undefined}>{p}</button>)}</div></div>
     <section className="cm-jars" aria-label="Frascos de conversaciones">{ranking.slice(0,5).map((s,i)=><div className="cm-item" key={s.id} style={{'--glow':s.color||'#a45aff'}}><div className="cm-count">{i===0?'👑 ':''}{s.count}</div><div className="cm-jar">{Array.from({length:Math.min(s.count,100)},(_,j)=><div className="cm-ball" key={j} style={{animationDelay:Math.min(j*25,300)+'ms'}}>{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</div>)}</div><div className="cm-name">{s.name}</div></div>)}</section>
     <section className="cm-panel"><h2>🏆 Ranking de conversadores</h2><p className="cm-ranking-help">Los alumnos aparecerán acá cuando reciban su primera marca. Los que tengan cero no ocupan lugar.</p>{ranking.map((s,i)=><div className="cm-row" key={s.id} style={{'--glow':s.color||'#a45aff'}}><b>{i+1}</b><span className="cm-avatar">{s.avatar_url?<img src={s.avatar_url} alt=""/>:s.name.slice(0,1)}</span><strong>{s.name}</strong><div className="cm-bar"><div className="cm-fill" style={{width:(ranking[0].count?100*s.count/ranking[0].count:0)+'%'}}/></div><b>{s.count}</b><span className="cm-actions"><button className="cm-add cm-sub" disabled={!allowMark || !isDemo || s.count<=0} onClick={()=>undo(s)} aria-label={'Quitar una marca de '+s.name}>−1</button><button className="cm-add" disabled={!allowMark} onClick={()=>mark(s)} aria-label={'Sumar una llamada de atención a '+s.name}>+1</button></span></div>)}</section>
