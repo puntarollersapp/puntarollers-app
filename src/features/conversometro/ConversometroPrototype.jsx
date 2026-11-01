@@ -44,8 +44,8 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
     });
     return () => {active=false};
   },[isDemo,previewEditor]);
-  const matches = studentSearch.trim() ? directory.filter(p=>p.name.toLowerCase().includes(studentSearch.trim().toLowerCase()) && !previewStudents.some(s=>s.id===p.id)).slice(0,8) : [];
-  const addStudent = p => {setExtraStudents(old=>[...old,p]);setLocal(old=>({...old,[p.id]:1}));setStudentSearch('');};
+  const matches = studentSearch.trim() ? directory.filter(p=>p.name.toLowerCase().includes(studentSearch.trim().toLowerCase()) && !ranking.some(s=>s.id===p.id)).slice(0,8) : [];
+  const addStudent = p => {setExtraStudents(old=>old.some(s=>s.id===p.id)?old:[...old,p]);setLocal(old=>({...old,[p.id]:Math.max(1,(old[p.id]||0)+1)}));setStudentSearch('');};
   const undo = s => {
     if (!allowMark || !isDemo) return;
     setLocal(p => ({...p,[s.id]:Math.max(-s.count,(p[s.id]||0)-1)}));
@@ -99,6 +99,19 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
       .cm-jars{display:flex;align-items:end;justify-content:center;gap:clamp(8px,2vw,28px);max-width:1200px;margin:45px auto 45px;min-height:290px}.cm-item{flex:1;min-width:0;text-align:center}.cm-count{display:inline-block;font-size:clamp(16px,3vw,29px);font-weight:900;padding:7px 17px;border:2px solid var(--glow);border-radius:16px;background:#190e31;box-shadow:0 0 18px var(--glow);margin-bottom:15px}.cm-jar{position:relative;height:clamp(145px,23vw,280px);border:3px solid #a6c4ff;border-top:10px solid var(--glow);border-radius:18px 18px 30px 30px;background:linear-gradient(110deg,#ffffff24,transparent 28%,#ffffff12 80%,#ffffff40);box-shadow:inset 0 0 22px #9ac8ff44,0 0 26px color-mix(in srgb,var(--glow) 55%,transparent);overflow:hidden;display:flex;align-content:end;justify-content:center;align-items:end;flex-wrap:wrap-reverse;gap:3px;padding:12px 5px}.cm-ball{width:clamp(18px,3.3vw,37px);height:clamp(18px,3.3vw,37px);border-radius:50%;background:linear-gradient(135deg,#fff,var(--glow));border:2px solid #fff8;display:grid;place-items:center;color:#241039;font-size:clamp(9px,1.6vw,15px);font-weight:900;overflow:hidden;animation:cm-drop .4s ease-out both}.cm-ball img{width:100%;height:100%;object-fit:cover}.cm-name{margin:16px auto 0;background:var(--glow);color:#120b21;border-radius:25px;padding:8px 4px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@keyframes cm-drop{from{transform:translateY(-80px);opacity:0}to{transform:translateY(0);opacity:1}}
       .cm-panel{max-width:1050px;margin:auto;border:1px solid #8137dc;border-radius:24px;background:#120d2bd9;padding:clamp(16px,3vw,30px);box-shadow:0 0 50px #631ac52a}.cm-panel h2{margin:0 0 20px;font-size:clamp(20px,3vw,30px)}.cm-row{display:grid;grid-template-columns:28px 40px minmax(80px,180px) 1fr 36px auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #ffffff18}.cm-avatar{width:38px;height:38px;border-radius:50%;background:#6832a2;display:grid;place-items:center;overflow:hidden}.cm-avatar img{width:100%;height:100%;object-fit:cover}.cm-bar{height:11px;background:#292143;border-radius:20px;overflow:hidden}.cm-fill{height:100%;border-radius:20px;background:var(--glow);transition:width .35s}.cm-add{background:#8a36e4;color:white;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:800}.cm-add:disabled{opacity:.35;cursor:default}.cm-actions{display:flex;gap:5px;justify-content:flex-end}.cm-actions button{min-width:37px;min-height:40px;touch-action:manipulation}.cm-sub{background:#472362;color:#f7d9ff}.cm-foot{text-align:center;color:#b7a4d6;margin:25px auto;font-size:13px}
       @media(max-width:650px){.cm-jars{overflow-x:auto;justify-content:flex-start;padding:20px 2px}.cm-item{flex:0 0 110px}.cm-jar{height:185px}.cm-row{grid-template-columns:18px 30px minmax(70px,1fr) minmax(35px,70px) 25px auto;gap:5px;font-size:12px}.cm-avatar{width:30px;height:30px}.cm-add{padding:7px}.cm-actions button{min-width:34px}.cm-panel{border-radius:16px}}
+      @media(max-width:440px){
+        .cm-root{padding:18px 10px calc(30px + env(safe-area-inset-bottom,0px))}
+        .cm-panel{padding:12px 9px}
+        .cm-row{grid-template-columns:18px 28px minmax(0,1fr) 27px 75px;gap:5px}
+        .cm-row .cm-bar{display:none}
+        .cm-row strong{overflow-wrap:anywhere;font-size:11px}
+        .cm-actions{gap:3px}
+        .cm-actions button{min-width:36px;min-height:44px;padding:6px}
+        .cm-period{flex-wrap:wrap}
+        .cm-stats{justify-content:center}
+        .cm-hero .cm-title-wrap h1{font-size:clamp(23px,7vw,36px)}
+        .cm-title-emoji{font-size:23px}
+      }
       @media(prefers-reduced-motion:reduce){.cm-ball{animation:none}}
     `}</style>
     <header className="cm-hero">
@@ -111,7 +124,7 @@ export default function ConversometroPrototype({ students = demo, onMark, canMar
     {isDemo && <p className="cm-demo-notice" role="status">🎨 Demostración visual: 25 marcas simuladas para mostrar cómo se llena el frasco. No se guardan como llamadas de atención reales.</p>}
     {isDemo && previewEditor && <section className="cm-student-picker">
       <label htmlFor="cm-search">💬 Simular primera marca de un alumno</label>
-      <input id="cm-search" type="search" placeholder="Buscar alumno…" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/>
+      <input id="cm-search" autoComplete="off" type="search" placeholder="Buscar alumno…" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/>
       {matches.map(p=><button type="button" key={p.id} onClick={()=>addStudent(p)}>{p.name} <b>+1</b></button>)}
     </section>}
     <div className="cm-stats"><div className="cm-pill">💬 Total de conversaciones: <strong>{total}</strong></div><div className="cm-period">{['Semana','Mes','Histórico'].map(p=><button key={p} aria-pressed={period===p} onClick={()=>setPeriod(p)} disabled={isDemo} title={isDemo?'Disponible cuando se conecten los registros reales':undefined}>{p}</button>)}</div></div>
