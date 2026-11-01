@@ -671,6 +671,7 @@ export default function Activity() {
   const [activities, setActivities] = useState([])
   const [legacyItems, setLegacyItems] = useState([])
   const [socialPosts, setSocialPosts] = useState([])
+  const [shifterAlbums, setShifterAlbums] = useState([])
   const [events, setEvents] = useState(() => getDefaultRollerEvents())
   const [profiles, setProfiles] = useState([])
   const [moments, setMoments] = useState([])
@@ -818,6 +819,8 @@ export default function Activity() {
       supabase.rpc('community_social_feed'),
     ])
 
+    const albumResponse = await supabase.rpc('community_my_albums')
+    if (!albumResponse.error) setShifterAlbums((Array.isArray(albumResponse.data) ? albumResponse.data : []).filter(a => /shifter/i.test(a.title || '')))
     if(socialResponse.error)setMessage('No pudimos cargar las publicaciones: '+socialResponse.error.message)
     else setSocialPosts(Array.isArray(socialResponse.data)?socialResponse.data:[])
 
@@ -1341,6 +1344,20 @@ export default function Activity() {
             </div>
           )}
 
+          {filter === 'Todos' && shifterAlbums.length > 0 && (
+            <div className="mb-4 space-y-3">
+              {shifterAlbums.map(album => (
+                <button key={album.id} type="button" onClick={() => navigate('/app/comunidad')} className="w-full overflow-hidden rounded-[26px] border border-orange-400/30 bg-[#161017] text-left shadow-lg">
+                  <div className="p-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">🛼 Álbum público · Punta Rollers</p>
+                    <h3 className="mt-1 text-lg font-black text-white">{album.title}</h3>
+                    <p className="mt-1 text-xs text-white/60">{(album.photos || []).length} fotos · Tocá para ver el álbum en Comunidad</p>
+                  </div>
+                  {(album.photos || []).length > 0 && <div className="grid grid-cols-3 gap-1">{album.photos.slice(0,3).map(photo => <img key={photo.id} src={photo.url} alt="Foto del álbum Shifter" loading="lazy" className="h-28 w-full object-cover" />)}</div>}
+                </button>
+              ))}
+            </div>
+          )}
           {loading ? (
             <div className="space-y-4" aria-hidden="true">
               <LoadingFeedCard />
