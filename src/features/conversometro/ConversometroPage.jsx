@@ -11,12 +11,12 @@ export default function ConversometroPage() {
   const [saving,setSaving] = useState(false);
   const refresh = useCallback(async () => {
     try {
-      const data = await loadConversationData();
+      const data = await loadConversationData(authorized(user));
       setState({loading:false,ready:true,...data,error:''});
     } catch (err) {
       setState(previous=>({...previous,loading:false,ready:false,error:err?.message||'No se pudo cargar el Conversómetro'}));
     }
-  },[]);
+  },[user?.id,user?.role,user?.esProfesor]);
   useEffect(()=>{
     refresh();
     const onFocus = () => refresh();
