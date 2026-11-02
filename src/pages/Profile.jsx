@@ -363,6 +363,15 @@ function getPaymentStatus(
   }
 }
 
+function ConeLoanProfileAlert({profileId}){
+ const {user}=useAuth()
+ const [loan,setLoan]=useState(null)
+ useEffect(()=>{if(!user?.id||user.id!==profileId)return;let alive=true;async function refresh(){const {data,error}=await supabase.rpc('pr_training_cone_my_status');if(alive&&!error)setLoan(data?.status==='delivered'?data:null)}refresh();const t=setInterval(refresh,45000);return()=>{alive=false;clearInterval(t)}},[user?.id,profileId])
+ if(!loan)return null
+ const overdue=loan.due_at&&new Date(loan.due_at).getTime()<Date.now()
+ const days=Number(loan.days_remaining??0)
+ return <section role="status" className="mb-5 rounded-[22px] border border-red-500/60 bg-gradient-to-br from-red-950/95 to-[#2A1219] p-5 text-white"><p className="text-[10px] font-black uppercase tracking-widest text-red-300">🔴 Material PR en préstamo</p><h3 className="mt-2 text-lg font-black">{overdue?'Plazo de devolución vencido':'Tenés conos prestados'}</h3><p className="mt-2 text-sm leading-6 text-red-100">{overdue?'Devolvé los conos a tu profesor lo antes posible.':`Tenés 7 días desde la entrega para devolverlos. Te quedan ${days} ${days===1?'día':'días'}.`}</p><p className="mt-2 text-xs text-red-200/80">Fecha límite: {loan.due_at?new Date(loan.due_at).toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'}):'Pendiente'}. El aviso desaparece cuando el profesor confirma la devolución.</p></section>
+}
 export default function Profile() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -1851,6 +1860,7 @@ export default function Profile() {
           )}
         </section>
 
+        <ConeLoanProfileAlert profileId={profileId}/>
         <a href="/uniformes?origen=perfil" className="mb-5 block rounded-[22px] border border-[#BEFF37]/35 bg-gradient-to-r from-[#232A1B] via-[#181D19] to-[#16161C] p-5 text-white shadow-lg transition active:scale-[.99]"><span className="text-[10px] font-black uppercase tracking-[.18em] text-[#BEFF37]">EQUIPO OFICIAL PR</span><strong className="mt-2 block text-xl font-black">Tu próxima remera o buzo PR</strong><span className="mt-2 block text-xs leading-5 text-white/70">Elegí tu prenda, talle y personalización. Registrá tu pedido desde la tienda oficial.</span><span className="mt-3 inline-block text-xs font-black text-[#BEFF37]">Solicitar indumentaria →</span></a>
 
         <Accordion
