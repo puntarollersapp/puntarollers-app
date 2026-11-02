@@ -35,6 +35,15 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invalid_order" }, 400, headers);
   }
   const db = adminClient();
+  let linkedProfileId: string | null = null;
+  const authHeader = req.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const { data: authResult } = await db.auth.getUser(authHeader.slice(7));
+    if (authResult?.user?.id) {
+      const { data: linkedProfile } = await db.from("profiles").select("id").eq("auth_user_id",authResult.user.id).maybeSingle();
+      linkedProfileId = linkedProfile?.id || null;
+    }
+  }
   const { data: previous } = await db.from("pr_uniform_orders").select("id,total,buyer_email,product_id,model,color,size,quantity,buyer_name,buyer_phone,notes").eq("request_key",requestKey).maybeSingle();
   const sameOrder = (item: Record<string, unknown>) => item.buyer_email === email && item.product_id === productId && item.model === (model || null) && item.color === (color || null) && item.size === size && Number(item.quantity) === quantity && item.buyer_name === name && item.buyer_phone === phone && item.notes === (notes || null);
   if (previous) {
@@ -54,7 +63,7 @@ Deno.serve(async (req) => {
   const { data: order, error: insertError } = await db.from("pr_uniform_orders").insert({
     request_key: requestKey, product_id: product.id, product_name: product.nombre, model: model || null,
     color: color || null, size, quantity, unit_price: price, total: price * quantity,
-    buyer_name: name, buyer_email: email, buyer_phone: phone, notes: notes || null,
+    buyer_name: name, buyer_email: email, buyer_phone: phone, notes: notes || null, profile_id: linkedProfileId,
     payment_method: "transfer", payment_status: "pending",
   }).select("id,total").single();
   if (insertError?.code === "23505") {
