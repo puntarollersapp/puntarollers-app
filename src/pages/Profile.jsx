@@ -1851,6 +1851,8 @@ export default function Profile() {
           )}
         </section>
 
+        <a href="/uniformes?origen=perfil" className="mb-5 block rounded-[22px] border border-[#BEFF37]/35 bg-gradient-to-r from-[#232A1B] via-[#181D19] to-[#16161C] p-5 text-white shadow-lg transition active:scale-[.99]"><span className="text-[10px] font-black uppercase tracking-[.18em] text-[#BEFF37]">EQUIPO OFICIAL PR</span><strong className="mt-2 block text-xl font-black">Tu próxima remera o buzo PR</strong><span className="mt-2 block text-xs leading-5 text-white/70">Elegí tu prenda, talle y personalización. Registrá tu pedido desde la tienda oficial.</span><span className="mt-3 inline-block text-xs font-black text-[#BEFF37]">Solicitar indumentaria →</span></a>
+
         <Accordion
           title="Mis servicios PR"
           subtitle="Accesos activos"
