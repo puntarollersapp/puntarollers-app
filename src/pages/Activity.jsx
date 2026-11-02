@@ -1344,22 +1344,6 @@ export default function Activity() {
             </div>
           )}
 
-          {shifterViewer && (() => {
-            const photos = shifterViewer.album.photos || []
-            const photo = photos[shifterViewer.index]
-            return <div className="fixed inset-0 z-[250] flex flex-col bg-black/95" role="dialog" aria-modal="true" aria-label="Galería de Shifter">
-              <div className="flex items-center justify-between gap-3 px-4 py-4 text-white">
-                <div className="min-w-0"><p className="truncate text-sm font-bold">{shifterViewer.album.title}</p><p className="text-xs text-white/60">{shifterViewer.index + 1} de {photos.length}</p></div>
-                <button type="button" onClick={() => setShifterViewer(null)} className="rounded-full bg-white/15 px-4 py-2 text-sm font-bold" aria-label="Cerrar galería">Cerrar ✕</button>
-              </div>
-              <div className="flex min-h-0 flex-1 items-center justify-between gap-1 px-2">
-                <button type="button" disabled={shifterViewer.index === 0} onClick={() => setShifterViewer(v => ({ ...v, index: v.index - 1 }))} className="shrink-0 rounded-full bg-white/15 px-3 py-3 text-xl text-white disabled:opacity-20" aria-label="Foto anterior">‹</button>
-                {photo && <img src={photo.url} alt={'Foto ' + (shifterViewer.index + 1)} className="max-h-full min-w-0 flex-1 object-contain" />}
-                <button type="button" disabled={shifterViewer.index === photos.length - 1} onClick={() => setShifterViewer(v => ({ ...v, index: v.index + 1 }))} className="shrink-0 rounded-full bg-white/15 px-3 py-3 text-xl text-white disabled:opacity-20" aria-label="Foto siguiente">›</button>
-              </div>
-              <p className="px-4 py-4 text-center text-xs text-white/50">Galería de RollerFeed · Punta Rollers</p>
-            </div>
-          })()}
           {loading ? (
             <div className="space-y-4" aria-hidden="true">
               <LoadingFeedCard />
