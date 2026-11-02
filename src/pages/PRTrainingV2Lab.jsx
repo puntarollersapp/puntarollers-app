@@ -88,13 +88,25 @@ function SpinWheel({onViewDuties, initialRevealed=0, onReveal}) {
     <p className="mt-3 text-center text-[11px] leading-5 text-white/40">Vista de prueba · Los ejercicios mostrados son ilustrativos.</p>
   </div>
 }
+function ConeLoanRequest(){
+ const [status,setStatus]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('')
+ async function request(){if(busy)return;setBusy(true);const {data,error}=await supabase.rpc('pr_training_cone_request');if(error)setMessage(error.message);else{setStatus(data?.status||'requested');setMessage('Tu solicitud quedó registrada. El profesor preparará los conos para una próxima clase.')}setBusy(false)}
+ return <section className="mx-3 my-6 rounded-[24px] border border-[#F5AE52]/50 bg-gradient-to-br from-[#3B271B] via-[#242022] to-[#16171D] p-5 text-white"><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#FFC47B]">MATERIAL PARA ENTRENAR</p><h2 className="mt-2 text-xl font-black">¿Necesitás conos para realizar tus ejercicios?</h2><p className="mt-2 text-sm leading-6 text-white/75">Solicitá conos de préstamo a Punta Rollers. El profesor podrá entregártelos en una próxima clase y, cuando termines de practicar, deberás devolverlos.</p><button type="button" disabled={busy||!!status} onClick={request} className="mt-4 w-full rounded-xl bg-[#FFB65D] px-4 py-3 font-black text-[#241609] disabled:opacity-70">{busy?'Enviando…':status?'Solicitud registrada ✓':'Solicitar conos de préstamo'}</button>{message&&<p role="status" className="mt-2 text-xs text-[#FFE0B5]">{message}</p>}</section>
+}
+function ConeLoanAdmin(){
+ const [items,setItems]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState('')
+ async function load(){const {data,error:e}=await supabase.rpc('pr_training_cone_staff');if(e)setError(e.message);else{setItems(data||[]);setError('')}}
+ useEffect(()=>{load();const t=setInterval(load,45000);return()=>clearInterval(t)},[])
+ const pending=items.filter(x=>x.status==='requested')
+ return <section className="mt-5 rounded-2xl border border-[#FFB65D]/40 bg-[#231C18] p-4 text-white"><h2 className="text-lg font-black text-[#FFC47B]">🔔 Conos de préstamo · {pending.length} solicitudes pendientes</h2><p className="mt-1 text-xs text-white/65">Registrá la entrega en clase y la devolución posterior.</p>{error&&<p role="alert" className="mt-2 text-xs text-red-300">{error}</p>}{items.filter(x=>x.status!=='returned').map(x=><div key={x.id} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><div><strong className="text-sm">{x.name||x.profile_id}</strong><p className="text-xs text-white/60">{x.status==='requested'?'Solicitado':'Entregado · pendiente de devolución'}</p></div><button disabled={busy===x.id} onClick={async()=>{setBusy(x.id);const {error:e}=await supabase.rpc('pr_training_cone_staff',{p_id:x.id,p_status:x.status==='requested'?'delivered':'returned'});if(e)setError(e.message);else await load();setBusy('')}} className="rounded-lg bg-[#FFB65D] px-3 py-2 text-xs font-bold text-black">{x.status==='requested'?'Marcar entregado':'Marcar devuelto'}</button></div>)}</section>
+}
 function TrainingDailyControl(){
  const [tab,setTab]=useState('hoy')
  const tabs=[['hoy','Entregas'],['alumnos','Alumnos'],['contenido','Ejercicios']]
  return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/30 bg-[#101012] p-4 sm:p-6">
   <div className="mb-4"><p className="text-xs font-bold tracking-[.16em] text-[#BBFF1F]">CENTRO DE CONTROL</p><h2 className="mt-1 text-2xl font-black">PR TAREAS</h2><p className="mt-1 text-xs text-white/50">Todo lo importante, en un solo lugar.</p></div>
   <div role="tablist" aria-label="Administración de PR TAREAS" className="grid grid-cols-3 gap-2">{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
-  <div role="tabpanel">{tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
+  <ConeLoanAdmin/><div role="tabpanel">{tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
 
 
  </section>
@@ -413,7 +425,7 @@ export default function PRTrainingV2Lab(){
  return <AppLayout>
  <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#14141B] text-[#EFF8FF]">
  <div className="mx-auto w-full min-w-0 max-w-5xl">
-  {adminView?<TrainingDailyControl/>:<PRTareasHome user={user}/>}
+  {adminView?<TrainingDailyControl/>:<><PRTareasHome user={user}/><ConeLoanRequest/></>}
 
 
   {adminView&&<footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR TAREAS · Administración</footer>}
