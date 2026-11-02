@@ -111,9 +111,10 @@ export default function Uniformes() {
       if (requestRef.current.fingerprint !== fingerprint) {
         requestRef.current = { fingerprint, key: crypto.randomUUID() }
       }
+      const {data:authData}=await supabase.auth.getSession()
       const response = await fetch(`${supabaseUrl}/functions/v1/uniform-order`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+        headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey, ...(authData?.session?.access_token ? {Authorization: `Bearer ${authData.session.access_token}`} : {}) },
         body: JSON.stringify({ ...payload, requestKey: requestRef.current.key }),
       })
       const result = await response.json()
