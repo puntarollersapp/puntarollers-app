@@ -1298,6 +1298,33 @@ export default function Activity() {
 
         <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
+        <section id="rollerfeed-albumes-recientes" className="scroll-mt-36">
+          {shifterAlbums.length > 0 && <div className="mb-3"><p className="text-[10px] font-black uppercase tracking-[.2em] text-orange-300">Comunidad · álbumes recientes</p><h2 className="mt-1 font-display text-[27px] text-white">Últimas fotos de PR<span className="text-[#FF0055]">.</span></h2></div>}
+          {shifterAlbums.length > 0 && (
+            <div className="mb-4 space-y-3">
+              {shifterAlbums.map(album => {
+                const photos = album.photos || []
+                const expanded = expandedShifterAlbums.includes(album.id)
+                return <article key={album.id} className="overflow-hidden rounded-[26px] border border-orange-400/30 bg-[#161017] shadow-lg">
+                  <div className="p-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">🛼 Álbum público · Punta Rollers</p>
+                    <h3 className="mt-1 text-lg font-black text-white">{album.title}</h3>
+                    <p className="mt-1 text-xs text-white/60">{photos.length} fotos · Miralas acá en RollerFeed</p>
+                  </div>
+                  <div className={expanded ? 'grid grid-cols-3 gap-1 p-1' : 'grid grid-cols-3 gap-1'}>
+                    {(expanded ? photos : photos.slice(0, 3)).map((photo, index) => (
+                      <button key={photo.id} type="button" onClick={() => setShifterViewer({ album, index })} className="relative aspect-square overflow-hidden bg-black/30" aria-label={'Ampliar foto ' + (index + 1)}>
+                        <img src={photo.url} alt={'Foto ' + (index + 1) + ' de ' + album.title} loading="lazy" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                  {photos.length > 3 && <button type="button" onClick={() => setExpandedShifterAlbums(ids => expanded ? ids.filter(id => id !== album.id) : [...ids, album.id])} className="w-full border-t border-white/10 px-4 py-3 text-center text-sm font-bold text-orange-200">{expanded ? 'Mostrar menos fotos ↑' : 'Ver las ' + photos.length + ' fotos acá ↓'}</button>}
+                </article>
+              })}            </div>
+          )}
+
+        </section>
+
         <RollerFeedCommunity initialPosts={socialPosts} />
 
         <section id="rollerfeed-actividades" className="scroll-mt-36">
@@ -1346,28 +1373,6 @@ export default function Activity() {
             </div>
           )}
 
-          {filter === 'Todos' && shifterAlbums.length > 0 && (
-            <div className="mb-4 space-y-3">
-              {shifterAlbums.map(album => {
-                const photos = album.photos || []
-                const expanded = expandedShifterAlbums.includes(album.id)
-                return <article key={album.id} className="overflow-hidden rounded-[26px] border border-orange-400/30 bg-[#161017] shadow-lg">
-                  <div className="p-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-300">🛼 Álbum público · Punta Rollers</p>
-                    <h3 className="mt-1 text-lg font-black text-white">{album.title}</h3>
-                    <p className="mt-1 text-xs text-white/60">{photos.length} fotos · Miralas acá en RollerFeed</p>
-                  </div>
-                  <div className={expanded ? 'grid grid-cols-3 gap-1 p-1' : 'grid grid-cols-3 gap-1'}>
-                    {(expanded ? photos : photos.slice(0, 3)).map((photo, index) => (
-                      <button key={photo.id} type="button" onClick={() => setShifterViewer({ album, index })} className="relative aspect-square overflow-hidden bg-black/30" aria-label={'Ampliar foto ' + (index + 1)}>
-                        <img src={photo.url} alt={'Foto ' + (index + 1) + ' de ' + album.title} loading="lazy" className="h-full w-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                  {photos.length > 3 && <button type="button" onClick={() => setExpandedShifterAlbums(ids => expanded ? ids.filter(id => id !== album.id) : [...ids, album.id])} className="w-full border-t border-white/10 px-4 py-3 text-center text-sm font-bold text-orange-200">{expanded ? 'Mostrar menos fotos ↑' : 'Ver las ' + photos.length + ' fotos acá ↓'}</button>}
-                </article>
-              })}            </div>
-          )}
           {shifterViewer && (() => {
             const photos = shifterViewer.album.photos || []
             const photo = photos[shifterViewer.index]
