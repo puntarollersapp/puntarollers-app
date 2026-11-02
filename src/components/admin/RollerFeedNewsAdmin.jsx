@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
-const blank = {id:'',title:'',body:'',image_url:'',event_at:'',kind:'news',allow_rsvp:false,published:false,options:'',image_urls:[]}
+const blank = {id:'',title:'',body:'',image_url:'',event_at:'',kind:'news',allow_rsvp:false,published:false,options:'',image_urls:[],link_url:'',link_label:''}
 const input = 'w-full rounded-xl border border-white/15 bg-black/30 px-3 py-3 text-sm text-white outline-none focus:border-[#FF0055]'
 
 export default function RollerFeedNewsAdmin() {
@@ -26,7 +26,7 @@ export default function RollerFeedNewsAdmin() {
       if(error){setMessage(error.message);return}
       options=(data||[]).map(x=>x.label).join('\n')
     }
-    setForm({...item,event_at:item.event_at?new Date(item.event_at).toISOString().slice(0,16):'',image_url:item.image_url||'',image_urls:item.image_urls?.length?item.image_urls:(item.image_url?[item.image_url]:[]),options})
+    setForm({...item,event_at:item.event_at?new Date(item.event_at).toISOString().slice(0,16):'',image_url:item.image_url||'',image_urls:item.image_urls?.length?item.image_urls:(item.image_url?[item.image_url]:[]),options,link_url:item.link_url||'',link_label:item.link_label||''})
     setExpanded(true)
   }
   async function uploadImage(event) {
@@ -74,8 +74,9 @@ export default function RollerFeedNewsAdmin() {
           if(JSON.stringify((previous||[]).map(o=>o.label))!==JSON.stringify(labels))throw Error('No podés modificar las opciones de una encuesta que ya recibió votos.')
         }
       }
-      const payload={title:form.title.trim(),body:form.body.trim(),image_url:(form.image_urls?.[0]||form.image_url.trim()||null),image_urls:form.image_urls?.length?form.image_urls:(form.image_url.trim()?[form.image_url.trim()]:[]),event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,updated_at:new Date().toISOString()}
+      const payload={title:form.title.trim(),body:form.body.trim(),image_url:(form.image_urls?.[0]||form.image_url.trim()||null),image_urls:form.image_urls?.length?form.image_urls:(form.image_url.trim()?[form.image_url.trim()]:[]),event_at:form.event_at?new Date(form.event_at).toISOString():null,kind:form.kind,allow_rsvp:form.kind==='event'&&form.allow_rsvp,published:form.published,link_url:form.link_url?.trim()||null,link_label:form.link_url?.trim()?(form.link_label?.trim()||'Abrir enlace'):null,updated_at:new Date().toISOString()}
       if(!payload.title)throw Error('Escribí un título.')
+      if(payload.link_url && !/^https:\/\/[^\s]+$/i.test(payload.link_url))throw Error('El enlace debe comenzar con https://')
       const request=form.id?supabase.from('pr_feed_news').update(payload).eq('id',form.id).select('id').single():supabase.from('pr_feed_news').insert(payload).select('id').single()
       const {data,error}=await request
       if(error)throw Error(error.message)
@@ -104,6 +105,7 @@ export default function RollerFeedNewsAdmin() {
       {uploading&&<p role="status" className="text-xs text-[#FF0055]">Subiendo imagen…</p>}
       {!!form.image_urls?.length&&<div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{form.image_urls.map((url,i)=><div key={url} className="space-y-1"><img src={url} alt={'Imagen '+(i+1)} className="h-32 w-full rounded-lg object-cover"/><button type="button" onClick={()=>setForm(f=>{const next=f.image_urls.filter(u=>u!==url);return {...f,image_urls:next,image_url:next[0]||''}})} className="rounded-lg border border-white/20 px-2 py-1 text-xs text-white">Quitar</button></div>)}</div>}
       <details className="rounded-xl border border-white/10 p-3"><summary className="cursor-pointer text-xs text-white/60">Usar URL de imagen (opcional)</summary><input className={input+' mt-3'} type="url" placeholder="https://..." value={form.image_urls?.length?'':form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})}/></details>
+      <div className="space-y-2 rounded-xl border border-[#FF0055]/20 bg-[#FF0055]/[.04] p-3"><p className="text-xs font-bold text-white">Enlace debajo del flyer (opcional)</p><label className="block space-y-1 text-xs text-white/70">URL de destino<input className={input} type="url" placeholder="https://drive.google.com/..." value={form.link_url||''} onChange={e=>setForm({...form,link_url:e.target.value})}/></label><label className="block space-y-1 text-xs text-white/70">Texto del botón<input className={input} maxLength={70} placeholder="Ver fotos y videos" value={form.link_label||''} onChange={e=>setForm({...form,link_label:e.target.value})}/></label></div>
       {form.kind==='event'&&<><label className="block space-y-1 text-xs text-white/70">Fecha y hora<input className={input} type="datetime-local" value={form.event_at} onChange={e=>setForm({...form,event_at:e.target.value})}/></label><label className="flex items-center gap-2 text-xs text-white/80"><input type="checkbox" checked={form.allow_rsvp} onChange={e=>setForm({...form,allow_rsvp:e.target.checked})}/> Permitir confirmar asistencia</label></>}
       {form.kind==='poll'&&<label className="block space-y-1 text-xs text-white/70">Opciones (una por línea)<textarea className={input} rows={4} value={form.options} onChange={e=>setForm({...form,options:e.target.value})} placeholder={'Sí\nNo\nQuizás'}/></label>}
       <label className="flex items-center gap-2 text-xs text-white/80"><input type="checkbox" checked={form.published} onChange={e=>setForm({...form,published:e.target.checked})}/> Publicar inmediatamente</label>
