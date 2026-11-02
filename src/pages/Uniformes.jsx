@@ -29,6 +29,7 @@ export default function Uniformes() {
   const [color, setColor] = useState('')
   const [talle, setTalle] = useState('')
   const [nombre, setNombre] = useState('')
+  const [nombreEstampado,setNombreEstampado]=useState('')
   const [observacion, setObservacion] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -78,6 +79,7 @@ export default function Uniformes() {
     setModelo(product.modelos[0] || '')
     setColor(product.colores[0] || '')
     setTalle('')
+    setNombreEstampado('')
     setOrder(null)
     setErrorMsg('')
     setQuantity(1)
@@ -93,7 +95,7 @@ export default function Uniformes() {
   }
 
   async function sendOrder() {
-    if (!selected || !nombre.trim() || !email.trim() || !phone.trim() || !talle ||
+    if (!selected || (/buzo|hoodie/i.test(selected.id+' '+selected.nombre)&&!nombreEstampado.trim()) || !nombre.trim() || !email.trim() || !phone.trim() || !talle ||
         (selected.modelos.length > 0 && !modelo) || (selected.colores.length > 0 && !color)) {
       setErrorMsg('Completá producto, talle, nombre, correo y teléfono para continuar.')
       return
@@ -103,7 +105,7 @@ export default function Uniformes() {
     try {
       const payload = {
         productId: selected.id, model: modelo, color, size: talle, quantity,
-        name: nombre.trim(), email: email.trim(), phone: phone.trim(), notes: observacion.trim(),
+        name: nombre.trim(), email: email.trim(), phone: phone.trim(), notes: [nombreEstampado.trim()?'Nombre para estampar: '+nombreEstampado.trim():'',new URLSearchParams(window.location.search).get('origen')==='perfil'?'Origen: perfil PR':'',observacion.trim()].filter(Boolean).join(' | '),
       }
       const fingerprint = JSON.stringify(payload)
       if (requestRef.current.fingerprint !== fingerprint) {
@@ -304,6 +306,7 @@ export default function Uniformes() {
                 />
               </label>
 
+              {/buzo|hoodie/i.test(selected.id+' '+selected.nombre)&&<label className="block"><span className="text-white/80 text-xs font-bold">Nombre para estampar en el buzo * (obligatorio)</span><input required maxLength={40} value={nombreEstampado} onChange={e=>{setNombreEstampado(e.target.value);setOrder(null)}} placeholder="Nombre que llevará el buzo" className="mt-2 w-full rounded-2xl border border-[#D6FF59]/45 bg-black/30 px-4 py-3 text-sm text-white"/></label>}
               <label className="block"><span className="text-white/40 text-xs">Correo electrónico</span><input type="email" value={email} onChange={e => { setEmail(e.target.value); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
               <label className="block"><span className="text-white/40 text-xs">Teléfono</span><input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
               <label className="block"><span className="text-white/40 text-xs">Cantidad</span><input type="number" min="1" max="20" value={quantity} onChange={e => { setQuantity(Math.max(1, Math.min(20, Number(e.target.value) || 1))); setOrder(null) }} className="mt-1 w-full rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white" /></label>
