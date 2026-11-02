@@ -63,7 +63,7 @@ export default function PRAwards(){
  return <main className="min-h-screen bg-[#0e0d0b] text-[#f5eee2]" style={{fontFamily:'Inter,system-ui,sans-serif'}}>
   {showIntro&&createPortal(<div className="pr-awards-intro" role="dialog" aria-modal="true" aria-label="Presentación de PR Awards 2026"><div className="pr-awards-intro-aura" aria-hidden="true"/><div className="pr-awards-intro-content"><div className="pr-awards-intro-trophy"><img src="/pr-awards-trophy.webp" alt="Trofeo oficial de PR Awards" onError={e=>{e.currentTarget.style.display='none'}}/></div><p className="pr-awards-intro-eyebrow">PUNTA ROLLERS PRESENTA</p><h2 className="pr-awards-intro-title">PR <span>AWARDS</span></h2><p className="pr-awards-intro-year">2026</p><div className="pr-awards-intro-rule" aria-hidden="true"/></div><button type="button" className="pr-awards-intro-skip" onClick={skipIntro}>Saltar presentación <span aria-hidden="true">↗</span></button></div>,document.body)}
 
-  <div className="mx-auto max-w-5xl px-4 pb-24 pt-7 sm:px-8">
+  <div className="mx-auto max-w-5xl px-4 pb-24 sm:px-8" style={{paddingTop:"calc(env(safe-area-inset-top, 0px) + 28px)"}}>
    <div className="mb-5 flex justify-start">
     <Link to="/app/perfil" className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#bda478]/40 bg-[#c5a36b]/10 px-4 py-2.5 text-xs font-black text-[#f5e1b9] no-underline shadow-[0_5px_20px_rgba(0,0,0,.18)] transition hover:border-[#e8c789]/70 hover:bg-[#c5a36b]/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e8c789]" aria-label="Volver a la aplicación de Punta Rollers"><span aria-hidden="true" className="text-lg leading-none">←</span> Volver a Punta Rollers</Link>
    </div>
