@@ -34,7 +34,7 @@ async function changeOwnPin(){
  if(!doc||!/^\\d{4}$/.test(current))return setPinMessage('Ingresá tu PIN actual de 4 números.');
  setPinSaving(true);
  try{
-  const {error:verifyError}=await supabase.auth.signInWithPassword({email:'pr-'+doc+'@auth.puntarollers.com',password:'PR-'+current+'-'+doc});
+  const {error:verifyError}=await supabase.auth.signInWithPassword({email:doc+'@usuarios.puntarollers.app',password:'PR-'+current+'-'+doc});
   if(verifyError)throw new Error('El PIN actual no es correcto.');
   const {error:authError}=await supabase.auth.updateUser({password:'PR-'+next+'-'+doc});
   if(authError)throw new Error('No se pudo actualizar el acceso: '+authError.message);
