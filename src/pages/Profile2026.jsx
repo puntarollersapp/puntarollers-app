@@ -38,8 +38,8 @@ async function changeOwnPin(){
   if(verifyError)throw new Error('El PIN actual no es correcto.');
   const {error:authError}=await supabase.auth.updateUser({password:'PR-'+next+'-'+doc});
   if(authError)throw new Error('No se pudo actualizar el acceso: '+authError.message);
-  const {error:profileError}=await supabase.from('profiles').update({pin:next}).eq('id',profileId).eq('auth_user_id',(await supabase.auth.getUser()).data.user?.id);
-  if(profileError){
+  const {data:updatedProfile,error:profileError}=await supabase.from('profiles').update({pin:next}).eq('id',profileId).eq('auth_user_id',(await supabase.auth.getUser()).data.user?.id).select('id').maybeSingle();
+  if(profileError||!updatedProfile?.id){
    await supabase.auth.updateUser({password:'PR-'+current+'-'+doc});
    throw new Error('No se pudo sincronizar el PIN del perfil. Intentá nuevamente.');
   }
