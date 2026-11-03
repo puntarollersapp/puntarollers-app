@@ -246,7 +246,7 @@ export default function PRTesoreria(){
   async function excludeStudent(profile,exclude=true){
     if(!isAdmin)return
     const label=[profile.nombre,profile.apellido].filter(Boolean).join(' ')
-    if(!window.confirm(exclude?`¿Quitar a ${label} de la lista de Tesorería? Su cuenta PR NEXT no se elimina y podés restaurar esta ficha después. Los perfiles con pagos registrados no se pueden excluir.`:`¿Restaurar a ${label} en Tesorería?`))return
+    if(!window.confirm(exclude?`¿Quitar a ${label} de la lista de Tesorería? Su cuenta PR NEXT no se elimina y podés restaurar esta ficha después. Los pagos y el historial se conservarán, pero la ficha dejará de figurar en los listados activos.`:`¿Restaurar a ${label} en Tesorería?`))return
     setBusy(true)
     const {error}=await supabase.rpc('pr_tesoreria_excluir',{p_profile_id:profile.id,p_excluir:exclude})
     if(error)setMsg('No se pudo cambiar la ficha: '+error.message)
