@@ -193,13 +193,23 @@ function TrainingReviewQueue(){
  async function refresh(){setRefreshing(true);const {data,error:e}=await supabase.rpc('pr_training_v2_staff_submissions');if(e)setError(e.message);else {setItems(uniqueReviews(data||[]));setError('');const ids=[...new Set((data||[]).map(x=>x.profile_id).filter(Boolean))];if(ids.length){const found=await supabase.from('profiles').select('id,nombre,apellido').in('id',ids);if(!found.error)setStudentNames(Object.fromEntries((found.data||[]).map(p=>[p.id,[p.nombre,p.apellido].filter(Boolean).join(' ')])))}}setRefreshing(false)}
  useEffect(()=>{refresh()},[])
  async function review(id,status){
-  const item=items.find(x=>x.id===id);const note=(notes[id]??item?.reviewer_note??'').trim();
+  if(busy)return;
+  const item=items.find(x=>x.id===id),note=(notes[id]??item?.reviewer_note??'').trim();
   if(status==='returned'&&!note){setError('Escribí qué debe corregir el alumno.');return}
   if(!item||!['submitted','under_review'].includes(item.status)){setError('Esta entrega ya no está pendiente. Actualizá la lista antes de revisarla.');return}
-  if(status==='approved'&&!window.confirm('¿Confirmás que revisaste la evidencia y querés aprobar este ejercicio?'))return
-  if(status==='returned'&&!window.confirm('¿Devolver este ejercicio al alumno para que lo corrija?'))return
-  setBusy(id);setError('');setReviewNotice('');const {error:e}=await supabase.rpc('pr_training_v2_review_submission',{p_submission_id:id,p_status:status,p_note:note});
-  if(e)setError(e.message);else {setItems(prev=>prev.map(entry=>entry.id===id?{...entry,status,reviewer_note:note}:entry));setReviewNotice(status==='approved'?'Ejercicio aprobado y revisión registrada.':status==='returned'?'Devolución enviada: el alumno podrá corregir su ejercicio.':'Entrega marcada en revisión.');await refresh()}setBusy('')
+  if(status==='approved'&&!window.confirm('¿Confirmás que revisaste la evidencia y querés aprobar este ejercicio?'))return;
+  if(status==='returned'&&!window.confirm('¿Devolver este ejercicio al alumno para que lo corrija?'))return;
+  setBusy(id);setError('');setReviewNotice('');
+  try{
+   const {error:e}=await supabase.rpc('pr_training_v2_review_submission',{p_submission_id:id,p_status:status,p_note:note});
+   if(e)throw e;
+   const {data:latest,error:readError}=await supabase.rpc('pr_training_v2_staff_submissions');
+   if(readError)throw new Error('La revisión se envió, pero no se pudo verificar. Actualizá antes de intentar otra vez.');
+   const actual=(latest||[]).find(x=>x.id===id);
+   setItems(uniqueReviews(latest||[]));
+   if(!actual||actual.status!==status)throw new Error('La revisión no quedó confirmada. Actualizá antes de volver a intentar.');
+   setReviewNotice(status==='approved'?'Ejercicio aprobado y confirmado en el sistema.':status==='returned'?'Devolución registrada y confirmada.':'Revisión registrada.');
+  }catch(e){setError(e?.message||'No se pudo completar la revisión.')}finally{setBusy('')}
  }
  async function openEvidence(item,path){
   const popup=window.open('','_blank');if(popup){popup.opener=null;popup.document.title='Cargando evidencia · Punta Rollers';popup.document.body.textContent='Preparando evidencia privada…'}
