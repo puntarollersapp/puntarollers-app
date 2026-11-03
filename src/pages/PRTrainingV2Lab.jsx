@@ -102,12 +102,14 @@ function ConeLoanAdmin(){
  return <section className="mt-5 rounded-2xl border border-[#FFB65D]/40 bg-[#231C18] p-4 text-white"><h2 className="text-lg font-black text-[#FFC47B]">🔔 Conos de préstamo · {pending.length} solicitudes pendientes</h2><p className="mt-1 text-xs text-white/65">Registrá la entrega en clase y la devolución posterior.</p>{error&&<p role="alert" className="mt-2 text-xs text-red-300">{error}</p>}{items.filter(x=>x.status!=='returned').map(x=><div key={x.id} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><div><strong className="text-sm">{x.name||x.profile_id}</strong><p className="text-xs text-white/60">{x.status==='requested'?'Solicitado':'Entregado · pendiente de devolución'}</p></div><button disabled={busy===x.id} onClick={async()=>{setBusy(x.id);const {error:e}=await supabase.rpc('pr_training_cone_staff',{p_id:x.id,p_status:x.status==='requested'?'delivered':'returned'});if(e)setError(e.message);else await load();setBusy('')}} className="rounded-lg bg-[#FFB65D] px-3 py-2 text-xs font-bold text-black">{x.status==='requested'?'Marcar entregado':'Marcar devuelto'}</button></div>)}</section>
 }
 function TrainingDailyControl(){
+ const {user}=useAuth()
+ const davidOnly=user?.id==='profe-david'
  const [tab,setTab]=useState('hoy')
- const tabs=[['hoy','Entregas'],['alumnos','Alumnos'],['contenido','Ejercicios']]
+ const tabs=davidOnly?[['hoy','Entregas']]:[['hoy','Entregas'],['alumnos','Alumnos'],['contenido','Ejercicios']]
  return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/30 bg-[#101012] p-4 sm:p-6">
   <div className="mb-4"><p className="text-xs font-bold tracking-[.16em] text-[#BBFF1F]">CENTRO DE CONTROL</p><h2 className="mt-1 text-2xl font-black">PR TAREAS</h2><p className="mt-1 text-xs text-white/50">Todo lo importante, en un solo lugar.</p></div>
   <div role="tablist" aria-label="Administración de PR TAREAS" className="grid grid-cols-3 gap-2">{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
-  <ConeLoanAdmin/><div role="tabpanel">{tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
+  {!davidOnly&&<ConeLoanAdmin/>}<div role="tabpanel">{davidOnly||tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
 
 
  </section>
