@@ -36,13 +36,11 @@ async function changeOwnPin(){
  try{
   const {data:identity}=await supabase.auth.getUser();
   if(identity?.user?.id!==String(profile?.auth_user_id||base?.authUserId||''))throw new Error('Tu sesión venció. Ingresá nuevamente.');
-  const {error:authError}=await supabase.auth.updateUser({password:'PR-'+next+'-'+doc});
-  if(authError)throw new Error('No se pudo actualizar el acceso: '+authError.message);
+  const oldPin=String(profile?.pin||'');
   const {data:updatedProfile,error:profileError}=await supabase.from('profiles').update({pin:next}).eq('id',profileId).eq('auth_user_id',(await supabase.auth.getUser()).data.user?.id).select('id').maybeSingle();
-  if(profileError||!updatedProfile?.id){
-   
-   throw new Error('No se pudo sincronizar el PIN del perfil. Intentá nuevamente.');
-  }
+  if(profileError||!updatedProfile?.id)throw new Error('No se pudo guardar el PIN en el perfil.');
+  const {error:authError}=await supabase.auth.updateUser({password:'PR-'+next+'-'+doc});
+  if(authError){await supabase.from('profiles').update({pin:oldPin}).eq('id',profileId);throw new Error('No se pudo cambiar el PIN de acceso. Intentá nuevamente.');}
   setProfile(prev=>({...prev,pin:next}));
   try{const stored=savedUser();localStorage.setItem('pr_user',JSON.stringify({...stored,pin:next}))}catch{}
   setPinForm({current:'',next:'',confirm:''});setPinMessage('PIN actualizado correctamente. Usá el nuevo PIN en tu próximo ingreso.');
