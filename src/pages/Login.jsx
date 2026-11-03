@@ -21,6 +21,7 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
+    if(user.role==='familiar'&&!user.accesoHabilitado){logout();return}
     navigate(transitionDestination(user, destination), { replace: true })
   }, [authLoading, user, navigate, destination, next])
 
@@ -32,7 +33,7 @@ export default function Login() {
       const result = await login(documento, pin)
       if (result?.error) { setError(result.error); return }
       if(result?.user?.role==='familiar'&&!result?.user?.accesoHabilitado){await logout();setError('Tu solicitud familiar está pendiente de aprobación. Te avisaremos cuando puedas ingresar.');return}
-      if (result?.user?.id && (!['admin','profesor'].includes(result?.user?.role) || result?.user?.documento === '48036677')) {
+      if (result?.user?.role!=='familiar' && result?.user?.id && (!['admin','profesor'].includes(result?.user?.role) || result?.user?.documento === '48036677')) {
         const { data: training } = await (await import('../lib/supabase')).supabase
           .from('pr_training_enrollments')
           .select('category')
