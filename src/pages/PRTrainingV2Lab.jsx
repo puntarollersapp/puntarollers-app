@@ -108,7 +108,7 @@ function TrainingDailyControl(){
  const tabs=davidOnly?[['hoy','Entregas']]:[['hoy','Entregas'],['alumnos','Alumnos'],['contenido','Ejercicios']]
  return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/30 bg-[#101012] p-4 sm:p-6">
   <div className="mb-4"><p className="text-xs font-bold tracking-[.16em] text-[#BBFF1F]">CENTRO DE CONTROL</p><h2 className="mt-1 text-2xl font-black">PR TAREAS</h2><p className="mt-1 text-xs text-white/50">Todo lo importante, en un solo lugar.</p></div>
-  <div role="tablist" aria-label="Administración de PR TAREAS" className="grid grid-cols-3 gap-2">{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
+  <div role="tablist" aria-label="Administración de PR TAREAS" className={`grid ${davidOnly?'grid-cols-1':'grid-cols-3'} gap-2`}>{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
   {!davidOnly&&<ConeLoanAdmin/>}<div role="tabpanel">{davidOnly||tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
 
 
