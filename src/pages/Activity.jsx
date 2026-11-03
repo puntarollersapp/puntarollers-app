@@ -1,3 +1,4 @@
+import RollerFeedOnline from '../components/RollerFeedOnline'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
@@ -1197,6 +1198,7 @@ export default function Activity() {
   return (
     <AppLayout title="RollerFeed ⚡️">
       <div className="pr-page space-y-5 animate-page-enter">
+        <RollerFeedOnline/>
         <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.08),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.035),transparent_55%)]" />
           <div aria-hidden="true" className="rf-shine" />
