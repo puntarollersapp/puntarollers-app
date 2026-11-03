@@ -75,6 +75,30 @@ export default function PRTesoreria(){
   }
 
   useEffect(()=>{load()},[periodo,user?.id])
+  // Sincronización liviana entre Tesorería de Claudio y Lucía.
+  // No ejecuta generación de cuotas ni modificaciones: solo consulta estados.
+  useEffect(()=>{
+    if(!user?.id)return
+    let active=true
+    const syncPayments=async()=>{
+      if(document.visibilityState==='hidden')return
+      const {data,error}=await supabase.from('pr_mensualidades').select('*').eq('periodo',periodo)
+      if(!active||error)return
+      setDues(data||[])
+      setSelected(prev=>{
+        if(!prev)return prev
+        const updated=(data||[]).find(d=>d.alumno_id===prev.profile.id)
+        if(updated?.estado==='pagado'&&prev.due?.estado!=='pagado')return null
+        return prev
+      })
+    }
+    const timer=window.setInterval(syncPayments,20000)
+    const onFocus=()=>syncPayments()
+    window.addEventListener('focus',onFocus)
+    document.addEventListener('visibilitychange',onFocus)
+    return()=>{active=false;window.clearInterval(timer);window.removeEventListener('focus',onFocus);document.removeEventListener('visibilitychange',onFocus)}
+  },[periodo,user?.id])
+
 
   const merged=useMemo(()=>profiles.filter(p=>showExcluded?excluded.includes(p.id):!excluded.includes(p.id)).map(p=>({...p,due:dues.find(d=>d.alumno_id===p.id)})),[profiles,dues,excluded,showExcluded])
   const shown=useMemo(()=>merged.filter(x=>{
