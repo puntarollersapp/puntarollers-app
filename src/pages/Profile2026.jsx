@@ -20,12 +20,12 @@ export default function Profile2026(){const location=useLocation(),navigate=useN
 const editing=new URLSearchParams(location.search).get('editar')==='1'
 const [profileLoaded,setProfileLoaded]=useState(false)
 const [editForm,setEditForm]=useState(null),[editSaving,setEditSaving]=useState(false),[editError,setEditError]=useState(''),[editSuccess,setEditSuccess]=useState(false)
-const [pinForm,setPinForm]=useState({current:'',next:'',confirm:''}),[pinSaving,setPinSaving]=useState(false),[pinMessage,setPinMessage]=useState('')
+const [pinForm,setPinForm]=useState({next:'',confirm:''}),[pinSaving,setPinSaving]=useState(false),[pinMessage,setPinMessage]=useState('')
 useEffect(()=>{if(editing&&profileLoaded){setEditForm({nombre:profile?.nombre||'',apellido:profile?.apellido||'',telefono:profile?.telefono||'',ciudad:profile?.ciudad||'',instagram:profile?.instagram||'',tiktok:profile?.tiktok||'',facebook:profile?.facebook||'',setup_patines:profile?.setup_patines||'',sobre_mi:profile?.sobre_mi||profile?.sobreMi||'',fecha_nacimiento:String(profile?.fecha_nacimiento||profile?.fechaNacimiento||'').slice(0,10)});setEditError('');setEditSuccess(false);window.scrollTo(0,0)}},[editing,profileId,profileLoaded])
 async function changeOwnPin(){
  if(pinSaving||!profileId)return;
  setPinMessage('');
- const current=pinForm.current.trim(),next=pinForm.next.trim(),confirm=pinForm.confirm.trim();
+ const next=pinForm.next.trim(),confirm=pinForm.confirm.trim();
  if(!/^\\d{4}$/.test(next))return setPinMessage('Elegí un PIN de exactamente 4 números.');
  
  if(next!==confirm)return setPinMessage('Los PIN nuevos no coinciden.');
@@ -43,7 +43,7 @@ async function changeOwnPin(){
   if(authError){await supabase.from('profiles').update({pin:oldPin}).eq('id',profileId);throw new Error('No se pudo cambiar el PIN de acceso. Intentá nuevamente.');}
   setProfile(prev=>({...prev,pin:next}));
   try{const stored=savedUser();localStorage.setItem('pr_user',JSON.stringify({...stored,pin:next}))}catch{}
-  setPinForm({current:'',next:'',confirm:''});setPinMessage('PIN actualizado correctamente. Usá el nuevo PIN en tu próximo ingreso.');
+  setPinForm({next:'',confirm:''});setPinMessage('PIN actualizado correctamente. Usá el nuevo PIN en tu próximo ingreso.');
  }catch(error){setPinMessage(error?.message||'No se pudo cambiar el PIN.')}finally{setPinSaving(false)}
 }
 async function saveModernProfile(){if(!profileId||!editForm||editSaving||!profileLoaded)return;setEditSaving(true);setEditError('');try{const payload={...editForm,updated_at:new Date().toISOString()};const {data,error}=await supabase.from('profiles').update(payload).eq('id',profileId).select('*').maybeSingle();if(error)throw error;if(!data?.id)throw new Error('No se confirmó el guardado.');setProfile(previous=>({...previous,...data}));setEditSuccess(true);try{const stored=savedUser();localStorage.setItem('pr_user',JSON.stringify({...stored,...data}))}catch{}navigate('/app/perfil',{replace:true})}catch(error){setEditError(error?.message||'No se pudieron guardar los cambios.')}finally{setEditSaving(false)}}
