@@ -61,7 +61,7 @@ async function findProfile(db: any, phoneValue: unknown) {
   if (phone.length < 8) return { phone, profile: null }
   const { data: profiles, error } = await db.from('profiles').select('id,nombre,apellido,email,telefono,particulares_habilitadas').not('telefono', 'is', null)
   if (error) throw error
-  return { phone, profile: (profiles || []).find((p: any) => normalizePhone(p.telefono) === phone) || null }
+  return { phone, profile: (profiles || []).filter((p: any) => normalizePhone(p.telefono) === phone).sort((a: any, b: any) => Number(Boolean(b.particulares_habilitadas)) - Number(Boolean(a.particulares_habilitadas)))[0] || null }
 }
 
 async function readConfig(db: any) {
