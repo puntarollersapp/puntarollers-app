@@ -189,7 +189,8 @@ function TrainingStudentSearch(){
 
 function TrainingReviewQueue(){
  const [items,setItems]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(''),[notes,setNotes]=useState({}),[showAll,setShowAll]=useState(false),[studentNames,setStudentNames]=useState({}),[reviewQuery,setReviewQuery]=useState(''),[reviewStatus,setReviewStatus]=useState('pending'),[refreshing,setRefreshing]=useState(false),[reviewNotice,setReviewNotice]=useState('')
- async function refresh(){setRefreshing(true);const {data,error:e}=await supabase.rpc('pr_training_v2_staff_submissions');if(e)setError(e.message);else {setItems(data||[]);setError('');const ids=[...new Set((data||[]).map(x=>x.profile_id).filter(Boolean))];if(ids.length){const found=await supabase.from('profiles').select('id,nombre,apellido').in('id',ids);if(!found.error)setStudentNames(Object.fromEntries((found.data||[]).map(p=>[p.id,[p.nombre,p.apellido].filter(Boolean).join(' ')])))}}setRefreshing(false)}
+ function uniqueReviews(rows){const rank={approved:4,returned:3,under_review:2,submitted:1};const map=new Map();for(const item of rows||[]){const key=item.assignment_duty_id||item.id;const old=map.get(key);if(!old||(rank[item.status]||0)>(rank[old.status]||0))map.set(key,item)}return [...map.values()]}
+ async function refresh(){setRefreshing(true);const {data,error:e}=await supabase.rpc('pr_training_v2_staff_submissions');if(e)setError(e.message);else {setItems(uniqueReviews(data||[]));setError('');const ids=[...new Set((data||[]).map(x=>x.profile_id).filter(Boolean))];if(ids.length){const found=await supabase.from('profiles').select('id,nombre,apellido').in('id',ids);if(!found.error)setStudentNames(Object.fromEntries((found.data||[]).map(p=>[p.id,[p.nombre,p.apellido].filter(Boolean).join(' ')])))}}setRefreshing(false)}
  useEffect(()=>{refresh()},[])
  async function review(id,status){
   const item=items.find(x=>x.id===id);const note=(notes[id]??item?.reviewer_note??'').trim();
