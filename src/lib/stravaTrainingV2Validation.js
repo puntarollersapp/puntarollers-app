@@ -4,7 +4,9 @@ export function stravaDutyCode(assignmentDutyId) {
   return 'PRT-' + String(assignmentDutyId || '').replace(/-/g, '').slice(0, 12).toUpperCase()
 }
 export function validateStravaDuty({ assignmentDutyId, dutyCode, activity, series = [] }) {
-  const sport = String(activity?.deporte_strava || activity?.sport_type || activity?.type || 'InlineSkate')\n  if (sport !== 'InlineSkate') return { valid: false, reason: 'not_inline_skating' }\n  const code = stravaDutyCode(assignmentDutyId)
+  const sport = String(activity?.deporte_strava || activity?.sport_type || activity?.type || 'InlineSkate')
+  if (sport !== 'InlineSkate') return { valid: false, reason: 'not_inline_skating' }
+  const code = stravaDutyCode(assignmentDutyId)
   const name = String(activity?.nombre || activity?.name || '').toUpperCase()
   const exact = new RegExp('(?:^|[^A-Z0-9])' + code + '(?=$|[^A-Z0-9])').test(name)
   if (!exact) return { valid: false, reason: 'code_mismatch' }
@@ -18,7 +20,8 @@ export function validateStravaDuty({ assignmentDutyId, dutyCode, activity, serie
   if (dutyCode === 'B3-13') {
     const bySeries = new Map()
     for (const a of series) {
-      if (String(a?.deporte_strava || a?.sport_type || a?.type || 'InlineSkate') !== 'InlineSkate') continue\n      const n = String(a?.nombre || a?.name || '').toUpperCase()
+      if (String(a?.deporte_strava || a?.sport_type || a?.type || 'InlineSkate') !== 'InlineSkate') continue
+      const n = String(a?.nombre || a?.name || '').toUpperCase()
       const match = n.match(new RegExp('(?:^|[^A-Z0-9])' + code + '\\s+S([1-4])(?=$|[^A-Z0-9])'))
       const distance = Number(a?.distancia_metros ?? a?.distance ?? 0)
       const id = String(a?.strava_activity_id ?? a?.id ?? '')
