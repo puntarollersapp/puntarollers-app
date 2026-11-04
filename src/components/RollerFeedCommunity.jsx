@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import CommunityPhoto from './community/CommunityPhoto'
@@ -13,10 +13,15 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
   const [expanded,setExpanded] = useState(null)
   const [openAlbums,setOpenAlbums] = useState([])
   const [viewer,setViewer] = useState(null)
+  const refreshing = useRef(false)
   async function refresh() {
-    const {data,error:loadError} = await supabase.rpc('community_social_feed')
-    if (loadError) setError(previous=>previous||'No se pudieron actualizar las publicaciones. Intentá de nuevo.')
-    else { const next=Array.isArray(data)?data:[]; setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next); setError(previous=>previous?'':previous) }
+    if(refreshing.current)return
+    refreshing.current=true
+    try {
+      const {data,error:loadError} = await supabase.rpc('community_social_feed')
+      if (loadError) setError(previous=>previous||'No se pudieron actualizar las publicaciones. Intentá de nuevo.')
+      else { const next=Array.isArray(data)?data:[]; setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next); setError(previous=>previous?'':previous) }
+    } finally {refreshing.current=false}
   }
   useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
   async function react(post,key) {
