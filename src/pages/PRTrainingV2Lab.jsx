@@ -462,7 +462,7 @@ export default function PRTrainingV2Lab(){
  return <AppLayout>
  <main className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-[#14141B] text-[#EFF8FF]">
  <div className="mx-auto w-full min-w-0 max-w-5xl">
-  {adminView?<TrainingDailyControl/>:<><PRTareasHome user={user} coneBanner={<ConeLoanRequest/>}/><CollectiveDutyProgress/></>}
+  {adminView?<><TrainingDailyControl/><CollectiveDutyProgress/></>:<PRTareasHome user={user} coneBanner={<ConeLoanRequest/>}/> }
 
 
   {adminView&&<footer className="mt-5 px-2 text-center text-[10px] leading-5 text-white/35">PR TAREAS · Administración</footer>}
