@@ -29,3 +29,11 @@
 @keyframes prRankShimmer {0%,15%{transform:translateX(-135%)}55%,100%{transform:translateX(135%)}}
 .pr-rank-shimmer{animation:prRankShimmer 4.8s ease-in-out infinite;will-change:transform}
 @media(prefers-reduced-motion:reduce){.pr-rank-shimmer{animation:none!important;opacity:0}}
+
+/* Android Chrome: avoid oversized animated blur layers and repeated compositor repaints. */
+@media (max-width: 767px) {
+ .rf-hero::before,.rf-shine,.rf-envelope{animation:none!important;display:none!important}
+ .rf-hero{isolation:auto}
+ .pr-rank-shimmer{animation:none!important;display:none!important}
+ .pr-rank-fill,.pr-rank-medal{animation:none!important;will-change:auto!important}
+}
