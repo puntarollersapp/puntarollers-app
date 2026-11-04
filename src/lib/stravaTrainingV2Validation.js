@@ -10,7 +10,7 @@ export function validateStravaDuty({ assignmentDutyId, dutyCode, activity, serie
   if (!exact) return { valid: false, reason: 'code_mismatch' }
   const meters = Number(activity?.distancia_metros ?? activity?.distance ?? 0)
   const seconds = Number(activity?.tiempo_movimiento_segundos ?? activity?.moving_time ?? 0)
-  if (dutyCode === 'B3-04' || dutyCode === 'B3-17') return { valid: seconds >= 900, reason: seconds >= 900 ? 'ok' : 'duration_short' }
+  if (dutyCode === 'B3-04' || dutyCode === 'B3-05' || dutyCode === 'B3-17') return { valid: seconds >= 900, reason: seconds >= 900 ? 'ok' : 'duration_short' }
   if (dutyCode === 'B3-10' || dutyCode === 'B3-11' || dutyCode === 'B3-12') {
     const threshold = { 'B3-10': 3000, 'B3-11': 6000, 'B3-12': 10000 }[dutyCode]
     return { valid: meters >= threshold, reason: meters >= threshold ? 'ok' : 'distance_short' }
