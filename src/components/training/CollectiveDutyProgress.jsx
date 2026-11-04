@@ -33,7 +33,7 @@ export default function CollectiveDutyProgress() {
    const profileIds=[...new Set((assignments||[]).map(a=>a.profile_id).filter(Boolean))]
    const {data:profiles}=profileIds.length?await supabase.from('profiles').select('id,nombre,apellido,foto').in('id',profileIds.slice(0,1000)):{data:[]}
    const profileMap=new Map((profiles||[]).map(p=>[p.id,p]))
-   const people=(assignments||[]).map(a=>{const p=profileMap.get(a.profile_id);const progress=byAssignment.get(a.id);return {id:a.profile_id,name:[p?.nombre,p?.apellido].filter(Boolean).join(' ')||'Integrante PR',photo:p?.foto||null,done:progress?.done.size||0,total:progress?.slots.size||0}}).filter(p=>p.total>0&&profileMap.has(p.id)).sort((a,b)=>b.done-a.done||a.name.localeCompare(b.name,'es'))
+   const people=(assignments||[]).map(a=>{const p=profileMap.get(a.profile_id);const progress=byAssignment.get(a.id);return {id:a.profile_id,name:[p?.nombre,p?.apellido].filter(Boolean).join(' ')||'Integrante PR',photo:p?.foto||null,done:progress?.done.size||0,total:progress?.slots.size||0}}).filter(p=>p.total>0&&profileMap.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name,'es'))
    if(alive)setState({loading:false,rows:people,total:people.reduce((n,p)=>n+p.done,0),error:false})
   }
   load();return()=>{alive=false}
