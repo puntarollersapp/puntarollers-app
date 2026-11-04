@@ -16,9 +16,9 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
   async function refresh() {
     const {data,error:loadError} = await supabase.rpc('community_social_feed')
     if (loadError) setError('No se pudieron actualizar las publicaciones. Intentá de nuevo.')
-    else { setPosts(Array.isArray(data)?data:[]); setError('') }
+    else { const next=Array.isArray(data)?data:[]; setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next); setError('') }
   }
-  useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},15000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
+  useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
   async function react(post,key) {
     if(busy)return
     setBusy(post.id);setError('')
