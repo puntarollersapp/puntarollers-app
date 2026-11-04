@@ -1,5 +1,5 @@
 import { describe, it } from 'node:test'\nimport assert from 'node:assert/strict'
-import { stravaDutyCode, validateStravaDuty } from './stravaTrainingV2Validation'
+import { stravaDutyCode, validateStravaDuty } from './stravaTrainingV2Validation.js'
 const id='12345678-ABCD-4321-ABCD-123456789012'
 const code=stravaDutyCode(id)
 const check=(dutyCode, activity, series)=>validateStravaDuty({assignmentDutyId:id,dutyCode,activity,series})
