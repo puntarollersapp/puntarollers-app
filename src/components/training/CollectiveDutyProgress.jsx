@@ -7,7 +7,10 @@ export default function CollectiveDutyProgress() {
  useEffect(()=>{
   let alive=true
   async function load(){
-   const month=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date())
+   const monthParts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).formatToParts(new Date())
+   const year=monthParts.find(part=>part.type==='year')?.value
+   const monthNumber=monthParts.find(part=>part.type==='month')?.value
+   const month=`${year}-${monthNumber}`
    const {data:cycles,error:cycleError}=await supabase.from('pr_training_v2_cycles').select('id,cycle_month').eq('is_visible',true).order('cycle_month',{ascending:false}).limit(12)
    if(cycleError){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
    const cycle=(cycles||[]).find(c=>String(c.cycle_month||'').startsWith(month))
