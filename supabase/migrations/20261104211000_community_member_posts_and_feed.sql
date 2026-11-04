@@ -1,11 +1,24 @@
 -- Member-wide community posts: staged, review before deploying.
+-- Member access is independent of friendship and excludes paused or blocked profiles.
+create or replace function public.community_is_active_member(p_profile_id text default public.pr_current_profile_id())
+returns boolean language sql stable security definer set search_path=public
+as $
+ select auth.uid() is not null
+   and p_profile_id is not null
+   and p_profile_id=public.pr_current_profile_id()
+   and exists(select 1 from public.profiles p where p.id=p_profile_id
+     and p.estado='Activo' and p.acceso_habilitado is true);
+$;
+revoke all on function public.community_is_active_member(text) from public,anon;
+grant execute on function public.community_is_active_member(text) to authenticated;
+
 -- Legacy content remains friends-only. Member posts are text-only until private media delivery is available.
 create or replace function public.community_create_member_post(p_body text)
 returns uuid language plpgsql security definer set search_path = public
 as $$
 declare pid text := public.pr_current_profile_id(); postid uuid;
 begin
-  if auth.uid() is null or pid is null then raise exception 'Necesitás iniciar sesión con tu perfil PR'; end if;
+  if not public.community_is_active_member(pid) then raise exception 'Necesitás un perfil PR activo y habilitado'; end if;
   if length(trim(coalesce(p_body,''))) < 1 then raise exception 'Escribí algo para publicar'; end if;
   if length(p_body) > 5000 then raise exception 'La publicación es demasiado larga'; end if;
   insert into public.community_posts(author_id,body,visibility)
@@ -21,7 +34,7 @@ returns jsonb language plpgsql stable security definer set search_path = public
 as $$
 declare pid text := public.pr_current_profile_id(); result jsonb;
 begin
- if auth.uid() is null or pid is null then return '[]'::jsonb; end if;
+ if not public.community_is_active_member(pid) then return '[]'::jsonb; end if;
  select coalesce(jsonb_agg(x.item order by x.created_at desc),'[]'::jsonb) into result
  from (
  select p.created_at,jsonb_build_object(
@@ -47,7 +60,7 @@ grant execute on function public.community_social_feed() to authenticated;
 -- Align direct table access with the same audience boundary.
 drop policy if exists p_posts_r on public.community_posts;
 create policy p_posts_r on public.community_posts for select to authenticated
-using (deleted_at is null and public.pr_current_profile_id() is not null
+using (deleted_at is null and public.community_is_active_member(public.pr_current_profile_id())
  and (visibility='members' or public.community_are_friends(public.pr_current_profile_id(),author_id)));
 
 -- SECURITY DEFINER interactions must independently authorize access.
@@ -56,7 +69,7 @@ returns uuid language plpgsql security definer set search_path=public
 as $$
 declare pid text:=public.pr_current_profile_id(); cid uuid;
 begin
- if auth.uid() is null or pid is null then raise exception 'Iniciá sesión'; end if;
+ if not public.community_is_active_member(pid) then raise exception 'Perfil PR no habilitado'; end if;
  if coalesce(trim(p_body),'')='' then raise exception 'Comentario vacío'; end if;
  if not exists(select 1 from public.community_posts p where p.id=p_post_id and p.deleted_at is null and (p.visibility='members' or public.community_are_friends(pid,p.author_id))) then raise exception 'Publicación no disponible'; end if;
  insert into public.community_post_comments(post_id,profile_id,body) values(p_post_id,pid,trim(p_body)) returning id into cid;
@@ -67,7 +80,7 @@ returns boolean language plpgsql security definer set search_path=public
 as $$
 declare pid text:=public.pr_current_profile_id(); old text;
 begin
- if auth.uid() is null or pid is null then raise exception 'Iniciá sesión'; end if;
+ if not public.community_is_active_member(pid) then raise exception 'Perfil PR no habilitado'; end if;
  if not exists(select 1 from public.community_posts p where p.id=p_post_id and p.deleted_at is null and (p.visibility='members' or public.community_are_friends(pid,p.author_id))) then raise exception 'Publicación no disponible'; end if;
  select reaction into old from public.community_post_reactions where post_id=p_post_id and profile_id=pid;
  if old=p_reaction then delete from public.community_post_reactions where post_id=p_post_id and profile_id=pid; return false; end if;
@@ -80,7 +93,7 @@ returns boolean language plpgsql security definer set search_path=public
 as $$
 declare pid text:=public.pr_current_profile_id();
 begin
- if auth.uid() is null or pid is null then raise exception 'Iniciá sesión'; end if;
+ if not public.community_is_active_member(pid) then raise exception 'Perfil PR no habilitado'; end if;
  if not exists(select 1 from public.community_posts p where p.id=p_post_id and p.deleted_at is null and (p.visibility='members' or public.community_are_friends(pid,p.author_id))) then raise exception 'Publicación no disponible'; end if;
  if exists(select 1 from public.community_reposts where post_id=p_post_id and profile_id=pid) then
  delete from public.community_reposts where post_id=p_post_id and profile_id=pid; return false; end if;
