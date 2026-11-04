@@ -2,13 +2,13 @@
 -- Member access is independent of friendship and excludes paused or blocked profiles.
 create or replace function public.community_is_active_member(p_profile_id text default public.pr_current_profile_id())
 returns boolean language sql stable security definer set search_path=public
-as $
+as $membercheck$
  select auth.uid() is not null
    and p_profile_id is not null
    and p_profile_id=public.pr_current_profile_id()
    and exists(select 1 from public.profiles p where p.id=p_profile_id
      and p.estado='Activo' and p.acceso_habilitado is true);
-$;
+$membercheck$;
 revoke all on function public.community_is_active_member(text) from public,anon;
 grant execute on function public.community_is_active_member(text) to authenticated;
 
