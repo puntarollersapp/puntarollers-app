@@ -7,7 +7,7 @@ export default function CollectiveDutyProgress() {
  useEffect(()=>{
   let alive=true
   async function load(){
-   const month=new Date().toISOString().slice(0,7)
+   const month=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date())
    const {data:cycles,error:cycleError}=await supabase.from('pr_training_v2_cycles').select('id,cycle_month').eq('is_visible',true).order('cycle_month',{ascending:false}).limit(12)
    if(cycleError){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
    const cycle=(cycles||[]).find(c=>String(c.cycle_month||'').startsWith(month))
@@ -15,13 +15,15 @@ export default function CollectiveDutyProgress() {
    const {data:assignments,error:assignmentError}=await supabase.from('pr_training_v2_assignments').select('id,profile_id').eq('cycle_id',cycle.id).limit(1000)
    if(assignmentError){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
    const ids=(assignments||[]).map(a=>a.id)
+   if((assignments||[]).length===1000){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
    if(!ids.length){if(alive)setState({loading:false,rows:[],total:0,error:false});return}
    const {data:slots,error:slotError}=await supabase.from('pr_training_v2_assignment_duties').select('id,assignment_id,slot').in('assignment_id',ids).limit(6000)
    if(slotError){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
+   if((slots||[]).length===6000){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
    const primary=(slots||[]).filter(s=>Number(s.slot)>=1&&Number(s.slot)<=6)
    const slotIds=primary.map(s=>s.id)
    const {data:approved,error:submissionError}=slotIds.length?await supabase.from('pr_training_v2_submissions').select('assignment_duty_id').in('assignment_duty_id',slotIds).eq('status','approved').limit(6000):{data:[],error:null}
-   if(submissionError){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
+   if(submissionError||(approved||[]).length===6000){if(alive)setState({loading:false,rows:[],total:0,error:true});return}
    const approvedIds=new Set((approved||[]).map(s=>s.assignment_duty_id))
    const byAssignment=new Map()
    for(const slot of primary){const entry=byAssignment.get(slot.assignment_id)||{slots:new Set(),done:new Set()};entry.slots.add(slot.slot);if(approvedIds.has(slot.id))entry.done.add(slot.slot);byAssignment.set(slot.assignment_id,entry)}
