@@ -8,6 +8,7 @@ const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','�
 export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) {
   const [posts,setPosts] = useState(initialPosts)
   const [newPost,setNewPost] = useState('')
+  const [newPhoto,setNewPhoto] = useState(null)
   const [publishing,setPublishing] = useState(false)
   const [composerMessage,setComposerMessage] = useState('')
   const [drafts,setDrafts] = useState({})
@@ -46,19 +47,20 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
   }
   async function publishMemberPost(e) {
     e.preventDefault()
-    if(publishing || !newPost.trim())return
+    if(publishing || (!newPost.trim()&&!newPhoto))return
     setPublishing(true);setComposerMessage('')
     try {
-      const {error:publishError}=await supabase.rpc('community_create_member_post',{p_body:newPost.trim()})
+      let media=[];if(newPhoto){if(!['image/jpeg','image/png','image/webp'].includes(newPhoto.type)||newPhoto.size>25*1024*1024)throw new Error('Usá una foto JPG, PNG o WEBP de hasta 25 MB.');const ext=(newPhoto.name.split('.').pop()||'jpg').replace(/[^a-z0-9]/gi,'').toLowerCase();const {data:path,error:pathError}=await supabase.rpc('community_media_path',{p_kind:'post',p_ext:ext});if(pathError)throw pathError;const {error:uploadError}=await supabase.storage.from('community-media').upload(path,newPhoto,{contentType:newPhoto.type,upsert:false});if(uploadError)throw uploadError;media=[supabase.storage.from('community-media').getPublicUrl(path).data.publicUrl]}
+      const {error:publishError}=await supabase.rpc('community_create_member_post',{p_body:newPost.trim(),p_media_paths:media})
       if(publishError)throw publishError
-      setNewPost('');setComposerMessage('✓ Publicado para toda Punta Rollers');await refresh()
+      setNewPost('');setNewPhoto(null);setComposerMessage('✓ Publicado para toda Punta Rollers');await refresh()
     } catch(err) {setComposerMessage('No se pudo publicar: '+(err?.message||'Error inesperado'))}
     finally {setPublishing(false)}
   }
   const latest=[...posts.filter(p=>p?.id).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0)).slice(0,12)
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">PR Social · publicaciones y álbumes</p><h2 className="mt-1 font-display text-[30px] text-white">Actividad de la comunidad<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Lo último que compartimos en Punta Rollers, ordenado por fecha.</p></div><div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[190px]"><Link to="/app/comunidad#pr-community-composer" className="rounded-xl bg-[#FF0055] px-4 py-3 text-center text-sm font-black text-white shadow-[0_6px_22px_rgba(255,0,85,.35)]">＋ Crear publicación</Link><Link to="/app/comunidad" className="shrink-0 rounded-xl border border-[#FF0055]/30 px-3 py-2 text-[10px] font-bold text-[#FF91B2]">Ver comunidad →</Link></div></div>
-    <form onSubmit={publishMemberPost} className="rounded-2xl border border-rose-400/25 bg-[#1b121c] p-4"><label htmlFor="rollerfeed-new-post" className="block text-xs font-black text-rose-200">Compartí algo con toda Punta Rollers</label><p className="mt-1 text-[11px] text-white/55">Lo verán los miembros con perfil PR. Por ahora, texto; para fotos y álbumes entrá en Comunidad.</p><textarea id="rollerfeed-new-post" value={newPost} onChange={e=>setNewPost(e.target.value)} maxLength={5000} rows={3} placeholder="¿Qué querés compartir hoy?" className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white outline-none focus:border-rose-400"/><button type="submit" disabled={publishing||!newPost.trim()} className="mt-2 w-full rounded-xl bg-[#FF0055] px-4 py-3 text-sm font-black text-white disabled:opacity-40">{publishing?'PUBLICANDO…':'PUBLICAR PARA TODA PR'}</button>{composerMessage&&<p role="status" className="mt-2 text-xs text-white/70">{composerMessage}</p>}</form>
+    <form onSubmit={publishMemberPost} className="rounded-2xl border border-rose-400/25 bg-[#1b121c] p-4"><label htmlFor="rollerfeed-new-post" className="block text-xs font-black text-rose-200">Compartí algo con toda Punta Rollers</label><p className="mt-1 text-[11px] text-white/55">Lo verán los miembros con perfil PR. Sumá una foto y un texto para compartir con toda la escuela.</p><textarea id="rollerfeed-new-post" value={newPost} onChange={e=>setNewPost(e.target.value)} maxLength={5000} rows={3} placeholder="¿Qué querés compartir hoy?" className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white outline-none focus:border-rose-400"/><label className="mt-3 flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-rose-300/30 bg-rose-300/10 px-3 text-sm font-bold text-rose-100">📷 {newPhoto?newPhoto.name:"Agregar foto"}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={e=>setNewPhoto(e.target.files?.[0]||null)}/></label>{newPhoto&&<button type="button" onClick={()=>setNewPhoto(null)} className="mt-2 text-xs text-white/60">Quitar foto</button>}<button type="submit" disabled={publishing||(!newPost.trim()&&!newPhoto)} className="mt-2 w-full rounded-xl bg-[#FF0055] px-4 py-3 text-sm font-black text-white disabled:opacity-40">{publishing?'PUBLICANDO…':'PUBLICAR PARA TODA PR'}</button>{composerMessage&&<p role="status" className="mt-2 text-xs text-white/70">{composerMessage}</p>}</form>
     {error&&<p role="alert" className="rounded-xl border border-red-400/30 p-3 text-xs text-red-200">{error}</p>}
     {!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">Todavía no hay publicaciones para mostrar.</p>}
     {latest.map(entry=>{
