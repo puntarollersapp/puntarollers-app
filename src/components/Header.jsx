@@ -15,8 +15,22 @@ export default function Header({ title, showBack = false, onBack }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const [family, setFamily] = useState(null)
-  useEffect(() => { if (!user?.id) { setFamily(null); return } let live=true; supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}}).then(({data,error})=>{if(live)setFamily(!error&&data?.ok&&Array.isArray(data.children)&&data.children.length?data:null)}).catch(()=>{if(live)setFamily(null)}); return ()=>{live=false} }, [user?.id])
+  const [family, setFamily] = useState(false)
+  useEffect(() => {
+    if (!user?.id) { setFamily(false); return }
+    let active = true
+    const key = 'prkids-family-banner:' + user.id
+    setFamily(sessionStorage.getItem(key) === 'yes')
+    supabase.functions.invoke('pr-kids-family-access', { body: { action: 'family-home' } })
+      .then(({ data, error }) => {
+        if (!active || error || data?.ok !== true) return
+        const hasChildren = Array.isArray(data.children) && data.children.length > 0
+        sessionStorage.setItem(key, hasChildren ? 'yes' : 'no')
+        setFamily(hasChildren)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [user?.id])
   const initials = user?.nombre?.split(' ').filter(Boolean).map((name) => name[0]).join('').slice(0, 2) || 'PR'
 
   async function handleLogout() {
