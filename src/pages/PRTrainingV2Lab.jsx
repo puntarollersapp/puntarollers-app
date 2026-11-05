@@ -323,7 +323,7 @@ function StudentTeacherFeedback({submissionId,reviewerId}){
 function PRTareasHome({user,coneBanner}){
  const [info,setInfo]=useState(''),[open,setOpen]=useState(null),[plan,setPlan]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revealed,setRevealed]=useState(0),[profile,setProfile]=useState(null),[files,setFiles]=useState({}),[sending,setSending]=useState(null),[feedback,setFeedback]=useState('')
  const [demoCatalog,setDemoCatalog]=useState({});
- useEffect(()=>{let cancelled=false;supabase.from('pr_training_v2_duties').select('duty_code,demo_video_path,demo_ready').then(({data,error})=>{if(!cancelled&&!error)setDemoCatalog(Object.fromEntries((data||[]).map(d=>[d.duty_code,d])))});return()=>{cancelled=true}},[]);
+ useEffect(()=>{let cancelled=false;supabase.rpc('pr_training_v2_my_demo_catalog').then(({data,error})=>{if(!cancelled&&!error)setDemoCatalog(Object.fromEntries((data||[]).map(d=>[d.duty_code,d])))});return()=>{cancelled=true}},[]);
  const demoUrlFor=t=>{const code=t.duty_code||t.code||t.duty_snapshot?.duty_code;const path=demoCatalog[code]?.demo_video_path||t.demo_video_path;if(!path||!demoCatalog[code]?.demo_ready)return null;return supabase.storage.from('pr-training-v2-demos').getPublicUrl(path).data?.publicUrl||null;};
  const [clockTick,setClockTick]=useState(0);
  useEffect(()=>{const timer=window.setInterval(()=>setClockTick(n=>n+1),60000);return()=>window.clearInterval(timer)},[]);
