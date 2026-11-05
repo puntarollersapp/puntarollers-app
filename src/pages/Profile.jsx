@@ -1428,6 +1428,21 @@ export default function Profile() {
               </button>
             </div>
 
+            <label className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-lime-300/35 bg-lime-300/10 px-4 py-3 text-sm font-bold text-lime-200 active:scale-[0.99]">
+              <span aria-hidden="true">📷</span>
+              {profile.foto ? 'Cambiar foto de perfil' : 'Subir foto de perfil'}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                aria-label="Elegir foto de perfil"
+                onChange={(event) => {
+                  previewImage(event.target.files?.[0], 'foto')
+                  event.target.value = ''
+                }}
+              />
+            </label>
+
             {fotoFile && (
               <div className="rounded-2xl border border-pr-gold/20 bg-pr-gold/10 p-3 mt-4">
                 <p className="text-pr-gold text-xs font-semibold">
