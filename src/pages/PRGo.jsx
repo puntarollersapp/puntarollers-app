@@ -17,7 +17,7 @@ const photoUrl = value => typeof value === 'string' && value.startsWith('https:/
 function readStandings(frame, token, signal) {
   return new Promise((resolve, reject) => {
     if (signal.aborted || !frame) {
-      reject(new Error('Conexión cancelada.'))
+      reject(new Error('La conexión todavía no está lista.'))
       return
     }
     const id = crypto.randomUUID()
@@ -191,8 +191,12 @@ export default function PRGo() {
         </header>
         {!allowed && <p className="prgo-panel-state">Esta página está reservada a las cuentas habilitadas de PR GO.</p>}
         {allowed && !result && <div className="prgo-panel-state" role="status">
-          {error || 'Conectando con tu cuenta de PR GO…'}
-          {error && <button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button>}
+          {error ? <div className="prgo-panel-connect">
+            <span className="prgo-panel-eyebrow">PUNTA ROLLERS × PR GO</span>
+            <h2>Establecer conexión</h2>
+            <p>Conectá tu cuenta para ver tu gimnasio y tus salidas respaldadas.</p>
+            <button type="button" onClick={() => setRetry(value => value + 1)}>Conectar <span aria-hidden="true">↗</span></button>
+          </div> : 'Conectando con tu cuenta de PR GO…'}
         </div>}
         {result && <>
           <section className="prgo-panel-my-gym" style={{ '--prgo-house': myHouse?.color || '#c4a4ff' }}>
@@ -203,6 +207,7 @@ export default function PRGo() {
               <p>{myHouse ? 'Tu elección confirmada en PR GO.' : 'Elegí tu gimnasio en la app para ver tu placa acá.'}</p>
               <div className="prgo-panel-metrics">
                 <div><span>Salidas respaldadas</span><strong>{result.me.savedOutings}</strong></div>
+                <div><span>Km privados respaldados</span><strong>{Number.isFinite(result.me.privateMeters) ? distance(result.me.privateMeters) : '—'}</strong></div>
                 <div><span>Km compartidos</span><strong>{distance(result.me.sharedMeters)}</strong></div>
               </div>
             </div>

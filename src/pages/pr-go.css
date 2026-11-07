@@ -69,3 +69,8 @@
 .prgo-panel-gym-plate figcaption strong{display:block;color:white;font-size:11cqw;margin-top:.15em}
 .prgo-panel-gym-plate .prgo-plate-wheel{position:absolute;right:3%;bottom:5%;width:27%;height:auto;transform:rotate(-10deg);z-index:4}
 @media(prefers-reduced-motion:reduce){.prgo-plate-circuits{animation:none}}
+
+.prgo-panel-connect{display:grid;justify-items:center;gap:.6rem;padding:1.15rem .5rem;text-align:center}
+.prgo-panel-connect h2,.prgo-panel-connect p{margin:0}
+.prgo-panel-state .prgo-panel-connect button{display:inline-flex;gap:1rem;align-items:center;padding:.7rem 1.2rem;border-radius:999px;background:#d6ff52;color:#14190d;font-weight:800;text-decoration:none}
+.prgo-panel-state .prgo-panel-connect button:focus-visible{outline:2px solid #c4a4ff;outline-offset:4px}
