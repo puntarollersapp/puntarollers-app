@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -150,28 +150,28 @@ function ConquestFlag({ color }) {
 
 export default function PRGo() {
   const { user } = useAuth()
-  const frame = useRef(null)
+  const [frame, setFrame] = useState(null)
   const [retry, setRetry] = useState(0)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const allowed = ['alumno', 'admin'].includes(user?.role)
 
   useEffect(() => {
-    if (!allowed || !user?.id) return
+    if (!allowed || !user?.id || !frame) return
     const controller = new AbortController()
     setResult(null)
     setError('')
     async function load() {
       const { data, error: sessionError } = await supabase.auth.getSession()
       if (sessionError || !data.session?.access_token) throw new Error('Volvé a entrar a Punta Rollers para consultar PR GO.')
-      const standings = await readStandings(frame.current?.contentWindow, data.session.access_token, controller.signal)
+      const standings = await readStandings(frame.contentWindow, data.session.access_token, controller.signal)
       if (!controller.signal.aborted) setResult(standings)
     }
     load().catch(issue => {
       if (!controller.signal.aborted) setError(issue.message)
     })
     return () => controller.abort()
-  }, [allowed, retry, user?.id])
+  }, [allowed, frame, retry, user?.id])
 
   const myHouse = houses.find(house => house.id === result?.me.teamId)
   const sortedHouses = [...houses].sort((a, b) => (result?.teamMeters[b.id] || 0) - (result?.teamMeters[a.id] || 0))
@@ -180,7 +180,7 @@ export default function PRGo() {
   return (
     <AppLayout title="PR GO">
       <div className="prgo-panel">
-        {allowed && <iframe ref={frame} hidden title="Conexión privada con PR GO" src={bridgeOrigin + '/?bridge=standings'} referrerPolicy="no-referrer" />}
+        {allowed && <iframe ref={setFrame} hidden title="Conexión privada con PR GO" src={bridgeOrigin + '/?bridge=standings'} referrerPolicy="no-referrer" />}
         <header className="prgo-panel-hero">
           <div className="prgo-panel-brand-copy">
             <span className="prgo-panel-eyebrow">PR GO / PUNTA ROLLERS</span>
