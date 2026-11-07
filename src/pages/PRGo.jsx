@@ -55,6 +55,27 @@ function readStandings(frame, token, signal) {
   })
 }
 
+function PRGoMark() {
+  return (
+    <svg viewBox="0 0 512 512" role="img" aria-label="Logo de PR GO">
+      <defs>
+        <linearGradient id="prgo-panel-lime" x2="1" y2="1">
+          <stop stopColor="#e4ff79" />
+          <stop offset="1" stopColor="#a8e927" />
+        </linearGradient>
+      </defs>
+      <path d="M132 351C108 321 94 281 91 235C80 133 127 53 256 53s176 80 165 182c-9 91-99 155-165 222"
+        fill="none" stroke="url(#prgo-panel-lime)" strokeWidth="12" strokeLinecap="round" />
+      <image x="143" y="94" width="227" height="227" href="/avatar/v3/brand/pr-logo-official-v1.png" />
+      <path d="m111 361 46-26m198-1 44 26" stroke="#b99bff" strokeWidth="6" strokeLinecap="round" />
+      <path d="M256 396v61m-45-43 45 43 45-43" fill="none" stroke="#d6ff52"
+        strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="194" y="374" fontFamily="Arial,sans-serif" fontSize="78" fontStyle="italic"
+        fontWeight="900" fill="#d6ff52" letterSpacing="-7">GO</text>
+    </svg>
+  )
+}
+
 export default function PRGo() {
   const { user } = useAuth()
   const frame = useRef(null)
@@ -89,9 +110,12 @@ export default function PRGo() {
       <div className="prgo-panel">
         {allowed && <iframe ref={frame} hidden title="Conexión privada con PR GO" src={bridgeOrigin + '/?bridge=standings'} referrerPolicy="no-referrer" />}
         <header className="prgo-panel-hero">
-          <span>PR GO / PUNTA ROLLERS</span>
-          <h1>La ciudad<br /><em>en movimiento.</em></h1>
-          <p>Tu gimnasio, tus salidas y las conquistas de la comunidad.</p>
+          <div className="prgo-panel-brand-copy">
+            <span className="prgo-panel-eyebrow">PR GO / PUNTA ROLLERS</span>
+            <h1>La ciudad<br /><em>en movimiento.</em></h1>
+            <p>Tu gimnasio, tus salidas y las conquistas de la comunidad.</p>
+          </div>
+          <div className="prgo-panel-brand"><PRGoMark /></div>
         </header>
         {!allowed && <p className="prgo-panel-state">Esta página está reservada a las cuentas habilitadas de PR GO.</p>}
         {allowed && !result && <div className="prgo-panel-state" role="status">
