@@ -10,6 +10,7 @@ const houses = [
   { id: 'green', name: 'Verde', coach: 'David', color: '#50e8a4' },
   { id: 'pink', name: 'Rosado', coach: 'Lucía', color: '#ff82c8' },
 ]
+const zoneNames = {"dedos": "Los Dedos", "gorlero": "Gorlero", "mexico": "Plaza México", "muelle-pastora": "Muelle La Pastora", "san-fernando": "Plaza San Fernando", "vigia": "Torre del Vigía", "bicentenario": "Plaza Bicentenario"}
 const distance = meters => new Intl.NumberFormat('es-UY', { maximumFractionDigits: 2 }).format(meters / 1000)
 const photoUrl = value => typeof value === 'string' && value.startsWith('https://') ? value : undefined
 
@@ -76,6 +77,77 @@ function PRGoMark() {
   )
 }
 
+const crestPaths = {
+  blue: 'M113 39 65 105h31l-9 55 54-78h-35Z M40 76h19M36 94h16M42 112h13',
+  green: 'M57 44 129 134q7 9 18 3l9-7-17-15-8 7-60-85 M143 44 71 134q-7 9-18 3l-9-7 17-15 8 7 60-85 M85 152h30v9H85Z',
+  pink: 'M71 53h27v44l29 11q12 4 13 17H57V89h14Z M65 88h30M66 99h30M60 130h81 M129 47v24M117 59h24',
+}
+
+function GymPlate({ house }) {
+  const portrait = '/prgo-art/' + house.id + '.webp'
+  return (
+    <figure className="prgo-panel-gym-plate" aria-label={'Placa del Gimnasio ' + house.name}>
+      <svg className="prgo-plate-circuits" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M-30 410 80 340 80 230 195 230 195 100 450-20 M-50 300 40 300 40 150 155 150 155 20 260-30 M-10 470 120 390 270 390 270 260 460 160" />
+      </svg>
+      <span className="prgo-plate-brand" aria-hidden="true">PR GO / PUNTA ROLLERS</span>
+      <span className="prgo-plate-watermark" aria-hidden="true">GIMNASIO</span>
+      <img className="prgo-plate-shadow" src={portrait} alt="" />
+      <img className="prgo-plate-portrait" src={portrait} alt={house.coach} />
+      <svg className="prgo-plate-crest" viewBox="0 0 200 200" aria-hidden="true">
+        <g fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round">
+          <path d={'M100 13 169 52v84l-69 49-69-49V52Z ' + crestPaths[house.id]} />
+          {house.id === 'pink' && [66, 88, 110, 132].map(x => <circle key={x} cx={x} cy="144" r="7" />)}
+        </g>
+      </svg>
+      <figcaption><span>Gimnasio {house.name}</span><strong>{house.coach}</strong></figcaption>
+      <img className="prgo-plate-wheel" src="/prgo-art/wheel.webp" alt="" />
+    </figure>
+  )
+}
+
+function Portrait({ person }) {
+  return <span className="prgo-panel-avatar">{photoUrl(person.photo)
+    ? <img src={photoUrl(person.photo)} alt="" loading="lazy" />
+    : person.name.slice(0, 1)}</span>
+}
+
+function Podium({ standings }) {
+  if (!standings.length) return <div className="prgo-panel-empty">Las primeras salidas compartidas aparecerán acá.</div>
+  const leaderMeters = Math.max(1, standings[0].meters)
+  return <>
+    <ol className="prgo-panel-podium" aria-label="Podio por kilómetros compartidos">
+      {standings.slice(0, 3).map((person, index) => {
+        const teamColor = houses.find(house => house.id === person.teamId)?.color || '#c4a4ff'
+        return (
+          <li key={person.id} data-rank={index + 1} style={{
+            '--prgo-rank-color': teamColor,
+            '--prgo-rank-angle': Math.min(360, person.meters / leaderMeters * 360) + 'deg',
+          }}>
+            <span className="prgo-panel-place">0{index + 1}</span>
+            <div className="prgo-panel-rank-ring"><Portrait person={person} /></div>
+            <strong>{person.name}</strong>
+            <span>{distance(person.meters)} km</span>
+          </li>
+        )
+      })}
+    </ol>
+    {standings.length > 3 && <ol className="prgo-panel-rank" start={4}>
+      {standings.slice(3).map((person, index) => <li key={person.id}>
+        <span>{index + 4}</span><Portrait person={person} />
+        <strong>{person.name}</strong><span>{distance(person.meters)} km</span>
+      </li>)}
+    </ol>}
+  </>
+}
+
+function ConquestFlag({ color }) {
+  return <svg viewBox="0 0 30 30" width="29" height="29" aria-hidden="true" style={{ color }}>
+    <path d="M7 26V4m0 2 15 5-15 6" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+}
+
 export default function PRGo() {
   const { user } = useAuth()
   const frame = useRef(null)
@@ -123,11 +195,19 @@ export default function PRGo() {
           {error && <button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button>}
         </div>}
         {result && <>
-          <div className="prgo-panel-metrics">
-            <div><span>Mi gimnasio</span><strong style={{ color: myHouse?.color }}>{myHouse?.name || 'Por elegir'}</strong></div>
-            <div><span>Mis salidas respaldadas</span><strong>{result.me.savedOutings}</strong></div>
-            <div><span>Mis km compartidos</span><strong>{distance(result.me.sharedMeters)}</strong></div>
-          </div>
+          <section className="prgo-panel-my-gym" style={{ '--prgo-house': myHouse?.color || '#c4a4ff' }}>
+            <div className="prgo-panel-gym-copy">
+              <span className="prgo-panel-eyebrow">TU EQUIPO</span>
+              <h2>Mi gimnasio</h2>
+              <strong>{myHouse ? myHouse.name + ' · ' + myHouse.coach : 'Por elegir'}</strong>
+              <p>{myHouse ? 'Tu elección confirmada en PR GO.' : 'Elegí tu gimnasio en la app para ver tu placa acá.'}</p>
+              <div className="prgo-panel-metrics">
+                <div><span>Salidas respaldadas</span><strong>{result.me.savedOutings}</strong></div>
+                <div><span>Km compartidos</span><strong>{distance(result.me.sharedMeters)}</strong></div>
+              </div>
+            </div>
+            {myHouse && <GymPlate house={myHouse} />}
+          </section>
           <section>
             <h2>Marcador de gimnasios</h2>
             <p>Kilómetros de las salidas compartidas con la comunidad.</p>
@@ -140,18 +220,21 @@ export default function PRGo() {
             })}
           </section>
           <section>
+            <span className="prgo-panel-eyebrow">TABLA DE POSICIONES</span>
             <h2>Ranking de patinadores</h2>
-            {result.standings.length === 0 ? <p>Las primeras salidas compartidas aparecerán acá.</p> : <ol className="prgo-panel-rank">
-              {result.standings.map((row, index) => <li key={row.id}>
-                <span>{index + 1}</span>
-                <span className="prgo-panel-avatar">{photoUrl(row.photo) ? <img src={photoUrl(row.photo)} alt="" loading="lazy" /> : row.name.slice(0, 1)}</span>
-                <strong>{row.name}</strong><span>{distance(row.meters)} km</span>
-              </li>)}
-            </ol>}
+            <Podium standings={result.standings} />
           </section>
           <section>
+            <span className="prgo-panel-eyebrow">MAPA COMPARTIDO</span>
             <h2>Conquistas activas</h2>
-            <p>{result.zones.length} {result.zones.length === 1 ? 'zona conquistada' : 'zonas conquistadas'} en el mapa compartido de PR GO.</p>
+            {result.zones.length ? <ul className="prgo-panel-zones">{result.zones.map(zone => (
+              <li key={zone.id}>
+                <ConquestFlag color={zone.color} /><div>
+                  <strong>{zoneNames[zone.id] || 'Zona del piloto'}</strong>
+                  <small>{zone.owner.name}</small>
+                </div><Portrait person={zone.owner} />
+              </li>
+            ))}</ul> : <div className="prgo-panel-empty"><ConquestFlag color="#c4a4ff" />Las banderas aparecerán cuando se compartan conquistas.</div>}
           </section>
         </>}
       </div>
