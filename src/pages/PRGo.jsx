@@ -161,21 +161,43 @@ export default function PRGo() {
     const controller = new AbortController()
     setResult(null)
     setError('')
+    let loading = false
     async function load() {
-      const { data, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !data.session?.access_token) throw new Error('Volvé a entrar a Punta Rollers para consultar PR GO.')
-      const standings = await readStandings(frame.contentWindow, data.session.access_token, controller.signal)
-      if (!controller.signal.aborted) setResult(standings)
+      if (loading || controller.signal.aborted) return
+      loading = true
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError || !data.session?.access_token) throw new Error('Volvé a entrar a Punta Rollers para consultar PR GO.')
+        const standings = await readStandings(frame.contentWindow, data.session.access_token, controller.signal)
+        if (!controller.signal.aborted) {
+          setResult(standings)
+          setError('')
+        }
+      } catch (issue) {
+        if (!controller.signal.aborted) setError(issue.message)
+      } finally {
+        loading = false
+      }
     }
-    load().catch(issue => {
-      if (!controller.signal.aborted) setError(issue.message)
-    })
-    return () => controller.abort()
+    const refreshVisible = () => {
+      if (document.visibilityState === 'visible') void load()
+    }
+    void load()
+    const timer = setInterval(refreshVisible, 15000)
+    document.addEventListener('visibilitychange', refreshVisible)
+    window.addEventListener('focus', refreshVisible)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', refreshVisible)
+      window.removeEventListener('focus', refreshVisible)
+      controller.abort()
+    }
   }, [allowed, frame, retry, user?.id])
 
   const myHouse = houses.find(house => house.id === result?.me.teamId)
-  const sortedHouses = [...houses].sort((a, b) => (result?.teamMeters[b.id] || 0) - (result?.teamMeters[a.id] || 0))
-  const maxMeters = result ? Math.max(1, ...houses.map(house => result.teamMeters[house.id] || 0)) : 1
+  const teamTotals = result?.teamTrainingMeters || result?.teamMeters
+  const sortedHouses = [...houses].sort((a, b) => (teamTotals?.[b.id] || 0) - (teamTotals?.[a.id] || 0))
+  const maxMeters = Math.max(1, ...houses.map(house => teamTotals?.[house.id] || 0))
 
   return (
     <AppLayout title="PR GO">
@@ -199,6 +221,7 @@ export default function PRGo() {
           </div> : 'Conectando con tu cuenta de PR GO…'}
         </div>}
         {result && <>
+          {error && <p className="prgo-panel-state" role="status">Mostrando los últimos datos. PR GO volverá a actualizar automáticamente.</p>}
           <section className="prgo-panel-my-gym" style={{ '--prgo-house': myHouse?.color || '#c4a4ff' }}>
             <div className="prgo-panel-gym-copy">
               <span className="prgo-panel-eyebrow">TU EQUIPO</span>
@@ -215,9 +238,9 @@ export default function PRGo() {
           </section>
           <section>
             <h2>Marcador de gimnasios</h2>
-            <p>Kilómetros de las salidas compartidas con la comunidad.</p>
+            <p>{result.teamTrainingMeters ? 'Kilómetros respaldados que sumaron al gimnasio.' : 'Kilómetros de las salidas compartidas con la comunidad.'}</p>
             {sortedHouses.map(house => {
-              const meters = result.teamMeters[house.id] || 0
+              const meters = teamTotals[house.id] || 0
               return <div className="prgo-panel-house" key={house.id} style={{ '--prgo-house': house.color }}>
                 <div><strong>{house.name} · {house.coach}</strong><span>{distance(meters)} km</span></div>
                 <progress aria-label={'Kilómetros de ' + house.name} value={meters} max={maxMeters} />

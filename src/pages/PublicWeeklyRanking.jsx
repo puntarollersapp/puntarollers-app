@@ -4,6 +4,7 @@ import PublicLayout from '../layouts/PublicLayout'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import { addPrGoToRanking, readPrGoActivities } from '../lib/prSkatingSources'
 
 function lower(value) {
   return String(value || '').trim().toLowerCase()
@@ -341,7 +342,7 @@ export default function PublicWeeklyRanking() {
       if (!silent) setLoading(true)
       setMessage('')
       try {
-        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse, octoberResultResponse, octoberCampaignResponse, octoberRankingResponse] = await Promise.all([
+        const [profilesResponse, weekResponse, monthResponse, previousMonthResponse, statusesResponse, unlockResponse, octoberResultResponse, octoberCampaignResponse, octoberRankingResponse, prgoActivities] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.week.start, p_end_date: ranges.week.end }),
           supabase.rpc('pr_get_inline_ranking', { p_start_date: ranges.month.start, p_end_date: ranges.month.end }),
@@ -351,6 +352,7 @@ export default function PublicWeeklyRanking() {
           supabase.from('pr_unlock_results').select('*').eq('campaign_id','cae7fa65-2dfc-4e02-ac23-dd50f78d0ac9').maybeSingle(),
           supabase.from('pr_unlock_campaigns').select('*').eq('slug','pr-unlock-2026-09-25').maybeSingle(),
           supabase.rpc('pr_get_inline_ranking', { p_start_date:'2026-09-25', p_end_date:'2026-10-31' }),
+          readPrGoActivities(),
         ])
         if (!active) return
         if (weekResponse.error) throw weekResponse.error
@@ -368,10 +370,23 @@ export default function PublicWeeklyRanking() {
             photo: profilePhoto(profile),
           }
         }).sort((a, b) => b.km - a.km || b.sessions - a.sessions || a.name.localeCompare(b.name))
+        let stravaMatches = []
+        if (prgoActivities.length) {
+          const ids = [...new Set(prgoActivities.map(row => row.alumno_id))]
+          const matched = await supabase.from('pr_inline_skate_public_activities')
+            .select('id,alumno_id,fuente,fecha_inicio,tiempo_total_segundos,tiempo_movimiento_segundos,distancia_metros')
+            .in('alumno_id', ids).gte('fecha_inicio', ranges.previousMonth.start + 'T00:00:00-03:00').limit(1000)
+          if (!matched.error && matched.data.length < 1000) stravaMatches = matched.data
+          else stravaMatches = null
+        }
+        if (!active) return
+        const combined = (rows, range) => stravaMatches
+          ? addPrGoToRanking(rows || [], stravaMatches, prgoActivities, range)
+          : rows
         setRankingRows({
-          week: hydrateRanking(weekResponse.data),
-          month: hydrateRanking(monthResponse.data),
-          previousMonth: hydrateRanking(previousMonthResponse.data),
+          week: hydrateRanking(combined(weekResponse.data, ranges.week)),
+          month: hydrateRanking(combined(monthResponse.data, ranges.month)),
+          previousMonth: hydrateRanking(combined(previousMonthResponse.data, ranges.previousMonth)),
         })
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(profileMap)
