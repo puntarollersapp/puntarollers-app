@@ -327,8 +327,8 @@ function StudentEvidenceLink({task,revision}) {
  supabase.rpc('pr_training_v2_my_evidence',{p_assignment_duty_id:task.assignment_duty_id}).then(({data,error})=>{
  if(alive){setEvidence(error?null:data);setMessage(error?'No pudimos consultar el archivo.': '')}
  });return()=>{alive=false}},[task.assignment_duty_id,task.latest_status,revision])
- async function view(){
- const path=evidence?.paths?.[0];if(!path)return;
+ async function view(path){
+ if(!path)return;
  const popup=window.open('','_blank');
  const {data,error}=await supabase.storage.from('pr-training-v2-evidence').createSignedUrl(path,120);
  if(error||!data?.signedUrl){popup?.close();setMessage('No pudimos abrir tu archivo. Intentá nuevamente.');return}
@@ -338,7 +338,7 @@ function StudentEvidenceLink({task,revision}) {
  return <div className="mt-4 rounded-xl border border-sky-300/30 bg-sky-300/10 p-4">
  <p className="text-sm font-black text-sky-200">Tu evidencia enviada</p>
  <p className="mt-1 text-xs text-white/75">Revisá qué foto o video enviaste. Este archivo es privado.</p>
- {evidence?.paths?.length>0&&<button type="button" onClick={view} className="mt-3 rounded-xl border border-sky-300/60 px-4 py-3 text-sm font-black text-sky-100">▶ Ver mi foto o video</button>}
+ {evidence?.paths?.map((path,i)=><button key={path} type="button" onClick={()=>view(path)} className="mr-2 mt-3 rounded-xl border border-sky-300/60 px-4 py-3 text-sm font-black text-sky-100">▶ Ver archivo {i+1}</button>)}
  {message&&<p role="alert" className="mt-2 text-xs text-amber-200">{message}</p>}
  </div>
 }
