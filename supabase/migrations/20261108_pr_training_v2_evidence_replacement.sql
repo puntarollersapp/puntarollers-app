@@ -33,7 +33,7 @@ begin
   v_count:=coalesce(array_length(p_paths,1),0);
   if v_count<1 or v_count>3 then raise exception 'INVALID_FILE_COUNT'; end if;
   foreach v_path in array p_paths loop
-    if v_path is null or left(v_path,length(v_profile)+1)<>v_profile||'/'
+    if v_path is null or left(v_path,length(v_profile||'/'||p_assignment_duty_id::text||'/'))<>v_profile||'/'||p_assignment_duty_id::text||'/'
        or position('..' in v_path)>0 then raise exception 'INVALID_PATH'; end if;
     if not exists(select 1 from storage.objects o where o.bucket_id='pr-training-v2-evidence' and o.name=v_path)
        then raise exception 'FILE_NOT_UPLOADED'; end if;
