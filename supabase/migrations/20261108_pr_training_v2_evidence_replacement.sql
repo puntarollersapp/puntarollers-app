@@ -78,7 +78,10 @@ create or replace function public.pr_training_v2_review_current_evidence(
  p_submission_id uuid,p_status text,p_note text,p_expected_paths jsonb
 ) returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
 declare v_row public.pr_training_v2_submissions%rowtype;
+        v_actor public.profiles%rowtype;
 begin
+ select * into v_actor from public.profiles where auth_user_id=auth.uid() limit 1;
+ if not found or v_actor.role not in ('admin','profesor') then raise exception 'FORBIDDEN'; end if;
  select * into v_row from public.pr_training_v2_submissions where id=p_submission_id;
  if not found then raise exception 'NOT_FOUND'; end if;
  perform pg_advisory_xact_lock(hashtextextended(v_row.assignment_duty_id::text,0));
