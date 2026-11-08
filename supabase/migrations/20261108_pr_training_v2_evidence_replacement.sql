@@ -52,7 +52,7 @@ begin
   if not found then raise exception 'SUBMISSION_CHANGED'; end if;
   return jsonb_build_object('ok',true,'submission_id',v_row.id,'status','submitted','replaced',true);
 end $$;
-revoke all on function public.pr_training_v2_replace_evidence(uuid,text[]) from public;
+revoke all on function public.pr_training_v2_replace_evidence(uuid,text[]) from public, anon;
 grant execute on function public.pr_training_v2_replace_evidence(uuid,text[]) to authenticated;
 
 create or replace function public.pr_training_v2_my_evidence(p_assignment_duty_id uuid)
@@ -70,7 +70,7 @@ begin
   order by case when s.status='approved' then 0 else 1 end,s.submitted_at desc,s.id desc limit 1;
   return coalesce(v_result,'{}'::jsonb);
 end $$;
-revoke all on function public.pr_training_v2_my_evidence(uuid) from public;
+revoke all on function public.pr_training_v2_my_evidence(uuid) from public, anon;
 grant execute on function public.pr_training_v2_my_evidence(uuid) to authenticated;
 
 -- Prevent approval of a stale file if the student replaced it after the staff screen loaded.
@@ -90,5 +90,5 @@ begin
  then raise exception 'EVIDENCE_CHANGED_REFRESH_REQUIRED'; end if;
  return public.pr_training_v2_review_submission(p_submission_id,p_status,p_note);
 end $$;
-revoke all on function public.pr_training_v2_review_current_evidence(uuid,text,text,jsonb) from public;
+revoke all on function public.pr_training_v2_review_current_evidence(uuid,text,text,jsonb) from public, anon;
 grant execute on function public.pr_training_v2_review_current_evidence(uuid,text,text,jsonb) to authenticated;
