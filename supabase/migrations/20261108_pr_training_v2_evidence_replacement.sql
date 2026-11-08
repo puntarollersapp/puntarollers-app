@@ -44,7 +44,7 @@ begin
       'bucket','pr-training-v2-evidence','paths',to_jsonb(p_paths),
       'replaced_at',now(),
       'history',coalesce(v_evidence->'history','[]'::jsonb) ||
-        jsonb_build_array(jsonb_build_object('paths',v_evidence->'paths','replaced_at',now()))
+        jsonb_build_array(jsonb_build_object('paths',v_evidence->'paths','archived_at',now(),'prior_status',v_row.status,'prior_submitted_at',v_row.submitted_at,'prior_reviewer_id',v_row.reviewer_id,'prior_reviewer_note',v_row.reviewer_note,'prior_reviewed_at',v_row.reviewed_at))
     ),
     status='submitted',submitted_at=now(),reviewer_note=null,reviewer_id=null,reviewed_at=null
   where id=v_row.id and status in ('submitted','under_review','returned','rejected','changes_requested');
