@@ -38,7 +38,7 @@ begin
     if not exists(select 1 from storage.objects o where o.bucket_id='pr-training-v2-evidence' and o.name=v_path)
        then raise exception 'FILE_NOT_UPLOADED'; end if;
   end loop;
-  if exists (select 1 from unnest(p_paths) as candidate(path) where candidate.path = any(array(select jsonb_array_elements_text(coalesce(v_row.evidence->'paths','[]'::jsonb)))) then raise exception 'REPLACEMENT_MUST_USE_NEW_FILE'; end if;
+  if exists (select 1 from unnest(p_paths) as candidate(path) where candidate.path = any(array(select jsonb_array_elements_text(coalesce(v_row.evidence->'paths','[]'::jsonb))))) then raise exception 'REPLACEMENT_MUST_USE_NEW_FILE'; end if;
   v_evidence:=coalesce(v_row.evidence,'{}'::jsonb);
   update public.pr_training_v2_submissions
   set evidence=jsonb_build_object(
