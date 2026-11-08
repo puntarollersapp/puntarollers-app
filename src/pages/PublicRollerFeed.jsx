@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import { combineSkatingSources, publicSkatingActivity, readPrGoActivities } from '../lib/prSkatingSources'
 
 const PRIVATE_TERMS = [
   'devolucion',
@@ -18,17 +19,6 @@ const PRIVATE_TERMS = [
 
 function lower(value) {
   return String(value || '').trim().toLowerCase()
-}
-
-function isPublicTraining(activity) {
-  if (!activity) return false
-  return (
-    activity.eliminada !== true &&
-    activity.es_privada !== true &&
-    activity.privada !== true &&
-    activity.privado !== true &&
-    activity.visible_feed !== false
-  )
 }
 
 function resolveLegacyType(item) {
@@ -200,9 +190,7 @@ function insideRankingRange(value, range) {
 
 function buildKmRanking(rows, profiles, range) {
   const grouped = new Map()
-  ;(rows || [])
-    .filter(isPublicTraining)
-    .filter((row) => lower(row.fuente || 'strava') === 'strava')
+  combineSkatingSources((rows || []).filter(publicSkatingActivity))
     .filter((row) => insideRankingRange(row.fecha_inicio, range))
     .forEach((row) => {
       const id = String(row.alumno_id || '')
@@ -294,6 +282,7 @@ export default function PublicRollerFeed() {
           legacyResponse,
           eventsResponse,
           rankingActivitiesResponse,
+          prgoActivities,
         ] = await Promise.all([
           supabase.from('profiles_public').select('*').limit(500),
 
@@ -323,20 +312,20 @@ export default function PublicRollerFeed() {
             .eq('eliminada', false)
             .order('fecha_inicio', { ascending: false })
             .limit(1000),
+          readPrGoActivities(),
         ])
 
         if (!active) return
 
         const profiles = buildProfileMap(profilesResponse.data || [])
         const ranges = rankingRanges()
-        const rankingRows = rankingActivitiesResponse.data || []
+        const rankingRows = [...(rankingActivitiesResponse.data || []), ...prgoActivities]
         setRankings({
           week: buildKmRanking(rankingRows, profiles, ranges.week),
           month: buildKmRanking(rankingRows, profiles, ranges.month),
         })
 
-        const trainingItems = (activitiesResponse.data || [])
-          .filter(isPublicTraining)
+        const trainingItems = combineSkatingSources([...(activitiesResponse.data || []), ...prgoActivities].filter(publicSkatingActivity))
           .map((activity) => {
             const profile = profiles.get(String(activity.alumno_id)) || {}
             return {
@@ -599,7 +588,7 @@ export default function PublicRollerFeed() {
                       Top Ranking <span className="text-orange-400">PR.</span>
                     </h2>
                     <p className="mt-3 max-w-xl text-xs leading-5 text-white/42 sm:text-sm">
-                      Cada salida pública sincronizada desde Strava suma kilómetros. La tabla se mueve con la comunidad y el cierre mensual queda marcado al terminar el último día del mes.
+                      Las salidas públicas sincronizadas desde Strava o PR GO suman kilómetros. La tabla se mueve con la comunidad y el cierre mensual queda marcado al terminar el último día del mes.
                     </p>
                   </div>
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-300/15 bg-amber-300/[.08] text-xl">
@@ -682,7 +671,7 @@ export default function PublicRollerFeed() {
                         <span className="text-lg">→</span>
                       </Link>
                       <p className="mt-3 text-center text-[9px] leading-4 text-white/24">
-                        Se actualiza con los entrenamientos públicos de Strava sincronizados en Punta Rollers.
+                        Se actualiza con los entrenamientos públicos de Strava y PR GO sincronizados en Punta Rollers.
                       </p>
                     </>
                   ) : (
