@@ -71,3 +71,20 @@ begin
 end $$;
 revoke all on function public.pr_training_v2_my_evidence(uuid) from public;
 grant execute on function public.pr_training_v2_my_evidence(uuid) to authenticated;
+
+-- Prevent approval of a stale file if the student replaced it after the staff screen loaded.
+create or replace function public.pr_training_v2_review_current_evidence(
+ p_submission_id uuid,p_status text,p_note text,p_expected_paths jsonb
+) returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+declare v_row public.pr_training_v2_submissions%rowtype;
+begin
+ select * into v_row from public.pr_training_v2_submissions where id=p_submission_id;
+ if not found then raise exception 'NOT_FOUND'; end if;
+ perform pg_advisory_xact_lock(hashtextextended(v_row.assignment_duty_id::text,0));
+ select * into v_row from public.pr_training_v2_submissions where id=p_submission_id for update;
+ if coalesce(v_row.evidence->'paths','[]'::jsonb) is distinct from coalesce(p_expected_paths,'[]'::jsonb)
+ then raise exception 'EVIDENCE_CHANGED_REFRESH_REQUIRED'; end if;
+ return public.pr_training_v2_review_submission(p_submission_id,p_status,p_note);
+end $$;
+revoke all on function public.pr_training_v2_review_current_evidence(uuid,text,text,jsonb) from public;
+grant execute on function public.pr_training_v2_review_current_evidence(uuid,text,text,jsonb) to authenticated;
