@@ -13,3 +13,15 @@
 
 /* Centered family access copy and application panels */
 .prk-access-stage .prk-lead,.prk-access-stage .prk-access-description,.prk-access-stage .prk-access-slogan,.prk-access-stage .prk-access-steps,.prk-access-stage .prk-section-label{text-align:center}.prk-access-stage .prk-access-description{margin-left:auto;margin-right:auto}.prk-access-stage .prk-access-steps>div{text-align:center}.prk-access-stage .prk-note-card,.prk-access-stage .prk-note-card p{text-align:center}.prk-access-stage form>p:not(.prk-error){text-align:center}.prk-access-stage .prk-form-grid>div.full>p{text-align:center}
+
+/* PR Kids family platform — integrated dark editorial card */
+.prk-digital{margin:28px 0 30px;padding:34px 26px 30px;text-align:center;border:1px solid rgba(255,255,255,.12);border-radius:26px;background:radial-gradient(ellipse at 50% 0%,rgba(255,0,85,.13),transparent 65%),linear-gradient(155deg,#181922,#101117);box-shadow:0 16px 44px rgba(0,0,0,.18);color:#f3f1ec}
+.prk-digital-icon{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 18px;border-radius:17px;background:rgba(255,0,85,.13);border:1px solid rgba(255,0,85,.25);font-size:30px;color:#ff4d8a}
+.prk-digital-eyebrow{font-size:.67rem;font-weight:800;letter-spacing:.18em;color:#ff80a8;margin-bottom:12px}
+.prk-stage .prk-digital h2{font-size:clamp(1.55rem,5vw,2.2rem);font-weight:850;letter-spacing:-.045em;line-height:1.12;margin:0 auto 14px;max-width:480px;color:#fff}
+.prk-digital-description{max-width:490px;margin:0 auto 22px;font-size:.96rem;line-height:1.7;color:#bfc0cb}
+.prk-digital-features{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;max-width:490px;margin:0 auto 22px}
+.prk-digital-features span{padding:10px 13px;border-radius:999px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.095);font-size:.78rem;font-weight:700;color:#f3f1ec}
+.prk-digital-footer{padding-top:19px;border-top:1px solid rgba(255,255,255,.09);font-size:.85rem;font-weight:650;color:#d5d2db}
+.prk-digital-footer span{color:#ff4d8a;font-size:1.15rem;vertical-align:middle}
+@media(max-width:480px){.prk-digital{padding:30px 18px 26px;border-radius:22px}.prk-digital-features{gap:7px}.prk-digital-features span{font-size:.72rem;padding:9px 11px}}
