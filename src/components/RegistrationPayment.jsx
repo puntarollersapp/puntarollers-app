@@ -15,7 +15,7 @@ function loadMercadoPago() {
       script.src = 'https://sdk.mercadopago.com/js/v2'
       script.async = true
       script.onload = () => resolve(window.MercadoPago)
-      script.onerror = () => reject(new Error('sdk_load_failed'))
+      script.onerror = () => { sdkPromise = undefined; script.remove(); reject(new Error('sdk_load_failed')) }
       document.head.appendChild(script)
     })
   }
@@ -27,6 +27,8 @@ export default function RegistrationPayment({ registrationType, registrationId, 
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const brickRef = useRef(null)
+  const onFinishedRef = useRef(onFinished)
+  onFinishedRef.current = onFinished
   const containerId = useMemo(() => `mp-card-${registrationId.replaceAll('-', '')}`, [registrationId])
   const whatsappUrl = useMemo(() => {
     const text = `Hola Punta Rollers, envío el comprobante de transferencia. Alumno/a: ${payerName}. Importe: $${Number(amount).toLocaleString('es-UY')}. Inscripción: ${registrationId}.`
@@ -75,7 +77,7 @@ export default function RegistrationPayment({ registrationType, registrationId, 
                 if (result.paymentState === 'paid') {
                   setStatus('paid')
                   setMessage('Pago acreditado. Tu inscripción quedó confirmada.')
-                  onFinished?.('mercadopago', result)
+                  onFinishedRef.current?.('mercadopago', result)
                   return
                 }
                 if (result.paymentState === 'pending' || response.status === 202 || result.error === 'payment_already_started') {
@@ -106,7 +108,7 @@ export default function RegistrationPayment({ registrationType, registrationId, 
       brickRef.current?.unmount?.()
       brickRef.current = null
     }
-  }, [amount, containerId, method, onFinished, payerEmail, registrationId, registrationType])
+  }, [amount, containerId, method, payerEmail, registrationId, registrationType])
 
   const finishTransfer = async () => {
     setStatus('processing')
