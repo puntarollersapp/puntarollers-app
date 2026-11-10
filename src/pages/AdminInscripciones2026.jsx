@@ -40,6 +40,9 @@ const modeLabel = (modalidad) => {
 export default function AdminInscripciones2026() {
   const [rows, setRows] = useState([])
   const [loans, setLoans] = useState([])
+  const [stock, setStock] = useState([])
+  const [stockDraft, setStockDraft] = useState({})
+  const [savingSize, setSavingSize] = useState(null)
   const [period, setPeriod] = useState('actual')
   const [type, setType] = useState('todas')
   const [loading, setLoading] = useState(true)
@@ -62,13 +65,15 @@ export default function AdminInscripciones2026() {
   const load = async () => {
     setLoading(true)
     setError('')
-    const [registrations, skateLoans] = await Promise.all([
+    const [registrations, skateLoans, skateStock] = await Promise.all([
       supabase.from('pr_inscripciones_2026').select('*').order('created_at', { ascending: false }),
-      supabase.from('pr_prestamo_patines_espera').select('*').order('creado_en', { ascending: false })
+      supabase.from('pr_prestamo_patines_espera').select('*').order('creado_en', { ascending: false }),
+      supabase.from('pr_prestamo_patines_stock').select('*').order('talle_calzado')
     ])
-    if (registrations.error || skateLoans.error) setError(registrations.error?.message || skateLoans.error?.message)
+    if (registrations.error || skateLoans.error || skateStock.error) setError(registrations.error?.message || skateLoans.error?.message || skateStock.error?.message)
     if (!registrations.error) setRows(registrations.data || [])
     if (!skateLoans.error) setLoans(skateLoans.data || [])
+    if (!skateStock.error) setStock(skateStock.data || [])
     setLoading(false)
   }
 
@@ -102,6 +107,37 @@ export default function AdminInscripciones2026() {
     kids: rows.filter(r => r.modalidad === 'kids').length,
     confirmadas: rows.filter(r => ['pago_verificado','confirmado'].includes(r.estado)).length,
   }), [rows, loans, allRows])
+
+  const sizeDemand = useMemo(() => {
+    const sizes = new Map()
+    for (const row of loans.filter(r => ['pendiente','contactado'].includes(r.estado))) {
+      const size = Number(row.talle_calzado)
+      if (!sizes.has(size)) sizes.set(size, [])
+      sizes.get(size).push(row)
+    }
+    return [...sizes.entries()].sort((a,b) => a[0]-b[0]).map(([size, people]) => ({
+      size, people, available: stock.find(s => s.talle_calzado === size)?.cantidad_disponible
+    }))
+  }, [loans, stock])
+
+  const saveStock = async (size) => {
+    const value = Number(stockDraft[size] ?? stock.find(s => s.talle_calzado === size)?.cantidad_disponible)
+    if (!Number.isInteger(value) || value < 0 || value > 999) {
+      setError('Ingresá una cantidad válida de pares (0 a 999).')
+      return
+    }
+    setSavingSize(size)
+    setError('')
+    const { data, error: stockError } = await supabase.from('pr_prestamo_patines_stock')
+      .upsert({ talle_calzado: size, cantidad_disponible: value, actualizado_en: new Date().toISOString() })
+      .select('talle_calzado,cantidad_disponible,actualizado_en').single()
+    if (stockError || !data) setError(stockError?.message || 'No se pudo guardar el stock.')
+    else {
+      setStock(prev => [...prev.filter(s => s.talle_calzado !== size), data])
+      setStockDraft(prev => { const next = {...prev}; delete next[size]; return next })
+    }
+    setSavingSize(null)
+  }
 
   const togglePersonalizadas = async () => {
     const nextValue = !personalizadasAbiertas
@@ -172,6 +208,34 @@ export default function AdminInscripciones2026() {
         <button className={personalizadasAbiertas ? 'is-open' : 'is-closed'} onClick={togglePersonalizadas} disabled={toggleLoading}>
           {toggleLoading ? 'Procesando…' : personalizadasAbiertas ? 'Pausar inscripciones' : 'Abrir inscripciones'}
         </button>
+      </section>
+
+      <section className="pr-admin-registration-control" style={{display:'block'}}>
+        <div>
+          <span>🛼 PRÉSTAMO DE PATINES · CONTROL DE TALLES</span>
+          <h2>Talles solicitados y stock disponible</h2>
+          <p>Solicitudes pendientes o contactadas de cualquier mes. Cargá cuántos pares libres tenés; el stock no se supone ni se descuenta automáticamente.</p>
+        </div>
+        {sizeDemand.length === 0 ? <p style={{marginTop:16}}>No hay solicitudes de patines en espera.</p> : (
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:12,marginTop:18}}>
+            {sizeDemand.map(item => {
+              const available = item.available
+              return <article key={item.size} style={{padding:16,border:'1px solid rgba(255,255,255,.2)',borderRadius:16,background:'rgba(0,0,0,.18)'}}>
+                <div style={{fontSize:23,fontWeight:900}}>Talle {item.size}</div>
+                <div style={{marginTop:6,fontWeight:700}}>{item.people.length} {item.people.length === 1 ? 'solicitud' : 'solicitudes'}</div>
+                <div style={{marginTop:5,fontSize:13,color:available == null ? '#facc15' : available >= item.people.length ? '#86efac' : '#fda4af'}}>
+                  {available == null ? 'Stock sin cargar' : available >= item.people.length ? `✓ ${available} pares libres · alcanza` : `⚠ ${available} pares libres · faltan ${item.people.length - available}`}
+                </div>
+                <div style={{marginTop:10,fontSize:12,opacity:.8}}>{item.people.map(p => p.nombre_alumno).join(' · ')}</div>
+                <label style={{display:'block',marginTop:12,fontSize:12}}>Pares disponibles</label>
+                <div style={{display:'flex',gap:8,marginTop:5}}>
+                  <input aria-label={`Pares disponibles talle ${item.size}`} type="number" min="0" max="999" step="1" placeholder="Sin cargar" value={stockDraft[item.size] ?? available ?? ''} onChange={e => setStockDraft(prev => ({...prev,[item.size]:e.target.value}))} style={{minWidth:0,width:100,padding:9,borderRadius:9,background:'#17171d',border:'1px solid #666',color:'#fff'}} />
+                  <button type="button" disabled={savingSize === item.size || (stockDraft[item.size] ?? available ?? '') === ''} onClick={() => saveStock(item.size)} style={{padding:'8px 14px',borderRadius:9,background:'#c5ff34',color:'#101010',fontWeight:800}}> {savingSize === item.size ? 'Guardando…' : 'Guardar'} </button>
+                </div>
+              </article>
+            })}
+          </div>
+        )}
       </section>
 
       <section className="pr-admin-stats">
