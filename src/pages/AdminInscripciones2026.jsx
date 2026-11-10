@@ -2,6 +2,22 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import './AdminInscripciones2026.css'
 
+const currentMonth = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit' }).format(new Date()).slice(0,7)
+const phoneForWhatsApp = (value) => {
+  const digits = String(value || '').replace(/\D/g, '').replace(/^00/, '')
+  if (!digits) return ''
+  return digits.startsWith('598') ? digits : '598' + digits.replace(/^0/, '')
+}
+const whatsappMessage = (row) => {
+  const name = row.nombre_responsable || row.nombre_completo || row.nombre_alumno || '¿cómo estás?'
+  if (row.isLoan) return `Hola ${name}, ¿cómo estás? Te contactamos de Punta Rollers 🛼. Recibimos la solicitud de inscripción de ${row.nombre_alumno} y quedó en lista de espera por disponibilidad de patines talle ${row.talle_calzado}. Te avisaremos cuando podamos confirmar un par. Por ahora no necesitás realizar ningún pago. ¡Gracias!`
+  if (['pago_verificado','confirmado'].includes(row.estado)) return `Hola ${name}, te contactamos de Punta Rollers 🛼. Tu inscripción a ${modeLabel(row.modalidad).replace(/^.. /, '')} figura confirmada. ¡Te esperamos!`
+  return `Hola ${name}, ¿cómo estás? Te contactamos de Punta Rollers 🛼. Recibimos tu inscripción a ${modeLabel(row.modalidad).replace(/^.. /, '')}. Queríamos ayudarte a completar la inscripción y consultar si necesitás información sobre el pago. ¡Quedamos atentos!`
+}
+const whatsappLink = (row) => {
+  const phone = phoneForWhatsApp(row.telefono)
+  return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage(row))}` : ''
+}
 const statusLabel = {
   pre_reserva: 'Pre-reserva',
   pago_pendiente: 'Pago pendiente',
@@ -19,6 +35,9 @@ const modeLabel = (modalidad) => {
 
 export default function AdminInscripciones2026() {
   const [rows, setRows] = useState([])
+  const [loans, setLoans] = useState([])
+  const [period, setPeriod] = useState('actual')
+  const [type, setType] = useState('todas')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('todas')
@@ -38,12 +57,13 @@ export default function AdminInscripciones2026() {
   const load = async () => {
     setLoading(true)
     setError('')
-    const { data, error: loadError } = await supabase
-      .from('pr_inscripciones_2026')
-      .select('*')
-      .order('created_at', { ascending: false })
-    if (loadError) setError(loadError.message)
-    else setRows(data || [])
+    const [registrations, skateLoans] = await Promise.all([
+      supabase.from('pr_inscripciones_2026').select('*').order('created_at', { ascending: false }),
+      supabase.from('pr_prestamo_patines_espera').select('*').order('creado_en', { ascending: false })
+    ])
+    if (registrations.error || skateLoans.error) setError(registrations.error?.message || skateLoans.error?.message)
+    if (!registrations.error) setRows(registrations.data || [])
+    if (!skateLoans.error) setLoans(skateLoans.data || [])
     setLoading(false)
   }
 
@@ -52,19 +72,31 @@ export default function AdminInscripciones2026() {
     loadRegistrationStatus()
   }, [])
 
-  const visible = useMemo(() => rows.filter(row => {
+  const allRows = useMemo(() => [...rows, ...loans.map(loan => ({
+    ...loan, isLoan: true, nombre_completo: loan.nombre_alumno,
+    modalidad: loan.tipo === 'kids' ? 'kids' : loan.modalidad,
+    created_at: loan.creado_en, estado: loan.estado || 'espera_patines'
+  }))].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)), [rows, loans])
+  const visible = useMemo(() => allRows.filter(row => {
     if (filter !== 'todas' && row.modalidad !== filter) return false
+    if (type === 'patines' && !row.isLoan) return false
+    if (type === 'inscripciones' && row.isLoan) return false
+    const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit' }).format(new Date(row.created_at)).slice(0,7)
+    if (period === 'actual' && month !== currentMonth()) return false
+    if (period === 'anteriores' && month === currentMonth()) return false
     const haystack = `${row.nombre_completo || ''} ${row.nombre_responsable || ''} ${row.email || ''} ${row.telefono || ''} ${row.localidad || ''}`.toLowerCase()
     return haystack.includes(query.trim().toLowerCase())
-  }), [rows, filter, query])
+  }), [allRows, filter, query, period, type])
 
   const stats = useMemo(() => ({
-    total: rows.length,
+    total: allRows.length,
+    prestamo: loans.length,
+    actuales: allRows.filter(r => new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date(r.created_at)).slice(0,7) === currentMonth()).length,
     grupales: rows.filter(r => r.modalidad === 'grupales').length,
     personalizadas: rows.filter(r => r.modalidad === 'personalizadas').length,
     kids: rows.filter(r => r.modalidad === 'kids').length,
     confirmadas: rows.filter(r => ['pago_verificado','confirmado'].includes(r.estado)).length,
-  }), [rows])
+  }), [rows, loans, allRows])
 
   const togglePersonalizadas = async () => {
     const nextValue = !personalizadasAbiertas
@@ -129,7 +161,7 @@ export default function AdminInscripciones2026() {
       </section>
 
       <section className="pr-admin-stats">
-        <article><span>Total</span><strong>{stats.total}</strong></article>
+        <article><span>Total histórico</span><strong>{stats.total}</strong></article><article><span>Este mes</span><strong>{stats.actuales}</strong></article><article><span>Esperando patines</span><strong>{stats.prestamo}</strong></article>
         <article><span>Grupales</span><strong>{stats.grupales}</strong></article>
         <article><span>Personalizadas</span><strong>{stats.personalizadas}</strong></article>
         <article><span>PR Kids</span><strong>{stats.kids}</strong></article>
@@ -138,6 +170,8 @@ export default function AdminInscripciones2026() {
 
 
       <section className="pr-admin-tools">
+        <select value={period} onChange={e => setPeriod(e.target.value)} aria-label="Período"><option value="actual">Este mes · activos a gestionar</option><option value="anteriores">Histórico · meses anteriores</option><option value="todos">Todos los meses</option></select>
+        <select value={type} onChange={e => setType(e.target.value)} aria-label="Tipo de solicitud"><option value="todas">Inscripciones y préstamos</option><option value="inscripciones">Inscripciones con pago</option><option value="patines">Lista de espera por patines</option></select>
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar alumno, responsable, email, teléfono…" />
         <select value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="todas">Todas</option>
@@ -147,6 +181,7 @@ export default function AdminInscripciones2026() {
         </select>
       </section>
 
+      <p className="pr-admin-empty">El histórico se conserva para consultar pagos y contactos. Los meses anteriores no se mezclan con las gestiones del mes actual. Ningún registro se borra automáticamente.</p>
       {error && <p className="pr-admin-error">{error}</p>}
       {loading ? <p className="pr-admin-empty">Cargando inscripciones…</p> : visible.length === 0 ? <p className="pr-admin-empty">Todavía no hay inscripciones para mostrar.</p> : (
         <section className="pr-admin-list">
@@ -183,19 +218,20 @@ export default function AdminInscripciones2026() {
                   )}
                   <div>
                     <span>Pago</span>
-                    <b>Prex · ${Number(row.monto).toLocaleString('es-UY')}</b>
-                    <small>{row.comprobante_recibido ? 'Comprobante recibido' : 'Comprobante pendiente'}</small>
+                    <b>{row.isLoan ? `En espera · talle ${row.talle_calzado}` : `${row.metodo_pago || 'Pago'} · ${Number(row.monto).toLocaleString('es-UY')}`}</b>
+                    <small>{row.isLoan ? 'No cobrar antes de confirmar disponibilidad' : row.comprobante_recibido ? 'Comprobante recibido' : 'Comprobante pendiente'}</small>
                   </div>
                 </div>
 
                 <div className="pr-admin-actions">
-                  <select value={row.estado} onChange={e => setStatus(row.id, e.target.value)}>
+                  {!row.isLoan && <select value={row.estado} onChange={e => setStatus(row.id, e.target.value)}>
                     {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
-                  </select>
-                  <a href={`https://wa.me/598${String(row.telefono).replace(/\D/g,'').replace(/^598/,'').replace(/^0/,'')}`} target="_blank" rel="noreferrer">WhatsApp</a>
-                  <button type="button" className="pr-admin-delete" onClick={() => deleteRegistration(row)} disabled={deletingId === row.id}>
+                  </select>}
+                  {row.isLoan && <strong>🛼 En espera de patines · talle {row.talle_calzado}</strong>}
+                  {whatsappLink(row) && <a href={whatsappLink(row)} target="_blank" rel="noreferrer">WhatsApp · mensaje listo</a>}
+                  {!row.isLoan && <button type="button" className="pr-admin-delete" onClick={() => deleteRegistration(row)} disabled={deletingId === row.id}>
                     {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}
-                  </button>
+                  </button>}
                 </div>
               </article>
             )
