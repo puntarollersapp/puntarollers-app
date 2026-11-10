@@ -201,6 +201,17 @@ Deno.serve(async (req: Request) => {
     if (["pago_verificado", "confirmado", "cancelado"].includes(data.estado)) {
       return jsonResponse({ error: "registration_not_payable" }, 409, headers);
     }
+    // Loan-backed enrollments must still own a live six-hour hold before initiating a charge.
+    const { data: loanHolds, error: loanHoldError } = await supabase
+      .from("pr_equipment_holds")
+      .select("id,status,expires_at")
+      .eq("registration_id", registrationId)
+      .limit(5);
+    if (loanHoldError) return jsonResponse({ error: "equipment_hold_check_failed" }, 503, headers);
+    if (loanHolds?.length && !loanHolds.some((hold) =>
+      (hold.status === "held" && new Date(hold.expires_at).getTime() > Date.now() + 5 * 60_000) ||
+      hold.status === "paid"
+    )) return jsonResponse({ error: "equipment_hold_expired", message: "La reserva de patines venció. Contactá a Punta Rollers antes de pagar." }, 409, headers);
     amount = Number(data.monto_final ?? data.monto);
     registrationEmail = typeof data.email === "string" ? data.email : null;
     classAccess = classAccessForRegistration(data.modalidad, data.turno_sabado);
