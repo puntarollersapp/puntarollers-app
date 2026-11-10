@@ -48,6 +48,12 @@ export default function AdminAccessRequests() {
   const filtered = useMemo(() => filter === 'todos' ? rows : rows.filter((row) => row.estado === filter), [rows, filter])
   const pendingCount = rows.filter((row) => row.estado === 'pendiente').length
 
+  async function discardRequest(row) {
+    if(row.estado!=='pendiente'||row.profile_id)return
+    if(!window.confirm(`¿Descartar la solicitud de ${row.nombre_completo}? Esta acción elimina la solicitud pendiente y no se puede deshacer. No se eliminarán perfiles de alumnos.`))return
+    await runAction(row.id,'discard')
+  }
+
   async function runAction(id, action) {
     setWorking(`${action}:${id}`)
     setError('')
@@ -90,6 +96,7 @@ export default function AdminAccessRequests() {
           {loading ? <div className="py-20 text-center text-sm font-bold text-white/35">Cargando solicitudes…</div> : filtered.length === 0 ? <div className="rounded-3xl border border-white/10 bg-white/[.025] py-16 text-center text-sm font-bold text-white/35">No hay solicitudes en esta sección.</div> : filtered.map((row) => {
             const importing = working === `import:${row.id}`
             const activating = working === `activate:${row.id}`
+            const discarding = working === `discard:${row.id}`
             return (
               <article key={row.id} className="rounded-[28px] border border-white/10 bg-white/[.035] p-5 sm:p-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -104,6 +111,7 @@ export default function AdminAccessRequests() {
                   </div>
                   <div className="flex shrink-0 flex-col gap-2 sm:w-52">
                     {row.estado === 'pendiente' && <button onClick={() => runAction(row.id, 'import')} disabled={Boolean(working)} className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-black disabled:opacity-40">{importing ? 'Creando…' : 'Importar y crear perfil'}</button>}
+                    {row.estado === 'pendiente' && !row.profile_id && <button onClick={() => discardRequest(row)} disabled={Boolean(working)} className="rounded-2xl border border-red-400/30 bg-red-400/5 px-4 py-3 text-sm font-bold text-red-200 disabled:opacity-40">{discarding ? 'Descartando…' : 'Descartar solicitud'}</button>}
                     {row.estado === 'perfil_creado' && <button onClick={() => runAction(row.id, 'activate')} disabled={Boolean(working)} className="rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-black text-black disabled:opacity-40">{activating ? 'Habilitando…' : '✓ Habilitar acceso'}</button>}
                     {row.profile_id && <div className="rounded-2xl border border-white/8 bg-black/25 px-4 py-3 text-center text-xs font-bold text-white/40">Perfil: {row.profile_id.slice(0, 18)}…</div>}
                   </div>
