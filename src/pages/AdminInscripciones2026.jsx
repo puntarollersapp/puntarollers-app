@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import './AdminInscripciones2026.css'
 
-const currentMonth = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit' }).format(new Date()).slice(0,7)
+const monthKey = (value) => {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit' }).formatToParts(new Date(value)).filter(x => x.type !== 'literal').map(x => [x.type,x.value]))
+  return `${parts.year}-${parts.month}`
+}
+const currentMonth = () => monthKey(new Date())
 const phoneForWhatsApp = (value) => {
   const digits = String(value || '').replace(/\D/g, '').replace(/^00/, '')
   if (!digits) return ''
@@ -81,7 +85,7 @@ export default function AdminInscripciones2026() {
     if (filter !== 'todas' && row.modalidad !== filter) return false
     if (type === 'patines' && !row.isLoan) return false
     if (type === 'inscripciones' && row.isLoan) return false
-    const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit' }).format(new Date(row.created_at)).slice(0,7)
+    const month = monthKey(row.created_at)
     if (period === 'actual' && month !== currentMonth()) return false
     if (period === 'anteriores' && month === currentMonth()) return false
     const haystack = `${row.nombre_completo || ''} ${row.nombre_responsable || ''} ${row.email || ''} ${row.telefono || ''} ${row.localidad || ''}`.toLowerCase()
@@ -91,7 +95,7 @@ export default function AdminInscripciones2026() {
   const stats = useMemo(() => ({
     total: allRows.length,
     prestamo: loans.length,
-    actuales: allRows.filter(r => new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date(r.created_at)).slice(0,7) === currentMonth()).length,
+    actuales: allRows.filter(r => monthKey(r.created_at) === currentMonth()).length,
     grupales: rows.filter(r => r.modalidad === 'grupales').length,
     personalizadas: rows.filter(r => r.modalidad === 'personalizadas').length,
     kids: rows.filter(r => r.modalidad === 'kids').length,
