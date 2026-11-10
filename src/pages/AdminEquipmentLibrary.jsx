@@ -1,14 +1,15 @@
-import {useEffect,useState} from 'react'
+import {useEffect,useMemo,useState} from 'react'
 import {useNavigate} from 'react-router-dom'
 import {supabase} from '../lib/supabase'
 import './AdminEquipmentLibrary.css'
 const empty={tipo:'patines',codigo:'',marca:'',modelo:'',talle:'',numero:'',estado:'disponible',notas:''}
 export default function AdminEquipmentLibrary(){
- const go=useNavigate(),[items,setItems]=useState([]),[holds,setHolds]=useState([]),[form,setForm]=useState(empty),[editing,setEditing]=useState(null),[photo,setPhoto]=useState(null),[photos,setPhotos]=useState({}),[filter,setFilter]=useState('todos'),[search,setSearch]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('')
- async function refresh(){const [a,b]=await Promise.all([supabase.from('pr_equipment_items').select('*').order('created_at',{ascending:false}),supabase.from('pr_equipment_holds').select('*').in('status',['held','paid'])]);if(a.error||b.error)setError(a.error?.message||b.error?.message);else{setItems(a.data||[]);setHolds(b.data||[])}}
+ const go=useNavigate(),[items,setItems]=useState([]),[holds,setHolds]=useState([]),[requests,setRequests]=useState([]),[form,setForm]=useState(empty),[editing,setEditing]=useState(null),[photo,setPhoto]=useState(null),[photos,setPhotos]=useState({}),[filter,setFilter]=useState('todos'),[search,setSearch]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('')
+ async function refresh(){const [a,b,d]=await Promise.all([supabase.from('pr_equipment_items').select('*').order('created_at',{ascending:false}),supabase.from('pr_equipment_holds').select('*').in('status',['held','paid']),supabase.from('pr_prestamo_patines_espera').select('id,nombre_alumno,talle_calzado,estado,creado_en').in('estado',['pendiente','contactado'])]);if(a.error||b.error||d.error)setError(a.error?.message||b.error?.message||d.error?.message);else{setItems(a.data||[]);setHolds(b.data||[]);setRequests(d.data||[])}}
  useEffect(()=>{refresh()},[])
  useEffect(()=>{let active=true;Promise.all(items.filter(i=>i.foto_path).map(async i=>{const {data}=await supabase.storage.from('pr-equipment-private').createSignedUrl(i.foto_path,3600);return [i.id,data?.signedUrl]})).then(pairs=>{if(active)setPhotos(Object.fromEntries(pairs))});return()=>{active=false}},[items])
  const activeHold=id=>holds.find(h=>h.equipment_id===id&&(h.status==='paid'||new Date(h.expires_at)>new Date()))
+ const demand=useMemo(()=>{const m=new Map();for(const req of requests){const key=String(req.talle_calzado||'').trim();if(!key)continue;if(!m.has(key))m.set(key,[]);m.get(key).push(req)}return [...m.entries()].sort((a,b)=>Number(a[0])-Number(b[0])).map(([size,people])=>({size,people,available:items.filter(i=>i.tipo==='patines'&&i.talle.trim()===size&&i.estado==='disponible'&&!activeHold(i.id)).length}))},[requests,items,holds])
  const shown=items.filter(i=>(filter==='todos'||i.tipo===filter)&&[i.codigo,i.marca,i.modelo,i.talle,i.numero].join(' ').toLowerCase().includes(search.toLowerCase()))
  const stats={total:items.length,libres:items.filter(i=>i.estado==='disponible'&&!activeHold(i.id)).length,reservados:items.filter(i=>activeHold(i.id)).length}
  const set=(key,value)=>setForm(f=>({...f,[key]:value}))
@@ -32,6 +33,9 @@ export default function AdminEquipmentLibrary(){
  <header className="eq-top"><button onClick={()=>go('/admin/inscripciones-2026')}>← Inscripciones</button><span>PR CONTROL / INVENTARIO PRIVADO</span></header>
  <div className="eq-hero"><div><p>THE GEAR LIBRARY · PUNTA ROLLERS</p><h1>Todo tu equipo.<br/><em>Bajo control.</em></h1><span>Biblioteca privada de patines, cascos y protecciones.</span></div><div className="eq-symbol">PR<span>®</span></div></div>
  <section className="eq-stats"><div><b>{stats.total}</b><span>ARTÍCULOS</span></div><div><b>{stats.libres}</b><span>DISPONIBLES</span></div><div><b>{stats.reservados}</b><span>RESERVADOS</span></div></section>
+ <section className="eq-demand"><div className="eq-heading"><div><small>EN TIEMPO REAL / SOLICITUDES</small><h2>¿Qué talles están esperando?</h2></div><span className="eq-private">{requests.length} personas</span></div>
+ {demand.length===0?<p className="eq-muted">No hay solicitudes de préstamo pendientes.</p>:<div className="eq-demand-grid">{demand.map(d=><article key={d.size}><div className="eq-demand-head"><strong>TALLE {d.size}</strong><span>{d.people.length} esperando</span></div><div className={d.available>=d.people.length?'eq-demand-ok':'eq-demand-low'}>{d.available} pares libres · {d.available>=d.people.length?'stock suficiente':`faltan ${d.people.length-d.available}`}</div><p>{d.people.map(p=>p.nombre_alumno).join(' · ')}</p></article>)}</div>}
+ <p className="eq-muted">La disponibilidad se calcula a partir de las fichas individuales, no del stock manual anterior. Las solicitudes aún no reservan artículos automáticamente.</p></section>
  <section className="eq-editor"><div className="eq-heading"><div><small>01 / CATÁLOGO</small><h2>{editing?'Editar ficha':'Nueva ficha de equipo'}</h2></div><span className="eq-private">🔒 Solo administradores</span></div>
  <form onSubmit={save}><div className="eq-fields">
  <label>TIPO<select value={form.tipo} onChange={e=>set('tipo',e.target.value)}><option value="patines">🛼 Patines</option><option value="casco">⛑️ Casco</option><option value="protecciones">🛡️ Protecciones</option></select></label>
