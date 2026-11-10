@@ -195,7 +195,7 @@ export default function AdminInscripciones2026() {
   return (
     <main className="pr-admin-reg">
       <header>
-        <div><p>ADMIN · PUNTA ROLLERS</p><h1>Inscripciones 2026</h1></div>
+        <div><p>ADMIN · PUNTA ROLLERS</p><h1>Inscripciones 2026</h1><a href="/admin/equipamiento" style={{display:"inline-block",marginTop:12,color:"#c5ff34",fontWeight:900}}>🛼 Biblioteca de equipamiento →</a></div>
         <button onClick={load}>Actualizar</button>
       </header>
 
