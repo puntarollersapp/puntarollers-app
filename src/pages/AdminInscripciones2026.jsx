@@ -47,6 +47,7 @@ export default function AdminInscripciones2026() {
   const [filter, setFilter] = useState('todas')
   const [query, setQuery] = useState('')
   const [deletingId, setDeletingId] = useState('')
+  const [updatingLoan, setUpdatingLoan] = useState('')
   const [personalizadasAbiertas, setPersonalizadasAbiertas] = useState(true)
   const [toggleLoading, setToggleLoading] = useState(true)
 
@@ -123,6 +124,15 @@ export default function AdminInscripciones2026() {
       .eq('id', id)
     if (updateError) return setError(updateError.message)
     setRows(prev => prev.map(row => row.id === id ? { ...row, estado, comprobante_recibido: ['pago_verificado','confirmado'].includes(estado) } : row))
+  }
+
+  const setLoanStatus = async (id, estado) => {
+    setUpdatingLoan(id)
+    setError('')
+    const { data, error: updateError } = await supabase.from('pr_prestamo_patines_espera').update({ estado }).eq('id', id).select('id,estado').single()
+    if (updateError || !data) setError(updateError?.message || 'No pudimos actualizar la solicitud.')
+    else setLoans(prev => prev.map(row => row.id === id ? { ...row, estado: data.estado } : row))
+    setUpdatingLoan('')
   }
 
   const deleteRegistration = async (row) => {
@@ -231,7 +241,7 @@ export default function AdminInscripciones2026() {
                   {!row.isLoan && <select value={row.estado} onChange={e => setStatus(row.id, e.target.value)}>
                     {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
                   </select>}
-                  {row.isLoan && <strong>🛼 En espera de patines · talle {row.talle_calzado}</strong>}
+                  {row.isLoan && <select aria-label="Estado de préstamo de patines" disabled={updatingLoan === row.id} value={row.estado} onChange={e => setLoanStatus(row.id, e.target.value)}><option value="pendiente">🛼 Esperando patines</option><option value="contactado">📲 Contactado</option><option value="asignado">✅ Patines asignados</option><option value="cancelado">✕ Cancelado</option></select>}
                   {whatsappLink(row) && <a href={whatsappLink(row)} target="_blank" rel="noreferrer">WhatsApp · mensaje listo</a>}
                   {!row.isLoan && <button type="button" className="pr-admin-delete" onClick={() => deleteRegistration(row)} disabled={deletingId === row.id}>
                     {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}
