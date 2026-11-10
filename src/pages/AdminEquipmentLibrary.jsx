@@ -1,0 +1,54 @@
+import {useEffect,useState} from 'react'
+import {useNavigate} from 'react-router-dom'
+import {supabase} from '../lib/supabase'
+import './AdminEquipmentLibrary.css'
+const empty={tipo:'patines',codigo:'',marca:'',modelo:'',talle:'',numero:'',estado:'disponible',notas:''}
+export default function AdminEquipmentLibrary(){
+ const go=useNavigate(),[items,setItems]=useState([]),[holds,setHolds]=useState([]),[form,setForm]=useState(empty),[editing,setEditing]=useState(null),[photo,setPhoto]=useState(null),[photos,setPhotos]=useState({}),[filter,setFilter]=useState('todos'),[search,setSearch]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('')
+ async function refresh(){const [a,b]=await Promise.all([supabase.from('pr_equipment_items').select('*').order('created_at',{ascending:false}),supabase.from('pr_equipment_holds').select('*').in('status',['held','paid'])]);if(a.error||b.error)setError(a.error?.message||b.error?.message);else{setItems(a.data||[]);setHolds(b.data||[])}}
+ useEffect(()=>{refresh()},[])
+ useEffect(()=>{let active=true;Promise.all(items.filter(i=>i.foto_path).map(async i=>{const {data}=await supabase.storage.from('pr-equipment-private').createSignedUrl(i.foto_path,3600);return [i.id,data?.signedUrl]})).then(pairs=>{if(active)setPhotos(Object.fromEntries(pairs))});return()=>{active=false}},[items])
+ const activeHold=id=>holds.find(h=>h.equipment_id===id&&(h.status==='paid'||new Date(h.expires_at)>new Date()))
+ const shown=items.filter(i=>(filter==='todos'||i.tipo===filter)&&[i.codigo,i.marca,i.modelo,i.talle,i.numero].join(' ').toLowerCase().includes(search.toLowerCase()))
+ const stats={total:items.length,libres:items.filter(i=>i.estado==='disponible'&&!activeHold(i.id)).length,reservados:items.filter(i=>activeHold(i.id)).length}
+ const set=(key,value)=>setForm(f=>({...f,[key]:value}))
+ async function save(e){e.preventDefault();setBusy(true);setError('');setSuccess('');try{
+ if(!form.codigo.trim()||!form.talle.trim())throw Error('Completá el código y el talle.')
+ let path=editing?.foto_path||null
+ if(photo){if(!['image/jpeg','image/png','image/webp'].includes(photo.type)||photo.size>5242880)throw Error('La foto debe ser JPG, PNG o WebP de hasta 5 MB.')
+ const extension=photo.type==='image/png'?'png':photo.type==='image/webp'?'webp':'jpg'
+ const name=`${crypto.randomUUID()}.${extension}`
+ const upload=await supabase.storage.from('pr-equipment-private').upload(name,photo,{contentType:photo.type})
+ if(upload.error)throw upload.error
+ path=name}
+ const payload={...form,codigo:form.codigo.trim(),talle:form.talle.trim(),foto_path:path,updated_at:new Date().toISOString()}
+ const result=editing?await supabase.from('pr_equipment_items').update(payload).eq('id',editing.id).select().single():await supabase.from('pr_equipment_items').insert(payload).select().single()
+ if(result.error)throw result.error
+ setSuccess(editing?'Ficha actualizada.':'Artículo agregado al inventario.')
+ setForm(empty);setEditing(null);setPhoto(null);const file=document.getElementById('equipment-photo');if(file)file.value='';await refresh()
+ }catch(err){setError(err.message||'No se pudo guardar.')}finally{setBusy(false)}}
+ function edit(i){setEditing(i);setForm({tipo:i.tipo,codigo:i.codigo,marca:i.marca||'',modelo:i.modelo||'',talle:i.talle,numero:i.numero||'',estado:i.estado,notas:i.notas||''});setPhoto(null);window.scrollTo({top:0,behavior:'smooth'})}
+ return <main className="eq-root"><div className="eq-wrap">
+ <header className="eq-top"><button onClick={()=>go('/admin/inscripciones-2026')}>← Inscripciones</button><span>PR CONTROL / INVENTARIO PRIVADO</span></header>
+ <div className="eq-hero"><div><p>THE GEAR LIBRARY · PUNTA ROLLERS</p><h1>Todo tu equipo.<br/><em>Bajo control.</em></h1><span>Biblioteca privada de patines, cascos y protecciones.</span></div><div className="eq-symbol">PR<span>®</span></div></div>
+ <section className="eq-stats"><div><b>{stats.total}</b><span>ARTÍCULOS</span></div><div><b>{stats.libres}</b><span>DISPONIBLES</span></div><div><b>{stats.reservados}</b><span>RESERVADOS</span></div></section>
+ <section className="eq-editor"><div className="eq-heading"><div><small>01 / CATÁLOGO</small><h2>{editing?'Editar ficha':'Nueva ficha de equipo'}</h2></div><span className="eq-private">🔒 Solo administradores</span></div>
+ <form onSubmit={save}><div className="eq-fields">
+ <label>TIPO<select value={form.tipo} onChange={e=>set('tipo',e.target.value)}><option value="patines">🛼 Patines</option><option value="casco">⛑️ Casco</option><option value="protecciones">🛡️ Protecciones</option></select></label>
+ <label>CÓDIGO / ID<input required placeholder="PR-PAT-001" value={form.codigo} onChange={e=>set('codigo',e.target.value)}/></label>
+ <label>MARCA<input placeholder="Rollerblade" value={form.marca} onChange={e=>set('marca',e.target.value)}/></label>
+ <label>MODELO<input placeholder="Macroblade" value={form.modelo} onChange={e=>set('modelo',e.target.value)}/></label>
+ <label>TALLE<input required placeholder="38 / M / L" value={form.talle} onChange={e=>set('talle',e.target.value)}/></label>
+ <label>NÚMERO / SERIE<input placeholder="N.º de identificación" value={form.numero} onChange={e=>set('numero',e.target.value)}/></label>
+ <label>ESTADO<select value={form.estado} onChange={e=>set('estado',e.target.value)}><option value="disponible">Disponible</option><option value="mantenimiento">En mantenimiento</option><option value="retirado">Fuera de servicio</option></select></label>
+ <label>FOTO PRIVADA<input id="equipment-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label>
+ <label className="eq-full">OBSERVACIONES<input placeholder="Estado, ubicación, detalles..." value={form.notas} onChange={e=>set('notas',e.target.value)}/></label></div>
+ {error&&<p role="alert" className="eq-error">{error}</p>}{success&&<p role="status" className="eq-success">{success}</p>}
+ <div className="eq-buttons"><button className="eq-save" disabled={busy}>{busy?'Guardando…':editing?'Guardar cambios':'＋ Agregar al inventario'}</button>{editing&&<button type="button" onClick={()=>{setEditing(null);setForm(empty);setPhoto(null)}}>Cancelar</button>}</div></form></section>
+ <section className="eq-library"><div className="eq-heading"><div><small>02 / TU COLECCIÓN</small><h2>Biblioteca de equipamiento</h2></div><strong>{shown.length} fichas</strong></div>
+ <div className="eq-filters"><input type="search" placeholder="Buscar talle, código, modelo…" value={search} onChange={e=>setSearch(e.target.value)}/><select value={filter} onChange={e=>setFilter(e.target.value)}><option value="todos">Todo el equipo</option><option value="patines">Patines</option><option value="casco">Cascos</option><option value="protecciones">Protecciones</option></select></div>
+ <div className="eq-grid">{shown.map(i=>{const hold=activeHold(i.id);return <article className="eq-card" key={i.id}><div className="eq-photo">{photos[i.id]?<img src={photos[i.id]} alt={`${i.tipo} ${i.modelo||''}`}/>:<span>{i.tipo==='patines'?'🛼':i.tipo==='casco'?'⛑️':'🛡️'}</span>}<small>{i.codigo}</small></div><div className="eq-card-body"><div className="eq-card-top"><span>{i.tipo.toUpperCase()}</span><span className={hold?'eq-held':i.estado==='disponible'?'eq-available':'eq-off'}>{hold?'RESERVADO':i.estado==='disponible'?'DISPONIBLE':i.estado.toUpperCase()}</span></div><h3>{i.marca||'Punta Rollers'} {i.modelo||''}</h3><p>Talle <b>{i.talle}</b>{i.numero?' · N.º '+i.numero:''}</p><button onClick={()=>edit(i)}>Editar ficha →</button></div></article>})}</div>
+ {!shown.length&&<div className="eq-empty">Todavía no hay fichas para esta búsqueda. Agregá tu primer equipo arriba.</div>}
+ </section><p className="eq-footnote">INVENTARIO INTERNO · Las fotos, modelos y códigos no se muestran a los alumnos. Las reservas automáticas aún no están habilitadas.</p>
+ </div></main>
+}
