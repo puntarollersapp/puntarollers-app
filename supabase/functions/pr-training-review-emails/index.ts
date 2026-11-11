@@ -9,7 +9,7 @@ const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', {status:405});
   const roleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const apiKey = Deno.env.get('RESEND_API_KEY');
+  const apiKey = Deno.env.get('RESEND_PR_TRAINING_API_KEY');
   if (!roleKey || !apiKey) return Response.json({error:'not_configured'}, {status:503});
   if (req.headers.get('Authorization') !== `Bearer ${roleKey}`) return new Response('Unauthorized', {status:401});
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, roleKey);
