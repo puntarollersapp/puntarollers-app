@@ -28,7 +28,10 @@ Deno.serve(async (req) => {
     const {data:student}=await supabase.from('profiles').select('nombre').eq('id',item.recipient_profile_id).maybeSingle();
     const teacherName=[teacher?.nombre,teacher?.apellido].filter(Boolean).join(' ')||'Tu profesor';
     const approved=item.review_status==='approved';
-    const heading=approved?'¡Tu tarea fue aprobada!':'Tu profesor revisó tu tarea';
+    const {data:duty}=await db.from('pr_training_v2_submissions').select('assignment_duty_id').eq('id',item.submission_id).maybeSingle();
+const {data:task}=duty?.assignment_duty_id?await db.from('pr_training_v2_assignment_duties').select('duty_snapshot').eq('id',duty.assignment_duty_id).maybeSingle():{data:null};
+const taskTitle=String(task?.duty_snapshot?.title||'tu tarea').slice(0,100);
+const heading=approved?`¡Aprobaste ${taskTitle}!`:`Tu profesor revisó ${taskTitle}`;
     const detail=approved?'¡Muy buen trabajo! Seguí avanzando en tu entrenamiento.':'Tenés una devolución para mejorar tu ejercicio.';
     const html=`<div style="background:#191A20;padding:32px 16px;font-family:Arial,sans-serif;color:#F3F1EC"><div style="max-width:520px;margin:auto"><p style="color:#C4FF24;font-weight:800;letter-spacing:3px">PR NEXT · PUNTA ROLLERS</p><h1 style="font-size:32px">${heading}</h1><p>Hola ${esc(student?.nombre||'')}, ${detail}</p><div style="padding:20px;background:#292A30;border-radius:16px"><strong>Revisión de ${esc(teacherName)}</strong>${item.reviewer_note?`<p>${esc(item.reviewer_note)}</p>`:''}</div><p style="margin-top:24px"><a style="background:#C4FF24;color:#191A20;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:bold" href="https://www.puntarollers.com/app/mi-pr">Ver mi entrenamiento</a></p></div></div>`;
     try {
