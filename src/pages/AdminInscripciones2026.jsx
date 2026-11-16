@@ -46,6 +46,7 @@ export default function AdminInscripciones2026() {
   const [savingSize, setSavingSize] = useState(null)
   const [period, setPeriod] = useState('actual')
   const [type, setType] = useState('todas')
+  const [statusFilter, setStatusFilter] = useState('todos')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('todas')
@@ -90,6 +91,9 @@ export default function AdminInscripciones2026() {
   }))].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)), [rows, loans])
   const visible = useMemo(() => allRows.filter(row => {
     if (filter !== 'todas' && row.modalidad !== filter) return false
+    if (statusFilter === 'espera' && !row.isLoan) return false
+    if (statusFilter === 'pendiente' && (row.isLoan || !['pre_reserva','pago_pendiente'].includes(row.estado))) return false
+    if (statusFilter === 'confirmada' && (row.isLoan || !['pago_verificado','confirmado'].includes(row.estado))) return false
     if (type === 'patines' && !row.isLoan) return false
     if (type === 'inscripciones' && row.isLoan) return false
     const month = monthKey(row.created_at)
@@ -100,7 +104,7 @@ export default function AdminInscripciones2026() {
     const haystack = `${row.nombre_completo || ''} ${row.nombre_responsable || ''} ${row.email || ''} ${row.telefono || ''} ${row.localidad || ''}`.toLowerCase()
     const digits = phoneDigits(term)
     return haystack.includes(term) || (digits.length >= 4 && phoneDigits(row.telefono).includes(digits))
-  }), [allRows, filter, query, period, type])
+  }), [allRows, filter, query, period, type, statusFilter])
 
   const stats = useMemo(() => ({
     total: allRows.length,
@@ -253,7 +257,8 @@ export default function AdminInscripciones2026() {
 
       <section className="pr-admin-tools">
         <select value={period} onChange={e => setPeriod(e.target.value)} aria-label="Período"><option value="actual">Este mes · activos a gestionar</option><option value="anteriores">Histórico · meses anteriores</option><option value="todos">Todos los meses</option></select>
-        <select value={type} onChange={e => setType(e.target.value)} aria-label="Tipo de solicitud"><option value="todas">Inscripciones y préstamos</option><option value="inscripciones">Inscripciones con pago</option><option value="patines">Lista de espera por patines</option></select>
+        <select value={type} onChange={e => setType(e.target.value)} aria-label="Tipo de solicitud"><option value="todas">Todas las inscripciones</option><option value="inscripciones">Inscripciones con pago</option><option value="patines">Solo inscripciones en lista de espera</option></select>
+        <select aria-label="Filtrar por estado" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="todos">Todos los estados</option><option value="espera">🟡 En lista de espera</option><option value="pendiente">Pendientes de pago</option><option value="confirmada">Confirmadas</option></select>
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="🔎 Buscar nombre o teléfono (todos los meses)…" />
         <select value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="todas">Todas</option>
@@ -276,7 +281,7 @@ export default function AdminInscripciones2026() {
                   <div>
                     <span className={`pr-admin-mode ${row.modalidad}`}>{modeLabel(row.modalidad)}</span>
                     <h2>{row.nombre_completo}</h2>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:10,alignItems:"center",marginTop:8}}><a href={row.telefono ? `tel:+${phoneForWhatsApp(row.telefono)}` : undefined} style={{color:"#c5ff34",fontWeight:800,fontSize:16,textDecoration:"none"}}>📞 {row.telefono || "Sin teléfono"}</a><span style={{fontSize:12,fontWeight:700,opacity:.85}}>{row.isLoan ? `🛼 Lista de espera · talle ${row.talle_calzado}` : "📝 Inscripción"} · {row.estado}</span></div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:10,alignItems:"center",marginTop:8}}><a href={row.telefono ? `tel:+${phoneForWhatsApp(row.telefono)}` : undefined} style={{color:"#c5ff34",fontWeight:800,fontSize:16,textDecoration:"none"}}>📞 {row.telefono || "Sin teléfono"}</a><span style={{fontSize:12,fontWeight:700,opacity:.85}}>{row.isLoan ? `🟡 En lista de espera · talle ${row.talle_calzado}` : "📝 Inscripción"} · {row.estado}</span></div>
                     <p>{isKids ? `${row.edad} años · ${row.nivel}` : `${row.localidad || 'Sin localidad'} · ${row.edad} años · ${row.nivel}`}</p>
                   </div>
                   <time>{new Date(row.created_at).toLocaleString('es-UY')}</time>
@@ -311,7 +316,7 @@ export default function AdminInscripciones2026() {
                   {!row.isLoan && <select value={row.estado} onChange={e => setStatus(row.id, e.target.value)}>
                     {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
                   </select>}
-                  {row.isLoan && <select aria-label="Estado de préstamo de patines" disabled={updatingLoan === row.id} value={row.estado} onChange={e => setLoanStatus(row.id, e.target.value)}><option value="pendiente">🛼 Esperando patines</option><option value="contactado">📲 Contactado</option><option value="asignado">✅ Patines asignados</option><option value="cancelado">✕ Cancelado</option></select>}
+                  {row.isLoan && <select aria-label="Estado de préstamo de patines" disabled={updatingLoan === row.id} value={row.estado} onChange={e => setLoanStatus(row.id, e.target.value)}><option value="pendiente">🟡 En lista de espera</option><option value="contactado">📲 Contactado</option><option value="asignado">✅ Patines asignados</option><option value="cancelado">✕ Cancelado</option></select>}
                   {whatsappLink(row) && <a href={whatsappLink(row)} target="_blank" rel="noreferrer">WhatsApp · mensaje listo</a>}
                   {!row.isLoan && <button type="button" className="pr-admin-delete" onClick={() => deleteRegistration(row)} disabled={deletingId === row.id}>
                     {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}
