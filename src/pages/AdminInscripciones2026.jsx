@@ -7,6 +7,7 @@ const monthKey = (value) => {
   return `${parts.year}-${parts.month}`
 }
 const currentMonth = () => monthKey(new Date())
+const phoneDigits = (value) => String(value || '').replace(/\D/g, '').replace(/^(598|0)/, '')
 const phoneForWhatsApp = (value) => {
   const digits = String(value || '').replace(/\D/g, '').replace(/^00/, '')
   if (!digits) return ''
@@ -92,10 +93,13 @@ export default function AdminInscripciones2026() {
     if (type === 'patines' && !row.isLoan) return false
     if (type === 'inscripciones' && row.isLoan) return false
     const month = monthKey(row.created_at)
-    if (period === 'actual' && month !== currentMonth()) return false
-    if (period === 'anteriores' && month === currentMonth()) return false
+    const term = query.trim().toLowerCase()
+    // Una búsqueda explícita debe encontrar personas de cualquier mes, incluso en lista de espera.
+    if (!term && period === 'actual' && month !== currentMonth()) return false
+    if (!term && period === 'anteriores' && month === currentMonth()) return false
     const haystack = `${row.nombre_completo || ''} ${row.nombre_responsable || ''} ${row.email || ''} ${row.telefono || ''} ${row.localidad || ''}`.toLowerCase()
-    return haystack.includes(query.trim().toLowerCase())
+    const digits = phoneDigits(term)
+    return haystack.includes(term) || (digits.length >= 4 && phoneDigits(row.telefono).includes(digits))
   }), [allRows, filter, query, period, type])
 
   const stats = useMemo(() => ({
@@ -250,7 +254,7 @@ export default function AdminInscripciones2026() {
       <section className="pr-admin-tools">
         <select value={period} onChange={e => setPeriod(e.target.value)} aria-label="Período"><option value="actual">Este mes · activos a gestionar</option><option value="anteriores">Histórico · meses anteriores</option><option value="todos">Todos los meses</option></select>
         <select value={type} onChange={e => setType(e.target.value)} aria-label="Tipo de solicitud"><option value="todas">Inscripciones y préstamos</option><option value="inscripciones">Inscripciones con pago</option><option value="patines">Lista de espera por patines</option></select>
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar alumno, responsable, email, teléfono…" />
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="🔎 Buscar nombre o teléfono (todos los meses)…" />
         <select value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="todas">Todas</option>
           <option value="grupales">Grupales</option>
@@ -259,6 +263,7 @@ export default function AdminInscripciones2026() {
         </select>
       </section>
 
+      {query.trim() && <p className="pr-admin-empty">Buscando en todos los meses · {visible.length} resultado(s). Borrá la búsqueda para volver al período seleccionado.</p>}
       <p className="pr-admin-empty">El histórico se conserva para consultar pagos y contactos. Los meses anteriores no se mezclan con las gestiones del mes actual. Ningún registro se borra automáticamente.</p>
       {error && <p className="pr-admin-error">{error}</p>}
       {loading ? <p className="pr-admin-empty">Cargando inscripciones…</p> : visible.length === 0 ? <p className="pr-admin-empty">Todavía no hay inscripciones para mostrar.</p> : (
@@ -271,6 +276,7 @@ export default function AdminInscripciones2026() {
                   <div>
                     <span className={`pr-admin-mode ${row.modalidad}`}>{modeLabel(row.modalidad)}</span>
                     <h2>{row.nombre_completo}</h2>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:10,alignItems:"center",marginTop:8}}><a href={row.telefono ? `tel:+${phoneForWhatsApp(row.telefono)}` : undefined} style={{color:"#c5ff34",fontWeight:800,fontSize:16,textDecoration:"none"}}>📞 {row.telefono || "Sin teléfono"}</a><span style={{fontSize:12,fontWeight:700,opacity:.85}}>{row.isLoan ? `🛼 Lista de espera · talle ${row.talle_calzado}` : "📝 Inscripción"} · {row.estado}</span></div>
                     <p>{isKids ? `${row.edad} años · ${row.nivel}` : `${row.localidad || 'Sin localidad'} · ${row.edad} años · ${row.nivel}`}</p>
                   </div>
                   <time>{new Date(row.created_at).toLocaleString('es-UY')}</time>
