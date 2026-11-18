@@ -32,7 +32,52 @@ export default function PRKidsClub(){
  useEffect(()=>{let live=true;async function loadFamily(){if(demoMode){setFamilyLoading(false);return}setFamilyHome(null);setFamilyLoading(true);try{if(!sessionReady||!familySession)return;const {data:family,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}});if(!live)return;if(!error&&family?.ok){const projected=projectFamilyHome(family);if(projected?.children?.length){setFamilyHome(projected);setSelectedChild(null);setGuardianAccess('')}else{setGuardianAccess('Todavía no hay perfiles infantiles aprobados para esta cuenta.')}}else if(family?.error==='Acceso familiar pendiente de activación'){setGuardianAccess('Tu cuenta familiar está pendiente de activación. Administración te avisará cuando puedas ingresar.')}else if(error){setGuardianAccess('No pudimos comprobar el acceso familiar en este momento. Actualizá la página para volver a intentarlo.')}else if(family?.error&&family.error!=='Acceso familiar no habilitado'){setGuardianAccess('No se pudo comprobar tu acceso familiar. Intentá actualizar la página.')}else{setGuardianAccess('')}}catch{if(live)setGuardianAccess('Error de conexión al consultar PR Kids. Actualizá la página para reintentar.')}finally{if(live&&sessionReady)setFamilyLoading(false)}}loadFamily();return()=>{live=false}},[familySession,sessionReady,demoMode])
  useEffect(()=>{if(demoMode||!familySession||!sessionReady)return;let active=true;const refresh=async()=>{if(document.visibilityState!=='visible')return;try{const {data,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'family-home'}});if(!active||error||!data?.ok)return;const next=projectFamilyHome(data);if(next?.children?.length)setFamilyHome(prev=>({...next,children:next.children.map(child=>({...child,...(prev?.children?.find(x=>x.id===child.id)?.class_posts?.length?{class_posts:prev.children.find(x=>x.id===child.id).class_posts}:{} )}))}))}catch{}};document.addEventListener('visibilitychange',refresh);window.addEventListener('focus',refresh);return()=>{active=false;document.removeEventListener('visibilitychange',refresh);window.removeEventListener('focus',refresh)}},[demoMode,familySession,sessionReady])
  const [photoBusy,setPhotoBusy]=useState(''),[photoMessage,setPhotoMessage]=useState('')
- async function uploadChildPhoto(child,file){if(!file||demoMode)return;setPhotoMessage('');if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>2097152){setPhotoMessage('Elegí una foto JPG, PNG o WebP de hasta 2 MB.');return}setPhotoBusy(child.id);try{const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=reject;reader.readAsDataURL(file)});const {data,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'child-photo-upload',child_id:child.id,mime:file.type,base64}});if(error||!data?.ok)throw Error(data?.error||'No se pudo guardar la foto');setFamilyHome(prev=>({...prev,children:prev.children.map(item=>item.id===child.id?{...item,foto_url:data.photo_url}:item)}));setPhotoMessage('Foto guardada correctamente.')}catch(e){setPhotoMessage(e.message||'No se pudo guardar la foto.')}finally{setPhotoBusy('')}}
+
+ async function prepareChildPhoto(file){
+  // Resize camera images locally; the family API accepts JPEG/PNG/WebP up to 2 MB.
+  // This also avoids rejecting ordinary 4-12 MB phone photos.
+  const image=await new Promise((resolve,reject)=>{
+   const url=URL.createObjectURL(file)
+   const img=new Image()
+   img.onload=()=>{URL.revokeObjectURL(url);resolve(img)}
+   img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('No pudimos leer esta imagen. Probá guardarla como JPG desde tu galería.'))}
+   img.src=url
+  })
+  const limit=1200,ratio=Math.min(1,limit/Math.max(image.naturalWidth,image.naturalHeight))
+  const canvas=document.createElement('canvas')
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*ratio))
+  canvas.height=Math.max(1,Math.round(image.naturalHeight*ratio))
+  const ctx=canvas.getContext('2d')
+  if(!ctx)throw new Error('No pudimos preparar la imagen en este teléfono.')
+  ctx.drawImage(image,0,0,canvas.width,canvas.height)
+  let blob=null
+  for(const quality of [0.86,0.72,0.56]){
+   blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality))
+   if(blob&&blob.size<=2097152)break
+  }
+  if(!blob||blob.size>2097152)throw new Error('La imagen es demasiado grande. Probá con otra foto.')
+  const base64=await new Promise((resolve,reject)=>{
+   const reader=new FileReader()
+   reader.onload=()=>resolve(String(reader.result).split(',')[1])
+   reader.onerror=()=>reject(new Error('No pudimos leer la foto.'))
+   reader.readAsDataURL(blob)
+  })
+  return {base64,mime:'image/jpeg'}
+ }
+ async function uploadChildPhoto(child,file){
+  if(!file||demoMode)return
+  setPhotoMessage('')
+  if(photoBusy)return
+  setPhotoBusy(child.id)
+  try{
+   if(file.size>25*1024*1024)throw new Error('Elegí una imagen de menos de 25 MB.')
+   const {base64,mime}=await prepareChildPhoto(file)
+   const {data,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'child-photo-upload',child_id:child.id,mime,base64}})
+   if(error||!data?.ok)throw new Error(data?.error||'No se pudo guardar la foto. Volvé a intentar.')
+   setFamilyHome(prev=>prev?({...prev,children:prev.children.map(item=>item.id===child.id?{...item,foto_url:data.photo_url}:item)}):prev)
+   setPhotoMessage('Foto guardada correctamente.')
+  }catch(e){setPhotoMessage(e.message||'No se pudo guardar la foto.')}finally{setPhotoBusy('')}
+ }
  const set=(k,v)=>setData(d=>({...d,[k]:v}))
  async function submit(e){e.preventDefault();if(busy)return;setError('')
  if(data.es_alumno===null){setError('Elegí si ya tenés cuenta de alumno adulto.');return}
