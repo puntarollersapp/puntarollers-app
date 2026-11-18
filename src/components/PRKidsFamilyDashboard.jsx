@@ -10,7 +10,7 @@ const sample={
  attendanceStamps:6
 }
 const tabs=[['clases','Qué hicimos hoy'],['asistencias','Asistencias Check'],['logros','Mis insignias obtenidas'],['recuerdos','Mi historia PR']]
-export default function PRKidsFamilyDashboard({child,demo=false,onBack,onProfileSaved}){
+export default function PRKidsFamilyDashboard({child,demo=false,onBack,onProfileSaved,onPhotoChange,photoBusy=false,photoMessage=''}){
  const panelRef=useRef(null)
  const [tab,setTab]=useState('clases')
  const [monthly,setMonthly]=useState([]),[monthlyLoading,setMonthlyLoading]=useState(true),[monthlyError,setMonthlyError]=useState('')
@@ -41,7 +41,7 @@ export default function PRKidsFamilyDashboard({child,demo=false,onBack,onProfile
  const childPhoto=child.foto_url||child.photo_url||child.avatar_url||null
  return <section className="prk-dashboard" aria-label={'Perfil infantil de '+child.nombre}>
   <div className="prk-dashboard-top"><button type="button" className="prk-dashboard-back" onClick={onBack}>← Mi familia</button><span className="prk-dashboard-chip">{demo?'VISTA DEMO · FICTICIA':'PERFIL PRIVADO'}</span></div>
-  <div className="prk-dashboard-hero"><div className="prk-dashboard-avatar" aria-label="Foto de perfil infantil">{childPhoto?<img src={childPhoto} alt={'Foto de '+child.nombre}/>:<span>{String(child.nombre||'?').trim()[0]?.toUpperCase()}</span>}</div><div><p className="prk-dashboard-eyebrow">MI AVENTURA SOBRE RUEDAS</p><h2>{child.nombre}{!demo&&<VerifiedBadge size={24} className="ml-2"/>}</h2><p>{demo?'Un ejemplo de cómo la familia acompañará cada avance.':'Mi espacio familiar de PR Kids.'}</p></div></div>
+  <div className="prk-dashboard-hero"><div className="flex flex-col items-center gap-2"><div className="prk-dashboard-avatar" aria-label="Foto de perfil infantil">{childPhoto?<img src={childPhoto} alt={'Foto de '+child.nombre}/>:<span>{String(child.nombre||'?').trim()[0]?.toUpperCase()}</span>}</div>{!demo&&<label className={`cursor-pointer rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-black text-white ${photoBusy?"opacity-50":""}`}>📷 {photoBusy?"Guardando…":"Cambiar foto"}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={photoBusy} onChange={e=>{onPhotoChange?.(child,e.target.files?.[0]);e.target.value=""}}/></label>}{!demo&&photoMessage&&<p role="status" className="max-w-[180px] text-center text-[11px] text-white/75">{photoMessage}</p>}</div><div><p className="prk-dashboard-eyebrow">MI AVENTURA SOBRE RUEDAS</p><h2>{child.nombre}{!demo&&<VerifiedBadge size={24} className="ml-2"/>}</h2><p>{demo?'Un ejemplo de cómo la familia acompañará cada avance.':'Mi espacio familiar de PR Kids.'}</p></div></div>
   <a href="/club-sellos-kids" aria-label="Abrir Club de Premios y canje de pasaporte" className="group relative mt-4 block overflow-hidden rounded-[28px] border border-fuchsia-300/30 bg-[#130c27] p-5 text-white shadow-[0_16px_50px_rgba(12,5,35,.35)] transition duration-300 hover:-translate-y-1 hover:border-fuchsia-200/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(255,0,153,.33),transparent_42%),radial-gradient(circle_at_10%_95%,rgba(0,219,255,.22),transparent_46%)]"/>
     <div aria-hidden="true" className="pointer-events-none absolute -right-5 -top-6 text-[110px] opacity-20 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">✦</div>
