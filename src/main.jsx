@@ -20,6 +20,16 @@ if ('serviceWorker' in navigator) {
       const registration =
         await navigator.serviceWorker.register('/sw.js')
 
+      // Check for fresh releases when families reopen PR Kids.
+      // The service worker already fetches navigation documents network-first.
+      // Updating here prevents installed PWAs from staying on an old worker.
+      const refreshWorker = () => {
+        if (document.visibilityState === 'visible') registration.update().catch(() => {})
+      }
+      window.addEventListener('pageshow', refreshWorker)
+      document.addEventListener('visibilitychange', refreshWorker)
+      refreshWorker()
+
       console.log(
         'Punta Rollers PWA activa:',
         registration.scope
