@@ -70,7 +70,7 @@ export default function PRKidsClub(){
   if(photoBusy)return
   setPhotoBusy(child.id)
   try{
-   if(file.size>25*1024*1024)throw new Error('Elegí una imagen de menos de 25 MB.')
+   if(file.size>50*1024*1024)throw new Error('Elegí una imagen de menos de 50 MB.')
    const {base64,mime}=await prepareChildPhoto(file)
    const {data,error}=await supabase.functions.invoke('pr-kids-family-access',{body:{action:'child-photo-upload',child_id:child.id,mime,base64}})
    if(error||!data?.ok)throw new Error(data?.error||'No se pudo guardar la foto. Volvé a intentar.')
