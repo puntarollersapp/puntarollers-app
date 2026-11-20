@@ -113,15 +113,24 @@ function ConeLoanAdmin(){
  const pending=items.filter(x=>x.status==='requested')
  return <section className="mt-5 rounded-2xl border border-[#FFB65D]/40 bg-[#231C18] p-4 text-white"><h2 className="text-lg font-black text-[#FFC47B]">🔔 Conos de préstamo · {pending.length} solicitudes pendientes</h2><p className="mt-1 text-xs text-white/65">Registrá la entrega en clase y la devolución posterior.</p><button type="button" onClick={load} className="mt-2 rounded-lg border border-white/30 px-3 py-2 text-xs font-bold">Actualizar préstamos</button>{error&&<p role="alert" className="mt-2 text-xs text-red-300">{error}</p>}{items.filter(x=>x.status!=='returned').map(x=><div key={x.id} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-white/10 p-3"><div><strong className="text-sm">{x.name||x.profile_id}</strong><p className="text-xs text-white/60">{x.status==='requested'?'Solicitado':'Entregado · pendiente de devolución'}</p></div><button disabled={busy===x.id} onClick={async()=>{setBusy(x.id);const {error:e}=await supabase.rpc('pr_training_cone_staff',{p_id:x.id,p_status:x.status==='requested'?'delivered':'returned'});if(e)setError(e.message);else await load();setBusy('')}} className="rounded-lg bg-[#FFB65D] px-3 py-2 text-xs font-bold text-black">{x.status==='requested'?'Marcar entregado':'Marcar devuelto'}</button></div>)}</section>
 }
+function TrainingMonthlyProgress(){
+ const [month,setMonth]=useState(()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date()).slice(0,7))
+ const [rows,setRows]=useState([]),[filter,setFilter]=useState('all'),[query,setQuery]=useState(''),[error,setError]=useState('')
+ async function load(){const {data,error:e}=await supabase.rpc('pr_training_v2_staff_monthly_progress',{p_month:month+'-01'});if(e)setError(e.message);else{setRows(Array.isArray(data)?data:[]);setError('')}}
+ useEffect(()=>{load();const timer=setInterval(load,45000);return()=>clearInterval(timer)},[month])
+ const visible=rows.filter(x=>(filter==='all'||filter==='completed'&&x.completed||filter==='working'&&x.started>0&&!x.completed||filter==='pending'&&x.started===0)&&(x.name||'').toLowerCase().includes(query.toLowerCase()))
+ return <section className="mt-4 rounded-2xl border border-lime-300/30 bg-[#101014] p-4"><h3 className="text-xl font-black text-lime-300">Seguimiento mensual · PR TAREAS</h3><p className="mt-2 text-xs text-white/60">Seis deberes aprobados = mes completado. Incluye Strava y evidencias corregidas.</p><div className="mt-3 flex gap-2"><input type="month" aria-label="Mes" value={month} onChange={e=>setMonth(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white/10 p-3"/><button onClick={load} className="rounded-xl border border-lime-300/50 px-3">Actualizar</button></div><div className="mt-3 grid grid-cols-3 gap-2 text-center">{[[rows.length,'Con plan'],[rows.filter(x=>x.started>0).length,'En actividad'],[rows.filter(x=>x.completed).length,'Completaron']].map(([v,k])=><div key={k} className="rounded-xl bg-white/10 p-3"><strong className="block text-xl text-lime-300">{v}</strong><small>{k}</small></div>)}</div><div className="mt-3 flex flex-wrap gap-2">{[['all','Todos'],['completed','Completados'],['working','En curso'],['pending','Sin comenzar']].map(([v,k])=><button key={v} onClick={()=>setFilter(v)} className={filter===v?'rounded-full bg-lime-300 px-3 py-2 text-xs text-black':'rounded-full bg-white/10 px-3 py-2 text-xs'}>{k}</button>)}</div><input type="search" placeholder="Buscar alumno" value={query} onChange={e=>setQuery(e.target.value)} className="mt-3 w-full rounded-xl bg-white/10 p-3"/>{error&&<p role="alert" className="text-red-300">{error}</p>}<div className="mt-3 max-h-[500px] space-y-2 overflow-y-auto">{visible.map(x=><div key={x.profile_id} className="rounded-xl border border-white/10 p-3"><div className="flex justify-between gap-2"><strong>{x.name||x.profile_id}</strong><span className={x.completed?'text-lime-300':'text-white/60'}>{x.completed?'✓ Completado':x.approved+'/'+x.total}</span></div><p className="mt-1 text-xs text-white/50">{x.level} · {x.started} deberes con entregas</p><div className="mt-2 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-lime-300" style={{width:(x.total?x.approved/x.total*100:0)+'%'}}/></div></div>)}{visible.length===0&&<p className="text-xs text-white/50">Sin alumnos en este filtro.</p>}</div></section>
+}
+
 function TrainingDailyControl(){
  const {user}=useAuth()
  const davidOnly=user?.id==='profe-david'
  const [tab,setTab]=useState('hoy')
- const tabs=davidOnly?[['hoy','Entregas']]:[['hoy','Entregas'],['alumnos','Alumnos'],['contenido','Ejercicios']]
+ const tabs=davidOnly?[['hoy','Entregas'],['avance','Avance']]:[['hoy','Entregas'],['avance','Avance'],['alumnos','Alumnos'],['contenido','Ejercicios']]
  return <section className="mt-5 rounded-[24px] border border-[#BBFF1F]/30 bg-[#101012] p-4 sm:p-6">
   <div className="mb-4"><p className="text-xs font-bold tracking-[.16em] text-[#BBFF1F]">CENTRO DE CONTROL</p><h2 className="mt-1 text-2xl font-black">PR TAREAS</h2><p className="mt-1 text-xs text-white/50">Todo lo importante, en un solo lugar.</p></div>
-  <div role="tablist" aria-label="Administración de PR TAREAS" className={`grid ${davidOnly?'grid-cols-1':'grid-cols-3'} gap-2`}>{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
-  {!davidOnly&&<ConeLoanAdmin/>}<div role="tabpanel">{davidOnly||tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
+  <div role="tablist" aria-label="Administración de PR TAREAS" className={`grid ${davidOnly?'grid-cols-2':'grid-cols-4'} gap-2`}>{tabs.map(([id,label])=><button key={id} type="button" role="tab" aria-selected={tab===id} onClick={()=>setTab(id)} className={`rounded-xl px-2 py-3 text-sm font-bold ${tab===id?'bg-[#BBFF1F] text-[#0D0303]':'bg-white/10 text-white/70'}`}>{label}</button>)}</div>
+  {!davidOnly&&<ConeLoanAdmin/>}<div role="tabpanel">{tab==='avance'?<TrainingMonthlyProgress/>:tab==='hoy'?<TrainingReviewQueue/>:tab==='alumnos'?<TrainingStudentSearch/>:<TrainingAdminControls/>}</div>
 
 
  </section>
@@ -378,6 +387,11 @@ function PRTareasHome({user,coneBanner}){
  const extrasApproved=extraTasks.filter(t=>t.latest_status==='approved').length
  const done=tasks.filter(t=>(t.latest_status)==='approved').length
  const percent=tasks.length?Math.round(done/tasks.length*100):0
+ const [showCongrats,setShowCongrats]=useState(false)
+ const celebrationKey='pr-tareas-felicitaciones-'+user?.id+'-'+month
+ useEffect(()=>{if(tasks.length===6&&done===6){try{if(localStorage.getItem(celebrationKey)!=='seen')setShowCongrats(true)}catch{setShowCongrats(true)}}},[done,tasks.length,celebrationKey])
+ function dismissCongrats(){setShowCongrats(false);try{localStorage.setItem(celebrationKey,'seen')}catch{}}
+
  const previouslyWorked=tasks.reduce((max,t,i)=>t.latest_status&&!['not_submitted','pending','assigned'].includes(t.latest_status)?Math.max(max,i+1):max,0)
  const discovered=tasks.length===6?Math.min(Math.max(revealed,previouslyWorked),6):0
  useEffect(()=>{if(open!==null&&open>=discovered)setOpen(null)},[discovered,open])
@@ -490,7 +504,7 @@ export default function PRTrainingV2Lab(){
   setSpinCount(count)
   try {window.localStorage.setItem('pr-training-v2-preview-spin-count',String(count))} catch { /* Preview-only storage */ }
  }
- if(loading)return <AppLayout><div className="p-10 text-white">Cargando…</div></AppLayout>
+ if(loading)return <AppLayout>{showCongrats&&<div role="dialog" aria-modal="true" aria-label="Deberes mensuales completados" className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 p-5"><div className="w-full max-w-sm rounded-[30px] border border-lime-300/60 bg-[#171B20] p-7 text-center shadow-2xl"><div className="text-6xl">🏆</div><p className="mt-4 text-xs font-black uppercase tracking-widest text-lime-300">¡Objetivo desbloqueado!</p><h2 className="mt-2 text-3xl font-black">¡Felicitaciones!</h2><p className="mt-4 text-sm leading-6 text-white/80">¡Completaste tus seis deberes mensuales! Cada práctica te hace avanzar. Seguí disfrutando del camino, una rueda a la vez. 💚</p><button type="button" onClick={dismissCongrats} className="mt-6 w-full rounded-2xl bg-lime-300 px-5 py-4 font-black text-black">¡A seguir rodando!</button></div></div>}<div className="p-10 text-white">Cargando…</div></AppLayout>
  if(!user)return <Navigate to="/login" replace/>
  if(adminView&&!staffIds.has(user.id))return <Navigate to="/app/dashboard" replace/>
  const name=user.nombre||'Equipo'
