@@ -46,9 +46,6 @@ export default function PRAwards(){
  const [kmTop,setKmTop]=useState([])
  const [voteCategory,setVoteCategory]=useState(null)
  const [ceremony,setCeremony]=useState(null)
- const [showIntro,setShowIntro]=useState(true)
- useEffect(()=>{if(!showIntro)return;let reduced=false;try{reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch{}const timer=window.setTimeout(()=>{setShowIntro(false)},reduced?200:2350);return()=>window.clearTimeout(timer)},[showIntro])
- const skipIntro=()=>{setShowIntro(false);try{window.sessionStorage.setItem('pr-awards-intro-2026','1')}catch{}}
 
  useEffect(()=>{let active=true;Promise.all([getAwardsDirectory(),getAwardsCategories(),getAwardsFinalists(),getAwardsPublicStatus()]).then(([people,cats,finals,status])=>{if(active){setDirectory(people);setLiveCategories(cats);setFinalists(finals);setPublicStatus(status);setBackendReady(cats.length>0);setDirectoryError(cats.length===0)}}).catch(()=>{if(active){setBackendReady(false);setDirectoryError(true)}});return()=>{active=false}},[])
  useEffect(()=>{let active=true;const refresh=()=>getAwardsKmTop5().then(data=>{if(active)setKmTop(data)}).catch(()=>{});refresh();const timer=setInterval(refresh,120000);return()=>{active=false;clearInterval(timer)}},[])
@@ -61,7 +58,6 @@ export default function PRAwards(){
  const activeAward=expanded>=0?awardList[expanded]:null
  const share=async()=>{const url=window.location.href;if(navigator.share){try{await navigator.share({title:'PR Awards 2026',url});return}catch{}}try{await navigator.clipboard.writeText(url);window.alert('Enlace copiado')}catch{window.prompt('Copiá el enlace:',url)}}
  return <main className="min-h-screen bg-[#0e0d0b] text-[#f5eee2]" style={{fontFamily:'Inter,system-ui,sans-serif'}}>
-  {showIntro&&createPortal(<div className="pr-awards-intro" role="dialog" aria-modal="true" aria-label="Presentación de PR Awards 2026"><div className="pr-awards-intro-aura" aria-hidden="true"/><div className="pr-awards-intro-content"><div className="pr-awards-intro-trophy"><img src="/pr-awards-trophy.webp" alt="Trofeo oficial de PR Awards" onError={e=>{e.currentTarget.style.display='none'}}/></div><p className="pr-awards-intro-eyebrow">PUNTA ROLLERS PRESENTA</p><h2 className="pr-awards-intro-title">PR <span>AWARDS</span></h2><p className="pr-awards-intro-year">2026</p><div className="pr-awards-intro-rule" aria-hidden="true"/></div><button type="button" className="pr-awards-intro-skip" onClick={skipIntro}>Saltar presentación <span aria-hidden="true">↗</span></button></div>,document.body)}
 
   <div className="mx-auto max-w-5xl px-4 pb-24 sm:px-8" style={{paddingTop:"calc(env(safe-area-inset-top, 0px) + 28px)"}}>
    <div className="mb-5 flex justify-start">
