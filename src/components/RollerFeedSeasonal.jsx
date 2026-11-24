@@ -9,6 +9,27 @@ const CHOICES = [{ value: 'yes', label: 'Me sumo' }, { value: 'no', label: 'Esta
 // Retired campaign cards stay in the database but never render in RollerFeed.
 const isRetiredFeedNews = item => /cl[ií]nica internacional|miguel flores|rollerween|caramelos?|top ranking pr|pr km challenge/i.test([item.title,item.body,item.kind].filter(Boolean).join(' '))
 
+
+// Final aggregate counts verified in Supabase after closing the three 2026 polls.
+function FinalSeasonResults() {
+  const cards = [
+    {title:'Fiesta de fin de año',headline:'Noche sin gala',summary:'10 votos · 71,43 %',options:[['Noche sin gala',10,71.43],['Noche de gala',4,28.57]],note:'18 participantes · 18 a favor de la fiesta · 0 en contra. 14 eligieron vestimenta y 4 no indicaron preferencia. Los porcentajes de estilo se calculan sobre 14 respuestas.'},
+    {title:'Rolleada especial',headline:'¡Tenemos un empate!',summary:'14 votos afirmativos para cada propuesta',options:[['Rolleada navideña',14,50],['Rolleada de Año Nuevo',14,50]],note:'15 participantes únicos. Cada encuesta recibió 14 votos a favor y 0 en contra. Las barras representan la distribución de los 28 votos afirmativos combinados, no una elección excluyente.'}
+  ]
+  return <section className="relative overflow-hidden rounded-[28px] border border-[#D4B477]/35 bg-gradient-to-br from-[#282017] via-[#151311] to-[#100e0d] p-4 text-center shadow-xl">
+    <p className="text-[10px] font-black tracking-[.22em] text-[#E7C88C]">VOTACIONES FINALIZADAS</p>
+    <h2 className="mt-2 font-display text-3xl text-white">¡Ustedes decidieron!</h2>
+    <p className="mt-2 text-xs text-white/65">Gracias por ser parte de las decisiones de nuestra comunidad.</p>
+    <div className="mt-4 grid gap-3">{cards.map(card=><article key={card.title} className="rounded-2xl border border-[#D4B477]/25 bg-black/25 p-4">
+      <p aria-hidden="true" className="text-2xl">🏆</p><h3 className="mt-1 text-sm font-bold text-[#E7C88C]">{card.title}</h3>
+      <p className="mt-2 text-xl font-black text-white">{card.headline}</p><p className="mt-1 text-xs text-[#E7C88C]">{card.summary}</p>
+      {card.title==='Rolleada especial'&&<p className="mt-2 text-xs text-white/65">Ambas propuestas serán tenidas en cuenta al organizar nuestras próximas actividades.</p>}
+      <details className="mt-3 rounded-xl border border-[#D4B477]/20 p-3 text-left"><summary className="cursor-pointer text-center text-xs font-bold text-[#E7C88C]">Ver resultados</summary><div className="mt-3 space-y-3">{card.options.map(([label,count,pct])=><div key={label}><div className="flex justify-between gap-2 text-xs text-white"><span>{label}</span><span>{count} · {pct.toLocaleString('es-UY')} %</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-[#A77B39] to-[#F3D69D]" style={{width:pct+'%'}}/></div></div>)}<p className="text-xs leading-5 text-white/65">{card.note}</p></div></details>
+    </article>)}</div>
+    <p className="mt-5 font-black text-[#E7C88C]">¡Próximamente anunciaremos las fechas!</p><p className="mt-1 text-xs text-white/65">Estamos preparando nuestras próximas actividades para cerrar el año juntos sobre ruedas.</p>
+  </section>
+}
+
 export default function RollerFeedSeasonal({ section = 'polls' }) {
   const [polls, setPolls] = useState([])
   const [votes, setVotes] = useState([])
@@ -96,7 +117,8 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
 
   return <div className="space-y-5">
     {section === 'polls' && <>
-    <section className="relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] p-4 shadow-[0_16px_45px_rgba(0,0,0,.35)] sm:p-5">
+    <FinalSeasonResults />
+    {(polls.length > 0 || loading || error) && <section className="relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] p-4 shadow-[0_16px_45px_rgba(0,0,0,.35)] sm:p-5">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_100%_0%,rgba(255,0,85,.13),transparent_60%)]" />
       <div className="relative">
         <p className="text-center text-[10px] font-black uppercase tracking-[.22em] text-[#FF77A3]">Tu opinión cuenta</p>
@@ -144,7 +166,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         {loading && <p className="mt-4 text-center text-xs text-white/50">Cargando encuestas…</p>}
         {error && <p role="alert" className="mt-3 text-center text-xs text-red-300">{error}</p>}
       </div>
-    </section>
+    </section>}
     </>}
     {avatarDialog && <div role="dialog" aria-modal="true" aria-label="Participantes de la votación" className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 p-4" onClick={() => setAvatarDialog(null)}><div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-[24px] border border-[#FF0055]/40 bg-[#151016] p-5" onClick={e=>e.stopPropagation()}><div className="mb-4 flex items-center justify-between gap-3"><h3 className="text-lg font-black text-white">Participantes ({avatars.filter(a=>a.poll_id===avatarDialog).length})</h3><button type="button" onClick={() => setAvatarDialog(null)} className="rounded-lg border border-white/20 px-3 py-2 text-xs text-white">Cerrar ✕</button></div><div className="grid grid-cols-4 gap-4">{avatars.filter(a=>a.poll_id===avatarDialog).map((person,index)=><div key={index} className="min-w-0 text-center"><img src={person.photo_url} alt={person.display_name||'Participante'} loading="lazy" className="mx-auto h-14 w-14 rounded-full border-2 border-[#FF0055]/40 object-cover" /><p className="mt-1 break-words text-[10px] text-white/75">{person.display_name||'Participante'}</p></div>)}</div><p className="mt-4 text-xs text-white/40">Aparecen los participantes con foto de perfil visible. El total de votos incluye a todos.</p></div></div>}
     {section === 'news' && <>
