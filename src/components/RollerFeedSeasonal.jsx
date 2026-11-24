@@ -115,7 +115,7 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
     setBusy('')
   }
 
-  return <div className="space-y-5">
+  return <div data-pr-news-visible={section === "news" && !loading && !error ? "true" : undefined} className="space-y-5">
     {section === 'polls' && <>
     <FinalSeasonResults />
     {(polls.length > 0 || loading || error) && <section className="relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] p-4 shadow-[0_16px_45px_rgba(0,0,0,.35)] sm:p-5">
