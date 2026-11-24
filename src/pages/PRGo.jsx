@@ -154,7 +154,7 @@ export default function PRGo() {
   const [retry, setRetry] = useState(0)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
-  const allowed = ['alumno', 'admin'].includes(user?.role)
+  const allowed = ['alumno', 'admin', 'profesor'].includes(user?.role)
 
   useEffect(() => {
     if (!allowed || !user?.id || !frame) return
