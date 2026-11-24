@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import RollerFeedNewsInteractive from './RollerFeedNewsInteractive'
 import { useEffect, useRef, useState } from 'react'
 import '../styles/rollerfeed-news.css'
@@ -155,7 +156,8 @@ export default function RollerFeedSeasonal({ section = 'polls' }) {
         <div className="rf-news-line" aria-hidden="true" />
         <p className="mt-2 text-[11px] text-white/50"><span className="rf-news-indicator mr-2 align-middle" aria-hidden="true" /> Noticias, anuncios y lo último de nuestra comunidad</p>
       </div>
-      <div className="relative z-10">
+      <div className="relative z-10 mt-4">
+      <Link to="/app/voice" className="relative isolate block overflow-hidden rounded-[26px] border border-violet-300/25 bg-gradient-to-br from-[#252040] via-[#141324] to-[#111b2a] p-5 text-center shadow-xl motion-safe:transition-transform motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-cyan-300"><p className="text-[10px] font-black tracking-[.2em] text-cyan-300">PUNTA ROLLERS / TU ESPACIO</p><h3 className="mt-3 bg-gradient-to-r from-white via-violet-200 to-cyan-200 bg-clip-text text-5xl font-black italic tracking-tight text-transparent">FeedBack!</h3><p className="mt-3 text-lg font-black text-white">Tu opinión nos importa.<br/><span className="text-violet-300">Tu voz nos mueve.</span></p><p className="mt-3 text-xs leading-5 text-white/70">Queremos seguir creciendo contigo. Completá nuestro formulario y contanos cómo podemos mejorar tu experiencia en Punta Rollers.</p><span className="mt-4 inline-block rounded-full border border-cyan-300/30 px-4 py-2 text-xs font-bold text-cyan-200">Completar formulario →</span></Link>
       {loading ? <p role="status" className="mt-4 rounded-2xl border border-white/10 bg-white/[.025] p-4 text-center text-xs text-white/50">Cargando novedades…</p> : error ? <div role="alert" className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-center"><p className="text-xs text-amber-100/85">{error}</p><button type="button" onClick={() => { setLoading(true); refresh() }} className="mt-3 rounded-xl border border-[#BBFF1F]/35 px-4 py-2 text-xs font-bold text-[#BBFF1F]">Reintentar</button></div> : news.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{news.map(item => <RollerFeedNewsInteractive key={item.id} item={item} uid={uid} onImage={(url,title)=>setLightbox({url,title})} />)}{hasMoreNews && <button type="button" onClick={()=>setNewsLimit(n=>n+8)} className="rounded-xl border border-white/15 bg-white/[.035] px-4 py-3 text-xs font-bold text-[#BBFF1F] sm:col-span-2">Ver más novedades ↓</button>}</div> : <p className="mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-white/45">Pronto vas a encontrar acá noticias, anuncios y novedades de Punta Rollers.</p>}
       </div>
     </section>
