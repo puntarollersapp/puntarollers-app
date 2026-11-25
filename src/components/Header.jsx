@@ -1,4 +1,5 @@
 import PRWeather from './PRWeather'
+import { useDecemberNavigation } from '../lib/prDecemberNavigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -14,6 +15,7 @@ function RollerFeedIcon() {
 
 export default function Header({ title, showBack = false, onBack }) {
   const { user, logout } = useAuth()
+  const christmasNav = useDecemberNavigation()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [family, setFamily] = useState(false)
@@ -49,7 +51,7 @@ export default function Header({ title, showBack = false, onBack }) {
         <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h5v-6h4v6h5v-9.5"/></svg>
       </Link>
 
-      <Link to="/app/tareas" aria-label="Abrir Tareas" style={{backgroundColor:"#BEFF37",color:"#08080c",borderColor:"#BEFF37"}} className="pr-tasks-tab absolute left-1/2 top-1/2 flex h-[44px] min-w-[124px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-[17px] border border-[#BEFF37] bg-[#BEFF37] px-3.5 text-[#08080c] shadow-[0_0_0_3px_rgba(187,255,31,.055),0_8px_28px_rgba(255,0,85,.18)] transition-all active:scale-95"><span className="pr-tasks-hero-icon relative"><TasksIcon/><span className="pr-tasks-spark absolute -right-2 -top-2 text-[9px]">✦</span></span><span className="font-display text-[17px] font-extrabold tracking-[-.035em]">Tareas</span></Link>
+      {christmasNav ? <Link to="/app/secret-santa" aria-label="Abrir Regalo navideño" aria-current={pathname==='/app/secret-santa'?'page':undefined} className="absolute left-1/2 top-1/2 flex h-[44px] w-[116px] max-[359px]:w-[100px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-[16px] border border-amber-200/60 bg-gradient-to-br from-[#B72B3C] to-[#70182B] px-2 text-amber-100 shadow-[0_6px_22px_rgba(183,43,60,.28)] transition active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"><svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8C5 8 5 2 8 3c2 0 4 5 4 5Zm0 0c7 0 7-6 4-5-2 0-4 5-4 5Z"/></svg><span className="text-left text-[11px] font-black leading-tight">Regalo<br/>navideño</span></Link> : <Link to="/app/tareas" aria-label="Abrir Tareas" style={{backgroundColor:"#BEFF37",color:"#08080c",borderColor:"#BEFF37"}} className="pr-tasks-tab absolute left-1/2 top-1/2 flex h-[44px] min-w-[124px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-[17px] border border-[#BEFF37] bg-[#BEFF37] px-3.5 text-[#08080c] shadow-[0_0_0_3px_rgba(187,255,31,.055),0_8px_28px_rgba(255,0,85,.18)] transition-all active:scale-95"><span className="pr-tasks-hero-icon relative"><TasksIcon/><span className="pr-tasks-spark absolute -right-2 -top-2 text-[9px]">✦</span></span><span className="font-display text-[17px] font-extrabold tracking-[-.035em]">Tareas</span></Link>}
 
       <div className="flex items-center gap-2">
         <button type="button" onClick={handleLogout} aria-label="Cerrar sesión" title="Cerrar sesión" className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.075] bg-white/[0.035] text-white/45 transition active:scale-95 active:bg-red-500/10 active:text-red-300">
