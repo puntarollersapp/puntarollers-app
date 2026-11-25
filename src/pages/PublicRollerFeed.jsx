@@ -68,6 +68,7 @@ function profileName(profile) {
 }
 
 function profilePhoto(profile) {
+  if (profile && Object.prototype.hasOwnProperty.call(profile,'foto')) return profile.foto || ''
   return (
     profile?.foto_url ||
     profile?.photo_url ||
@@ -346,11 +347,8 @@ export default function PublicRollerFeed() {
                 activity.alumno_nombre ||
                 activity.nombre_alumno ||
                 'Integrante PR',
-              photo:
-                profilePhoto(profile) ||
-                activity.alumno_foto ||
-                activity.foto_alumno ||
-                '',
+              profileId: activity.alumno_id,
+              photo: profilePhoto(profile),
               distance: formatDistance(activity.distancia_metros),
               duration: formatDuration(
                 activity.tiempo_movimiento_segundos ||
@@ -381,12 +379,8 @@ export default function PublicRollerFeed() {
                 item.alumno_nombre ||
                 item.nombre_alumno ||
                 (type === 'Evento' ? 'Punta Rollers' : 'Integrante PR'),
-              photo:
-                profilePhoto(profile) ||
-                item.alumno_foto ||
-                item.foto_alumno ||
-                item.creado_por_foto ||
-                '',
+              profileId: item.alumno_id,
+              photo: profilePhoto(profile),
               creator:
                 item.creado_por_nombre ||
                 item.otorgado_por_nombre ||
@@ -443,6 +437,30 @@ export default function PublicRollerFeed() {
     load()
     return () => {
       active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true, running = false
+    async function refreshPhotos() {
+      if (running || document.visibilityState === 'hidden') return
+      running = true
+      try {
+        const {data,error} = await supabase.from('profiles_public').select('id,foto').limit(500)
+        if (!active || error) return
+        const directory = buildProfileMap(data || [])
+        setItems(old => old.map(item => item.profileId ? {...item,photo:profilePhoto(directory.get(String(item.profileId)))} : item))
+        setRankings(old => Object.fromEntries(Object.entries(old).map(([key,rows]) => [key,rows.map(row => ({...row,photo:profilePhoto(directory.get(String(row.alumnoId)))}))])))
+      } finally { running = false }
+    }
+    const timer = window.setInterval(refreshPhotos,60000)
+    window.addEventListener('focus',refreshPhotos)
+    document.addEventListener('visibilitychange',refreshPhotos)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus',refreshPhotos)
+      document.removeEventListener('visibilitychange',refreshPhotos)
     }
   }, [])
 
