@@ -168,6 +168,7 @@ function getProfileName(profile = {}) {
 }
 
 function getProfilePhoto(profile = {}) {
+  if (profile && Object.prototype.hasOwnProperty.call(profile,'foto')) return profile.foto || ''
   return (
     profile.foto ||
     profile.foto_url ||
@@ -362,10 +363,7 @@ function normalizeActivity(activity, profilesByAnyId) {
       activity.nombre_alumno ||
       'Integrante PR',
     userPhoto:
-      getProfilePhoto(profile) ||
-      activity.alumno_foto ||
-      activity.foto_alumno ||
-      '',
+      profile?.id ? getProfilePhoto(profile) : '',
     verified: getProfileVerified(profile),
     source: activity.fuente || 'strava',
     distanceMeters: Number(activity.distancia_metros) || 0,
@@ -457,11 +455,7 @@ function normalizeLegacyItem(item, profilesByAnyId) {
       item.nombre_alumno ||
       'Integrante PR',
     userPhoto:
-      getProfilePhoto(recipientProfile) ||
-      item.alumno_foto ||
-      item.foto_alumno ||
-      item.creado_por_foto ||
-      '',
+      recipientProfile?.id ? getProfilePhoto(recipientProfile) : '',
     verified: getProfileVerified(recipientProfile),
     creatorName:
       item.creado_por_nombre ||
@@ -905,6 +899,29 @@ export default function Activity() {
 
     return () => {
       active = false
+    }
+  }, [profileId])
+
+  // Refresh just the profile directory, never trigger a Strava sync.
+  useEffect(() => {
+    if (!profileId) return
+    let active = true, running = false
+    async function refreshPhotos() {
+      if (running || document.visibilityState === 'hidden') return
+      running = true
+      try {
+        const {data,error} = await supabase.from('profiles_feed').select('*').limit(500)
+        if (active && !error) setProfiles(data || [])
+      } finally { running = false }
+    }
+    const timer = window.setInterval(refreshPhotos, 60000)
+    window.addEventListener('focus',refreshPhotos)
+    document.addEventListener('visibilitychange',refreshPhotos)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus',refreshPhotos)
+      document.removeEventListener('visibilitychange',refreshPhotos)
     }
   }, [profileId])
 
