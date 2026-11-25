@@ -63,8 +63,8 @@ export function drawOraclePlaque(ctx,slide,logo,loaded=[false,false,false]){
  draw(block('PR WRAPPED 2026',sans,30,860,44,1.1),376)
  const eyebrow=block('LO QUE TUS PATINES DIRÍAN DE VOS · '+slide.oracleNumber+'/3',sans,32,900,90,1.3)
  const title=block(slide.kicker,serif,84,900,112,1.1)
- const main=block(slide.oracleNumber===2?slide.big:slide.big.toLocaleUpperCase('es-UY'),slide.oracleNumber===2?serif:condensed,slide.oracleNumber===2?104:146,900,560,slide.oracleNumber===2?1.08:.98)
- const punch=block(slide.small,sans,48,820,300,1.4)
+ const main=block(slide.oracleNumber===2?slide.big:slide.big.toLocaleUpperCase('es-UY'),slide.oracleNumber===2?serif:condensed,slide.oracleNumber===2?104:146,900,440,slide.oracleNumber===2?1.08:.98)
+ const punch=block(slide.small,sans,48,820,230,1.4)
  const total=eyebrow.height+title.height+main.height+punch.height+42+54+44
  let y=450+(1060-total)/2
  draw(eyebrow,y);y+=eyebrow.height+14;draw(title,y);y+=title.height+14
