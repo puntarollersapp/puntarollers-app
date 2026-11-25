@@ -79,7 +79,7 @@ export default function Header({ title, showBack = false, onBack }) {
         </Link>
       </div>
     </div>
-    <PRWeather/>
+    {pathname!=='/app/actividad'&&<PRWeather/>}
     {title && <div className="pointer-events-none border-t border-white/[0.035] px-4 py-1.5 text-center text-[9px] font-black uppercase tracking-[.18em] text-white/24">{title}</div>}
   </header>
 }

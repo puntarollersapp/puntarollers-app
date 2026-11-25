@@ -1,7 +1,8 @@
 import RollerFeedOnline from '../components/RollerFeedOnline'
+import PRWeather from '../components/PRWeather'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AppLayout from '../layouts/AppLayout'
+import AppLayout, { OptionalExperienceBoundary } from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import RollerFeedComments from '../components/RollerFeedComments'
@@ -1235,6 +1236,8 @@ export default function Activity() {
             </div>
           </div>
         </section>
+
+        <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
 
         <nav aria-label="Explorar RollerFeed" className="w-full min-w-0">
           <div className="grid w-full grid-cols-5 gap-1 py-1 sm:gap-2">
