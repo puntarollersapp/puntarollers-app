@@ -87,3 +87,16 @@ assert.equal(await shareOraclePlaque(png,filename,{canShare:()=>true,share:async
 assert.equal(downloaded,3)
 assert.equal(shared,1)
 console.log('PR Oracle: 36 story/theme variants, canvas sizing, safe text, sharing and fallback assertions passed (mock canvas and share API)')
+
+import { readFileSync } from 'node:fs'
+const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+assert(source('src/pages/Dashboard.jsx').includes('{wrappedAccess&&<Link to="/app/wrapped"'))
+assert(source('src/pages/Profile2026.jsx').includes('{!editing&&wrappedAccess&&<Link to="/app/wrapped"'))
+const accessSource=source('src/lib/useWrappedAccess.js')
+assert(accessSource.includes("supabase.rpc('pr_wrapped_2026')"))
+assert(accessSource.includes('data?.open===true'))
+assert(accessSource.includes('access?.owner===userId'))
+const wrappedSource=source('src/pages/Wrapped.jsx')
+assert(wrappedSource.includes('data.open!==true)return <Navigate'))
+assert(wrappedSource.includes('data?.open===true&&(!isDemo||data?.admin===true)'))
+console.log('PR Wrapped: both entry cards and direct route are server-gated')
