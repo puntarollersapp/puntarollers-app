@@ -4,10 +4,11 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildSlides, fmt, personality, plaqueStats } from '../lib/wrapped'
+import { getBadgeImage } from '../lib/badges'
 import './wrapped.css'
 
 const themes={dark:['#191A20','#F3F1EC','#FF0055'],fucsia:['#FF0055','#F3F1EC','#191A20'],ivory:['#F3F1EC','#191A20','#FF0055']}
-const demo={year:2026,name:'Sofi',lastInitial:'R',attendance:{classes:38,busiestMonth:10,favoriteWeekday:3},activity:{km:186.4,hours:17.5,bestMonth:11},duties:{approved:11},shifter:{category:'6K',completed:7},performance:{count:2,distances:[{km:3,count:2,firstSeconds:780,lastSeconds:690,bestSeconds:690,bestPace:230,bestSpeed:15.65,timeReductionPct:11.54}]},frames:{frames:4}}
+const demo={year:2026,name:'Sofi',lastInitial:'R',attendance:{classes:38,busiestMonth:10,favoriteWeekday:3},activity:{km:186.4,hours:17.5,bestMonth:11},duties:{approved:11},shifter:{category:'6K',completed:7},performance:{count:2,distances:[{km:3,count:2,firstSeconds:780,lastSeconds:690,bestSeconds:690,bestPace:230,bestSpeed:15.65,timeReductionPct:11.54}]},frames:{frames:4},badges:['Primeros 6K','Rodador frecuente','Ya frena en T']}
 const localDate=v=>new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',day:'numeric',month:'long',year:'numeric'}).format(new Date(v))
 function Count({value,decimals=0,motion}) {
  const [n,setN]=useState(()=>motion?0:value)
@@ -59,12 +60,24 @@ function StoryAtmosphere(){
   <div className="prw-grain"/>
  </div>
 }
+function VinylCard({song,onOpen}){
+ return <div className="prw-vinyl-card"><div className="prw-vinyl" aria-hidden="true"><i/><b>PR</b></div><div className="prw-song-info"><span>PR MUSIC · 2026</span><h1>{song.title}</h1><p>{song.artist}</p><small>{song.description}</small><a className="prw-spotify" href={song.url} target="_blank" rel="noopener noreferrer" onClick={onOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1ed760"/><path d="M5.5 9c5-1.5 9-.9 13 1.4M6.7 12.5c4-1.1 7.3-.6 10.5 1.1M8 15.6c2.8-.6 5.2-.3 7.7.8" fill="none" stroke="#111" strokeWidth="1.6" strokeLinecap="round"/></svg>Escuchar en Spotify ↗</a></div></div>
+}
+function RollerGlyph({type}){
+ return <div className="prw-glyph" aria-hidden="true"><svg viewBox="0 0 220 120" fill="none">
+ <defs><linearGradient id="prw-metal"><stop stopColor="#F3F1EC"/><stop offset=".48" stopColor="#FF91B5"/><stop offset="1" stopColor="#E6D3FF"/></linearGradient></defs>
+ {type==='flex'?<g stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"><circle cx="128" cy="20" r="10"/><path d="m122 34-27 24 35 17-18 24M95 58l-21 21 25 20M111 44l37 12 16-9"/><path stroke="url(#prw-metal)" d="M96 108h30m-63 0h31"/><circle cx="69" cy="114" r="3"/><circle cx="85" cy="114" r="3"/><circle cx="105" cy="114" r="3"/><circle cx="122" cy="114" r="3"/></g>:<g stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M28 69h158l12-9-31-7-30-35h-32l-7 33-43 7-25-8z" fill="currentColor" fillOpacity=".1"/><path d="M36 76h146M113 29h25M108 38h36M104 47h47"/>{[44,84,124,164].map(x=><g key={x}><circle cx={x} cy="91" r="16" fill="currentColor" fillOpacity=".13"/><circle cx={x} cy="91" r="6"/></g>)}{type==='brake'&&<path d="m179 76 24 11-9 12-15-8" fill="currentColor"/>}{type==='wheel'&&<path d="M28 30h47m-37-10 16 10-16 10" stroke="url(#prw-metal)"/>}</g>}
+ </svg><div className="prw-glyph-sheen"/></div>
+}
+function BadgeCollection({badges}){
+ return <div className="prw-badge-list">{badges.map(title=><div className="prw-badge" key={title}>{getBadgeImage(title)?<img src={getBadgeImage(title)} alt="" loading="lazy"/>:<span aria-hidden="true">🏅</span>}<small>{title}</small></div>)}</div>
+}
 export default function Wrapped(){
  const {user}=useAuth();const location=useLocation();const closeTo=location.state?.wrappedFrom==='/app/dashboard'?'/app/dashboard':'/app/perfil';const [data,setData]=useState(null),[dataOwner,setDataOwner]=useState(null),[error,setError]=useState(''),[index,setIndex]=useState(0),[isDemo,setDemo]=useState(false),[motion,setMotion]=useState(false),[photo,setPhoto]=useState(false),[blob,setBlob]=useState(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[reload,setReload]=useState(0)
  const touch=useRef(null);const generation=useRef(0)
  useEffect(()=>{const m=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setMotion(!m.matches);update();m.addEventListener?.('change',update);return()=>m.removeEventListener?.('change',update)},[])
  useEffect(()=>{let live=true;setData(null);setDemo(false);setIndex(0);setBlob(null);setError('');supabase.rpc('pr_wrapped_2026').then(({data:d,error:e})=>{if(!live)return;if(e||!d)setError('No pudimos cargar tu resumen. Probá nuevamente.');else {setDataOwner(user?.id);setData(d)}}).catch(()=>live&&setError('No pudimos cargar tu resumen.'));return()=>{live=false;generation.current++}},[user?.id,reload])
- const current=isDemo?demo:data;const slides=useMemo(()=>current&&(isDemo||data?.open)?buildSlides(current):[],[current,isDemo,data?.open]);const slide=slides[index];const last=index===slides.length-1
+ const current=isDemo?demo:data;const slides=useMemo(()=>current&&(isDemo||data?.open)?buildSlides(current,isDemo?'demo-2026':String(user?.id||'')):[],[current,isDemo,data?.open,user?.id]);const slide=slides[index];const last=index===slides.length-1
  const go=d=>{setIndex(i=>Math.max(0,Math.min(slides.length-1,i+d)));setBlob(null);generation.current++}
  async function publish(){if(!data?.admin||busy)return;setBusy(true);setNotice('');try{const {data:d,error:e}=await supabase.rpc('pr_wrapped_2026',{p_publish:!data.published});if(e||!d)throw Error();setData(d);setNotice(d.published?'Publicación programada desde el 1 de diciembre.':'Acceso de alumnos pausado.')}catch{setNotice('No se pudo modificar la publicación.')}finally{setBusy(false)}}
  async function prepare(){const token=++generation.current;setBusy(true);setNotice('');try{const b=await renderPlaque(current,photo,isDemo);if(token===generation.current){setBlob(b);setNotice('Placa lista. Elegí descargar o compartir.')}}catch(e){if(token===generation.current)setNotice(e.message==='PHOTO_UNAVAILABLE'?'No pudimos incorporar tu foto. Desmarcá la opción para generar la placa sin ella.':'No se pudo generar la placa. Probá nuevamente.')}finally{setBusy(false)}}
@@ -81,9 +94,13 @@ export default function Wrapped(){
   <div className="prw-content" key={slide.id}>
    {slide.id==='intro'&&current.photo&&!isDemo&&<img className="prw-avatar" src={current.photo} alt="Tu foto de perfil" referrerPolicy="no-referrer" onError={e=>e.currentTarget.hidden=true}/>}
    <p className="prw-kicker">{slide.kicker}</p>
+   {slide.humor&&<RollerGlyph type={slide.humor}/>}
+   {slide.song&&<VinylCard song={slide.song}/>}
    {slide.value!=null&&<div className="prw-number"><Count value={Number(slide.value)} decimals={slide.decimals} motion={motion}/><span>{slide.unit}</span></div>}
    {slide.big&&<h1>{slide.big}</h1>}<p className="prw-small">{slide.small}</p>
-   {last&&<div className="prw-actions">{current.photo&&!isDemo&&<label><input type="checkbox" checked={photo} onChange={e=>{setPhoto(e.target.checked);setBlob(null);generation.current++}}/> Incluir mi foto en la placa</label>}<button disabled={busy} onClick={prepare}>{busy?'Generando…':'Generar mi placa PNG'}</button>{blob&&<><button onClick={download}>Descargar PNG</button><button onClick={share}>Compartir</button></>}<button onClick={()=>go(-index)}>Ver de nuevo</button></div>}
+   {slide.badges&&<BadgeCollection badges={slide.badges}/>}
+   {slide.share&&<div className="prw-actions">{current.photo&&!isDemo&&<label><input type="checkbox" checked={photo} onChange={e=>{setPhoto(e.target.checked);setBlob(null);generation.current++}}/> Incluir mi foto en la placa</label>}<button disabled={busy} onClick={prepare}>{busy?'Generando…':'Generar mi placa PNG'}</button>{blob&&<><button onClick={download}>Descargar PNG</button><button onClick={share}>Compartir</button></>}</div>}
+   {last&&<div className="prw-actions"><button onClick={()=>go(-index)}>Ver de nuevo</button></div>}
   </div>
   {last&&motion&&<div aria-hidden="true" className="prw-confetti">{Array.from({length:18},(_,i)=><i key={i} style={{left:(i*37%100)+'%',animationDelay:(i%7)*.25+'s',background:['#F5C451','#F3F1EC','#191A20','#3CFFB8'][i%4]}}/>)}</div>}
   <div className="prw-controls"><button disabled={index===0} onClick={()=>go(-1)}>‹ Anterior</button><span className="prw-step">{index+1} / {slides.length}</span>{last?<Link className="prw-finish" to={closeTo}>Finalizar ✓</Link>:<button className="prw-next" onClick={()=>go(1)}>Seguir ›</button>}</div>
