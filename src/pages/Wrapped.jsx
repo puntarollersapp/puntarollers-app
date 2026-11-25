@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildSlides, fmt, personality, plaqueStats } from '../lib/wrapped'
 import { getBadgeImage } from '../lib/badges'
+import { createWrappedSound } from '../lib/wrappedSound'
 import './wrapped.css'
 
 const themes={dark:['#191A20','#F3F1EC','#FF0055'],fucsia:['#FF0055','#F3F1EC','#191A20'],ivory:['#F3F1EC','#191A20','#FF0055']}
@@ -74,7 +75,10 @@ function BadgeCollection({badges}){
 }
 export default function Wrapped(){
  const {user}=useAuth();const location=useLocation();const closeTo=location.state?.wrappedFrom==='/app/dashboard'?'/app/dashboard':'/app/perfil';const [data,setData]=useState(null),[dataOwner,setDataOwner]=useState(null),[error,setError]=useState(''),[index,setIndex]=useState(0),[isDemo,setDemo]=useState(false),[motion,setMotion]=useState(false),[photo,setPhoto]=useState(false),[blob,setBlob]=useState(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[reload,setReload]=useState(0)
- const touch=useRef(null);const generation=useRef(0)
+ const touch=useRef(null);const generation=useRef(0);const sound=useRef(null),soundToken=useRef(0);const [soundOn,setSoundOn]=useState(false)
+ const stopSound=()=>{soundToken.current++;sound.current?.stop();sound.current=null;setSoundOn(false)}
+ async function toggleSound(){if(soundOn){stopSound();return}const token=++soundToken.current;try{const track=await createWrappedSound();if(token!==soundToken.current){track.stop();return}sound.current=track;setSoundOn(true)}catch{if(token===soundToken.current)setNotice('No pudimos activar el audio en este dispositivo.')}}
+ useEffect(()=>{const hide=()=>{if(document.hidden)stopSound()};document.addEventListener('visibilitychange',hide);return()=>{document.removeEventListener('visibilitychange',hide);soundToken.current++;sound.current?.stop();sound.current=null}},[user?.id])
  useEffect(()=>{const m=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setMotion(!m.matches);update();m.addEventListener?.('change',update);return()=>m.removeEventListener?.('change',update)},[])
  useEffect(()=>{let live=true;setData(null);setDemo(false);setIndex(0);setBlob(null);setError('');supabase.rpc('pr_wrapped_2026').then(({data:d,error:e})=>{if(!live)return;if(e||!d)setError('No pudimos cargar tu resumen. Probá nuevamente.');else {setDataOwner(user?.id);setData(d)}}).catch(()=>live&&setError('No pudimos cargar tu resumen.'));return()=>{live=false;generation.current++}},[user?.id,reload])
  const current=isDemo?demo:data;const slides=useMemo(()=>current&&(isDemo||data?.open)?buildSlides(current,isDemo?'demo-2026':String(user?.id||'')):[],[current,isDemo,data?.open,user?.id]);const slide=slides[index];const last=index===slides.length-1
@@ -87,7 +91,7 @@ export default function Wrapped(){
  const [bg,fg,accent]=themes[slide.theme]||themes.dark
  return <StoryOverlay closeTo={closeTo} onStep={go}><section className="prw prw-story" style={{'--bg':bg,'--fg':fg,'--accent':accent}} onPointerDown={e=>{if(e.target.closest('button,a,input,label'))return;touch.current=e.clientX;}} onPointerUp={e=>{if(touch.current!==null){const dx=e.clientX-touch.current;if(Math.abs(dx)>45)go(dx<0?1:-1);touch.current=null}}} onPointerCancel={()=>{touch.current=null;}} onPointerLeave={()=>{touch.current=null;}}>
   <StoryAtmosphere/>
-  <div className="prw-top"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><div className="prw-top-label"><span>PR WRAPPED</span><strong>2026</strong></div><Link to={closeTo} aria-label="Cerrar Wrapped" className="prw-close">✕</Link></div>
+  <div className="prw-top"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><div className="prw-top-label"><span>PR WRAPPED</span><strong>2026</strong></div><div className="prw-top-actions"><button className="prw-audio" aria-label={soundOn?'Silenciar música de fondo':'Activar música de fondo'} aria-pressed={soundOn} onClick={toggleSound}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/>{soundOn?<><path d="M16 8a6 6 0 0 1 0 8M19 5a10 10 0 0 1 0 14"/></>:<path d="m17 9 5 6m0-6-5 6"/>}</svg></button><Link to={closeTo} aria-label="Cerrar Wrapped" className="prw-close">✕</Link></div></div>
   <div className="prw-bars" aria-label={'Historia '+(index+1)+' de '+slides.length}>{slides.map((s,i)=><button key={s.id} aria-label={'Ir a historia '+(i+1)} aria-current={i===index?'step':undefined} onClick={()=>{setIndex(i);setBlob(null);generation.current++}}><i className={i<=index?'active':''}/></button>)}</div>
   {data.admin&&<details className="prw-admin-panel"><summary>Administración</summary><div className="prw-admin"><button onClick={()=>{setDemo(x=>!x);setIndex(0);setBlob(null);setPhoto(false);generation.current++}}>{isDemo?'Ver mi resumen':'Demo ficticia'}</button><button disabled={busy} onClick={publish}>{data.published?'Pausar lanzamiento':'Programar lanzamiento'}</button></div></details>}
   {isDemo&&<p className="prw-demo">VISTA PREVIA · DATOS FICTICIOS</p>}
@@ -95,7 +99,7 @@ export default function Wrapped(){
    {slide.id==='intro'&&current.photo&&!isDemo&&<img className="prw-avatar" src={current.photo} alt="Tu foto de perfil" referrerPolicy="no-referrer" onError={e=>e.currentTarget.hidden=true}/>}
    <p className="prw-kicker">{slide.kicker}</p>
    {slide.humor&&<RollerGlyph type={slide.humor}/>}
-   {slide.song&&<VinylCard song={slide.song}/>}
+   {slide.song&&<VinylCard song={slide.song} onOpen={stopSound}/>}
    {slide.value!=null&&<div className="prw-number"><Count value={Number(slide.value)} decimals={slide.decimals} motion={motion}/><span>{slide.unit}</span></div>}
    {slide.big&&<h1>{slide.big}</h1>}<p className="prw-small">{slide.small}</p>
    {slide.badges&&<BadgeCollection badges={slide.badges}/>}
