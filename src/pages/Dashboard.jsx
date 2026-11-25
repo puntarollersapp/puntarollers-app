@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import useWrappedAccess from '../lib/useWrappedAccess'
 import { supabase } from '../lib/supabase'
 import AppLayout from '../layouts/AppLayout'
 import ChibiAvatarPortrait from '../features/avatar/components/ChibiAvatarPortrait'
@@ -385,6 +386,7 @@ const emptyUser = {
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth()
+  const wrappedAccess = useWrappedAccess(user?.id)
 
   const [profile, setProfile] = useState({
     ...emptyUser,
@@ -627,16 +629,16 @@ export default function Dashboard() {
           </p>
         </section>
 
-        <Link to="/app/wrapped" state={{wrappedFrom:'/app/dashboard'}} className="relative isolate block overflow-hidden rounded-[26px] border border-[#FF0055]/60 bg-[#191A20] p-5 text-[#F3F1EC] shadow-[0_12px_36px_#FF005522]">
+        {wrappedAccess&&<Link to="/app/wrapped" state={{wrappedFrom:'/app/dashboard'}} className="relative isolate block overflow-hidden rounded-[26px] border border-[#FF0055]/60 bg-[#191A20] p-5 text-[#F3F1EC] shadow-[0_12px_36px_#FF005522]">
           <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 -z-10 h-64 w-64 rounded-full bg-[#FF0055]/35 blur-3xl"/>
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 right-0 -z-10 h-36 w-64 -rotate-12 border-t-2 border-[#F3F1EC]/30 bg-gradient-to-r from-transparent via-[#FF0055]/40 to-transparent"/>
           <div className="flex items-center justify-between gap-3">
             <span className="text-[10px] font-black uppercase tracking-[.19em] text-[#FF91B5]">PR WRAPPED · 2026</span>
-            <span className="rounded-full border border-white/25 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest">{profile.role==='admin'?'Vista previa':'1 DIC'}</span>
+            <span className="rounded-full border border-white/25 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest">{wrappedAccess.admin?'Vista previa':'1 DIC'}</span>
           </div>
           <span className="mt-3 block text-[clamp(25px,7vw,36px)] font-black uppercase leading-[.95] tracking-tight">Tu año<br/>sobre ruedas.</span>
-          <span className="mt-4 block text-xs font-bold">{profile.role==='admin'?'Abrir mi Wrapped':'Descubrí tu historia'} <span aria-hidden="true">→</span></span>
-        </Link>
+          <span className="mt-4 block text-xs font-bold">{wrappedAccess.admin?'Abrir mi Wrapped':'Descubrí tu historia'} <span aria-hidden="true">→</span></span>
+        </Link>}
 
         <section className="pr-panel overflow-hidden relative">
           <div className="h-[150px] relative overflow-hidden bg-gradient-to-br from-[#221b0e] via-[#101018] to-[#08080d]">
