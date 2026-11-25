@@ -1026,16 +1026,21 @@ export default function Profile() {
         throw new Error(result.error)
       }
 
-      const { error } = await supabase
+      const { data: savedMediaRow, error } = await supabase
         .from('profiles')
         .update({
           [field]: result.url,
           updated_at: new Date().toISOString(),
         })
         .eq('id', profileId)
+        .select('id,foto,banner')
+        .maybeSingle()
 
       if (error) {
         throw new Error(error.message)
+      }
+      if (!savedMediaRow?.id || savedMediaRow[field] !== result.url) {
+        throw new Error('No se confirmó el guardado de la imagen en el servidor. Volvé a intentarlo.')
       }
 
       const nextUser = {
@@ -1160,14 +1165,14 @@ export default function Profile() {
         .from('profiles')
         .update(payload)
         .eq('id', profileId)
-        .select('id')
+        .select('id,foto,banner')
         .maybeSingle()
 
       if (error) {
         throw new Error(error.message)
       }
-      if (!savedProfile?.id) {
-        throw new Error('No se confirmó el guardado del perfil. Volvé a intentarlo.')
+      if (!savedProfile?.id || (fotoFile && savedProfile.foto !== foto) || (bannerFile && savedProfile.banner !== banner)) {
+        throw new Error('No se confirmó el guardado del perfil o de la imagen. Volvé a intentarlo.')
       }
 
       const nextUser = {
