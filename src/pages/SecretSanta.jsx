@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { isSantaAudience } from '../lib/prDecemberNavigation'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -20,6 +22,8 @@ export default function SecretSanta(){
  async function action(name,args={}){if(busy)return;setBusy(true);setError('');try{const d=await rpc(name,args);if(name==='pr_santa_reveal')setRecipient(d);else{setData(d);setEditing(false)}}catch(e){setError('No pudimos guardar el cambio. Intentá nuevamente.')}finally{setBusy(false)}}
  const e=data?.event||SCHEDULE,mine=data?.mine||{},stats=data?.stats||{},active=Boolean(e.visible),preview=Boolean(data?.admin)&&e.status==='scheduled',open=active&&e.status==='open',drawn=e.status==='drawn',participating=mine.participating===true
  const start=e.opens_at||'2026-12-01T00:00:00-03:00'
+ if(!isSantaAudience(user))return <Navigate to="/app/perfil" replace/>
+ if(!loading&&error&&!data&&user?.role!=='admin')return <AppLayout title="PR Secret Santa"><p role="alert" className="p-5 text-white/70">El taller no está disponible para este perfil.</p></AppLayout>
  return <AppLayout title="PR Secret Santa"><div className="mx-auto max-w-xl space-y-4 px-4 py-5 text-white"><style>{'@keyframes santa-snow{from{transform:translateY(-20px)}to{transform:translateY(260px)}}@keyframes santa-work{50%{transform:translateY(-7px) rotate(4deg)}}@media(prefers-reduced-motion:no-preference){.santa-flake{animation:santa-snow 7s linear infinite}.santa-worker{animation:santa-work 2s ease-in-out infinite}}'}</style>
  <header className="relative overflow-hidden rounded-[30px] border border-amber-200/20 bg-gradient-to-br from-[#153b2b] via-[#10291e] to-[#0a1711] p-5 text-center shadow-xl">
  <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">{Array.from({length:18},(_,i)=><span key={i} className="santa-flake absolute text-white/30" style={{left:(i*37%100)+'%',top:(i*17%80)+'%',animationDelay:-(i%7)+'s'}}>✦</span>)}</div><div className="relative"><p className="text-[10px] font-black tracking-[.25em] text-amber-200">PUNTA ROLLERS · NAVIDAD 2026</p><div aria-hidden="true" className="my-5 flex items-center justify-center gap-4 text-5xl"><span className="santa-worker">🧝</span><span className="santa-worker" style={{animationDelay:'.4s'}}>🎁</span><span className="santa-worker" style={{animationDelay:'.8s'}}>🧝‍♀️</span></div><h1 className="text-3xl font-black tracking-tight text-amber-100">PR Secret Santa</h1><p className="mt-2 text-sm text-white/80">La magia de regalar llega sobre ruedas.</p><p className="mt-4 text-xs font-bold text-amber-200">{drawn?'¡Los regalos están en camino!':'Los duendes están preparando el taller…'}</p></div></header>
