@@ -90,6 +90,12 @@ begin
     ) select case when count(*)>0 then jsonb_build_object('count',sum(count),'distances',jsonb_agg(jsonb_build_object('km',distancia_km,'count',count,'firstSeconds',first_seconds,'lastSeconds',last_seconds,'bestSeconds',best_seconds,'bestPace',best_seconds/distancia_km,'bestSpeed',3600*distancia_km/best_seconds,'timeReductionPct',case when count>1 then 100.0*(first_seconds-last_seconds)/first_seconds end) order by distancia_km)) end from by_distance),
     'goals',(select nullif(count(*),0) from public.pr_performance_objetivos where alumno_id=me.id and eliminado is not true and completado_en>=lo and completado_en<hi),
     'frames',(select case when count(*)>0 then jsonb_build_object('frames',count(*),'titles',jsonb_agg(c.title order by f.granted_at)) end from public.pr_profile_frames f join public.pr_collectible_frames c on c.code=f.frame_code where f.profile_id=me.id and f.revoked_at is null and f.granted_at>=lo and f.granted_at<hi),
+    'badges',(select jsonb_agg(b.title order by b.first_at,b.title) from (
+      select min(trim(titulo)) as title,min(fecha) as first_at
+      from public.actividad_pr where alumno_id=me.id and tipo='Insignia' and eliminado is not true
+      and fecha>=lo and fecha<hi and nullif(trim(titulo),'') is not null
+      group by lower(trim(titulo))
+    ) b),
     'awards',case when exists(select 1 from public.pr_awards_settings where singleton and results_revealed) then (
       select jsonb_agg(jsonb_build_object('category',cat.title,'recognition',case when w.finalist_id is not null then 'winner' else 'finalist' end))
       from public.pr_awards_candidates c join public.pr_awards_finalists f on f.candidate_id=c.id
