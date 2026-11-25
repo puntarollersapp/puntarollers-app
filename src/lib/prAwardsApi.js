@@ -12,7 +12,7 @@ export async function getAwardsCategories() {
  return data || []
 }
 export async function getAwardsFinalists() {
- const {data,error}=await supabase.from('pr_awards_finalists').select('id,category_id,candidate_id,finalist_position').order('finalist_position')
+ const {data,error}=await supabase.rpc('pr_awards_public_finalists')
  if(error) throw error
  return data || []
 }
@@ -27,7 +27,10 @@ export async function submitAwardsSuggestion(title,description) {
  return data
 }
 export async function castAwardsVote(finalistId) {
- const {data,error}=await supabase.rpc('pr_awards_cast_vote',{p_finalist:finalistId})
+ const request=crypto.randomUUID()
+ const send=()=>supabase.rpc('pr_awards_cast_vote_once',{p_finalist:finalistId,p_request:request})
+ let {data,error}=await send()
+ if(error&&/fetch|network|timeout/i.test(error.message||''))({data,error}=await send())
  if(error) throw error
  return data
 }
