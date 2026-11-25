@@ -23,25 +23,25 @@ const tracks={
 };
 const song=(a)=>({title:a[0],artist:a[1],url:'https://open.spotify.com/track/'+a[2],description:a[3]});
 const jokeBank=[
- {id:'rotate',big:'¿Y si nos rotás un poquito?',small:'Atentamente: tus ruedas.',icon:'wheel'},
- {id:'vacation',big:'Tus patines quieren vacaciones.',small:'Pero están dispuestos a negociar otra salida.',icon:'skate'},
- {id:'new-wheels',big:'No es una indirecta…',small:'Tus patines dicen que unas ruedas nuevas les quedarían divinas.',icon:'wheel'},
- {id:'bonus',big:'Tu freno pide aguinaldo.',small:'Es una sugerencia del sindicato de patines.',icon:'brake'},
- {id:'union',big:'Tus ruedas quieren sindicalizarse.',small:'Su primer reclamo: una rotación.',icon:'wheel'},
- {id:'talk',big:'Solo una conversación normal…',small:'Hasta que alguien menciona patines.',icon:'skate'},
- {id:'snack',big:'Patinar. Agua. Repetir.',small:'El plan también incluye una merienda, obvio.',icon:'skate'},
- {id:'brake',big:'Tu taco merece un respiro.',small:'Un saludo de parte del freno. No es un diagnóstico mecánico.',icon:'brake'},
- {id:'distance',big:'Tus ruedas tienen mucho para contar.',small:'Si hablaran, seguro pedirían una pausa y un cafecito.',icon:'wheel',when:d=>Number(d.activity?.km)>=50},
- {id:'practice',big:'Tus conos ya te conocen.',small:'Hasta se preguntan cuándo vuelve el próximo entrenamiento.',icon:'skate',when:d=>Number(d.duties?.approved)>0},
- {id:'clock',big:'El cronómetro te tiene fichado.',small:'Dice que el próximo año vuelve por la revancha.',icon:'brake',when:d=>Number(d.performance?.count)>0},
- {id:'shifter',big:'Modo Shifter: activado.',small:'Tus patines dicen que entrenar también cuenta como aventura.',icon:'skate',when:d=>Boolean(d.shifter?.category||d.shifter?.completed)}
+ {id:'rotate',big:'Tus ruedas te piden un favor.',small:'En 2027, rotalas de vez en cuando. ¡Siempre las mismas terminan haciendo el trabajo pesado!',icon:'wheel'},
+ {id:'vacation',big:'Tus patines quieren vacaciones.',small:'El problema es que, cada vez que decís «una vueltita más», les cancelás los planes.',icon:'skate'},
+ {id:'new-wheels',big:'Tus patines ya hicieron su carta a Papá Noel.',small:'Pidieron ruedas nuevas. Dicen que no es una indirecta… pero vos entendiste.',icon:'wheel'},
+ {id:'bonus',big:'Tu freno quiere cobrar aguinaldo.',small:'Dice que, si tiene que trabajar en cada bajada, merece un extra a fin de año.',icon:'brake'},
+ {id:'union',big:'Tus ruedas quieren formar un sindicato.',small:'Su primer reclamo es una rotación y el segundo, que dejes de decir «es la última vuelta».',icon:'wheel'},
+ {id:'talk',big:'¿Podés tener una conversación sin hablar de patines?',small:'El oráculo dice que sí. Hasta que alguien menciona ruedas y terminás explicándole hasta cómo se frena en T.',icon:'skate'},
+ {id:'snack',big:'Tus patines conocen tu debilidad.',small:'La mejor parte de una rodada es la excusa para ir a comer algo después. Ellos también lo saben.',icon:'skate'},
+ {id:'brake',big:'Tu taco también tiene deseos para 2027.',small:'Pide que practiques otras frenadas. A veces quiere descansar y dejar que las ruedas hagan lo suyo.',icon:'brake'},
+ {id:'distance',big:'Tus ruedas ya tienen historias para un libro.',small:'Con los kilómetros que registraste, podrían escribir sus memorias. El título: «Una vueltita más».',icon:'wheel',when:d=>Number(d.activity?.km)>=50},
+ {id:'practice',big:'Los conos del entrenamiento te mandan saludos.',small:'Con tantos deberes aprobados, ya te consideran parte de la familia. Dicen que te esperan en 2027.',icon:'skate',when:d=>Number(d.duties?.approved)>0},
+ {id:'clock',big:'El cronómetro quiere la revancha.',small:'Después de tus tomas de tiempo, se quedó pensando qué marca vas a conseguir el próximo año.',icon:'brake',when:d=>Number(d.performance?.count)>0},
+ {id:'shifter',big:'Tus patines escuchan «Shifter» y se ponen nerviosos.',small:'Dicen que, cuando preparás un desafío, nunca saben cuántas vueltas les esperan.',icon:'skate',when:d=>Boolean(d.shifter?.category||d.shifter?.completed)}
 ];
 function hash(s){let n=2166136261;for(const ch of String(s)){n=Math.imul(n^ch.charCodeAt(0),16777619)}return n>>>0}
 export function humorSlides(d,seed=''){
  const key=seed||[d.year,d.name,d.lastInitial].join('|');
  const eligible=jokeBank.filter(j=>!j.when||j.when(d));
  const chosen=eligible.sort((a,b)=>hash(key+'|'+a.id)-hash(key+'|'+b.id)).slice(0,3);
- return chosen.map((j,i)=>({id:'humor-'+j.id,theme:['fucsia','ivory','dark'][i],kicker:'CONFESIONES SOBRE RUEDAS · '+(i+1)+'/3',big:j.big,small:j.small,humor:j.icon}));
+ return chosen.map((j,i)=>({id:'humor-'+j.id,theme:['fucsia','ivory','dark'][i],kicker:'El oráculo roller',oracleNumber:i+1,big:j.big,small:j.small,humor:j.icon}));
 }
 const badgeKey=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
 export function buildSlides(d,seed=''){
@@ -70,7 +70,7 @@ export function buildSlides(d,seed=''){
  s.push({id:'soundtrack',theme:'dark',kicker:'TU SOUNDTRACK ROLLER · 2026',song:song(tracks[personality(d)]||tracks['El comienzo de algo grande']),small:'Una recomendación elegida según tu personalidad roller, no tu historial de escucha.'});
  s.push(...humorSlides(d,seed));
  s.push({id:'believe',theme:'fucsia',kicker:'ASÍ SE SIENTEN TUS PATINES CUANDO RODÁS',song:song(['Believe','Cher','17mBmo8BfRtqRwm1R2cBVa','Porque cuando las ruedas empiezan a girar, todo se siente mejor.']),small:'El himno de todos los rollers PR.'});
- s.push({id:'outro',theme:'fucsia',kicker:'Gracias por ser parte de Punta Rollers',big:'2027: LA HISTORIA CONTINÚA',small:'Compartí tu año sobre ruedas.',share:true});
+ s.push({id:'outro',theme:'fucsia',kicker:'Gracias por ser parte de Punta Rollers',big:'2027: LA HISTORIA CONTINÚA',small:'Compartí tu PR Wrapped en las historias de Instagram o en tus redes. ¡Mostrale al mundo tu año sobre ruedas!',share:true});
  s.push({id:'flexion',theme:'fucsia',kicker:'Y RECORDÁ, COMO DICE CLAUDIO…',big:'¡FLEXIONEN!',small:'Por un 2027 más flexionado, con buena postura y muchísimos kilómetros felices.',humor:'flex',final:true});
  return s;
 }
