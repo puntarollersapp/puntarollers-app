@@ -613,7 +613,7 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="pr-page space-y-7 animate-page-enter">
+      <div className="pr-page pr-desktop-dashboard space-y-7 animate-page-enter">
         <section>
           <p className="section-label">
             Mi comunidad PR
