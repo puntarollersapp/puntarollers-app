@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 
 /** All reads are from explicit public-facing awards tables. Never query private profiles here. */
 export async function getAwardsDirectory() {
- const {data,error}=await supabase.from('pr_awards_candidates').select('id,display_name,public_photo_url').order('display_name')
+ const {data,error}=await supabase.rpc('pr_awards_public_directory')
  if(error) throw error
  return data || []
 }
@@ -52,6 +52,12 @@ export async function getAwardsPublicStatus() {
 /** Public, aggregated, read-only live skating podium; no individual activities exposed. */
 export async function getAwardsKmTop5(){
  const {data,error}=await supabase.rpc('pr_awards_public_km_top6')
+ if(error) throw error
+ return data||[]
+}
+
+export async function getAwardsRevealedWinners(){
+ const {data,error}=await supabase.rpc('pr_awards_revealed_winners')
  if(error) throw error
  return data||[]
 }
