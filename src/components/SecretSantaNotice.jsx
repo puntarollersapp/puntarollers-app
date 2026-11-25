@@ -1,0 +1,17 @@
+import {useEffect,useState} from 'react'
+import {Link,useLocation} from 'react-router-dom'
+import {useAuth} from '../lib/auth'
+import {supabase} from '../lib/supabase'
+import {useDecemberNavigation} from '../lib/prDecemberNavigation'
+
+export default function SecretSantaNotice(){
+ const {user}=useAuth(),{pathname}=useLocation(),season=useDecemberNavigation(),[state,setState]=useState(null),[modal,setModal]=useState(false)
+ const key='pr-santa-2026-'+user?.id
+ useEffect(()=>{let live=true;setState(null);setModal(false);if(!season||!user?.id||user.role==='familiar')return;async function refresh(){try{const {data,error}=await supabase.rpc('pr_santa_state');if(!live||error)return;setState(data);const e=data?.event,m=data?.mine;const notice=e?.status==='drawn'&&m?.participating===true&&!m?.revealed?'reveal':e?.status==='open'&&m?.participating==null?'invite':null;if(notice&&pathname.startsWith('/app/')&&pathname!='/app/secret-santa'&&!sessionStorage.getItem(key+'-'+notice)){setModal(notice)}else setModal(false)}catch{}}refresh();const timer=setInterval(refresh,15000);window.addEventListener('focus',refresh);return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',refresh)}},[season,user?.id,pathname,key])
+ function close(){try{sessionStorage.setItem(key+'-'+modal,'1')}catch{}setModal(false)}
+ if(!season||!state?.event?.visible||pathname==='/app/secret-santa')return null
+ const e=state.event,m=state.mine||{},reveal=e.status==='drawn'&&m.participating===true
+ const title=reveal?(m.revealed?'Tu amigo invisible':'¡Tu regalo misterioso está listo!'):m.participating===true?'¡Carta enviada!':e.status==='open'?'Escribile a Santa':'PR Secret Santa 2026'
+ return <>{['/app/perfil','/app/perfil-clasico','/app/dashboard'].includes(pathname)&&<Link to="/app/secret-santa" className="relative mx-auto mb-3 flex max-w-[520px] items-center gap-3 overflow-hidden rounded-2xl border border-amber-200/30 bg-gradient-to-r from-[#193c2a] to-[#391722] p-3 text-white"><span className="text-3xl" aria-hidden="true">{reveal?'🎁':'💌'}</span><span className="flex-1"><span className="block text-[10px] font-black tracking-widest text-amber-200">PR SECRET SANTA · 2026</span><span className="block font-black">{title}</span><span className="text-xs text-white/70">Clase especial · 16 de diciembre, 19:30</span></span><span aria-hidden="true">→</span></Link>}
+ {modal&&<div className="fixed inset-0 z-[145] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={title}><section className="w-full max-w-sm space-y-4 rounded-[30px] border border-amber-200/30 bg-gradient-to-br from-[#153b2b] to-[#2c141a] p-6 text-center text-white shadow-2xl"><div className="text-6xl" aria-hidden="true">{modal==='reveal'?'🎁':'💌'}</div><p className="text-xs font-black tracking-widest text-amber-200">PR SECRET SANTA</p><h2 className="text-2xl font-black">{title}</h2><p className="text-sm text-white/75">{modal==='reveal'?'Santa ya hizo el sorteo. Abrí tu regalo para descubrir a quién te toca sorprender.':'La Navidad llega sobre ruedas. Sumate al amigo invisible de Punta Rollers y escribí tu carta.'}</p><Link to="/app/secret-santa" onClick={close} className="block rounded-xl bg-[#b72b3c] p-3 font-black">{modal==='reveal'?'Abrir mi regalo':'Escribir mi carta'}</Link><button onClick={close} className="w-full p-2 text-sm text-white/70">Ahora no</button></section></div>}</>
+}
