@@ -22,8 +22,8 @@ declare
 begin
   if auth.uid() is null then raise exception 'Authentication required' using errcode='42501'; end if;
   select * into strict me from public.profiles where auth_user_id=auth.uid();
-  is_admin := me.role='admin';
-  if me.role='familiar' or (not is_admin and me.acceso_habilitado is distinct from true) then
+  is_admin := coalesce(me.role='admin',false);
+  if me.role is null or me.role not in ('admin','profesor','alumno') or (not is_admin and me.acceso_habilitado is distinct from true) then
     raise exception 'Access denied' using errcode='42501';
   end if;
   -- Mirror the existing platform's monthly access enforcement on the server.
