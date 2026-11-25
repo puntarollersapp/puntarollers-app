@@ -5,6 +5,8 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildSlides, fmt, personality, plaqueStats } from '../lib/wrapped'
 import { getBadgeImage } from '../lib/badges'
+import OracleShare from './OracleShare'
+import { isOracleSlide } from '../lib/oraclePlaque'
 import './wrapped.css'
 
 const themes={dark:['#191A20','#F3F1EC','#FF0055'],fucsia:['#FF0055','#F3F1EC','#191A20'],ivory:['#F3F1EC','#191A20','#FF0055']}
@@ -96,6 +98,7 @@ export default function Wrapped(){
    {slide.value!=null&&<div className="prw-number"><Count value={Number(slide.value)} decimals={slide.decimals} motion={motion}/><span>{slide.unit}</span></div>}
    {slide.big&&<h1>{slide.big}</h1>}<p className="prw-small">{slide.small}</p>
    {slide.badges&&<BadgeCollection badges={slide.badges}/>}
+   {isOracleSlide(slide)&&<OracleShare key={JSON.stringify([user?.id,isDemo,slide.id,slide.oracleNumber,slide.theme,slide.big,slide.small])} slide={slide}/>}
    {slide.share&&<div className="prw-actions">{current.photo&&!isDemo&&<label><input type="checkbox" checked={photo} onChange={e=>{setPhoto(e.target.checked);setBlob(null);generation.current++}}/> Incluir mi foto en la placa</label>}<button disabled={busy} onClick={prepare}>{busy?'Generando…':'Preparar mi historia para redes'}</button>{blob&&<><button onClick={download}>Guardar imagen para Instagram</button><button onClick={share}>Compartir en mis redes</button></>}</div>}
    {last&&<div className="prw-actions"><button onClick={()=>go(-index)}>Ver de nuevo</button></div>}
   </div>
