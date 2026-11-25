@@ -52,6 +52,7 @@ export default function AdminPersonalizadas({desktopCalendar=null}={}) {
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [calendarRevision,setCalendarRevision]=useState(0)
 
   const load = async () => {
     const [cfgRes, slotRes, resRes, studentsRes, passesRes, historyRes] = await Promise.all([
@@ -68,6 +69,7 @@ export default function AdminPersonalizadas({desktopCalendar=null}={}) {
     setStudents(studentsRes.data || [])
     setPasses(passesRes.data || [])
     setHistory(historyRes.data || [])
+    setCalendarRevision(v=>v+1)
   }
 
   useEffect(() => { load() }, [])
@@ -274,7 +276,7 @@ export default function AdminPersonalizadas({desktopCalendar=null}={}) {
 
         <div className="grid grid-cols-4 gap-2"><Stat label="Alumnos" value={students.length} /><Stat label="Turnos" value={futureSlots.length} /><Stat label="Reservas" value={upcomingReservations} /><div className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-[9px] font-black uppercase tracking-widest text-white/30">Estado</p><p className={`mt-2 text-xs font-black uppercase ${config?.reservas_habilitadas ? 'text-emerald-300' : 'text-red-300'}`}>{config?.reservas_habilitadas ? 'Abiertas' : 'Cerradas'}</p></div></div>
 
-        {desktopCalendar}
+        {desktopCalendar?.(calendarRevision)}
 
         <section className={`rounded-[28px] border p-5 ${config?.reservas_habilitadas ? 'border-emerald-300/20 bg-emerald-400/10' : 'border-red-300/20 bg-red-500/10'}`}><div className="flex items-center justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[.25em] text-white/45">Estado público</p><h2 className="mt-1 text-xl font-black">{config?.reservas_habilitadas ? 'Reservas abiertas' : 'Reservas cerradas'}</h2></div><button disabled={busy} onClick={toggle} className="rounded-2xl bg-white px-4 py-3 text-xs font-black text-black">{config?.reservas_habilitadas ? 'Cerrar' : 'Abrir'}</button></div>{config && <div className="mt-4 flex gap-2"><input value={config.mensaje_cerrado} onChange={(e) => setConfig({ ...config, mensaje_cerrado: e.target.value })} className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm" /><button onClick={async () => { const { error } = await supabase.from('pr_personal_config').update({ mensaje_cerrado: config.mensaje_cerrado }).eq('id', 1); setNotice(error ? error.message : 'Mensaje guardado.') }} className="rounded-2xl border border-white/10 px-4 text-xs font-black">Guardar</button></div>}</section>
 

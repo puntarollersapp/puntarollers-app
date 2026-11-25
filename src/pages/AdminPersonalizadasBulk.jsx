@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDesktopStandalone } from '../layouts/AppLayout'
 import DesktopPersonalCalendar from '../components/admin/DesktopPersonalCalendar'
 import AdminPersonalizadas from './AdminPersonalizadas'
@@ -44,30 +44,27 @@ const STATE_STYLE = {
   ausente: 'border-orange-300/20 bg-orange-400/10 text-orange-200',
 }
 
-function WeeklyRoster({ onClose }) {
+function WeeklyRoster({ onClose, startWeek }) {
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState([])
   const [week, setWeek] = useState(null)
   const [error, setError] = useState('')
 
-  useState(() => {
+  useEffect(() => {
     let alive = true
     const run = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10)
-        const { data: futureSlots, error: slotError } = await supabase
-          .from('pr_personal_disponibilidad')
-          .select('id,fecha,hora_inicio,hora_fin,habilitado')
-          .gte('fecha', today)
-          .order('fecha')
-          .order('hora_inicio')
+        let query=supabase.from('pr_personal_disponibilidad').select('id,fecha,hora_inicio,hora_fin,habilitado').gte('fecha',startWeek||today)
+        if(startWeek)query=query.lte('fecha',shiftIso(startWeek,6))
+        const { data: futureSlots, error: slotError } = await query.order('fecha').order('hora_inicio')
         if (slotError) throw slotError
 
         const first = (futureSlots || []).find((slot) => slot.habilitado) || futureSlots?.[0]
-        const anchor = first?.fecha || today
+        const anchor = startWeek || first?.fecha || today
         const start = mondayFor(anchor)
         const end = shiftIso(start, 6)
-        setWeek({ start, end })
+        if(alive)setWeek({ start, end })
 
         const weekSlots = (futureSlots || []).filter((slot) => slot.fecha >= start && slot.fecha <= end)
         const ids = weekSlots.map((slot) => slot.id)
@@ -99,7 +96,7 @@ function WeeklyRoster({ onClose }) {
     }
     run()
     return () => { alive = false }
-  })
+  },[startWeek])
 
   const active = rows.filter((row) => ['reservada', 'realizada', 'ausente'].includes(row.estado))
   const inactive = rows.filter((row) => !['reservada', 'realizada', 'ausente'].includes(row.estado))
@@ -137,6 +134,7 @@ export default function AdminPersonalizadasBulk() {
   const desktop=useDesktopStandalone()
   const [open, setOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
+  const [rosterWeek,setRosterWeek]=useState(null)
   const [date, setDate] = useState('')
   const [times, setTimes] = useState([])
   const [repeatDates, setRepeatDates] = useState([])
@@ -219,14 +217,14 @@ export default function AdminPersonalizadasBulk() {
 
   return (
     <>
-      <AdminPersonalizadas desktopCalendar={desktop?<DesktopPersonalCalendar onAddDay={day=>{setDate(day);setTimes([]);setRepeatDates([]);setRepeatInput('');setMessage('');setOpen(true)}} onOpenRoster={()=>setRosterOpen(true)}/>:null} />
+      <AdminPersonalizadas desktopCalendar={desktop?refreshKey=><DesktopPersonalCalendar refreshKey={refreshKey} onAddDay={day=>{setDate(day);setTimes([]);setRepeatDates([]);setRepeatInput('');setMessage('');setOpen(true)}} onOpenRoster={week=>{setRosterWeek(week);setRosterOpen(true)}}/>:null} />
 
       <div className="fixed bottom-5 right-5 z-[100] flex flex-col items-end gap-2">
-        <button type="button" onClick={() => setRosterOpen(true)} className="rounded-2xl border border-white/15 bg-[#171717]/95 px-5 py-3 text-sm font-black text-white shadow-[0_20px_60px_rgba(0,0,0,.5)] backdrop-blur-xl active:scale-[.98]">📋 Agenda semanal</button>
+        <button type="button" onClick={() => {setRosterWeek(null);setRosterOpen(true)}} className="rounded-2xl border border-white/15 bg-[#171717]/95 px-5 py-3 text-sm font-black text-white shadow-[0_20px_60px_rgba(0,0,0,.5)] backdrop-blur-xl active:scale-[.98]">📋 Agenda semanal</button>
         <button type="button" onClick={() => setOpen(true)} className="rounded-2xl border border-red-300/25 bg-red-500 px-5 py-3 text-sm font-black text-white shadow-[0_20px_60px_rgba(0,0,0,.5)] active:scale-[.98]">+ Cargar varios horarios</button>
       </div>
 
-      {rosterOpen && <WeeklyRoster onClose={() => setRosterOpen(false)} />}
+      {rosterOpen && <WeeklyRoster startWeek={rosterWeek} onClose={() => setRosterOpen(false)} />}
 
       {open && (
         <div className="fixed inset-0 z-[120] overflow-y-auto bg-black/80 p-4 backdrop-blur-md">
