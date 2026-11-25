@@ -1,4 +1,5 @@
 const BADGE_IMAGES = {
+  '6 km solidarios · juntos por valentino': '/insignias-pr/6km-solidarios-valentino.webp',
   'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k-1.png?v=4',
   'primer evento pr': '/insignias-pr/primer-evento-pr.png',
   'rodador frecuente': '/insignias-pr/rodador-frecuente.png',
