@@ -26,6 +26,16 @@ begin
   if me.role='familiar' or (not is_admin and me.acceso_habilitado is distinct from true) then
     raise exception 'Access denied' using errcode='42501';
   end if;
+  -- Mirror the existing platform's monthly access enforcement on the server.
+  if not is_admin and me.role <> 'profesor' and not coalesce(me.exento_mensualidad,false)
+     and not coalesce(me.es_solo_personalizadas,false)
+     and extract(day from statement_timestamp() at time zone 'America/Montevideo') >= 11
+     and exists(select 1 from public.pr_tesoreria_config where id=1 and enforcement_enabled)
+     and exists(select 1 from public.pr_mensualidades m where m.alumno_id=me.id
+       and m.periodo=date_trunc('month',statement_timestamp() at time zone 'America/Montevideo')::date
+       and lower(coalesce(m.estado,'')) not in ('pagado','bonificado','acuerdo')
+       and coalesce(m.gracia_hasta,m.vencimiento)<(statement_timestamp() at time zone 'America/Montevideo')::date)
+  then raise exception 'Access denied' using errcode='42501'; end if;
   if p_publish is not null then
     if not is_admin then raise exception 'Admin required' using errcode='42501'; end if;
     update public.pr_wrapped_2026_settings set published=p_publish where singleton;
