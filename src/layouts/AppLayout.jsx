@@ -18,14 +18,16 @@ function montevideoDateParts(date=new Date()){const parts=Object.fromEntries(new
 function AccessBlocked({profile,onLogout,onPublicHome}){return <div className="min-h-[calc(100vh-72px)] px-4 py-8 flex items-center justify-center"><section className="w-full max-w-md rounded-[32px] border border-red-400/20 bg-red-500/10 p-6"><div className="text-3xl">🔒</div><h1 className="font-display text-3xl text-white mt-3">Tu mensualidad está vencida</h1><p className="text-white/55 text-sm mt-4">Hola, {profile?.nombre||'alumno'}. Para volver a usar los servicios privados necesitás regularizarla.</p>{profile?.mensualidadHasta&&<p className="mt-3 text-xs text-white/35">Venció el {formatExpirationDate(profile.mensualidadHasta)}</p>}<a href={buildWhatsAppLink(profile)} target="_blank" rel="noreferrer" className="btn-gold w-full mt-6 flex justify-center">Regularizar por WhatsApp</a><button onClick={onPublicHome} className="w-full mt-3 py-3 text-white">Ir a la página pública</button><button onClick={onLogout} className="w-full mt-2 py-2 text-white/40 text-xs">Cerrar sesión</button></section></div>}
 
 const DESKTOP_MEDIA='(min-width: 1100px)'
-const DESKTOP_KEY='pr-next-desktop-preview-admin-claudio'
+const desktopKey=user=>user?.id==='admin-claudio'?'pr-next-desktop-preview-admin-claudio':'pr-next-desktop-view:'+String(user?.id||'')
 function useDesktopPreview(user){
- const eligible=user?.id==='admin-claudio'&&user?.role==='admin'
+ const eligible=Boolean(user?.id)&&['admin','profesor','alumno'].includes(user?.role)&&!isTransitionStudent(user)
+ const key=desktopKey(user)
  const [wide,setWide]=useState(()=>typeof window!=='undefined'&&window.matchMedia(DESKTOP_MEDIA).matches)
- const [classic,setClassic]=useState(()=>{try{return localStorage.getItem(DESKTOP_KEY)==='classic'}catch{return false}})
+ const [classic,setClassic]=useState(()=>{try{return localStorage.getItem(key)==='classic'}catch{return false}})
  useEffect(()=>{const media=window.matchMedia(DESKTOP_MEDIA);const update=()=>setWide(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[])
+ useEffect(()=>{try{setClassic(localStorage.getItem(key)==='classic')}catch{setClassic(false)}},[key])
  const available=eligible&&wide
- function toggle(){const next=!classic;setClassic(next);try{localStorage.setItem(DESKTOP_KEY,next?'classic':'desktop')}catch{}}
+ function toggle(){const next=!classic;setClassic(next);try{localStorage.setItem(key,next?'classic':'desktop')}catch{}}
  return {available,desktop:available&&!classic,toggle}
 }
 function DesktopRestore({onClick}){return <div className="pr-desktop-restore"><button type="button" onClick={onClick}>▣ Activar vista escritorio</button></div>}
