@@ -11,7 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check:admin-routes": "node scripts/check-admin-routes.mjs",
-    "prebuild": "npm run check:admin-routes"
+    "check:wrapped": "node scripts/check-wrapped.mjs",
+    "prebuild": "npm run check:admin-routes && npm run check:wrapped"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
