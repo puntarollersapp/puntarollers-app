@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { isSantaAudience } from '../lib/prDecemberNavigation'
+import { isSantaAudience, isDecemberNavigation } from '../lib/prDecemberNavigation'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -22,7 +22,7 @@ export default function SecretSanta(){
  async function action(name,args={}){if(busy)return;setBusy(true);setError('');try{const d=await rpc(name,args);if(name==='pr_santa_reveal')setRecipient(d);else{setData(d);setEditing(false)}}catch(e){setError('No pudimos guardar el cambio. Intentá nuevamente.')}finally{setBusy(false)}}
  const e=data?.event||SCHEDULE,mine=data?.mine||{},stats=data?.stats||{},active=Boolean(e.visible),preview=Boolean(data?.admin)&&e.status==='scheduled',open=active&&e.status==='open',drawn=e.status==='drawn',participating=mine.participating===true
  const start=e.opens_at||'2026-12-01T00:00:00-03:00'
- if(!isSantaAudience(user))return <Navigate to="/app/perfil" replace/>
+ if(!isSantaAudience(user)||(user?.role!=='admin'&&!isDecemberNavigation()))return <Navigate to="/app/perfil" replace/>
  if(!loading&&error&&!data&&user?.role!=='admin')return <AppLayout title="PR Secret Santa"><p role="alert" className="p-5 text-white/70">El taller no está disponible para este perfil.</p></AppLayout>
  return <AppLayout title="PR Secret Santa"><div className="mx-auto max-w-xl space-y-4 px-4 py-5 text-white"><style>{'@keyframes santa-snow{from{transform:translateY(-20px)}to{transform:translateY(260px)}}@keyframes santa-work{50%{transform:translateY(-7px) rotate(4deg)}}@media(prefers-reduced-motion:no-preference){.santa-flake{animation:santa-snow 7s linear infinite}.santa-worker{animation:santa-work 2s ease-in-out infinite}}'}</style>
  <header className="relative overflow-hidden rounded-[30px] border border-amber-200/20 bg-gradient-to-br from-[#153b2b] via-[#10291e] to-[#0a1711] p-5 text-center shadow-xl">
