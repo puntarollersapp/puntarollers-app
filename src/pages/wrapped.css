@@ -53,34 +53,49 @@
 @media(max-height:650px){.prw-overlay .prw{gap:5px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(8px,env(safe-area-inset-bottom))}.prw-overlay .prw-top{min-height:44px}.prw-overlay .prw-top-label strong{font-size:18px}.prw-overlay .prw-logo{height:36px}.prw-overlay .prw-content{gap:8px;padding:4px 1px}.prw-overlay .prw-content h1{font-size:clamp(31px,8.5vw,55px)}.prw-overlay .prw-number{font-size:clamp(45px,14vw,88px)}.prw-overlay .prw-number span{font-size:21px;margin-top:6px}.prw-overlay .prw-avatar{width:52px;height:52px}.prw-overlay .prw-controls button,.prw-overlay .prw-finish{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.prw-prism,.prw-sparkles i{animation:none!important}}
 
-/* Wrapped: soundtrack, PR insignias and illustrated confessions. */
-.prw-vinyl-card{display:grid;grid-template-columns:clamp(76px,26vw,150px) minmax(0,1fr);align-items:center;gap:clamp(12px,4vw,25px);padding:clamp(12px,4vw,25px);background:#191A20;color:#F3F1EC;border:1px solid #fff3;border-radius:24px;box-shadow:0 16px 38px #0003;position:relative;overflow:hidden}
-.prw-vinyl-card::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(125deg,#FF005522,transparent 40%,#F3F1EC13 75%,transparent)}
-.prw-vinyl{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:repeating-radial-gradient(circle,#16161c 0 2px,#42424b 3px,#191a20 4px 6px);border:1px solid #ffffff33;box-shadow:0 6px 30px #0009;position:relative;isolation:isolate;animation:prw-record 15s linear infinite}
-.prw-vinyl i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0deg,#ffffff42 50deg,transparent 90deg,transparent 180deg,#ff91b54d 230deg,transparent 270deg)}
-.prw-vinyl b{position:relative;display:grid;place-items:center;background:#FF0055;border:1px solid #F3F1EC77;border-radius:50%;width:37%;height:37%;font-size:clamp(12px,3.3vw,20px);font-style:italic;font-weight:950}
-@keyframes prw-record{to{transform:rotate(360deg)}}
-.prw-song-info{position:relative;min-width:0;display:flex;flex-direction:column;gap:8px}
-.prw-song-info>span{font-size:9px;letter-spacing:.14em;font-weight:850;color:#FF91B5}
-.prw-overlay .prw-song-info h1{font-size:clamp(22px,6vw,40px);line-height:1.02;text-transform:none;letter-spacing:-.035em}
-.prw-song-info p{font-size:15px;font-weight:750;margin:0}
-.prw-song-info small{font-size:12px;line-height:1.35;color:#F3F1ECCC}
-.prw-spotify{display:flex;align-items:center;gap:7px;min-height:40px;width:fit-content;max-width:100%;font-size:11px;font-weight:800;color:#F3F1EC;text-decoration:none}
-.prw-spotify svg{width:21px;height:21px;flex-shrink:0}
-.prw-glyph{width:clamp(100px,38vw,190px);max-height:22dvh;aspect-ratio:1.83;position:relative;color:var(--fg);padding:8px;border-radius:18px;background:linear-gradient(145deg,color-mix(in srgb,var(--fg) 12%,transparent),transparent);border:1px solid color-mix(in srgb,var(--fg) 28%,transparent);overflow:hidden}
-.prw-glyph svg{height:100%;width:100%;display:block;position:relative;z-index:1;filter:drop-shadow(0 4px 7px #0002)}
-.prw-glyph-sheen{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,#fff4 46%,#ff91b52a 52%,transparent 68%);transform:translateX(-120%);animation:prw-sheen 4.5s ease-in-out infinite}
-@keyframes prw-sheen{0%,30%{transform:translateX(-120%)}80%,100%{transform:translateX(120%)}}
+
+/* Final editorial pass: centered stories, no decorative figurative illustrations. */
+.prw-overlay .prw-content{align-items:center;text-align:center;justify-content:safe center;gap:clamp(12px,2.5dvh,22px)}
+.prw-overlay .prw-content h1{width:100%;max-width:20ch;text-align:center;text-wrap:balance;font-size:clamp(41px,min(12vw,11dvh),105px);line-height:.98;letter-spacing:-.055em;font-weight:950;overflow-wrap:anywhere;margin-inline:auto}
+.prw-overlay .prw-kicker{max-width:39ch;line-height:1.45;text-align:center;margin-inline:auto}
+.prw-overlay .prw-small{width:100%;max-width:35ch;margin-inline:auto;text-align:center;text-wrap:pretty;line-height:1.4;font-weight:600}
+.prw-overlay .prw-number{width:100%;text-align:center;font-size:clamp(64px,min(21vw,19dvh),165px);letter-spacing:-.075em}
+.prw-overlay .prw-number span{max-width:23ch;margin:12px auto 0;text-wrap:balance;line-height:1.04}
+.prw-overlay .prw-avatar{margin-inline:auto}
+.prw-overlay .prw-actions{justify-content:center;align-items:center;width:100%}
+.prw-overlay .prw-actions label{justify-content:center;text-align:center}
+.prw-overlay .prw-admin-panel summary{margin-inline:auto}
+.prw-overlay .prw-admin-panel .prw-admin{justify-content:center}
+.prw-overlay .prw-demo{text-align:center}
+.prw-overlay .prw-wait{align-items:center;text-align:center}
+.prw-overlay .prw-wait h1{text-wrap:balance}
+.prw-overlay .prw-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.prw-overlay .prw-top-label{justify-self:center;white-space:nowrap}
+.prw-top-actions{display:flex;align-items:center;gap:6px;justify-self:end;flex-shrink:0}
+.prw-overlay .prw-top-actions .prw-theme-link{display:grid;place-items:center;width:42px;height:42px;padding:10px;border-radius:50%;border:1px solid currentColor;background:color-mix(in srgb,var(--bg) 70%,transparent)}
+.prw-theme-link svg{width:21px;height:21px}
+.prw-overlay .prw-editorial{position:relative;isolation:isolate}
+.prw-editorial::before{content:'';position:absolute;z-index:-1;pointer-events:none;inset:8% 2%;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fg) 9%,transparent),transparent 67%);opacity:.85}
+.prw-editorial::after{content:'';position:absolute;z-index:-1;pointer-events:none;left:-9%;right:-9%;top:49%;height:32%;transform:skewY(-13deg);background:linear-gradient(110deg,transparent 10%,color-mix(in srgb,var(--fg) 8%,transparent) 45%,transparent 74%);border-top:1px solid color-mix(in srgb,var(--fg) 19%,transparent);border-bottom:1px solid color-mix(in srgb,var(--fg) 9%,transparent);animation:prw-editorial-glow 6s ease-in-out infinite alternate}
+@keyframes prw-editorial-glow{from{opacity:.4;transform:skewY(-13deg) translateY(-5%)}to{opacity:1;transform:skewY(-13deg) translateY(5%)}}
+.prw-overlay .prw-editorial h1{font-size:clamp(42px,min(13.5vw,12dvh),115px);max-width:15ch;letter-spacing:-.067em;text-transform:uppercase;text-shadow:0 6px 28px color-mix(in srgb,var(--bg) 26%,transparent)}
+.prw-overlay .prw-flexion h1{font-size:clamp(39px,12vw,112px);max-width:none;white-space:normal;overflow-wrap:normal;letter-spacing:-.067em;text-shadow:0 8px 36px #191A2044}
+.prw-overlay .prw-flexion .prw-small{font-size:clamp(18px,4.9vw,25px);max-width:29ch}
+.prw-overlay .prw-flexion .prw-kicker{letter-spacing:.16em}
+.prw-music-story{width:100%;max-width:620px;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2dvh,20px);text-align:center;position:relative;padding:clamp(18px,5vw,36px) 10px;border-block:1px solid color-mix(in srgb,var(--fg) 25%,transparent);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fg) 7%,transparent),transparent 72%)}
+.prw-music-label{font-size:10px;letter-spacing:.22em;font-weight:850;opacity:.85}
+.prw-overlay .prw-music-story h1{font-size:clamp(38px,min(11vw,10dvh),86px);letter-spacing:-.045em;text-transform:none;max-width:17ch}
+.prw-artist{font-size:clamp(21px,6vw,34px);font-weight:750;margin:0}
+.prw-song-description{font-size:clamp(14px,4vw,20px);max-width:28ch;line-height:1.35;text-wrap:pretty;margin:0}
+.prw-overlay .prw-spotify,.prw-overlay .prw-theme-cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:10px 15px;font-weight:800;text-align:center;line-height:1.35;font-size:12px;text-decoration:none;border-radius:999px;border:1px solid currentColor}
+.prw-overlay .prw-spotify{background:var(--fg);color:var(--bg)}
+.prw-overlay .prw-theme-cta{font-size:11px;color:var(--fg);background:color-mix(in srgb,var(--fg) 6%,transparent);text-wrap:balance}
 .prw-badge-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:7px;max-height:32dvh;overflow-y:auto;overscroll-behavior:contain;padding:3px}
 .prw-badge{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;border:1px solid #d7b46850;border-radius:12px;padding:7px;background:linear-gradient(155deg,#d7b46819,#ffffff05);min-width:0}
 .prw-badge img{width:clamp(44px,13vw,72px);height:clamp(44px,13vw,72px);object-fit:contain}
 .prw-badge span{font-size:30px}.prw-badge small{font-size:10px;font-weight:750;line-height:1.2;overflow-wrap:anywhere}
-.prw-overlay .prw-content:has(.prw-glyph) h1{font-size:clamp(32px,min(9vw,9vh),74px)}
-@media(max-width:360px){.prw-vinyl-card{grid-template-columns:66px minmax(0,1fr);gap:10px;padding:12px}.prw-overlay .prw-song-info h1{font-size:21px}}
-@media(prefers-reduced-motion:reduce){.prw-vinyl,.prw-glyph-sheen{animation:none!important}}
 
-.prw-top-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.prw-overlay .prw-top-actions .prw-audio{border:1px solid currentColor;border-radius:50%;width:40px;height:40px;min-height:40px;padding:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 70%,transparent)}
-.prw-audio svg{width:20px;height:20px}
-.prw-audio[aria-pressed=true]{background:var(--fg)!important;color:var(--bg)!important}
-@media(max-width:360px){.prw-overlay .prw-logo{width:72px}.prw-top-actions{gap:4px}.prw-overlay .prw-top-actions .prw-audio{width:36px;height:36px;min-height:36px;padding:7px}.prw-overlay .prw-close{width:38px;height:38px}.prw-top-label{font-size:9px}}
+.prw-badge-list{width:100%;max-width:600px}
+@media(max-width:360px){.prw-overlay .prw-logo{width:70px}.prw-top-actions{gap:4px}.prw-overlay .prw-top-actions .prw-theme-link{width:36px;height:36px;padding:7px}.prw-overlay .prw-close{width:38px;height:38px}.prw-top-label{font-size:9px}.prw-overlay .prw-content h1{font-size:clamp(34px,11.8vw,47px)}.prw-overlay .prw-flexion h1{font-size:clamp(34px,11.4vw,44px)}}
+@media(max-height:650px){.prw-overlay .prw-content{gap:8px}.prw-overlay .prw-content h1{font-size:clamp(30px,min(10vw,9dvh),64px)}.prw-overlay .prw-flexion h1{font-size:clamp(34px,10vw,66px)}.prw-overlay .prw-number{font-size:clamp(48px,min(17vw,17dvh),100px)}.prw-music-story{gap:8px;padding:12px 6px}}
+@media(prefers-reduced-motion:reduce){.prw-editorial::after{animation:none!important}}
