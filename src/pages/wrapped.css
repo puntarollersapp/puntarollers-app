@@ -52,3 +52,29 @@
 @media(min-width:800px){.prw-overlay .prw{padding-left:max(32px,env(safe-area-inset-left));padding-right:max(32px,env(safe-area-inset-right))}.prw-overlay .prw-wait{align-items:center;text-align:center}}
 @media(max-height:650px){.prw-overlay .prw{gap:5px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(8px,env(safe-area-inset-bottom))}.prw-overlay .prw-top{min-height:44px}.prw-overlay .prw-top-label strong{font-size:18px}.prw-overlay .prw-logo{height:36px}.prw-overlay .prw-content{gap:8px;padding:4px 1px}.prw-overlay .prw-content h1{font-size:clamp(31px,8.5vw,55px)}.prw-overlay .prw-number{font-size:clamp(45px,14vw,88px)}.prw-overlay .prw-number span{font-size:21px;margin-top:6px}.prw-overlay .prw-avatar{width:52px;height:52px}.prw-overlay .prw-controls button,.prw-overlay .prw-finish{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.prw-prism,.prw-sparkles i{animation:none!important}}
+
+/* Wrapped: soundtrack, PR insignias and illustrated confessions. */
+.prw-vinyl-card{display:grid;grid-template-columns:clamp(76px,26vw,150px) minmax(0,1fr);align-items:center;gap:clamp(12px,4vw,25px);padding:clamp(12px,4vw,25px);background:#191A20;color:#F3F1EC;border:1px solid #fff3;border-radius:24px;box-shadow:0 16px 38px #0003;position:relative;overflow:hidden}
+.prw-vinyl-card::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(125deg,#FF005522,transparent 40%,#F3F1EC13 75%,transparent)}
+.prw-vinyl{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:repeating-radial-gradient(circle,#16161c 0 2px,#42424b 3px,#191a20 4px 6px);border:1px solid #ffffff33;box-shadow:0 6px 30px #0009;position:relative;isolation:isolate;animation:prw-record 15s linear infinite}
+.prw-vinyl i{position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0deg,#ffffff42 50deg,transparent 90deg,transparent 180deg,#ff91b54d 230deg,transparent 270deg)}
+.prw-vinyl b{position:relative;display:grid;place-items:center;background:#FF0055;border:1px solid #F3F1EC77;border-radius:50%;width:37%;height:37%;font-size:clamp(12px,3.3vw,20px);font-style:italic;font-weight:950}
+@keyframes prw-record{to{transform:rotate(360deg)}}
+.prw-song-info{position:relative;min-width:0;display:flex;flex-direction:column;gap:8px}
+.prw-song-info>span{font-size:9px;letter-spacing:.14em;font-weight:850;color:#FF91B5}
+.prw-overlay .prw-song-info h1{font-size:clamp(22px,6vw,40px);line-height:1.02;text-transform:none;letter-spacing:-.035em}
+.prw-song-info p{font-size:15px;font-weight:750;margin:0}
+.prw-song-info small{font-size:12px;line-height:1.35;color:#F3F1ECCC}
+.prw-spotify{display:flex;align-items:center;gap:7px;min-height:40px;width:fit-content;max-width:100%;font-size:11px;font-weight:800;color:#F3F1EC;text-decoration:none}
+.prw-spotify svg{width:21px;height:21px;flex-shrink:0}
+.prw-glyph{width:clamp(100px,38vw,190px);max-height:22dvh;aspect-ratio:1.83;position:relative;color:var(--fg);padding:8px;border-radius:18px;background:linear-gradient(145deg,color-mix(in srgb,var(--fg) 12%,transparent),transparent);border:1px solid color-mix(in srgb,var(--fg) 28%,transparent);overflow:hidden}
+.prw-glyph svg{height:100%;width:100%;display:block;position:relative;z-index:1;filter:drop-shadow(0 4px 7px #0002)}
+.prw-glyph-sheen{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,#fff4 46%,#ff91b52a 52%,transparent 68%);transform:translateX(-120%);animation:prw-sheen 4.5s ease-in-out infinite}
+@keyframes prw-sheen{0%,30%{transform:translateX(-120%)}80%,100%{transform:translateX(120%)}}
+.prw-badge-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:7px;max-height:32dvh;overflow-y:auto;overscroll-behavior:contain;padding:3px}
+.prw-badge{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;border:1px solid #d7b46850;border-radius:12px;padding:7px;background:linear-gradient(155deg,#d7b46819,#ffffff05);min-width:0}
+.prw-badge img{width:clamp(44px,13vw,72px);height:clamp(44px,13vw,72px);object-fit:contain}
+.prw-badge span{font-size:30px}.prw-badge small{font-size:10px;font-weight:750;line-height:1.2;overflow-wrap:anywhere}
+.prw-overlay .prw-content:has(.prw-glyph) h1{font-size:clamp(32px,min(9vw,9vh),74px)}
+@media(max-width:360px){.prw-vinyl-card{grid-template-columns:66px minmax(0,1fr);gap:10px;padding:12px}.prw-overlay .prw-song-info h1{font-size:21px}}
+@media(prefers-reduced-motion:reduce){.prw-vinyl,.prw-glyph-sheen{animation:none!important}}
