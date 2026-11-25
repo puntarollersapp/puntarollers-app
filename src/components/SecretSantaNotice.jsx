@@ -2,12 +2,12 @@ import {useEffect,useState} from 'react'
 import {Link,useLocation} from 'react-router-dom'
 import {useAuth} from '../lib/auth'
 import {supabase} from '../lib/supabase'
-import {useDecemberNavigation} from '../lib/prDecemberNavigation'
+import {useDecemberNavigation,isSantaAudience} from '../lib/prDecemberNavigation'
 
 export default function SecretSantaNotice(){
  const {user}=useAuth(),{pathname}=useLocation(),season=useDecemberNavigation(),[state,setState]=useState(null),[modal,setModal]=useState(false)
  const key='pr-santa-2026-'+user?.id
- useEffect(()=>{let live=true;setState(null);setModal(false);if(!season||!user?.id||user.role==='familiar')return;async function refresh(){try{const {data,error}=await supabase.rpc('pr_santa_state');if(!live||error)return;setState(data);const e=data?.event,m=data?.mine;const notice=e?.status==='drawn'&&m?.participating===true&&!m?.revealed?'reveal':e?.status==='open'&&m?.participating==null?'invite':null;if(notice&&pathname.startsWith('/app/')&&pathname!='/app/secret-santa'&&!sessionStorage.getItem(key+'-'+notice)){setModal(notice)}else setModal(false)}catch{}}refresh();const timer=setInterval(refresh,15000);window.addEventListener('focus',refresh);return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',refresh)}},[season,user?.id,pathname,key])
+ useEffect(()=>{let live=true;setState(null);setModal(false);if(!season||!isSantaAudience(user))return;async function refresh(){try{const {data,error}=await supabase.rpc('pr_santa_state');if(!live||error)return;setState(data);const e=data?.event,m=data?.mine;const notice=e?.status==='drawn'&&m?.participating===true&&!m?.revealed?'reveal':e?.status==='open'&&m?.participating==null?'invite':null;if(notice&&pathname.startsWith('/app/')&&pathname!='/app/secret-santa'&&!sessionStorage.getItem(key+'-'+notice)){setModal(notice)}else setModal(false)}catch{}}refresh();const timer=setInterval(refresh,15000);window.addEventListener('focus',refresh);return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',refresh)}},[season,user?.id,pathname,key])
  function close(){try{sessionStorage.setItem(key+'-'+modal,'1')}catch{}setModal(false)}
  if(!season||!state?.event?.visible||pathname==='/app/secret-santa')return null
  const e=state.event,m=state.mine||{},reveal=e.status==='drawn'&&m.participating===true
