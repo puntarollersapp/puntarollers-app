@@ -1214,7 +1214,7 @@ export default function Activity() {
 
   return (
     <AppLayout title="RollerFeed ⚡️">
-      <div className="pr-page space-y-5 animate-page-enter">
+      <div className="pr-page pr-desktop-feed space-y-5 animate-page-enter">
         <RollerFeedOnline/>
         <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.08),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.035),transparent_55%)]" />
@@ -1264,6 +1264,7 @@ export default function Activity() {
           </div>
         </nav>
 
+        <div className="pr-feed-desktop-rail">
         <RollerFeedTopRanking profilesByAnyId={profilesByAnyId} profileId={profileId} />
 
 
@@ -1315,6 +1316,8 @@ export default function Activity() {
 
         <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
 
+        </div>
+        <div className="pr-feed-desktop-main">
         <RollerFeedCommunity initialPosts={socialPosts} albums={shifterAlbums} />
 
         <section id="rollerfeed-actividades" className="scroll-mt-36">
@@ -1406,6 +1409,7 @@ export default function Activity() {
         
 
 
+        </div>
         {reactionModalItem && (
           <ReactionsModal
             item={reactionModalItem}
