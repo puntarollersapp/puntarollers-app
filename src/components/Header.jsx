@@ -15,7 +15,7 @@ function RollerFeedIcon() {
 
 export default function Header({ title, showBack = false, onBack }) {
   const { user, logout } = useAuth()
-  const christmasNav = useDecemberNavigation(user?.role==='admin')
+  const christmasNav = useDecemberNavigation(user?.id==='admin-claudio'&&user?.role==='admin')
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [family, setFamily] = useState(false)
