@@ -4,7 +4,7 @@ import SecretSantaNotice from '../components/SecretSantaNotice'
 import { useDecemberNavigation } from '../lib/prDecemberNavigation'
 import LaunchWelcome from '../components/LaunchWelcome'
 import { isTransitionStudent, PR_PUBLIC_LAUNCH_ENABLED } from '../lib/prTransition'
-import { Component, useEffect, useMemo, useState } from 'react'
+import { Component, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import BottomNav from '../components/BottomNav'
@@ -29,9 +29,11 @@ function useDesktopPreview(user){
  return {available,desktop:available&&!classic,toggle}
 }
 function DesktopRestore({onClick}){return <div className="pr-desktop-restore"><button type="button" onClick={onClick}>▣ Activar vista escritorio</button></div>}
+const DesktopStandaloneContext=createContext(false)
+export function useDesktopStandalone(){return useContext(DesktopStandaloneContext)}
 export function DesktopStandalone({children}){
  const {user}=useAuth(),preview=useDesktopPreview(user)
- return <div className={preview.desktop?'pr-desktop-standalone':'pr-desktop-standalone-inactive'}>{preview.desktop&&<BottomNav desktop onToggleDesktop={preview.toggle}/>}<div className="pr-desktop-standalone-content">{preview.available&&!preview.desktop&&<DesktopRestore onClick={preview.toggle}/>}{children}</div></div>
+ return <div className={preview.desktop?'pr-desktop-standalone':'pr-desktop-standalone-inactive'}>{preview.desktop&&<BottomNav desktop onToggleDesktop={preview.toggle}/>}<div className="pr-desktop-standalone-content">{preview.available&&!preview.desktop&&<DesktopRestore onClick={preview.toggle}/>}<DesktopStandaloneContext.Provider value={preview.desktop}>{children}</DesktopStandaloneContext.Provider></div></div>
 }
 
 export default function AppLayout({children,title,showBack=false}){const navigate=useNavigate(),location=useLocation(),{user,logout,updateUser}=useAuth(),[accessProfile,setAccessProfile]=useState(user||null),[checkingAccess,setCheckingAccess]=useState(Boolean(user?.id)),[enforcementEnabled,setEnforcementEnabled]=useState(false),[monthlyDue,setMonthlyDue]=useState(null),[dmUnread,setDmUnread]=useState(0),[dmToast,setDmToast]=useState(null),dmSeenRef=useState(()=>({total:null}))[0]

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useDesktopStandalone } from '../layouts/AppLayout'
+import DesktopPersonalCalendar from '../components/admin/DesktopPersonalCalendar'
 import AdminPersonalizadas from './AdminPersonalizadas'
 import { supabase } from '../lib/supabase'
 
@@ -132,6 +134,7 @@ function WeeklyRoster({ onClose }) {
 }
 
 export default function AdminPersonalizadasBulk() {
+  const desktop=useDesktopStandalone()
   const [open, setOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
   const [date, setDate] = useState('')
@@ -216,7 +219,7 @@ export default function AdminPersonalizadasBulk() {
 
   return (
     <>
-      <AdminPersonalizadas />
+      <AdminPersonalizadas desktopCalendar={desktop?<DesktopPersonalCalendar onAddDay={day=>{setDate(day);setTimes([]);setRepeatDates([]);setRepeatInput('');setMessage('');setOpen(true)}} onOpenRoster={()=>setRosterOpen(true)}/>:null} />
 
       <div className="fixed bottom-5 right-5 z-[100] flex flex-col items-end gap-2">
         <button type="button" onClick={() => setRosterOpen(true)} className="rounded-2xl border border-white/15 bg-[#171717]/95 px-5 py-3 text-sm font-black text-white shadow-[0_20px_60px_rgba(0,0,0,.5)] backdrop-blur-xl active:scale-[.98]">📋 Agenda semanal</button>
