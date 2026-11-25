@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildSlides, fmt, personality, plaqueStats } from '../lib/wrapped'
@@ -37,25 +38,45 @@ async function renderPlaque(data,includePhoto,isDemo){
  fit('PUNTAROLLERS.COM',72,1820,36,936)
  return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('PNG unavailable')),'image/png'))
 }
+function StoryOverlay({children,closeTo,onStep}){
+ const dialog=useRef(null),navigate=useNavigate()
+ useEffect(()=>{
+  const root=document.getElementById('root'),prevFocus=document.activeElement,overflow=document.body.style.overflow,wasInert=root?.inert
+  document.body.style.overflow='hidden';if(root)root.inert=true
+  dialog.current?.focus({preventScroll:true})
+  return()=>{document.body.style.overflow=overflow;if(root)root.inert=wasInert;prevFocus?.focus?.({preventScroll:true})}
+ },[])
+ return createPortal(<div className="prw-overlay" ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label="PR Wrapped 2026" onKeyDown={e=>{
+  if(e.key==='Escape'){e.preventDefault();navigate(closeTo);return}
+  if(e.key==='Tab'){const items=[...dialog.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),summary')].filter(el=>el.getClientRects().length);if(!items.length)return;const first=items[0],last=items[items.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===dialog.current)){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
+  if(!e.target.closest('button,a,input,summary')&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();onStep?.(e.key==='ArrowLeft'?-1:1)}
+ }}>{children}</div>,document.body)
+}
+function StoryAtmosphere(){
+ return <div className="prw-atmosphere" aria-hidden="true">
+  <div className="prw-prism"/><div className="prw-orbit prw-orbit-a"/><div className="prw-orbit prw-orbit-b"/>
+  <div className="prw-sparkles">{Array.from({length:8},(_,i)=><i key={i} style={{'--x':[8,24,47,68,88,96,55,14][i]+'%','--y':[38,12,55,19,35,65,8,77][i]+'%','--s':[12,5,8,15,6,9,5,6][i]+'px','--delay':i*.47+'s'}}/>)}</div>
+  <div className="prw-grain"/>
+ </div>
+}
 export default function Wrapped(){
- const {user}=useAuth();const [data,setData]=useState(null),[dataOwner,setDataOwner]=useState(null),[error,setError]=useState(''),[index,setIndex]=useState(0),[isDemo,setDemo]=useState(false),[auto,setAuto]=useState(false),[hold,setHold]=useState(false),[motion,setMotion]=useState(false),[photo,setPhoto]=useState(false),[blob,setBlob]=useState(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[reload,setReload]=useState(0)
+ const {user}=useAuth();const location=useLocation();const closeTo=location.state?.wrappedFrom==='/app/dashboard'?'/app/dashboard':'/app/perfil';const [data,setData]=useState(null),[dataOwner,setDataOwner]=useState(null),[error,setError]=useState(''),[index,setIndex]=useState(0),[isDemo,setDemo]=useState(false),[motion,setMotion]=useState(false),[photo,setPhoto]=useState(false),[blob,setBlob]=useState(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[reload,setReload]=useState(0)
  const touch=useRef(null);const generation=useRef(0)
  useEffect(()=>{const m=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setMotion(!m.matches);update();m.addEventListener?.('change',update);return()=>m.removeEventListener?.('change',update)},[])
  useEffect(()=>{let live=true;setData(null);setDemo(false);setIndex(0);setBlob(null);setError('');supabase.rpc('pr_wrapped_2026').then(({data:d,error:e})=>{if(!live)return;if(e||!d)setError('No pudimos cargar tu resumen. Probá nuevamente.');else {setDataOwner(user?.id);setData(d)}}).catch(()=>live&&setError('No pudimos cargar tu resumen.'));return()=>{live=false;generation.current++}},[user?.id,reload])
  const current=isDemo?demo:data;const slides=useMemo(()=>current&&(isDemo||data?.open)?buildSlides(current):[],[current,isDemo,data?.open]);const slide=slides[index];const last=index===slides.length-1
  const go=d=>{setIndex(i=>Math.max(0,Math.min(slides.length-1,i+d)));setBlob(null);generation.current++}
- useEffect(()=>{if(!auto||!motion||hold||last||!slide)return;const t=setTimeout(()=>setIndex(i=>Math.min(slides.length-1,i+1)),8000);return()=>clearTimeout(t)},[auto,motion,hold,index,last,slide,slides.length])
  async function publish(){if(!data?.admin||busy)return;setBusy(true);setNotice('');try{const {data:d,error:e}=await supabase.rpc('pr_wrapped_2026',{p_publish:!data.published});if(e||!d)throw Error();setData(d);setNotice(d.published?'Publicación programada desde el 1 de diciembre.':'Acceso de alumnos pausado.')}catch{setNotice('No se pudo modificar la publicación.')}finally{setBusy(false)}}
  async function prepare(){const token=++generation.current;setBusy(true);setNotice('');try{const b=await renderPlaque(current,photo,isDemo);if(token===generation.current){setBlob(b);setNotice('Placa lista. Elegí descargar o compartir.')}}catch(e){if(token===generation.current)setNotice(e.message==='PHOTO_UNAVAILABLE'?'No pudimos incorporar tu foto. Desmarcá la opción para generar la placa sin ella.':'No se pudo generar la placa. Probá nuevamente.')}finally{setBusy(false)}}
  function download(){if(!blob)return;const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='PR-Wrapped-2026.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
  async function share(){if(!blob)return;const file=new File([blob],'PR-Wrapped-2026.png',{type:'image/png'});try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'PR Wrapped 2026'});return}}catch(e){if(e.name==='AbortError')return}download()}
- if(error||!data||dataOwner!==user?.id||!slide)return <section className="prw prw-wait"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><p className="prw-kicker">PR WRAPPED 2026</p><h1>{error?'No pudimos abrir tu resumen':!data?'Armando tu año…':data.published?'Llega el 1 de diciembre':'Muy pronto'}</h1><p>{error||(!data?'Recuperando tus registros de 2026.':'Tu año sobre ruedas se está preparando.')}</p>{error&&<button onClick={()=>setReload(x=>x+1)}>Reintentar</button>}<Link to="/app/perfil">Volver a mi perfil</Link></section>
+ if(error||!data||dataOwner!==user?.id||!slide)return <StoryOverlay closeTo={closeTo}><section className="prw prw-wait"><StoryAtmosphere/><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><p className="prw-kicker">PR WRAPPED 2026</p><h1>{error?'No pudimos abrir tu resumen':!data?'Armando tu año…':data.published?'Llega el 1 de diciembre':'Muy pronto'}</h1><p>{error||(!data?'Recuperando tus registros de 2026.':'Tu año sobre ruedas se está preparando.')}</p>{error&&<button onClick={()=>setReload(x=>x+1)}>Reintentar</button>}<Link to={closeTo}>Volver</Link></section></StoryOverlay>
  const [bg,fg,accent]=themes[slide.theme]||themes.dark
- return <section className="prw prw-story" style={{'--bg':bg,'--fg':fg,'--accent':accent}} onPointerDown={e=>{if(e.target.closest('button,a,input,label'))return;touch.current=e.clientX;setHold(true)}} onPointerUp={e=>{if(touch.current!==null){const dx=e.clientX-touch.current;if(Math.abs(dx)>45)go(dx<0?1:-1);touch.current=null}setHold(false)}} onPointerCancel={()=>{touch.current=null;setHold(false)}} onPointerLeave={()=>{touch.current=null;setHold(false)}}>
-  <div className="prw-lights" aria-hidden="true">{Array.from({length:11},(_,i)=><i key={i} style={{background:['#FF0055','#F5C451','#F3F1EC','#3CFFB8','#5B9BFF'][i%5],animationDelay:(i%5)*.3+'s'}}/>)}</div>
-  <div className="prw-top"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><Link to="/app/perfil" aria-label="Cerrar Wrapped">✕</Link></div>
+ return <StoryOverlay closeTo={closeTo} onStep={go}><section className="prw prw-story" style={{'--bg':bg,'--fg':fg,'--accent':accent}} onPointerDown={e=>{if(e.target.closest('button,a,input,label'))return;touch.current=e.clientX;}} onPointerUp={e=>{if(touch.current!==null){const dx=e.clientX-touch.current;if(Math.abs(dx)>45)go(dx<0?1:-1);touch.current=null}}} onPointerCancel={()=>{touch.current=null;}} onPointerLeave={()=>{touch.current=null;}}>
+  <StoryAtmosphere/>
+  <div className="prw-top"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><div className="prw-top-label"><span>PR WRAPPED</span><strong>2026</strong></div><Link to={closeTo} aria-label="Cerrar Wrapped" className="prw-close">✕</Link></div>
   <div className="prw-bars" aria-label={'Historia '+(index+1)+' de '+slides.length}>{slides.map((s,i)=><button key={s.id} aria-label={'Ir a historia '+(i+1)} aria-current={i===index?'step':undefined} onClick={()=>{setIndex(i);setBlob(null);generation.current++}}><i className={i<=index?'active':''}/></button>)}</div>
-  {data.admin&&<div className="prw-admin"><button onClick={()=>{setDemo(x=>!x);setIndex(0);setBlob(null);setPhoto(false);generation.current++}}>{isDemo?'Ver mi resumen':'Demo ficticia'}</button><button disabled={busy} onClick={publish}>{data.published?'Pausar lanzamiento':'Programar lanzamiento'}</button></div>}
+  {data.admin&&<details className="prw-admin-panel"><summary>Administración</summary><div className="prw-admin"><button onClick={()=>{setDemo(x=>!x);setIndex(0);setBlob(null);setPhoto(false);generation.current++}}>{isDemo?'Ver mi resumen':'Demo ficticia'}</button><button disabled={busy} onClick={publish}>{data.published?'Pausar lanzamiento':'Programar lanzamiento'}</button></div></details>}
   {isDemo&&<p className="prw-demo">VISTA PREVIA · DATOS FICTICIOS</p>}
   <div className="prw-content" key={slide.id}>
    {slide.id==='intro'&&current.photo&&!isDemo&&<img className="prw-avatar" src={current.photo} alt="Tu foto de perfil" referrerPolicy="no-referrer" onError={e=>e.currentTarget.hidden=true}/>}
@@ -65,7 +86,8 @@ export default function Wrapped(){
    {last&&<div className="prw-actions">{current.photo&&!isDemo&&<label><input type="checkbox" checked={photo} onChange={e=>{setPhoto(e.target.checked);setBlob(null);generation.current++}}/> Incluir mi foto en la placa</label>}<button disabled={busy} onClick={prepare}>{busy?'Generando…':'Generar mi placa PNG'}</button>{blob&&<><button onClick={download}>Descargar PNG</button><button onClick={share}>Compartir</button></>}<button onClick={()=>go(-index)}>Ver de nuevo</button></div>}
   </div>
   {last&&motion&&<div aria-hidden="true" className="prw-confetti">{Array.from({length:18},(_,i)=><i key={i} style={{left:(i*37%100)+'%',animationDelay:(i%7)*.25+'s',background:['#F5C451','#F3F1EC','#191A20','#3CFFB8'][i%4]}}/>)}</div>}
-  <div className="prw-controls"><button disabled={index===0} onClick={()=>go(-1)}>‹ Anterior</button>{motion&&<button onClick={()=>setAuto(x=>!x)}>{auto?'Pausar':'Auto'}</button>}<button disabled={last} onClick={()=>go(1)}>Siguiente ›</button></div>
+  <div className="prw-controls"><button disabled={index===0} onClick={()=>go(-1)}>‹ Anterior</button><span className="prw-step">{index+1} / {slides.length}</span>{last?<Link className="prw-finish" to={closeTo}>Finalizar ✓</Link>:<button className="prw-next" onClick={()=>go(1)}>Seguir ›</button>}</div>
   <p className="prw-cutoff">{isDemo?'Ejemplo ficticio':'Registros hasta '+localDate(data.asOf)}</p>{notice&&<p className="prw-notice" role="status">{notice}</p>}
- </section>
+
+ </section></StoryOverlay>
 }

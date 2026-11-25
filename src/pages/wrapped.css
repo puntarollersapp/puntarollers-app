@@ -5,3 +5,50 @@
 @keyframes prw-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes prw-twinkle{50%{opacity:.45}}@keyframes prw-confetti{to{transform:translateY(100vh) rotate(300deg);opacity:.2}}
 @media(prefers-reduced-motion:reduce){.prw,.prw-content,.prw-lights i,.prw-confetti i{animation:none!important;transition:none!important}}
 @media(max-width:360px){.prw{padding:14px;gap:12px}.prw-content{min-height:260px}.prw-controls button:not(.prw-bars button){padding:8px;font-size:11px}}
+
+/* Immersive story layer: isolated from the platform navigation and scroll. */
+.prw-overlay{position:fixed;inset:0;z-index:2147483000;background:#191A20;height:100vh;height:100dvh;width:100%;overflow:hidden;overscroll-behavior:contain;outline:none;display:flex;align-items:stretch;justify-content:center}
+.prw-overlay .prw{position:relative;isolation:isolate;width:100%;max-width:none;height:100%;min-height:0;max-height:none;margin:0;border-radius:0;padding:max(14px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));gap:10px;overflow:hidden;box-sizing:border-box}
+.prw-overlay .prw-story> :not(.prw-atmosphere):not(.prw-confetti){width:100%;max-width:760px;align-self:center;box-sizing:border-box}
+.prw-overlay .prw-top{position:relative;z-index:3;flex-shrink:0;min-height:62px;gap:12px}
+.prw-overlay .prw-logo{width:90px;height:46px;padding:5px;object-fit:contain;background:#191A20;border:1px solid #ffffff20;box-shadow:0 5px 20px #0002}
+.prw-top-label{display:flex;flex-direction:column;align-items:center;line-height:1;letter-spacing:.18em;font-size:10px;font-weight:900;text-align:center}
+.prw-top-label strong{margin-top:4px;font-size:23px;letter-spacing:-.04em}
+.prw-overlay .prw-close{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid currentColor;border-radius:50%;font-size:18px;flex-shrink:0;backdrop-filter:blur(12px);background:color-mix(in srgb,var(--bg) 70%,transparent)}
+.prw-atmosphere{position:absolute;inset:0 0 auto;height:clamp(140px,26vh,250px);pointer-events:none;overflow:hidden;z-index:-1;contain:paint}
+.prw-prism{position:absolute;inset:-60% -20% 0;background:conic-gradient(from 215deg at 50% 35%,transparent 0deg,#FF005555 42deg,#F5C45188 67deg,#F3F1EC88 82deg,#B99BFF88 103deg,#6EF0D055 127deg,transparent 157deg,transparent 360deg);filter:blur(22px);opacity:.75;transform:rotate(-10deg);animation:prw-prismatic 8s ease-in-out infinite alternate;mask-image:linear-gradient(#000 0%,#000 48%,transparent 94%)}
+.prw-orbit{position:absolute;width:142%;height:108px;left:-21%;top:1%;border-radius:50%;border:1px solid transparent;transform:rotate(-12deg);background:linear-gradient(100deg,#FF005500,#FF93B7AA,#FFF2BECC,#A4E8F7AA,#A58AFF77,#FF005500) border-box;mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);mask-composite:exclude;box-shadow:0 0 24px #FF005544;opacity:.8}
+.prw-orbit-b{top:12%;transform:rotate(10deg);opacity:.46;width:126%;left:-13%}
+.prw-sparkles{position:absolute;inset:0 0 28%}
+.prw-sparkles i{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);background:#FFF6DC;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 5px #F5C451);opacity:.8;animation:prw-star 4.8s var(--delay) ease-in-out infinite}
+.prw-grain{position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 7px,#FFFFFF08 7px 8px);mask-image:linear-gradient(#000,transparent 90%);opacity:.7}
+@keyframes prw-prismatic{from{transform:rotate(-10deg) translateX(-4%)}to{transform:rotate(5deg) translateX(4%)}}
+@keyframes prw-star{0%,100%{transform:scale(.7);opacity:.48}50%{transform:scale(1.15);opacity:1}}
+.prw-overlay .prw-bars{flex-shrink:0;gap:4px;position:relative;z-index:2}
+.prw-overlay .prw-bars i{height:3px;background:currentColor;opacity:.23}
+.prw-overlay .prw-bars i.active{opacity:1;box-shadow:0 0 8px color-mix(in srgb,var(--fg) 35%,transparent)}
+.prw-admin-panel{position:relative;flex-shrink:0;font-size:11px;font-weight:700;z-index:3}
+.prw-admin-panel summary{width:max-content;cursor:pointer;padding:4px 8px;border:1px solid currentColor;border-radius:8px;opacity:.78}
+.prw-admin-panel .prw-admin{margin-top:6px;gap:6px}
+.prw-admin-panel .prw-admin button{min-height:36px;padding:6px 10px}
+.prw-overlay .prw-content{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;justify-content:safe center;gap:clamp(9px,2vh,16px);padding:8px 1px;touch-action:pan-y}
+.prw-overlay .prw-content>*{flex-shrink:0}
+.prw-overlay .prw-content h1{font-size:clamp(38px,min(10.7vw,10vh),94px)}
+.prw-overlay .prw-number{font-size:clamp(58px,min(19vw,18vh),154px)}
+.prw-overlay .prw-small{font-size:clamp(15px,4vw,22px)}
+.prw-overlay .prw-avatar{width:clamp(64px,12vh,100px);height:clamp(64px,12vh,100px)}
+.prw-overlay .prw-controls{flex:0 0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;position:relative;z-index:3}
+.prw-overlay .prw-controls button,.prw-overlay .prw-finish{height:auto;min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+.prw-overlay .prw-next,.prw-overlay .prw-finish{background:var(--fg)!important;color:var(--bg)!important;border:1px solid var(--fg);border-radius:13px;padding:11px 14px;font-size:14px;font-weight:850}
+.prw-step{font-size:11px;opacity:.75;font-weight:800;font-variant-numeric:tabular-nums}
+.prw-overlay .prw-cutoff{text-align:center;opacity:.75;flex-shrink:0;font-size:10px}
+.prw-overlay .prw-notice{font-size:11px;text-align:center;flex-shrink:0;line-height:1.3}
+.prw-overlay .prw-demo{font-size:10px;padding:5px 7px;flex-shrink:0}
+.prw-overlay .prw-actions{gap:6px}
+.prw-overlay .prw-actions button{min-height:42px;padding:8px 10px}
+.prw-overlay .prw-actions button:first-of-type{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.prw-overlay .prw-wait{justify-content:center;align-items:flex-start}
+.prw-overlay .prw-wait>*:not(.prw-atmosphere){position:relative;max-width:760px}
+@media(min-width:800px){.prw-overlay .prw{padding-left:max(32px,env(safe-area-inset-left));padding-right:max(32px,env(safe-area-inset-right))}.prw-overlay .prw-wait{align-items:center;text-align:center}}
+@media(max-height:650px){.prw-overlay .prw{gap:5px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(8px,env(safe-area-inset-bottom))}.prw-overlay .prw-top{min-height:44px}.prw-overlay .prw-top-label strong{font-size:18px}.prw-overlay .prw-logo{height:36px}.prw-overlay .prw-content{gap:8px;padding:4px 1px}.prw-overlay .prw-content h1{font-size:clamp(31px,8.5vw,55px)}.prw-overlay .prw-number{font-size:clamp(45px,14vw,88px)}.prw-overlay .prw-number span{font-size:21px;margin-top:6px}.prw-overlay .prw-avatar{width:52px;height:52px}.prw-overlay .prw-controls button,.prw-overlay .prw-finish{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.prw-prism,.prw-sparkles i{animation:none!important}}
