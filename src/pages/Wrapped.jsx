@@ -5,7 +5,6 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { buildSlides, fmt, personality, plaqueStats } from '../lib/wrapped'
 import { getBadgeImage } from '../lib/badges'
-import { createWrappedSound } from '../lib/wrappedSound'
 import './wrapped.css'
 
 const themes={dark:['#191A20','#F3F1EC','#FF0055'],fucsia:['#FF0055','#F3F1EC','#191A20'],ivory:['#F3F1EC','#191A20','#FF0055']}
@@ -61,24 +60,19 @@ function StoryAtmosphere(){
   <div className="prw-grain"/>
  </div>
 }
-function VinylCard({song,onOpen}){
- return <div className="prw-vinyl-card"><div className="prw-vinyl" aria-hidden="true"><i/><b>PR</b></div><div className="prw-song-info"><span>PR MUSIC · 2026</span><h1>{song.title}</h1><p>{song.artist}</p><small>{song.description}</small><a className="prw-spotify" href={song.url} target="_blank" rel="noopener noreferrer" onClick={onOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1ed760"/><path d="M5.5 9c5-1.5 9-.9 13 1.4M6.7 12.5c4-1.1 7.3-.6 10.5 1.1M8 15.6c2.8-.6 5.2-.3 7.7.8" fill="none" stroke="#111" strokeWidth="1.6" strokeLinecap="round"/></svg>Escuchar en Spotify ↗</a></div></div>
+const WRAPPED_THEME_TRACK='https://open.spotify.com/track/3uyJrbOnK7fMunoFjRfsew'
+function SpotifyLink({url,children='Escuchar en Spotify ↗',className='prw-spotify'}){
+ return <a className={className} href={url} target="_blank" rel="noopener noreferrer">{children}</a>
 }
-function RollerGlyph({type}){
- return <div className="prw-glyph" aria-hidden="true"><svg viewBox="0 0 220 120" fill="none">
- <defs><linearGradient id="prw-metal"><stop stopColor="#F3F1EC"/><stop offset=".48" stopColor="#FF91B5"/><stop offset="1" stopColor="#E6D3FF"/></linearGradient></defs>
- {type==='flex'?<g stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"><circle cx="128" cy="20" r="10"/><path d="m122 34-27 24 35 17-18 24M95 58l-21 21 25 20M111 44l37 12 16-9"/><path stroke="url(#prw-metal)" d="M96 108h30m-63 0h31"/><circle cx="69" cy="114" r="3"/><circle cx="85" cy="114" r="3"/><circle cx="105" cy="114" r="3"/><circle cx="122" cy="114" r="3"/></g>:<g stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M28 69h158l12-9-31-7-30-35h-32l-7 33-43 7-25-8z" fill="currentColor" fillOpacity=".1"/><path d="M36 76h146M113 29h25M108 38h36M104 47h47"/>{[44,84,124,164].map(x=><g key={x}><circle cx={x} cy="91" r="16" fill="currentColor" fillOpacity=".13"/><circle cx={x} cy="91" r="6"/></g>)}{type==='brake'&&<path d="m179 76 24 11-9 12-15-8" fill="currentColor"/>}{type==='wheel'&&<path d="M28 30h47m-37-10 16 10-16 10" stroke="url(#prw-metal)"/>}</g>}
- </svg><div className="prw-glyph-sheen"/></div>
+function MusicStory({song}){
+ return <div className="prw-music-story"><span className="prw-music-label">PR MUSIC · 2026</span><h1>{song.title}</h1><p className="prw-artist">{song.artist}</p><p className="prw-song-description">{song.description}</p><SpotifyLink url={song.url}/></div>
 }
 function BadgeCollection({badges}){
  return <div className="prw-badge-list">{badges.map(title=><div className="prw-badge" key={title}>{getBadgeImage(title)?<img src={getBadgeImage(title)} alt="" loading="lazy"/>:<span aria-hidden="true">🏅</span>}<small>{title}</small></div>)}</div>
 }
 export default function Wrapped(){
  const {user}=useAuth();const location=useLocation();const closeTo=location.state?.wrappedFrom==='/app/dashboard'?'/app/dashboard':'/app/perfil';const [data,setData]=useState(null),[dataOwner,setDataOwner]=useState(null),[error,setError]=useState(''),[index,setIndex]=useState(0),[isDemo,setDemo]=useState(false),[motion,setMotion]=useState(false),[photo,setPhoto]=useState(false),[blob,setBlob]=useState(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[reload,setReload]=useState(0)
- const touch=useRef(null);const generation=useRef(0);const sound=useRef(null),soundToken=useRef(0);const [soundOn,setSoundOn]=useState(false)
- const stopSound=()=>{soundToken.current++;sound.current?.stop();sound.current=null;setSoundOn(false)}
- async function toggleSound(){if(soundOn){stopSound();return}const token=++soundToken.current;try{const track=await createWrappedSound();if(token!==soundToken.current){track.stop();return}sound.current=track;setSoundOn(true)}catch{if(token===soundToken.current)setNotice('No pudimos activar el audio en este dispositivo.')}}
- useEffect(()=>{const hide=()=>{if(document.hidden)stopSound()};document.addEventListener('visibilitychange',hide);return()=>{document.removeEventListener('visibilitychange',hide);soundToken.current++;sound.current?.stop();sound.current=null}},[user?.id])
+ const touch=useRef(null);const generation=useRef(0)
  useEffect(()=>{const m=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setMotion(!m.matches);update();m.addEventListener?.('change',update);return()=>m.removeEventListener?.('change',update)},[])
  useEffect(()=>{let live=true;setData(null);setDemo(false);setIndex(0);setBlob(null);setError('');supabase.rpc('pr_wrapped_2026').then(({data:d,error:e})=>{if(!live)return;if(e||!d)setError('No pudimos cargar tu resumen. Probá nuevamente.');else {setDataOwner(user?.id);setData(d)}}).catch(()=>live&&setError('No pudimos cargar tu resumen.'));return()=>{live=false;generation.current++}},[user?.id,reload])
  const current=isDemo?demo:data;const slides=useMemo(()=>current&&(isDemo||data?.open)?buildSlides(current,isDemo?'demo-2026':String(user?.id||'')):[],[current,isDemo,data?.open,user?.id]);const slide=slides[index];const last=index===slides.length-1
@@ -91,17 +85,17 @@ export default function Wrapped(){
  const [bg,fg,accent]=themes[slide.theme]||themes.dark
  return <StoryOverlay closeTo={closeTo} onStep={go}><section className="prw prw-story" style={{'--bg':bg,'--fg':fg,'--accent':accent}} onPointerDown={e=>{if(e.target.closest('button,a,input,label'))return;touch.current=e.clientX;}} onPointerUp={e=>{if(touch.current!==null){const dx=e.clientX-touch.current;if(Math.abs(dx)>45)go(dx<0?1:-1);touch.current=null}}} onPointerCancel={()=>{touch.current=null;}} onPointerLeave={()=>{touch.current=null;}}>
   <StoryAtmosphere/>
-  <div className="prw-top"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><div className="prw-top-label"><span>PR WRAPPED</span><strong>2026</strong></div><div className="prw-top-actions"><button className="prw-audio" aria-label={soundOn?'Silenciar música de fondo':'Activar música de fondo'} aria-pressed={soundOn} onClick={toggleSound}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/>{soundOn?<><path d="M16 8a6 6 0 0 1 0 8M19 5a10 10 0 0 1 0 14"/></>:<path d="m17 9 5 6m0-6-5 6"/>}</svg></button><Link to={closeTo} aria-label="Cerrar Wrapped" className="prw-close">✕</Link></div></div>
+  <div className="prw-top"><img className="prw-logo" src="/logo.png" alt="Punta Rollers"/><div className="prw-top-label"><span>PR WRAPPED</span><strong>2026</strong></div><div className="prw-top-actions"><a className="prw-theme-link" href={WRAPPED_THEME_TRACK} target="_blank" rel="noopener noreferrer" aria-label="Escuchar Up & Down de Vengaboys en Spotify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13M9 9l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></svg></a><Link to={closeTo} aria-label="Cerrar Wrapped" className="prw-close">✕</Link></div></div>
   <div className="prw-bars" aria-label={'Historia '+(index+1)+' de '+slides.length}>{slides.map((s,i)=><button key={s.id} aria-label={'Ir a historia '+(i+1)} aria-current={i===index?'step':undefined} onClick={()=>{setIndex(i);setBlob(null);generation.current++}}><i className={i<=index?'active':''}/></button>)}</div>
   {data.admin&&<details className="prw-admin-panel"><summary>Administración</summary><div className="prw-admin"><button onClick={()=>{setDemo(x=>!x);setIndex(0);setBlob(null);setPhoto(false);generation.current++}}>{isDemo?'Ver mi resumen':'Demo ficticia'}</button><button disabled={busy} onClick={publish}>{data.published?'Pausar lanzamiento':'Programar lanzamiento'}</button></div></details>}
   {isDemo&&<p className="prw-demo">VISTA PREVIA · DATOS FICTICIOS</p>}
-  <div className="prw-content" key={slide.id}>
+  <div className={["prw-content",slide.humor?"prw-editorial":"",slide.id==="flexion"?"prw-flexion":"",slide.song?"prw-music-content":""].filter(Boolean).join(" ")} key={slide.id}>
    {slide.id==='intro'&&current.photo&&!isDemo&&<img className="prw-avatar" src={current.photo} alt="Tu foto de perfil" referrerPolicy="no-referrer" onError={e=>e.currentTarget.hidden=true}/>}
    <p className="prw-kicker">{slide.kicker}</p>
-   {slide.humor&&<RollerGlyph type={slide.humor}/>}
-   {slide.song&&<VinylCard song={slide.song} onOpen={stopSound}/>}
+   {slide.song&&<MusicStory song={slide.song}/>}
    {slide.value!=null&&<div className="prw-number"><Count value={Number(slide.value)} decimals={slide.decimals} motion={motion}/><span>{slide.unit}</span></div>}
    {slide.big&&<h1>{slide.big}</h1>}<p className="prw-small">{slide.small}</p>
+   {slide.id==="intro"&&<SpotifyLink url={WRAPPED_THEME_TRACK} className="prw-theme-cta">♪ Tema elegido para Wrapped: Up &amp; Down · Vengaboys ↗</SpotifyLink>}
    {slide.badges&&<BadgeCollection badges={slide.badges}/>}
    {slide.share&&<div className="prw-actions">{current.photo&&!isDemo&&<label><input type="checkbox" checked={photo} onChange={e=>{setPhoto(e.target.checked);setBlob(null);generation.current++}}/> Incluir mi foto en la placa</label>}<button disabled={busy} onClick={prepare}>{busy?'Generando…':'Generar mi placa PNG'}</button>{blob&&<><button onClick={download}>Descargar PNG</button><button onClick={share}>Compartir</button></>}</div>}
    {last&&<div className="prw-actions"><button onClick={()=>go(-index)}>Ver de nuevo</button></div>}
