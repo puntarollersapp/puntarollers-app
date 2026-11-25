@@ -450,7 +450,7 @@ export default function PublicRollerFeed() {
         if (!active || error) return
         const directory = buildProfileMap(data || [])
         setItems(old => old.map(item => item.profileId ? {...item,photo:profilePhoto(directory.get(String(item.profileId)))} : item))
-        setRankings(old => Object.fromEntries(Object.entries(old).map(([key,rows]) => [key,rows.map(row => ({...row,photo:profilePhoto(directory.get(String(row.alumnoId)))}))])))
+        setRankings(old => Object.fromEntries(Object.entries(old).map(([key,rows]) => [key,rows.map(row => ({...row,photo:profilePhoto(directory.get(String(row.id)))}))])))
       } finally { running = false }
     }
     const timer = window.setInterval(refreshPhotos,60000)
