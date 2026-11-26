@@ -130,3 +130,5 @@
 .pr-personal-v3 .pr-confirm{background:#a5efdc;color:#17332c;font-weight:900}.pr-personal-v3 .pr-confirm-v3>small{color:#c4d4d2}
 @media(max-width:480px){.pr-pass-v3{padding:16px}.pr-agenda-status{grid-template-columns:36px minmax(0,1fr)}.pr-agenda-status-icon{width:36px;height:36px}.pr-agenda-tag{grid-column:2;justify-self:start}.pr-pass-v3-ticket{min-height:82px}.pr-confirm-tickets article{grid-template-columns:1fr auto}.pr-confirm-tickets article>span{display:none}}
 @media(prefers-reduced-motion:reduce){.pr-pass-v3-shine,.pr-pass-v3-stamped{animation:none!important}.pr-pass-v3-progress i{transition:none!important}}
+
+.pr-profile-personal-pass{--pr-mint:#a5efdc;--pr-warm:#ffc195;--pr-ink:#191a20;--pr-paper:#f3f1ec;min-width:0;font-family:Inter,system-ui,sans-serif}.pr-profile-personal-pass .pr-pass-v3{width:100%}
