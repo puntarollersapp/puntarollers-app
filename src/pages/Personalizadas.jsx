@@ -69,22 +69,27 @@ function TermsModal({ onClose }) {
   )
 }
 
-function PassCard({ student, pass, reservedCredits = 0 }) {
+function PassCard({ student, pass, reservedCredits = 0, bookableCredits = 0, paymentPending = false }) {
   const total = Math.max(0, Number(pass?.clases_cargadas || 0))
   const used = Math.min(total, Math.max(0, Number(pass?.clases_utilizadas || 0)))
   const left = Math.max(0, Number(pass?.clases_disponibles || 0))
-  const cols = total <= 2 ? 'grid-cols-2' : total <= 4 ? 'grid-cols-4' : 'grid-cols-4 sm:grid-cols-5'
-  return (
-    <section className="pr-pass-enter pr-pass-sheen relative overflow-hidden rounded-[30px] border border-white/10 bg-gradient-to-br from-[#251010] via-[#111] to-black p-5 shadow-[0_28px_90px_rgba(0,0,0,.45)]">
-      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-red-500/20 blur-3xl" />
-      <div className="relative"><div className="flex items-center justify-between gap-4"><p className="text-[10px] font-black uppercase tracking-[.3em] text-red-300">PR PASS · PERSONAL</p><span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[9px] font-black uppercase tracking-[.18em] text-white/35">Activa</span></div>
-      <div className="mt-4 flex items-end justify-between gap-4"><div className="min-w-0"><h2 className="truncate text-2xl font-black text-white">{student?.nombre || 'Alumno'} {student?.apellido || ''}</h2><p className="mt-1 text-sm text-white/45">{pass?.nombre_cuponera || `Cuponera de ${total} clases`}</p></div><div className="shrink-0 rounded-2xl border border-white/10 bg-black/35 px-4 py-2 text-right"><p className="text-[9px] font-black uppercase tracking-widest text-white/30">Te quedan</p><p className="text-2xl font-black text-white">{left}</p></div></div>
-      <div className={`mt-6 grid ${cols} gap-3`}>{Array.from({ length: total }).map((_, index) => { const completed = index < used; return <div key={index} className={`pr-pass-slot relative aspect-square overflow-hidden rounded-2xl border flex items-center justify-center ${completed ? 'border-red-400/45 bg-red-500/15' : 'border-white/10 bg-white/[.035]'}`}><div className="absolute left-2 top-2 text-[8px] font-black text-white/20">{String(index + 1).padStart(2, '0')}</div>{completed ? <div className="pr-pass-stamp flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-300/80 text-[11px] font-black text-red-200">PR</div> : <div className="h-11 w-11 rounded-full border border-dashed border-white/15" />}</div> })}</div>
-      <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4"><div><p className="text-xs text-white/35">{used} de {total} clases realizadas</p>{reservedCredits > 0 && <p className="mt-1 text-[10px] font-bold text-red-200/70">{reservedCredits} reservada{reservedCredits === 1 ? '' : 's'}</p>}</div><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/25">Punta Rollers</p></div></div>
-    </section>
-  )
+  const reserved = Math.min(Math.max(0, total-used), Math.max(0, Number(reservedCredits)||0))
+  const available = Math.max(0, Number(bookableCredits)||0)
+  const progress = total ? used / total * 100 : 0
+  return <section className="pr-pass-v3 pr-pass-enter" aria-label="Tu cuponera digital PR Pass">
+    <div className="pr-pass-v3-orbit" aria-hidden="true"/><div className="pr-pass-v3-shine" aria-hidden="true"/>
+    <header className="pr-pass-v3-head"><div className="pr-pass-v3-brand"><img src="/logo.png" alt="Punta Rollers"/><div><p>PR PERSONAL</p><strong>PR PASS</strong></div></div><span className="pr-pass-v3-status">{paymentPending?'PAGO PENDIENTE':left>0?'ACTIVA':'COMPLETA'}</span></header>
+    <div className="pr-pass-v3-identity"><div><small>TITULAR</small><h2>{student?.nombre || 'Alumno'} {student?.apellido || ''}</h2><p>{pass?.nombre_cuponera || 'Cuponera de '+total+' clases'}</p></div><div className="pr-pass-v3-balance"><small>TE QUEDAN</small><strong>{left}<em>/{total}</em></strong><span>clases</span></div></div>
+    <div className="pr-pass-v3-stats"><div><b>{used}</b><small>Realizadas</small></div><div><b>{reservedCredits}</b><small>Reservadas</small></div><div><b>{available}</b><small>Para reservar</small></div></div>
+    <div className="pr-pass-v3-progress"><span>Tu progreso</span><strong>{used} de {total}</strong><div role="progressbar" aria-label="Clases realizadas" aria-valuemin={0} aria-valuemax={Math.max(1,total)} aria-valuenow={used}><i style={{width:progress+'%'}}/></div></div>
+    <div className="pr-pass-v3-tickets">{Array.from({length:total},(_,index)=>{const state=index<used?'done':index<used+reserved?'reserved':'open';return <div key={index} className={'pr-pass-v3-ticket '+state}><small>{String(index+1).padStart(2,'0')}</small><div className={state==='done'?'pr-pass-v3-stamped':''}>{state==='done'?<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="m5 12 4 4L19 6"/></svg>:state==='reserved'?<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v5m8-5v5M4 10h16"/></svg>:<span aria-hidden="true">+</span>}</div><b>{state==='done'?'Realizada':state==='reserved'?'Reservada':'Pendiente'}</b></div>})}</div>
+    <footer className="pr-pass-v3-footer"><span>PRIVATE TRAINING · 1:1</span><span>PUNTA ROLLERS</span></footer>
+  </section>
 }
 
+function PersonalAgendaStatus({closed,student}) {
+ return <section className="pr-agenda-status"><div className="pr-agenda-status-icon" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M7 3v5m10-5v5M3 11h18m-13 4h2m4 0h2"/></svg></div><div><p className="pr-kicker">AGENDA SEMANAL</p><h2>{closed?'Reservas cerradas':'Elegí tu próxima clase'}</h2><p>{closed?'Los próximos horarios se publicarán el domingo.':'La agenda está abierta para seleccionar tus turnos.'}</p>{closed&&<small>{student?'Tus turnos confirmados se mantienen sin cambios.':'Ingresá tu WhatsApp para consultar tus reservas confirmadas.'}</small>}</div><span className={closed?'pr-agenda-tag closed':'pr-agenda-tag'}>{closed?'CERRADA':'ABIERTA'}</span></section>
+}
 export default function Personalizadas() {
   const demoMode = useMemo(() => new URLSearchParams(window.location.search).get('demo') === '1', [])
   const [config, setConfig] = useState(null)
@@ -196,26 +201,14 @@ export default function Personalizadas() {
 
   return (
     <PublicLayout>
-      <div className="pr-personal-shell pr-personal-editorial px-4 pb-20 pt-5 space-y-6">
-        <section className="pr-hero pr-hero-clean"><div className="pr-personal-orbit" aria-hidden="true"/><div className="pr-personal-sun" aria-hidden="true"/><div className="pr-personal-watermark" aria-hidden="true">1:1</div>
+      <div className="pr-personal-shell pr-personal-editorial pr-personal-v3 px-4 pb-20 pt-5 space-y-6">
+        <section className={student?"pr-hero pr-hero-clean pr-hero-signed":"pr-hero pr-hero-clean"}><div className="pr-personal-orbit" aria-hidden="true"/><div className="pr-personal-sun" aria-hidden="true"/><div className="pr-personal-watermark" aria-hidden="true">1:1</div>
           <div className="relative z-10"><div className="flex items-start justify-between gap-3"><p className="pr-kicker">PUNTA ROLLERS · PR PERSONAL</p><span className="pr-week-pill">{formatShort(week.start)} → {formatShort(week.end)}</span></div>
-          <div className="mt-8 max-w-lg"><p className="pr-hero-eyebrow">CLASES PERSONALIZADAS</p><h1>Tu entrenamiento.<br/><span>Tu horario.</span></h1><p>Tu PR Pass, tus clases y tu semana en un solo lugar. Elegí el momento. Nosotros hacemos que cuente.</p></div>
+          <div className="mt-8 max-w-lg"><p className="pr-hero-eyebrow">CLASES PERSONALIZADAS</p>{student?<><h1>Tu espacio.<br/><span>Tu evolución.</span></h1><p>Gestioná tu PR Pass y tus próximos entrenamientos.</p></>:<><h1>Tu entrenamiento.<br/><span>Tu horario.</span></h1><p>Tu PR Pass, tus clases y tu semana en un solo lugar. Elegí el momento. Nosotros hacemos que cuente.</p></>}</div>
           <div className="pr-personal-hero-tags"><span>PR PASS</span><span>TRAINING 1:1</span><span>TU EVOLUCIÓN</span></div></div>
         </section>
 
-        {config && !config.reservas_habilitadas && <section className="rounded-[28px] border border-red-300/20 bg-red-400/[.07] px-5 py-6 sm:p-7">
-          <p className="pr-kicker">PR PERSONAL · CONSULTA</p>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-2xl font-black text-white">Reservas cerradas</h2>
-            <span className="shrink-0 rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-red-200">CERRADAS</span>
-          </div>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 px-5 py-6 text-center">
-            <p className="text-base font-semibold leading-7 text-white">La agenda de esta semana ya está cerrada.</p>
-            <p className="mt-4 text-sm leading-6 text-white/75">Los próximos horarios se publicarán el <strong className="font-bold text-white">domingo</strong>.</p>
-            <p className="mt-4 text-sm font-medium text-rose-200">¡Te esperamos!</p>
-          </div>
-          <p className="mt-5 rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm leading-6 text-white/65">¿Ya reservaste? Podés consultar tu horario abajo. Tus turnos confirmados se mantienen sin cambios.</p>
-        </section>}
+        {config && !student && <PersonalAgendaStatus closed={!config.reservas_habilitadas} student={false}/>}
 
         {!student && <form onSubmit={identify} className="pr-login-card"><div className="pr-login-icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="8" width="26" height="17" rx="4"/><path d="M3 13h26M8 19h7M21 19h3"/></svg></div><div><p className="pr-kicker">{config?.reservas_habilitadas ? 'ACCESO PERSONAL' : 'CONSULTAR RESERVA'}</p><h2>{config?.reservas_habilitadas ? 'Entrá a tu PR Pass' : '¿Qué horario reservé?'}</h2><p className="pr-muted">{config?.reservas_habilitadas ? 'Usá el mismo WhatsApp que tenés registrado en Punta Rollers.' : 'Ingresá tu WhatsApp registrado para ver tus próximas clases confirmadas.'}</p></div><label htmlFor="pr-personal-phone">Tu WhatsApp</label><input id="pr-personal-phone" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Ej: 099 123 456" />
           {config?.reservas_habilitadas && <label className="pr-terms-check"><input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} /><span>Leí y acepto los <button type="button" onClick={() => setTermsOpen(true)}>Términos y Condiciones</button>.</span></label>}
@@ -223,9 +216,10 @@ export default function Personalizadas() {
 
         {student && paymentPending && <section role="status" style={{background:'linear-gradient(145deg,#211b24,#111317)',border:'1px solid rgba(255,120,150,.35)',borderRadius:24,padding:'28px 24px',textAlign:'center',marginBottom:22,boxShadow:'0 16px 40px rgba(0,0,0,.18)'}}><div style={{fontSize:12,letterSpacing:3,color:'#ff8ea5',fontWeight:800}}>PR PERSONAL · ESTADO DE CUENTA</div><div style={{fontSize:34,margin:'16px 0 8px'}}>🔒</div><h2 style={{fontSize:25,fontWeight:850,color:'#fff',marginBottom:10}}>Reservas pendientes de habilitación</h2><p style={{color:'#c9c1ca',lineHeight:1.7}}>Tu PR Pass tiene {Number(pass?.clases_disponibles || 0)} clases disponibles. Podés consultar los horarios publicados, pero para reservar primero necesitamos confirmar el pago.</p><div style={{marginTop:20,padding:15,borderRadius:14,background:'rgba(255,255,255,.05)',color:'#ffb7c6',fontWeight:700}}>Pago pendiente · Reservas bloqueadas</div><p style={{color:'#a9a3ae',fontSize:13,marginTop:15}}>Una vez acreditado el pago, Punta Rollers habilitará tus reservas.</p></section>}
 
-        {student && pass && <PassCard student={student} pass={pass} reservedCredits={reservedCredits} />}
+        {student && pass && <PassCard student={student} pass={pass} reservedCredits={reservedCredits} bookableCredits={bookableCredits} paymentPending={paymentPending} />}
+        {config && student && <PersonalAgendaStatus closed={!config.reservas_habilitadas} student={true}/>}
 
-        {student && upcoming.length > 0 && <section className="pr-section-card"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div><strong>{formatDay(item.slot.fecha)}</strong><small>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</small></div><b>RESERVADA</b></div>)}</div></section>}
+        {student && upcoming.length > 0 && <section className="pr-section-card pr-next-v3"><div className="pr-section-title"><div><p className="pr-kicker">TU AGENDA</p><h2>Próximas clases</h2></div><span>{upcoming.length}</span></div><div className="mt-4 space-y-2">{upcoming.map((item) => <div key={item.id} className="pr-upcoming"><div className="pr-next-date"><strong>{formatDay(item.slot.fecha)}</strong><small>ENTRENAMIENTO 1:1</small></div><div className="pr-next-time"><strong>{formatTime(item.slot.hora_inicio)}</strong><small>Hasta {formatTime(item.slot.hora_fin)}</small></div><b>CONFIRMADA</b></div>)}</div></section>}
 
         {config?.reservas_habilitadas && student && pass && (paymentPending || bookableCredits > 0) && <section className="pr-personal-calendar space-y-4"><div className="pr-section-title"><div><p className="pr-kicker">SEMANA PUBLICADA</p><h2>{paymentPending ? 'Horarios publicados' : 'Elegí tus próximas clases'}</h2><p className="pr-muted">{paymentPending ? 'Podés consultar todos los horarios disponibles. La selección y reserva se habilitarán cuando confirmemos tu pago.' : `Podés seleccionar y confirmar hasta ${bookableCredits} clase${bookableCredits === 1 ? '' : 's'} juntas. Los turnos dejan de estar disponibles 2 horas antes.`}</p></div></div>
           <div className="pr-personal-legend" aria-label="Estados de los turnos"><span><i/>Disponible</span><span><i/>Seleccionado</span><span><i/>Reservado</span></div>{days.length === 0 ? <div className="pr-empty-week"><div>🛼</div><h3>Sin turnos disponibles por ahora</h3><p>Los horarios que ya pasaron o están a menos de 2 horas de comenzar dejan de mostrarse automáticamente.</p></div> : days.map(([date, daySlots]) => <div key={date} className="pr-day-card"><div className="pr-day-head"><strong>{formatDay(date)}</strong><span>{daySlots.filter((slot) => !slot.ocupado).length} disponible{daySlots.filter((slot) => !slot.ocupado).length === 1 ? '' : 's'}</span></div><div className="pr-slot-grid">{daySlots.map((slot) => {
@@ -238,7 +232,7 @@ export default function Personalizadas() {
 
         {config?.reservas_habilitadas && student && pass && !paymentPending && bookableCredits <= 0 && Number(pass.clases_disponibles) > 0 && <div className="pr-info blue">Ya tenés comprometidas todas las clases disponibles de tu PR Pass. Si querés cambiar un turno, contactanos.</div>}
         {config?.reservas_habilitadas && student && pass && Number(pass.clases_disponibles) <= 0 && <div className="pr-info amber">Tu PR Pass está completa. Contactanos para cargar una nueva.</div>}
-        {confirmed.length > 0 && <div className="pr-success pr-pass-enter"><span>✓</span><p className="pr-kicker">{confirmed.length === 1 ? 'RESERVA CONFIRMADA' : 'RESERVAS CONFIRMADAS'}</p><h2>¡Nos vemos sobre ruedas!</h2><div className="mt-3 space-y-1">{confirmed.map((item) => <p key={item.reservation.id}>{formatDay(item.slot.fecha)} · {formatTime(item.slot.hora_inicio)} a {formatTime(item.slot.hora_fin)}.</p>)}</div><small>El sello de tu PR Pass se aplica cuando cada clase se marca como realizada.</small></div>}
+        {confirmed.length > 0 && <div className="pr-success pr-pass-enter pr-confirm-v3" role="status"><span>✓</span><p className="pr-kicker">{confirmed.length === 1 ? 'RESERVA CONFIRMADA' : 'RESERVAS CONFIRMADAS'}</p><h2>¡Nos vemos sobre ruedas!</h2><div className="pr-confirm-tickets">{confirmed.map((item) => <article key={item.reservation.id}><div><small>PR PERSONAL · RESERVA</small><strong>{formatDay(item.slot.fecha)}</strong></div><b>{formatTime(item.slot.hora_inicio)}–{formatTime(item.slot.hora_fin)}</b><span aria-hidden="true">✓</span></article>)}</div><small>El sello de tu PR Pass se aplica cuando cada clase se marca como realizada.</small></div>}
         {message && <div className="pr-message">{message}</div>}
         <button className="pr-terms-footer" onClick={() => setTermsOpen(true)}>Términos y Condiciones · PR Personal</button>
       </div>
