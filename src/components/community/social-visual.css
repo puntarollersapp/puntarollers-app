@@ -66,3 +66,17 @@
 .pr-social-first .pr-social-post-action[aria-pressed=true]{color:#ff91b2;border-color:#ff719e66;background:#ff005515}
 @media(min-width:1100px){.pr-desktop-shell .pr-desktop-feed.pr-social-first>.pr-feed-desktop-main,.pr-desktop-shell .pr-desktop-feed.pr-social-first>.pr-feed-desktop-rail{grid-row:5}}
 @media(max-width:1099px){.pr-social-first .rf-hero{box-shadow:none}.pr-social-first .rf-hero .rf-pulse{stroke-width:1.5}}
+
+/* Studio mobile ergonomics: a single editor surface, persistent exit and larger hit targets. */
+.pr-studio-overlay{padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));scrollbar-width:thin}
+.pr-studio-header{position:sticky;top:-1px;z-index:5;background:var(--pr-social-bg);padding:8px 0;border-bottom:1px solid #ffffff0d}
+.pr-studio-close{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #ffffff22;background:#ffffff09;color:white;font-size:25px;line-height:1}
+.pr-studio-close:focus-visible,.pr-studio-tile:focus-visible{outline:2px solid var(--pr-social-accent);outline-offset:3px}
+.pr-compose-inner{min-width:0}
+.pr-compose-selected{border-color:var(--pr-social-accent)!important;background:color-mix(in srgb,var(--pr-social-accent) 14%,transparent)!important;color:var(--pr-social-accent)!important}
+.pr-compose-text{min-height:100px;resize:vertical;line-height:1.55}
+.pr-compose-tool{min-height:46px;border-radius:14px;background:#ffffff07}
+.pr-compose-submit{letter-spacing:.015em;box-shadow:0 6px 22px color-mix(in srgb,var(--pr-social-accent) 15%,transparent)}
+.pr-compose-submit:active:not(:disabled){transform:scale(.99)}
+@media(max-width:480px){.pr-studio-overlay .pr-social-editor{border-radius:22px;padding:12px}.pr-studio-overlay .pr-social-format-banner{padding:14px;gap:10px}.pr-studio-overlay .pr-studio-header h2{font-size:19px;line-height:1.16}.pr-studio-overlay .pr-studio-grid{gap:8px}.pr-studio-overlay .pr-studio-tile:not(.pr-studio-wide){min-height:123px}.pr-studio-overlay .pr-studio-artwrap{width:56px;height:56px}}
+@media(prefers-reduced-motion:reduce){.pr-compose-submit:active{transform:none}}
