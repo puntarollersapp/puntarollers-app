@@ -107,7 +107,7 @@ function PodiumAvatar({ row, size = 'lg' }) {
 function PrizeVisual({ campaign, level, totalKm, preview = false }) {
   const target = Number(campaign?.[`prize_${level}_target_km`] || 0)
   const unlocked = !preview && target > 0 && totalKm >= target
-  const revealed = level === 1 || unlocked
+  const revealed = campaign?.slug === 'pr-unlock-diciembre-2026' ? unlocked : level === 1 || unlocked
   const progress = Math.min(100, Math.max(0, totalKm / Math.max(1,target) * 100))
   const prize = campaign?.[`prize_${level}_title`] || 'Premio'
   const prizeImages = ['/premios/Vino.png', '/premios/Ferrerorocher.png', '/premios/Entradasdecine.png']
@@ -115,7 +115,7 @@ function PrizeVisual({ campaign, level, totalKm, preview = false }) {
     <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-[#c9fb60]/[.055] blur-2xl"/>
     <div className="relative flex items-center gap-4">
       <div className={`relative grid h-[84px] w-[84px] shrink-0 place-items-center overflow-hidden rounded-[22px] border text-[39px] shadow-[inset_0_1px_0_rgba(255,255,255,.06)] ${unlocked ? 'border-[#c9fb60]/40 bg-[#c9fb60]/10' : 'border-white/10 bg-gradient-to-br from-[#30383a] to-[#111518]'}`} aria-hidden="true">
-        <img src={revealed ? prizeImages[level-1] : '/premios/Mystery.png'} alt={revealed ? prize : 'Premio misterioso'} className="h-full w-full object-contain" loading="lazy" />
+        <img src={revealed ? (campaign?.[`prize_${level}_image_url`] || prizeImages[level-1]) : '/premios/Mystery.png'} alt={revealed ? prize : 'Premio misterioso'} className="h-full w-full object-contain" loading="lazy" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-1.5"><span className="text-[10px] font-black uppercase tracking-[.16em] text-[#c9fb60]">RECOMPENSA 0{level}</span><span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${unlocked?'bg-[#c9fb60] text-[#111419]':'bg-white/[.07] text-white/50'}`}>{unlocked?'✓ Desbloqueada':preview?'Próximamente':'🔒 Bloqueada'}</span></div>
@@ -171,7 +171,7 @@ function HallOfChampions({ octoberResult, novemberResult }) {
         <div className="flex items-center justify-between gap-2"><span className="text-[9px] font-black uppercase tracking-[.17em] text-[#c9fb60]">{name}</span><span className="rounded-full border border-[#c9fb60]/25 bg-[#c9fb60]/10 px-2.5 py-1 text-[8px] font-black text-[#c9fb60]">CAMPEÓN OFICIAL</span></div>
         <div className="mt-5 flex items-center gap-4"><div className="relative shrink-0">{result.winner_photo?<img src={result.winner_photo} alt={result.winner_name||'Campeón'} className="h-20 w-20 rounded-full border-[3px] border-[#c9fb60]/50 object-cover shadow-[0_0_28px_rgba(201,251,96,.15)]"/>:<div className="grid h-20 w-20 place-items-center rounded-full border-[3px] border-[#c9fb60]/50 bg-[#c9fb60]/10 text-xl font-black">{initials(result.winner_name)}</div>}<span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-3 py-1 text-[9px] font-black text-[#121719]">#1</span></div>
           <div className="min-w-0"><h3 className="truncate text-xl font-black text-[#f3f1e9]">{result.winner_name||'Campeón PR'}</h3><p className="mt-1 text-lg font-black text-[#c9fb60]">{Number(result.winner_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} <span className="text-xs">km</span></p><p className="mt-1 text-[10px] text-white/40">Nivel {result.unlocked_level||0} · {Number(result.group_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km colectivos</p></div></div>
-        <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-[#c9fb60]/15 bg-[#c9fb60]/[.055] p-3"><span className="text-xl" aria-hidden="true">🏆</span><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-white/40">Premio conseguido</p><p className="mt-1 text-sm font-black text-[#f3f1e9]">{result.prize_title||'Misión completada'}</p></div></div>
+        <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-[#c9fb60]/15 bg-[#c9fb60]/[.055] p-3"><span className="text-xl" aria-hidden="true">🏆</span><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-white/40">Premio conseguido</p><p className="mt-1 text-sm font-black text-[#f3f1e9]">{result.prize_title||'Misión completada'}</p></div></div>{result.unlocked_level>0&&<p className="mt-4 text-xs leading-5 text-white/80">¡Felicitaciones, {result.winner_name.split(' ')[0]}! Nos pondremos en contacto contigo para coordinar la entrega de tu premio.</p>}
       </article>)}</div>
       <p className="mt-5 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/25">El esfuerzo se recuerda. El legado permanece.</p>
     </div>
@@ -191,7 +191,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false, demo = fals
   const activePrizeLevel = unlockedLevel
   const activePrizeTitle = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_title`] : null
   const activePrizeDetail = activePrizeLevel ? campaign[`prize_${activePrizeLevel}_detail`] : null
-  const activePrizeImage = activePrizeLevel === 1 ? '/premios/Vino.png' : activePrizeLevel === 2 ? '/premios/Ferrerorocher.png' : activePrizeLevel === 3 ? '/premios/Entradasdecine.png' : '/premios/Mystery.png'
+  const activePrizeImage = activePrizeLevel ? (campaign[`prize_${activePrizeLevel}_image_url`] || (activePrizeLevel === 1 ? '/premios/Vino.png' : activePrizeLevel === 2 ? '/premios/Ferrerorocher.png' : '/premios/Entradasdecine.png')) : '/premios/Mystery.png'
   const leader = demo || preview ? null : campaignRanking[0]
   const today = montevideoToday().date
   const finished = !preview && today > campaign.ends_on
@@ -266,7 +266,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false, demo = fals
           {contributors.length ? <div className="mt-4 flex gap-3 overflow-x-auto pb-2">{contributors.map((row,index)=><div key={row.alumnoId} className="min-w-[108px] rounded-[20px] border border-white/[.08] bg-black/25 p-3 text-center"><div className="relative mx-auto w-fit">{row.photo?<img src={row.photo} alt={row.name} className="h-14 w-14 rounded-full border-2 border-[#c9fb60]/25 object-cover"/>:<div className="grid h-14 w-14 place-items-center rounded-full border-2 border-fuchsia-300/20 bg-[#c9fb60]/10 text-sm font-black">{initials(row.name)}</div>}<span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full border-2 border-[#100d13] bg-[#c9fb60] text-[8px] font-black text-black">{index+1}</span></div><p className="mt-3 truncate text-[10px] font-black">{row.name.split(' ')[0]}</p><p className="mt-1 text-[9px] font-black text-[#c9fb60]">{row.km.toLocaleString('es-UY',{maximumFractionDigits:1})} km</p></div>)}</div>:<p className="mt-3 text-[10px] text-white/30">Todavía no hay kilómetros dentro de esta misión.</p>}
         </div>
         <div className="mt-5 space-y-3">
-          <div className="flex items-center justify-between gap-2"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[#c9fb60]">REWARD VAULT / NOVIEMBRE</p><h3 className="mt-1 text-xl font-black">Abrí el siguiente nivel.</h3></div><span className="text-2xl" aria-hidden="true">🎀</span></div>
+          <div className="flex items-center justify-between gap-2"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-[#c9fb60]">REWARD VAULT / {campaign.slug==='pr-unlock-diciembre-2026'?'DICIEMBRE':'NOVIEMBRE'}</p><h3 className="mt-1 text-xl font-black">Abrí el siguiente nivel.</h3></div><span className="text-2xl" aria-hidden="true">🎀</span></div>
           {[1,2,3].map((level)=><PrizeVisual key={level} campaign={campaign} level={level} totalKm={totalKm} preview={preview} />)}
         </div>
       </div>
@@ -316,7 +316,9 @@ function PodiumDuel({ challenger, defender, gap }) {
 
 export default function PublicWeeklyRanking() {
   const { user } = useAuth()
-  const ranges = useMemo(() => dateRanges(), [])
+  const [rangeDay,setRangeDay]=useState(()=>montevideoToday().date)
+  useEffect(()=>{const update=()=>setRangeDay(montevideoToday().date);const timer=setInterval(update,30000);window.addEventListener('focus',update);return()=>{clearInterval(timer);window.removeEventListener('focus',update)}},[])
+  const ranges = useMemo(() => dateRanges(), [rangeDay])
   const [params, setParams] = useSearchParams()
   const requested = params.get('period')
   const initialPeriod = requested === 'week' ? 'week' : 'month'
@@ -331,6 +333,7 @@ export default function PublicWeeklyRanking() {
   const [octoberResult, setOctoberResult] = useState(null)
   const [octoberSnapshot, setOctoberSnapshot] = useState(null)
   const [unlockResult, setUnlockResult] = useState(null)
+  const [novemberResult,setNovemberResult]=useState(null)
   function changePeriod(next) {
     setPeriod(next)
     setParams({ period: next })
@@ -390,7 +393,12 @@ export default function PublicWeeklyRanking() {
         })
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(profileMap)
-        setUnlockCampaign(unlockResponse.data || null)
+        const december = await supabase.rpc('pr_unlock_december_public');
+        const currentCampaign=december.data || unlockResponse.data;
+        if (!active) return;
+        setUnlockCampaign(currentCampaign || null);
+        const nov=await supabase.from('pr_unlock_results').select('*').eq('campaign_id','898cf83d-ff61-480a-8178-c79cbb665bea').maybeSingle();
+        if(!active)return;setNovemberResult(nov.data||null)
         setOctoberResult(octoberResultResponse.data || null)
         if (!octoberRankingResponse.error && octoberCampaignResponse.data) {
           const rows = hydrateRanking(octoberRankingResponse.data)
@@ -399,13 +407,13 @@ export default function PublicWeeklyRanking() {
           const level = [1,2,3].reduce((acc,n)=>total>=Number(campaign[`prize_${n}_target_km`]||Infinity)?n:acc,0)
           setOctoberSnapshot({total,participants:rows.length,level,prize:level?campaign[`prize_${level}_title`]:null,leader:rows[0]||null})
         }
-        if (unlockResponse.data?.id) {
+        if (currentCampaign?.id) {
           const [unlockRankingResponse, resultResponse] = await Promise.all([
             supabase.rpc('pr_get_inline_ranking', {
-              p_start_date: unlockResponse.data.starts_on,
-              p_end_date: unlockResponse.data.ends_on,
+              p_start_date: currentCampaign.starts_on,
+              p_end_date: currentCampaign.ends_on,
             }),
-            supabase.from('pr_unlock_results').select('*').eq('campaign_id', unlockResponse.data.id).maybeSingle(),
+            supabase.from('pr_unlock_results').select('*').eq('campaign_id', currentCampaign.id).maybeSingle(),
           ])
           if (unlockRankingResponse.error) throw unlockRankingResponse.error
           if (active) {
@@ -497,7 +505,7 @@ export default function PublicWeeklyRanking() {
         </section>}
 
           <PRUnlock campaign={unlockCampaign} ranking={unlockRanking} result={unlockResult} preview={montevideoToday().date < '2026-11-01'} demo={false} />
-          <HallOfChampions octoberResult={octoberResult} novemberResult={unlockResult} />
+          <HallOfChampions octoberResult={octoberResult} novemberResult={novemberResult} />
 
 
         {loading ? <div className="mt-4 rounded-[28px] border border-white/10 bg-white/[.03] p-6 text-center text-xs text-white/35">Actualizando kilómetros de Strava…</div> : message ? <div className="mt-4 rounded-[28px] border border-red-300/15 bg-red-400/[.06] p-5 text-xs text-red-200">{message}</div> : <div className="mt-5 space-y-5">
