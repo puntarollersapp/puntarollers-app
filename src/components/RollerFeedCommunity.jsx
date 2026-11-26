@@ -2,7 +2,7 @@ import {FeedFormatBanner,AnimatedReactions,formatStyle,FORMATS} from './communit
 import {SocialVideo} from './community/SocialVideo'
 import SocialCommentInput from './community/SocialCommentInput'
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {SocialComposer,SocialTags} from './community/SocialComposer'
 import {SocialPostTools,SocialReply,SocialPoll,useSocialPolls,useSocialStatus,useSocialSaved} from './community/PRSocial2'
@@ -10,6 +10,9 @@ import {SocialPostTools,SocialReply,SocialPoll,useSocialPolls,useSocialStatus,us
 const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','👏']]
 
 export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) {
+  const location=useLocation()
+  const targetId=useRef(new URLSearchParams(location.search).get('socialPost'))
+  const [targetUnavailable,setTargetUnavailable]=useState(false)
   const socialStatus=useSocialStatus(),saved=useSocialSaved(socialStatus),polls=useSocialPolls(socialStatus)
   const [onlySaved,setOnlySaved]=useState(false)
   const [formatFilter,setFormatFilter]=useState('all')
@@ -32,7 +35,7 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
         try{
           const {data,error:loadError}=await supabase.rpc('community_social_feed')
           if(loadError)setError(previous=>previous||'No se pudieron actualizar las publicaciones. Intentá de nuevo.')
-          else{const next=Array.isArray(data)?data:[];setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next);setError('')}
+          else{const next=Array.isArray(data)?data:[];const id=targetId.current;if(id&&!next.some(p=>p.id===id)){const {data:target,error:targetError}=await supabase.rpc('community_social_post',{p_post_id:id});if(targetError)throw targetError;if(targetId.current===id){if(Array.isArray(target)&&target.length)next.push(target[0]);setTargetUnavailable(!target?.length)}}else setTargetUnavailable(false);setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next);setError('')}
         }catch{setError('No se pudieron actualizar las publicaciones. Intentá de nuevo.')}
         setLoaded(true)
       }while(refreshAgain.current)
@@ -62,7 +65,8 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     setBusy('')
   }
   const [scrollPost,setScrollPost]=useState(()=>new URLSearchParams(window.location.search).get('socialPost'))
-  useEffect(()=>{const open=e=>{setOnlySaved(false);setFormatFilter('all');setVisibleCount(100);setScrollPost(e.detail)};window.addEventListener('pr-social2-scroll-post',open);return()=>window.removeEventListener('pr-social2-scroll-post',open)},[])
+  useEffect(()=>{const open=e=>{targetId.current=e.detail;setOnlySaved(false);setFormatFilter('all');setVisibleCount(100);setScrollPost(e.detail);refresh()};window.addEventListener('pr-social2-scroll-post',open);return()=>window.removeEventListener('pr-social2-scroll-post',open)},[])
+  useEffect(()=>{const id=new URLSearchParams(location.search).get('socialPost');if(id){targetId.current=id;setOnlySaved(false);setFormatFilter('all');setVisibleCount(100);setScrollPost(id);refresh()}},[location.search])
   useEffect(()=>{if(!scrollPost)return;const el=document.getElementById('social-post-'+scrollPost);if(el){el.scrollIntoView({block:'center',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});setScrollPost(null);const url=new URL(window.location.href);if(url.searchParams.has('socialPost')){url.searchParams.delete('socialPost');window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash)}}},[scrollPost,visibleCount,posts,onlySaved,formatFilter])
   const allEntries=[...posts.filter(p=>p?.id&&(!onlySaved||!socialStatus?.enabled||saved.includes(p.id))).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id&&(!onlySaved||!socialStatus?.enabled)).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
   const latest=allEntries.filter(e=>!socialStatus?.enabled||formatFilter==='all'||(e.kind==='album'?'album':e.item.social_kind||'post')===formatFilter)
@@ -71,6 +75,7 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">{socialStatus?.enabled?"Lo último de tu gente.":"Compartí, reaccioná y comentá sin salir del feed."}</p></div>{socialStatus?.enabled&&<button type="button" aria-label="Actualizar publicaciones" title="Actualizar publicaciones" onClick={()=>refresh()} className="self-end rounded-full border border-white/10 bg-white/5 p-2.5 text-white/70"><svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 11a8 8 0 0 0-14-5L3 9m0-5v5h5M4 13a8 8 0 0 0 14 5l3-3m0 5v-5h-5"/></svg></button>}</div>
     {!socialStatus?.enabled&&<SocialComposer compact onPublished={refresh}/>}{socialStatus?.enabled&&<div className="flex gap-2"><button type="button" onClick={()=>setOnlySaved(false)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(!onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Todas</button><button type="button" onClick={()=>setOnlySaved(true)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Guardadas · {saved.length}</button></div>}
     {socialStatus?.enabled&&<div className="flex gap-2 overflow-x-auto pb-2" aria-label="Filtrar publicaciones">{['all','post','daily','class','poll','video','album'].map(key=><button key={key} type="button" aria-pressed={formatFilter===key} onClick={()=>selectFilter(key)} style={{color:formatFilter===key?(FORMATS[key]?.color||'#ff719e'):undefined}} className={'shrink-0 rounded-full border px-3 py-2 text-xs font-bold '+(formatFilter===key?'border-current bg-white/10':'border-white/10 text-white/65')}>{key==='all'?'Todo':FORMATS[key].icon+' '+FORMATS[key].label}</button>)}</div>}
+    {targetUnavailable&&<p role="status" className="rounded-xl border border-white/15 p-3 text-xs text-white/65">Esta publicación ya no está disponible o no tenés permiso para verla.</p>}
     {error&&<div role="alert" className="flex items-center justify-between gap-2 rounded-xl border border-red-400/30 p-3 text-xs text-red-200"><span>{error}</span><button type="button" onClick={()=>refresh()} className="shrink-0 rounded-lg border border-red-300/25 px-2 py-2 font-bold">Reintentar</button></div>}
     {!loaded&&!latest.length&&!error&&<div role="status" aria-label="Cargando publicaciones" className="rounded-[20px] border border-white/10 bg-white/[.03] p-4"><div className="flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-white/10 motion-safe:animate-pulse"/><div className="flex-1 space-y-2"><div className="h-3 w-28 rounded bg-white/10 motion-safe:animate-pulse"/><div className="h-2 w-16 rounded bg-white/5"/></div></div><div className="mt-4 aspect-[16/7] rounded-xl bg-white/5 motion-safe:animate-pulse"/></div>}
     {loaded&&!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">{onlySaved?'Todavía no tenés publicaciones guardadas de este formato.':formatFilter!=='all'?'Todavía no hay publicaciones de este formato.':'Todavía no hay publicaciones para mostrar.'}{socialStatus?.enabled&&formatFilter!=='all'&&<button type="button" className="mx-auto mt-3 block text-rose-200 font-bold" onClick={()=>selectFilter('all')}>Ver todos los formatos</button>}</p>}
