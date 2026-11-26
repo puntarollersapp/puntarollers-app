@@ -38,3 +38,16 @@
 .pr-summer-ack{display:flex;align-items:flex-start;gap:13px;padding:17px;border-radius:16px;background:#ffffff08;border:1px solid #ffffff24;cursor:pointer;font-size:.9rem;line-height:1.55;color:#f3f1ec}
 .pr-summer-ack:has(input:checked){border-color:#ff729b;background:#ff00550a}
 @media(max-width:640px){.pr-reg-summer .pr-reg-card{border-radius:0}.pr-summer-membership,.pr-summer-schedule{padding:19px 16px}.pr-summer-slot{gap:9px}.pr-summer-time{min-width:61px;padding:8px}.pr-summer-slot>span{font-size:1.1rem}.pr-reg-summer .pr-reg-stage-form .pr-reg-cta-wrap{background:linear-gradient(180deg,transparent,#191a20 24%)}}
+
+
+/* Summer private experience and shared community card */
+.pr-reg-summer .pr-summer-private{background:radial-gradient(ellipse at 105% -5%,#ff875d38,transparent 46%),linear-gradient(145deg,#263b40,#22232b 62%);border-color:#ffb38c45}
+.pr-reg-summer .pr-summer-private h2{color:#ffb38c}.pr-summer-private .pr-summer-season{margin:12px 0 0}.pr-summer-availability{font-size:.77rem;color:#d7bfae;letter-spacing:.03em;margin:12px 0 0}
+.pr-summer-community{padding:23px;margin:24px 0;border-radius:25px;background:radial-gradient(ellipse at 100% 0,#71e0c01b,transparent 55%),#1d282e;border:1px solid #71e0c02c;box-sizing:border-box}
+.pr-summer-community .pr-summer-eyebrow{color:#a5ebd6}
+.pr-summer-community h2{color:#f3f1ec;font-size:clamp(1.45rem,5.4vw,2.15rem);font-weight:900;letter-spacing:-.045em;line-height:1.1;margin:0 0 12px}
+.pr-summer-community>p:not(.pr-summer-eyebrow),.pr-summer-safety p{font-size:.92rem;line-height:1.6;color:#d5e0e1;margin:0}
+.pr-summer-safety{display:flex;gap:12px;align-items:flex-start;border-top:1px solid #ffffff18;margin-top:18px;padding-top:16px}
+.pr-summer-safety>span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#9fe5c322;color:#9fe5c3;font-weight:950;flex-shrink:0}
+.pr-summer-safety b{display:block;color:#f3f1ec;margin-bottom:5px}
+@media(max-width:640px){.pr-summer-community{padding:19px 16px}}
