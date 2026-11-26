@@ -5,8 +5,8 @@ import PassCard from '../PRPersonalPassCard'
 
 export function usePersonalMembership(profileId) {
  const [state,setState]=useState(null)
- useEffect(()=>{let alive=true;setState(null);if(!profileId)return;async function load(){const {data,error}=await supabase.rpc('pr_personal_my_membership');if(alive&&!error)setState(data||null)}load();const timer=setInterval(load,60000);const refresh=()=>{if(document.visibilityState==='visible')load()};document.addEventListener('visibilitychange',refresh);return()=>{alive=false;clearInterval(timer);document.removeEventListener('visibilitychange',refresh)}},[profileId])
- return state
+ useEffect(()=>{let alive=true;setState(null);if(!profileId)return;async function load(){const {data,error}=await supabase.rpc('pr_personal_my_membership');if(alive&&!error)setState({profileId,data:data||null})}load();const timer=setInterval(load,60000);const refresh=()=>{if(document.visibilityState==='visible')load()};document.addEventListener('visibilitychange',refresh);return()=>{alive=false;clearInterval(timer);document.removeEventListener('visibilitychange',refresh)}},[profileId])
+ return state?.profileId===profileId?state.data:null
 }
 export default function PRPersonalMembership({membership,profile}) {
  if(!membership?.pass)return null
