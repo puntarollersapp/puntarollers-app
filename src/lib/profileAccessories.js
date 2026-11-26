@@ -8,6 +8,20 @@ export function accessoryUrl(file){
 export function accessoryAccess(user,now=Date.now()){
  return Boolean(user?.id&&user.role!=='familiar'&&(now>=ACCESSORY_RELEASE||(user.id==='admin-claudio'&&user.role==='admin')))
 }
+// Permanent visual refresh: owner preview until Dec 1, then all signed-in profiles.
+export function useProfileVisualRefresh(user){
+ const owner=user?.id==='admin-claudio'&&user?.role==='admin'
+ const [released,setReleased]=useState(()=>Date.now()>=ACCESSORY_RELEASE)
+ useEffect(()=>{
+  if(released)return
+  const check=()=>setReleased(Date.now()>=ACCESSORY_RELEASE)
+  check()
+  const t=setInterval(check,15000)
+  window.addEventListener('focus',check)
+  return()=>{clearInterval(t);window.removeEventListener('focus',check)}
+ },[released])
+ return Boolean(user?.id&&(owner||released))
+}
 const cache=new Map(),listeners=new Map(),queue=new Set()
 let timer=null
 function broadcast(id,value){cache.set(id,{value,time:Date.now()});listeners.get(id)?.forEach(fn=>fn(value))}
