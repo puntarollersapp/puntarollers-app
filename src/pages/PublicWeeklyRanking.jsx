@@ -171,7 +171,7 @@ function HallOfChampions({ octoberResult, novemberResult }) {
         <div className="flex items-center justify-between gap-2"><span className="text-[9px] font-black uppercase tracking-[.17em] text-[#c9fb60]">{name}</span><span className="rounded-full border border-[#c9fb60]/25 bg-[#c9fb60]/10 px-2.5 py-1 text-[8px] font-black text-[#c9fb60]">CAMPEÓN OFICIAL</span></div>
         <div className="mt-5 flex items-center gap-4"><div className="relative shrink-0">{result.winner_photo?<img src={result.winner_photo} alt={result.winner_name||'Campeón'} className="h-20 w-20 rounded-full border-[3px] border-[#c9fb60]/50 object-cover shadow-[0_0_28px_rgba(201,251,96,.15)]"/>:<div className="grid h-20 w-20 place-items-center rounded-full border-[3px] border-[#c9fb60]/50 bg-[#c9fb60]/10 text-xl font-black">{initials(result.winner_name)}</div>}<span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#c9fb60] px-3 py-1 text-[9px] font-black text-[#121719]">#1</span></div>
           <div className="min-w-0"><h3 className="truncate text-xl font-black text-[#f3f1e9]">{result.winner_name||'Campeón PR'}</h3><p className="mt-1 text-lg font-black text-[#c9fb60]">{Number(result.winner_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} <span className="text-xs">km</span></p><p className="mt-1 text-[10px] text-white/40">Nivel {result.unlocked_level||0} · {Number(result.group_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km colectivos</p></div></div>
-        <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-[#c9fb60]/15 bg-[#c9fb60]/[.055] p-3"><span className="text-xl" aria-hidden="true">🏆</span><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-white/40">Premio conseguido</p><p className="mt-1 text-sm font-black text-[#f3f1e9]">{result.prize_title||'Misión completada'}</p></div></div>{result.unlocked_level>0&&<p className="mt-4 text-xs leading-5 text-white/80">¡Felicitaciones, {result.winner_name.split(' ')[0]}! Nos pondremos en contacto contigo para coordinar la entrega de tu premio.</p>}
+        <div className="mt-5 flex items-center gap-3 rounded-[18px] border border-[#c9fb60]/15 bg-[#c9fb60]/[.055] p-3"><span className="text-xl" aria-hidden="true">🏆</span><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-white/40">Premio conseguido</p><p className="mt-1 text-sm font-black text-[#f3f1e9]">{result.prize_title||'Misión completada'}</p></div></div>{result.unlocked_level>0&&<p className="mt-4 text-xs leading-5 text-white/80">¡Felicitaciones, {result.winner_name.split(' ')[0]}! Nos pondremos en contacto contigo para coordinar la entrega de tu premio.{key!=='october'&&<> La entrega se realizará dentro de los primeros 10 días hábiles del mes siguiente al cierre del desafío.</>}</p>}
       </article>)}</div>
       <p className="mt-5 text-center text-[9px] font-bold uppercase tracking-[.18em] text-white/25">El esfuerzo se recuerda. El legado permanece.</p>
     </div>
@@ -244,7 +244,7 @@ function PRUnlock({ campaign, ranking = [], result, preview = false, demo = fals
             <h3 className="mt-5 text-2xl font-black">{official.winner_name||'Ganador PR'}</h3>
             <p className="mt-1 text-sm font-black text-amber-300">{Number(official.winner_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km</p>
             <p className="mt-3 text-[10px] leading-5 text-white/45">La comunidad cerró con <b className="text-white">{Number(official.group_km||0).toLocaleString('es-UY',{maximumFractionDigits:1})} km</b> y alcanzó el <b className="text-white">Nivel {String(official.unlocked_level||0).padStart(2,'0')}</b>.</p>
-            <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.08] px-4 py-3 text-sm font-black text-amber-200">{official.prize_title||'Misión completada'}</div>
+            <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/[.08] px-4 py-3 text-sm font-black text-amber-200">{official.prize_title||'Misión completada'}</div>{official.unlocked_level>0&&<p className="mt-3 text-xs leading-5 text-white/80">¡Felicitaciones! Nos pondremos en contacto contigo para coordinar la entrega. La entrega se realizará dentro de los primeros 10 días hábiles del mes siguiente al cierre del desafío.</p>}
           </div>
         </div>}
 
@@ -394,9 +394,10 @@ export default function PublicWeeklyRanking() {
         setStatuses(Object.fromEntries((statusesResponse.data || []).map((row) => [String(row.alumno_id), row.status_text || ''])))
         setProfiles(profileMap)
         const december = await supabase.rpc('pr_unlock_december_public');
+        if(december.error && montevideoToday().date>='2026-12-01')throw december.error;
         const currentCampaign=december.data || unlockResponse.data;
         if (!active) return;
-        setUnlockCampaign(currentCampaign || null);
+        
         const nov=await supabase.from('pr_unlock_results').select('*').eq('campaign_id','898cf83d-ff61-480a-8178-c79cbb665bea').maybeSingle();
         if(!active)return;setNovemberResult(nov.data||null)
         setOctoberResult(octoberResultResponse.data || null)
@@ -417,10 +418,12 @@ export default function PublicWeeklyRanking() {
           ])
           if (unlockRankingResponse.error) throw unlockRankingResponse.error
           if (active) {
+            setUnlockCampaign(currentCampaign)
             setUnlockRanking(hydrateRanking(unlockRankingResponse.data))
             setUnlockResult(resultResponse.data || null)
           }
         } else if (active) {
+          setUnlockCampaign(null)
           setUnlockRanking([])
           setUnlockResult(null)
         }
