@@ -1237,7 +1237,7 @@ export default function Activity() {
           </div>
         </section>
 
-        <button type="button" onClick={()=>{const el=document.getElementById('pr-social-composer');el?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});el?.querySelector('button')?.focus({preventScroll:true})}} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>
+        <button type="button" onClick={()=>window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>
 
         <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
 
