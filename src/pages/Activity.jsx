@@ -1231,7 +1231,7 @@ export default function Activity() {
             <h1 className="mt-4 font-display text-[42px] leading-none tracking-tight text-white sm:text-5xl">Roller<span className="text-[#FF0055]">Feed.</span></h1>
             <svg aria-hidden="true" viewBox="0 0 150 22" className="mx-auto mt-2 h-5 w-36 opacity-80"><path className="rf-pulse" d="M1 11h40l7-5 8 12 8-17 9 20 8-10h68"/></svg>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">{socialVisualStatus?.enabled?"Tu gente. Tus avances. Todo lo que pasa sobre ruedas.":"Lo que pasa en Punta Rollers, pasa acá. Seguí en vivo lo que están patinando tus compañeros, compartí sus logros y enterate de todas las novedades de nuestra comunidad."}</p>
-            <div className="mt-5 grid grid-cols-3 gap-2">
+            <div className={"mt-5 grid grid-cols-3 gap-2 "+(socialVisualStatus?.enabled?"rf-social-stats":"")}>
               <HeroStat value={loading ? '—' : communityStats.activities} label="Actividades" />
               <HeroStat value={loading ? '—' : communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })} label="Km rodados" highlight />
               <HeroStat value={loading ? '—' : communityStats.skaters} label="Patinadores" />
@@ -1242,9 +1242,9 @@ export default function Activity() {
         {!socialVisualStatus?.enabled&&<button type="button" onClick={()=>socialVisualStatus?.enabled?window.dispatchEvent(new CustomEvent('pr-social2-open',{detail:{kind:'choose'}})):window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>}
 
         <OptionalExperienceBoundary><SocialDaily/></OptionalExperienceBoundary>
-        <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
+        {!socialVisualStatus?.enabled&&<OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>}
 
-        <nav aria-label="Explorar RollerFeed" className="w-full min-w-0">
+        <nav aria-label="Explorar RollerFeed" className={"w-full min-w-0 "+(socialVisualStatus?.enabled?"rf-quick-nav":"")}>
           <div className="grid w-full grid-cols-5 gap-1 py-1 sm:gap-2">
             {FEED_FILTERS.map((item) => {
               const active = !item.target && filter === item.key
@@ -1273,6 +1273,7 @@ export default function Activity() {
         </nav>
 
         <div className="pr-feed-desktop-rail">
+        {socialVisualStatus?.enabled&&<OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>}
         <RollerFeedTopRanking profilesByAnyId={profilesByAnyId} profileId={profileId} />
 
 
