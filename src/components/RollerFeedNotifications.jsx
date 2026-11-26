@@ -24,7 +24,7 @@ export default function RollerFeedNotifications(){
   const ok=item?.read_at?true:await mark(item?.id??null)
   setBusy(false)
   if(!ok){setError('No pudimos marcar como leída. Probá nuevamente.');return}
-  if(item){close();const to=rollerFeedTarget(item.kind||'');if(to.startsWith('#'))requestAnimationFrame(()=>document.getElementById(to.slice(1))?.scrollIntoView({behavior:'auto',block:'start'}));else navigate(to)}
+  if(item){close();const to=rollerFeedTarget(item.kind||'',item.entity_id);if(to.startsWith('#'))requestAnimationFrame(()=>document.getElementById(to.slice(1))?.scrollIntoView({behavior:'auto',block:'start'}));else navigate(to)}
  }
  const visible=onlyUnread?items.filter(n=>!n.read_at):items
  if(!user?.id)return null
