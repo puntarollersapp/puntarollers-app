@@ -13,5 +13,5 @@ export default function ProfileAccessory({profileId,preview,large=false}){
  const src=accessoryUrl(item?.asset_file)
  const [failed,setFailed]=useState('')
  if(!src||failed===src)return null
- return <img src={src} onError={()=>setFailed(src)} alt={item.title||'Accesorio PR'} title={item.title||'Accesorio PR'} draggable={false} decoding="async" className="pointer-events-none absolute z-[21] object-contain select-none" style={{right:'-7%',bottom:'-4%',width:large?'38%':'43%',height:large?'38%':'43%',objectFit:'contain',filter:'drop-shadow(0 2px 3px rgba(0,0,0,.75))'}}/>
+ return <img src={src} onError={()=>setFailed(src)} alt={item.title||'Accesorio PR'} title={item.title||'Accesorio PR'} draggable={false} decoding="async" className="pointer-events-none absolute z-[21] object-contain select-none" style={{right:large?'-15%':'-7%',top:large?'50%':undefined,bottom:large?undefined:'-4%',transform:large?'translateY(-50%)':undefined,width:large?'34%':'43%',height:large?'34%':'43%',objectFit:'contain',filter:'drop-shadow(0 3px 5px rgba(0,0,0,.65))'}}/>
 }
