@@ -24,7 +24,7 @@ export function useSocialStatus(){
  const {user}=useAuth(),uid=user?.id
  const [snapshot,setSnapshot]=useState(null)
  useEffect(()=>{let active=true;if(!uid)return
- async function load(){if(document.visibilityState==='hidden')return;const {data,error}=await sharedSocialRead(uid,'pr_social_status');if(active)setSnapshot({uid,value:error?null:data})}
+ async function load(){if(document.visibilityState==='hidden')return;const {data,error}=await sharedSocialRead(uid,'pr_social_status');if(active)setSnapshot(old=>({uid,value:error?(old?.uid===uid?old.value:null):data}))}
  load();const timer=setInterval(load,60000);window.addEventListener('focus',load);document.addEventListener('visibilitychange',load)
  return()=>{active=false;clearInterval(timer);window.removeEventListener('focus',load);document.removeEventListener('visibilitychange',load)}
  },[uid])
