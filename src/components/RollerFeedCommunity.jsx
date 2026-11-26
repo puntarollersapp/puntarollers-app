@@ -46,6 +46,9 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     else {setDrafts(old=>({...old,[post.id]:''}));await refresh()}
     setBusy('')
   }
+  const [scrollPost,setScrollPost]=useState(null)
+  useEffect(()=>{const open=e=>{setOnlySaved(false);setVisibleCount(100);setScrollPost(e.detail)};window.addEventListener('pr-social2-scroll-post',open);return()=>window.removeEventListener('pr-social2-scroll-post',open)},[])
+  useEffect(()=>{if(!scrollPost)return;const el=document.getElementById('social-post-'+scrollPost);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});setScrollPost(null)}},[scrollPost,visibleCount,posts,onlySaved])
   const latest=[...posts.filter(p=>p?.id&&(!onlySaved||!socialStatus?.enabled||saved.includes(p.id))).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id&&(!onlySaved||!socialStatus?.enabled)).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Compartí, reaccioná y comentá sin salir del feed.</p></div></div>
