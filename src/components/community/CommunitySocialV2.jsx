@@ -4,7 +4,7 @@ import SocialCommentInput from './SocialCommentInput'
 import {useSocialStatus,useSocialPolls,SocialPoll,SocialReply} from './PRSocial2'
 import RollerweenBadge from '../RollerweenBadge'
 import { useEffect,useRef,useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate,useLocation } from 'react-router-dom'
 import CommunityPhoto, { CommunityFullPhoto } from './CommunityPhoto'
 import { supabase } from '../../lib/supabase'
 import {SocialComposer,SocialTags} from './SocialComposer'
@@ -16,12 +16,13 @@ function Avatar({src,name,size='h-9 w-9',pumpkin=false}){return <div className={
 
 export default function CommunitySocialV2({view='legacy'}={}){
  const socialStatus=useSocialStatus(),socialPolls=useSocialPolls(socialStatus)
- const navigate=useNavigate(),[posts,setPosts]=useState([]),[notes,setNotes]=useState([]),[friends,setFriends]=useState([]),[albums,setAlbums]=useState([]),[busy,setBusy]=useState(false),[msg,setMsg]=useState('')
+ const navigate=useNavigate(),location=useLocation(),openedAlbum=useRef(null),[posts,setPosts]=useState([]),[notes,setNotes]=useState([]),[friends,setFriends]=useState([]),[albums,setAlbums]=useState([]),[busy,setBusy]=useState(false),[msg,setMsg]=useState('')
  const[postBusy,setPostBusy]=useState(''),[showAllNotes,setShowAllNotes]=useState(false),[mode,setMode]=useState(()=>new URLSearchParams(window.location.search).get('create')==='album'?'album':'post'),[audience,setAudience]=useState('members'),[body,setBody]=useState(''),[postFiles,setPostFiles]=useState([]),[tags,setTags]=useState([]),[albumTitle,setAlbumTitle]=useState(''),[albumMembers,setAlbumMembers]=useState([]),[albumTarget,setAlbumTarget]=useState(null),[selectedAlbum,setSelectedAlbum]=useState(null),[selectedPhoto,setSelectedPhoto]=useState(null)
  const[comments,setComments]=useState({}),[albumComments,setAlbumComments]=useState({}),[replying,setReplying]=useState(null),[replyText,setReplyText]=useState(''),[photoComment,setPhotoComment]=useState('')
  const postInput=useRef(null),createAlbumInput=useRef(null),addAlbumInput=useRef(null),loadingFeed=useRef(false)
  async function load(){if(loadingFeed.current)return albums;loadingFeed.current=true;try{const results=await Promise.all([supabase.rpc('community_social_feed'),supabase.rpc('community_my_notifications'),supabase.rpc('community_my_friends'),supabase.rpc('community_my_albums')]);const setters=[setPosts,setNotes,setFriends,setAlbums];let firstError=null;results.forEach((result,index)=>{if(result.error){firstError??=result.error;return}setters[index](previous=>{const next=Array.isArray(result.data)?result.data:[];return JSON.stringify(previous)===JSON.stringify(next)?previous:next})});if(firstError){if(!/failed to fetch|networkerror|load failed/i.test(firstError.message||''))setMsg('No se pudo actualizar la comunidad: '+firstError.message)}else setMsg(previous=>previous.startsWith('No se pudo actualizar la comunidad:')?'':previous);return Array.isArray(results[3].data)?results[3].data:[]}finally{loadingFeed.current=false}}
  useEffect(()=>{load();const timer=setInterval(()=>{if(document.visibilityState==='visible')load()},60000);const onFocus=()=>load();const onVisibility=()=>{if(document.visibilityState==='visible')load()};window.addEventListener('focus',onFocus);window.addEventListener('pr-social-published',onFocus);window.addEventListener('pr-notifications-changed',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);window.removeEventListener('pr-social-published',onFocus);window.removeEventListener('pr-notifications-changed',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
+ useEffect(()=>{const id=new URLSearchParams(location.search).get('album');if(!id){openedAlbum.current=null;return}if(view!=='albums'||openedAlbum.current===id)return;const found=albums.find(a=>String(a.id)===id);if(found){openedAlbum.current=id;setSelectedAlbum(found)}},[location.search,albums,view])
  const profile=id=>id&&navigate(`/app/comunidad/perfil/${id}`)
  const toggle=(list,setter,id)=>setter(list.includes(id)?list.filter(x=>x!==id):[...list,id])
  function files(list,limit){const all=[...list],picked=all.slice(0,limit);if(all.length>limit)setMsg(`Podés subir hasta ${limit} fotos por tanda.`);if(picked.some(f=>!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>MAX_FILE)){setMsg('Las fotos deben ser JPG, PNG o WEBP de hasta 25 MB.');return[]}return picked}
