@@ -41,12 +41,16 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     return refreshing.current
   }
   useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);window.addEventListener('pr-social-published',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);window.removeEventListener('pr-social-published',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
+  useEffect(()=>{if(socialStatus?.enabled)refresh()},[socialStatus?.enabled,socialStatus?.preview])
   async function react(post,key) {
-    if(busy)return
+    if(busy)throw Error('Ya hay una reacción en proceso.')
     setBusy(post.id);setError('')
-    const {error:actionError}=socialStatus?.enabled&&!socialStatus.preview?await supabase.rpc("pr_social_react",{p_post:post.id,p_reaction:key}):await supabase.rpc("community_toggle_reaction",{p_post_id:post.id,p_reaction:key})
-    if(actionError){setError('No se pudo guardar tu reacción: '+actionError.message);setBusy('');throw actionError}
-    try{await refresh()}finally{setBusy('')}
+    try{
+      const {error:actionError}=socialStatus?.enabled&&!socialStatus.preview?await supabase.rpc("pr_social_react",{p_post:post.id,p_reaction:key}):await supabase.rpc("community_toggle_reaction",{p_post_id:post.id,p_reaction:key})
+      if(actionError)throw actionError
+      await refresh()
+    }catch(e){setError('No se pudo guardar tu reacción: '+(e.message||'Revisá tu conexión.'));throw e}
+    finally{setBusy('')}
   }
   async function comment(post) {
     const body=(drafts[post.id]||'').trim()
@@ -64,7 +68,7 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
   const latest=allEntries.filter(e=>!socialStatus?.enabled||formatFilter==='all'||(e.kind==='album'?'album':e.item.social_kind||'post')===formatFilter)
   function selectFilter(key){setFormatFilter(key);setVisibleCount(12)}
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">{socialStatus?.enabled?"Lo último de tu gente.":"Compartí, reaccioná y comentá sin salir del feed."}</p></div></div>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">{socialStatus?.enabled?"Lo último de tu gente.":"Compartí, reaccioná y comentá sin salir del feed."}</p></div>{socialStatus?.enabled&&<button type="button" aria-label="Actualizar publicaciones" title="Actualizar publicaciones" onClick={()=>refresh()} className="self-end rounded-full border border-white/10 bg-white/5 p-2.5 text-white/70"><svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 11a8 8 0 0 0-14-5L3 9m0-5v5h5M4 13a8 8 0 0 0 14 5l3-3m0 5v-5h-5"/></svg></button>}</div>
     {!socialStatus?.enabled&&<SocialComposer compact onPublished={refresh}/>}{socialStatus?.enabled&&<div className="flex gap-2"><button type="button" onClick={()=>setOnlySaved(false)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(!onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Todas</button><button type="button" onClick={()=>setOnlySaved(true)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Guardadas · {saved.length}</button></div>}
     {socialStatus?.enabled&&<div className="flex gap-2 overflow-x-auto pb-2" aria-label="Filtrar publicaciones">{['all','post','daily','class','poll','video','album'].map(key=><button key={key} type="button" aria-pressed={formatFilter===key} onClick={()=>selectFilter(key)} style={{color:formatFilter===key?(FORMATS[key]?.color||'#ff719e'):undefined}} className={'shrink-0 rounded-full border px-3 py-2 text-xs font-bold '+(formatFilter===key?'border-current bg-white/10':'border-white/10 text-white/65')}>{key==='all'?'Todo':FORMATS[key].icon+' '+FORMATS[key].label}</button>)}</div>}
     {error&&<div role="alert" className="flex items-center justify-between gap-2 rounded-xl border border-red-400/30 p-3 text-xs text-red-200"><span>{error}</span><button type="button" onClick={()=>refresh()} className="shrink-0 rounded-lg border border-red-300/25 px-2 py-2 font-bold">Reintentar</button></div>}
