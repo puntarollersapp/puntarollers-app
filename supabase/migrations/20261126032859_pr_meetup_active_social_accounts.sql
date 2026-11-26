@@ -1,0 +1,1 @@
+create or replace function pr_social_internal.meetup_adult(p_id text) returns boolean language sql stable set search_path='' as $$ select exists(select 1 from public.profiles p where p.id=p_id and p.estado='Activo' and p.acceso_habilitado is true and p.auth_user_id is not null and p.role in('admin','profesor','alumno','familiar')) $$;
