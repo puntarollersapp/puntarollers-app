@@ -18,8 +18,8 @@ export default function AdminCollectibles(){
   }catch(e){setError('No se pudo cargar el panel. '+(e.message||''))}
   finally{setLoading(false)}
  }
- useEffect(()=>{if(user?.role==='admin')load()},[user?.id])
- useEffect(()=>{let live=true;setGrants([]);if(user?.role!=='admin')return;supabase.from('pr_collectibles_grants').select('profile_id').eq('card_code',card).limit(1000).then(r=>{if(live){if(r.error)setError('No se pudo consultar el historial de esta carta.');else setGrants((r.data||[]).map(x=>x.profile_id))}});return()=>{live=false}},[card,user?.id])
+ useEffect(()=>{if(user?.role==='admin'&&user?.id==='admin-claudio')load()},[user?.id])
+ useEffect(()=>{let live=true;setGrants([]);if(user?.role!=='admin'||user?.id!=='admin-claudio')return;supabase.from('pr_collectibles_grants').select('profile_id').eq('card_code',card).limit(1000).then(r=>{if(live){if(r.error)setError('No se pudo consultar el historial de esta carta.');else setGrants((r.data||[]).map(x=>x.profile_id))}});return()=>{live=false}},[card,user?.id])
  const matches=useMemo(()=>profiles.filter(p=>norm(p.nombre+' '+p.apellido).includes(norm(search))),[profiles,search])
  const pending=selected.filter(id=>!grants.includes(id))
  function toggle(id){setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);setMsg('')}
@@ -37,7 +37,7 @@ export default function AdminCollectibles(){
   }catch(e){setError('No se otorgaron las cartas: '+(e.message||'Error de conexión'))}
   finally{setBusy(false)}
  }
- if(user?.role!=='admin')return <Navigate to="/admin" replace/>
+ if(user?.role!=='admin'||user?.id!=='admin-claudio')return <Navigate to="/admin" replace/>
  const chosen=PR_COLLECTIBLES_CATALOG.find(c=>c.code===card)
  return <AppLayout title="PR Collectibles · Control" showBack><main className="pr-page space-y-5 pb-24 text-white">
  <section className="rounded-3xl border border-[#FF0055]/30 bg-[#20141c] p-5"><p className="text-[10px] font-black tracking-widest text-[#ff80ae]">PR CONTROL · ADMINISTRACIÓN</p><h1 className="mt-2 text-3xl font-black">PR Collectibles</h1><p className="mt-2 text-sm text-white/65">Otorgá una carta a uno o varios alumnos. Las entregas quedan registradas y no se duplican.</p><Link className="mt-4 inline-block text-sm underline" to="/app/cartas">Ver mi álbum</Link></section>
