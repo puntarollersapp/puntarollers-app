@@ -50,3 +50,19 @@
 .pr-today-card:active{transform:scale(.98)}
 @media(max-width:1099px){.pr-desktop-feed.pr-social-first{display:flex;flex-direction:column;gap:14px}.pr-desktop-feed.pr-social-first>*{margin-top:0!important;min-width:0}.pr-social-first .pr-feed-desktop-main,.pr-social-first .pr-feed-desktop-rail{display:block;min-width:0}.pr-social-first .pr-feed-desktop-main{order:1}.pr-social-first .pr-feed-desktop-rail{order:2}.pr-social-first .pr-feed-desktop-main>*:first-child,.pr-social-first .pr-feed-desktop-rail>*:first-child{margin-top:0}}
 @media(prefers-reduced-motion:reduce){.pr-studio-tile,.pr-studio-art,.pr-today-card{animation:none!important;transition:none!important}.pr-studio-tile:hover,.pr-studio-tile:active,.pr-today-card:active{transform:none!important}}
+
+/* Compact social-first masthead. Keep the global create patch and navigation unchanged. */
+.pr-social-first .rf-hero{padding:16px 16px 14px;border-radius:22px}
+.pr-social-first .rf-hero h1{margin-top:8px;font-size:36px}
+.pr-social-first .rf-hero .rf-pulse{opacity:.75}
+.pr-social-first .rf-hero .rf-envelope{display:none}
+.pr-social-first .rf-social-stats{margin-top:12px;gap:6px}
+.pr-social-first .rf-social-stats>*{padding:8px 4px}
+.pr-social-first .rf-quick-nav button{min-height:36px;padding-block:7px}
+.pr-social-first #rollerfeed-comunidad .pr-social-card{border-radius:20px}
+.pr-social-first #rollerfeed-comunidad .pr-social-card img{display:block}
+.pr-social-first #rollerfeed-comunidad .pr-social-card .pr-social-format-small{border-radius:0}
+.pr-social-first .pr-social-post-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:38px;padding:6px 9px;border-radius:12px;color:#ffffffb3;background:#ffffff08;border:1px solid #ffffff14;font-size:11px;font-weight:700}
+.pr-social-first .pr-social-post-action[aria-pressed=true]{color:#ff91b2;border-color:#ff719e66;background:#ff005515}
+@media(min-width:1100px){.pr-desktop-shell .pr-desktop-feed.pr-social-first>.pr-feed-desktop-main,.pr-desktop-shell .pr-desktop-feed.pr-social-first>.pr-feed-desktop-rail{grid-row:5}}
+@media(max-width:1099px){.pr-social-first .rf-hero{box-shadow:none}.pr-social-first .rf-hero .rf-pulse{stroke-width:1.5}}
