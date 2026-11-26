@@ -1,3 +1,4 @@
+import {SocialProfileGallery} from '../components/community/PRSocial2'
 import RollerweenBadge from '../components/RollerweenBadge'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -34,6 +35,7 @@ export default function FriendProfile(){
 
     {albums.length>0&&<section><p className="mb-2 text-[9px] font-black tracking-[.16em] text-violet-300">ÁLBUMES EN SU PERFIL</p><div className="grid gap-2">{albums.map(a=><div key={a.id} className="rounded-[22px] border border-violet-300/10 bg-violet-500/[.05] p-4"><p className="text-sm font-black text-white">{a.title}</p><p className="mt-1 text-[9px] text-white/30">{a.photo_count||0} fotos · colaborativo</p></div>)}</div></section>}
 
+    <SocialProfileGallery target={id}/>
     {posts.length>0&&<section><p className="mb-2 text-[9px] font-black tracking-[.16em] text-orange-300">PUBLICACIONES VINCULADAS</p><div className="space-y-2">{posts.slice(0,6).map(p=><div key={p.id} className="rounded-[22px] border border-white/[.07] bg-white/[.025] p-4"><p className="text-[9px] font-black text-white/35">{p.author_name}</p><p className="mt-2 text-xs leading-5 text-white/55">{p.body||'Publicación con fotos'}</p></div>)}</div></section>}
 
     <section className="rounded-[24px] border border-emerald-300/10 bg-emerald-400/[.04] p-4"><p className="text-[10px] font-black text-emerald-200">🔒 Perfil entre amigos</p><p className="mt-2 text-[10px] leading-5 text-white/35">Solo las amistades aceptadas pueden entrar a esta vista. Si la amistad se elimina, el acceso desaparece.</p></section>
