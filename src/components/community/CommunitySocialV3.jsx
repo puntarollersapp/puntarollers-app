@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CommunitySocialV2 from './CommunitySocialV2'
 
-export default function CommunitySocialV3(){
+export default function CommunitySocialV3({view='legacy'}={}){
   const navigate=useNavigate()
   const root=useRef(null)
 
@@ -12,7 +12,7 @@ export default function CommunitySocialV3(){
 
     const enhance=()=>{
       const sections=[...host.querySelectorAll(':scope > div > section')]
-      if(sections[0]&&!host.querySelector('[data-pr-messages]')){
+      if(view==='legacy'&&sections[0]&&!host.querySelector('[data-pr-messages]')){
         const banner=document.createElement('button')
         banner.type='button'
         banner.dataset.prMessages='true'
@@ -57,9 +57,10 @@ export default function CommunitySocialV3(){
       observer.disconnect()
       document.documentElement.classList.remove('pr-community-modal-open','pr-community-photo-open')
     }
-  },[navigate])
+  },[navigate,view])
 
-  return <div ref={root} className="community-social-v3"><CommunitySocialV2/><style>{`
+  return <div ref={root} className={"community-social-v3 "+(view==='legacy'?'':'pr-network-social')}><CommunitySocialV2 view={view}/><style>{`
+    .pr-network-social .pr-messages-banner{display:none!important}.pr-network-social [hidden]{display:none!important}
     .pr-messages-banner{position:relative;isolation:isolate;display:flex;width:100%;min-height:72px;align-items:center;gap:12px;overflow:hidden;border:1px solid rgba(52,211,153,.25);border-radius:24px;padding:11px 14px;text-align:left;background:radial-gradient(circle at 12% 50%,rgba(52,211,153,.20),transparent 30%),linear-gradient(100deg,#06251c 0%,#0a1715 52%,#07110f 100%);box-shadow:0 16px 38px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.04);color:white}
     .pr-messages-banner:after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.07) 50%,transparent 65%);transform:translateX(-120%);animation:prMsgSweep 5.8s ease-in-out infinite;pointer-events:none}
     .pr-msg-orb{display:grid;width:46px;height:46px;flex:0 0 46px;place-items:center;border:1px solid rgba(110,231,183,.22);border-radius:16px;background:rgba(16,185,129,.12);font-size:22px;box-shadow:0 0 24px rgba(16,185,129,.10);animation:prMsgFloat 2.8s ease-in-out infinite}
