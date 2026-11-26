@@ -21,6 +21,21 @@ const dayOf = (value) => {
   return d.toLocaleDateString('es-UY', { day: '2-digit', month: '2-digit' })
 }
 
+// Never use persisted public URLs to render private attachments.
+function ChatAttachment({message,modern,onOpen,viewerId}){
+  const [signed,setSigned]=useState(null),[failed,setFailed]=useState(false),[retry,setRetry]=useState(0)
+  const stored=message.media_url||'',path=stored.split('/storage/v1/object/public/pr-chat-media/')[1]||''
+  useEffect(()=>{let alive=true;setSigned(null);setFailed(false);if(!viewerId||!path||!(/^[0-9a-f-]{36}\\/[A-Za-z0-9._-]+$/.test(path))) {setFailed(true);return}
+    async function load(){const {data,error}=await supabase.storage.from('pr-chat-media').createSignedUrl(path,300);if(!alive)return;if(error||!data?.signedUrl){setFailed(true);setSigned(null)}else{setFailed(false);setSigned({path,viewerId,url:data.signedUrl})}}
+    load();const timer=setInterval(load,240000);return()=>{alive=false;clearInterval(timer)}
+  },[path,viewerId,retry])
+  const url=signed?.path===path&&signed?.viewerId===viewerId?signed.url:null
+  if(!url)return <div className="mb-2 rounded-xl bg-black/15 p-3 text-xs">{failed?<><p>No se pudo abrir el archivo.</p><button type="button" className="mt-2 underline" onClick={()=>setRetry(v=>v+1)}>Reintentar</button></>:<p>Cargando archivo privado…</p>}</div>
+  if(message.media_type==='audio')return <audio src={url} controls preload="metadata" className="mb-1 w-[245px] max-w-full"/>
+  const img=<img src={url} alt="Foto compartida" loading="lazy" className="mb-2 max-h-[360px] w-full rounded-[16px] object-contain"/>
+  return modern?<button type="button" onClick={()=>onOpen(url)} aria-label="Ampliar foto">{img}</button>:img
+}
+
 function Avatar({ profile, small = false }) {
   const size = small ? 'h-11 w-11' : 'h-12 w-12'
   return <div className={`${size} shrink-0 overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.04] grid place-items-center`}>
@@ -328,8 +343,7 @@ export default function MessagesPage() {
           {chatLoading&&<p role="status" className="p-6 text-center text-xs text-violet-200/70">Abriendo conversación…</p>}{!chatLoading&&messages.length === 0 && <div className="py-14 text-center"><div className="text-4xl">👋</div><h2 className="mt-4 font-display text-2xl text-white">Empiecen a rodar la charla.</h2><p className="mx-auto mt-2 max-w-[270px] text-xs leading-relaxed text-white/32">Este espacio es privado entre ustedes. Mandá el primer mensaje.</p></div>}
           {messages.map((m,index) => <div key={m.id}>{modern&&(index===0||dateLabel(messages[index-1].created_at)!==dateLabel(m.created_at))&&<p className="my-4 text-center text-[10px] font-bold text-white/45">{dateLabel(m.created_at)}</p>}<div className={`flex ${m.is_mine ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[82%] rounded-[22px] px-4 py-3 ${m.is_mine ? (modern?'rounded-br-md bg-gradient-to-br from-[#7750c5] to-[#50309c] text-white':'rounded-br-md bg-gradient-to-br from-sky-300 to-cyan-300 text-[#071018]') : 'rounded-bl-md border border-white/[0.07] bg-white/[0.045] text-white'}`}>
-              {m.media_type === 'image' && m.media_url && (modern?<button type="button" onClick={()=>setLightbox(m.media_url)} aria-label="Ampliar foto"><img src={m.media_url} loading="lazy" alt="Foto compartida" className="mb-2 max-h-[360px] w-full rounded-[16px] object-contain"/></button>:<img src={m.media_url} alt="Foto compartida" className="mb-2 max-h-[360px] w-full rounded-[16px] object-cover" />)}
-              {m.media_type === 'audio' && m.media_url && <audio src={m.media_url} controls preload="metadata" className="mb-1 w-[245px] max-w-full" />}
+              {['image','audio'].includes(m.media_type)&&m.media_url&&<ChatAttachment message={m} modern={modern} viewerId={user?.id} onOpen={setLightbox}/>}
               {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed">{m.body}</p>}
               <div className="mt-1.5 flex items-center justify-end gap-2">
                 <p className={`text-right text-[8px] font-bold ${m.is_mine ? (modern?'text-white/70':'text-black/45') : 'text-white/40'}`}>{timeOf(m.created_at)}{m.is_mine?(m.read_at?' · ✓✓ Leído':modern?' · ✓ Enviado':''):''}</p>
