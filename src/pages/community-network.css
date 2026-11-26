@@ -17,3 +17,28 @@
 .pr-network [hidden]{display:none!important}
 @media(prefers-reduced-motion:no-preference){.pr-network button{transition:background-color .15s,border-color .15s,opacity .15s}.pr-network button:active{opacity:.82}}
 @media(max-width:360px){.pr-network-head{gap:6px}.pr-network-icon{width:40px;height:40px}.pr-network-tabs button{font-size:9px}.pr-network-small{padding:8px;font-size:10px}}
+
+/* Community hero: energetic, lightweight and isolated from shared app UI */
+.pr-network-hero{position:relative;isolation:isolate;overflow:hidden;border-radius:28px;border:1px solid #c4b5fd40;background:#120d20;padding:21px 17px 17px;box-shadow:0 14px 38px #12091e80}
+.pr-network-aurora{position:absolute;inset:-45%;z-index:-2;pointer-events:none;background:radial-gradient(ellipse at 28% 36%,#a625b879 0%,transparent 43%),radial-gradient(ellipse at 70% 48%,#ef5e3f66 0%,transparent 40%),radial-gradient(ellipse at 49% 72%,#5847ed9c 0%,transparent 49%);transform:rotate(-12deg)}
+.pr-network-hero:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle,#f1e9ff26 1px,transparent 1.2px) 0 0/19px 19px,linear-gradient(0deg,#0c0919b3,transparent 80%)}
+.pr-network-hero-label{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;border:1px solid #e9d5ff33;background:#19112b9c;color:#f3dcff;font-size:9px;font-weight:900;letter-spacing:.15em}
+.pr-network-hero-label i{display:block;width:6px;height:6px;border-radius:50%;background:#b9ff87;box-shadow:0 0 10px #b9ff87}
+.pr-network-hero h2{position:relative;max-width:94%;margin:13px 0 8px;font-size:clamp(30px,8vw,44px);line-height:1.03;letter-spacing:-.025em;color:#fff}
+.pr-network-hero h2 span{display:block;background:linear-gradient(100deg,#ffc08a,#ff81bd 60%,#d8b4fe);color:transparent;background-clip:text;-webkit-background-clip:text}
+.pr-network-hero p{position:relative;max-width:85%;font-size:12px;line-height:1.5;color:#f4e7ffbd}
+.pr-network-hero-orbit{position:absolute;right:12px;top:15px;display:grid;place-items:center;width:35px;height:35px;border-radius:14px;border:1px solid #e9d5ff33;background:#ffffff12;font-size:19px;transform:rotate(10deg);pointer-events:none}
+.pr-network-hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:17px}
+.pr-network-hero-stats button{min-height:54px;padding:8px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:15px;border:1px solid #e9d5ff30;background:#171024a8;color:#fff}
+.pr-network-hero-stats strong{font-size:18px;line-height:1.15;color:#fff}
+.pr-network-hero-stats small{font-size:10px;font-weight:650;color:#e8dff4c9}
+.pr-network-circle{background:radial-gradient(ellipse at top right,#43297666,transparent 68%),linear-gradient(145deg,#20152d,#111019);border-color:#b79aff40}
+.pr-network-friends{display:flex;gap:14px;overflow-x:auto;padding:7px 2px 9px;scrollbar-width:none;scroll-snap-type:x proximity}
+.pr-network-friends::-webkit-scrollbar{display:none}
+.pr-network-friend{display:flex;flex:0 0 66px;min-width:0;flex-direction:column;align-items:center;gap:8px;scroll-snap-align:start;background:none!important;border:0!important;box-shadow:none!important}
+.pr-network-friend .pr-network-avatar-shell{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;padding:2px;background:linear-gradient(145deg,#c4b5fd,#8056bf 55%,#ff94c4);overflow:hidden;box-shadow:0 3px 12px #b794f326}
+.pr-network-friend .pr-network-avatar-shell>div{border-radius:50%;width:54px;height:54px;overflow:hidden;box-shadow:none!important;outline:none!important}
+.pr-network-friend span.pr-network-friend-name{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:11px;color:#f3eaffb5}
+@media(prefers-reduced-motion:no-preference){.pr-network-aurora{animation:pr-network-aurora 13s ease-in-out infinite alternate}.pr-network-hero-orbit{animation:pr-network-float 4s ease-in-out infinite}}
+@keyframes pr-network-aurora{from{transform:translate3d(-3%,-1%,0) rotate(-12deg)}to{transform:translate3d(5%,4%,0) rotate(8deg)}}
+@keyframes pr-network-float{0%,100%{transform:translateY(0) rotate(10deg)}50%{transform:translateY(5px) rotate(3deg)}}
