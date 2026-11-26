@@ -1,4 +1,4 @@
-import {SocialProfilePanel} from '../components/community/PRSocial2'
+import {SocialProfilePanel,SocialProfileGallery} from '../components/community/PRSocial2'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
@@ -1637,6 +1637,7 @@ export default function Profile() {
         />
 
         <SocialProfilePanel/>
+        <SocialProfileGallery/>
         <ProfileLaunchSuite
           profile={profile}
           contacts={contactos}
