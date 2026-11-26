@@ -1,5 +1,6 @@
 import {PR_COLLECTIBLES_CATALOG} from './prCollectiblesCatalog'
 import {getBadgeImage,normalizeBadgeTitle} from './badges'
+import {frontFor,officialBack,visualRarity} from './prCollectiblesArt'
 const tones={common:['plata','#c9d3de'],holo:['holo','#56e7d2'],epic:['oro','#f4c965'],legendary:['prisma','#ad8aff'],limited:['navidad','#ff6196']}
 const escapeXml=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
 const motifs={
@@ -49,10 +50,12 @@ export function buildCollectibles({badges=[],grants=[],metrics={},previewEligibl
   const rule=c.rule, badge=(rule.aliases||[]).map(s=>bmap.get(normalizeBadgeTitle(s))).find(Boolean),g=gmap.get(c.code)
   const value=metrics[rule.type.replace('badge_or_','')]
   // Before launch the administrator can preview eligible cards without persisting grants.
-  const locked=!(badge||g||previewEligible.includes(c.number))
-  const rarity=tones[c.rarity][0]
+  const earned=Boolean(badge||g||previewEligible.includes(c.number))
+  const frontArt=frontFor(c.code),upcoming=!frontArt
+  const locked=!earned||upcoming
+  const rarity=visualRarity(c)
   const art=badge&&getBadgeImage(badge.titulo)||collectibleArtwork(c)
-  return {...c,id:c.code,number:c.number,total:50,source:c.rarity,rarity,category:c.rarity,locked,
+  return {...c,id:c.code,number:c.number,total:50,source:c.rarity,rarity,category:rarity,locked,earned,upcoming,frontArt,backArt:officialBack,
    subtitle:c.countsTowardMain?'Colección 001':'Edición limitada',art,description:g?.reason||badge?.descripcion||ruleDescription(c),date:badge?.fecha||g?.granted_at,by:badge?.creado_por_nombre||'',progress:typeof value==='number'&&rule.target?Math.min(1,value/rule.target):null,progressValue:value,progressTarget:rule.target}
  })
 }
