@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import {useAuth} from '../lib/auth'
+import {useProfileVisualRefresh} from '../lib/profileAccessories'
 import { isRollerweenActive } from '../lib/rollerween'
 
 import RollerweenBadge from './RollerweenBadge'
@@ -15,9 +17,12 @@ function initials(name) { return String(name || 'PR').split(/\s+/).filter(Boolea
 export default function ProfileAvatar({ profile, className='h-14 w-14', rounded='rounded-full', badge=true, rollerweenBadge=false, imageClassName='' }) {
   const name=profileName(profile), photo=profilePhoto(profile), treasury=isTreasury(profile), professor=isProfessor(profile), rollerween=isRollerweenActive()
   const [failedPhoto,setFailedPhoto]=useState(null)
+  const {user}=useAuth()
+  const visualRefresh=useProfileVisualRefresh(user)
+  const avatarClass=visualRefresh?className.replace(/\bh-8 w-8\b/g,'h-9 w-9').replace(/\bh-10 w-10\b/g,'h-12 w-12').replace(/\bh-11 w-11\b/g,'h-[52px] w-[52px]'):className
   const title=treasury ? `${name} · Tesorera` : professor ? `${name} · Profe` : name
   const showRollerweenBadge=rollerween&&rollerweenBadge
-  return <div className={`relative shrink-0 ${className}`} title={title}>
+  return <div className={`relative shrink-0 ${avatarClass}`} title={title}>
     {rollerween&&<div className={`absolute -inset-[3px] ${rounded} bg-gradient-to-br from-fuchsia-500 via-violet-500 to-lime-300 opacity-95 blur-[.2px] shadow-[0_0_12px_rgba(168,85,247,.62),0_0_20px_rgba(190,255,55,.20)]`}/>} 
     <div className={`relative z-[1] grid h-full w-full place-items-center overflow-hidden border ${rollerween?'border-black/70':'border-white/10'} bg-gradient-to-br from-orange-400/20 to-violet-500/15 ${rounded}`}>
       {photo && failedPhoto!==photo ? <img src={photo} onError={()=>setFailedPhoto(photo)} alt={name} className={`h-full w-full object-cover ${imageClassName}`} /> : <span className="text-xs font-black text-white/75">{initials(name)}</span>}
