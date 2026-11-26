@@ -1217,7 +1217,7 @@ export default function Activity() {
 
   return (
     <AppLayout title="RollerFeed ⚡️">
-      <div className="pr-page pr-desktop-feed space-y-5 animate-page-enter">
+      <div className={"pr-page pr-desktop-feed space-y-5 animate-page-enter "+(socialVisualStatus?.enabled?"pr-social-first":"")}>
         <RollerFeedOnline/>
         <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.08),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.035),transparent_55%)]" />
@@ -1230,7 +1230,7 @@ export default function Activity() {
             </p>
             <h1 className="mt-4 font-display text-[42px] leading-none tracking-tight text-white sm:text-5xl">Roller<span className="text-[#FF0055]">Feed.</span></h1>
             <svg aria-hidden="true" viewBox="0 0 150 22" className="mx-auto mt-2 h-5 w-36 opacity-80"><path className="rf-pulse" d="M1 11h40l7-5 8 12 8-17 9 20 8-10h68"/></svg>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">Lo que pasa en Punta Rollers, pasa acá. Seguí en vivo lo que están patinando tus compañeros, compartí sus logros y enterate de todas las novedades de nuestra comunidad.</p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">{socialVisualStatus?.enabled?"Tu gente. Tus avances. Todo lo que pasa sobre ruedas.":"Lo que pasa en Punta Rollers, pasa acá. Seguí en vivo lo que están patinando tus compañeros, compartí sus logros y enterate de todas las novedades de nuestra comunidad."}</p>
             <div className="mt-5 grid grid-cols-3 gap-2">
               <HeroStat value={loading ? '—' : communityStats.activities} label="Actividades" />
               <HeroStat value={loading ? '—' : communityStats.kilometers.toLocaleString('es-UY', { maximumFractionDigits: 0 })} label="Km rodados" highlight />
@@ -1239,7 +1239,7 @@ export default function Activity() {
           </div>
         </section>
 
-        <button type="button" onClick={()=>socialVisualStatus?.enabled?window.dispatchEvent(new CustomEvent('pr-social2-open',{detail:{kind:'choose'}})):window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>
+        {!socialVisualStatus?.enabled&&<button type="button" onClick={()=>socialVisualStatus?.enabled?window.dispatchEvent(new CustomEvent('pr-social2-open',{detail:{kind:'choose'}})):window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>}
 
         <OptionalExperienceBoundary><SocialDaily/></OptionalExperienceBoundary>
         <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
