@@ -18,3 +18,13 @@ export function classAccessForRegistration(modality: unknown, saturdayTurn: unkn
   else if (/intermedio|avanzado/i.test(saturdayTurn)) saturday = SATURDAY_ADVANCED;
   return saturday ? [WEDNESDAY, saturday] : [];
 }
+
+
+function escapeAccessHtml(value: unknown): string {
+ return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+export function paidClassAccessEmailHtml(modality: unknown, saturdayTurn: unknown): string {
+ const items=classAccessForRegistration(modality,saturdayTurn);
+ if(!items.length)return "";
+ return '<div style="margin:24px 0"><h2 style="font-size:21px;color:#a1f0df">Todo listo para tu primera clase</h2>'+items.map(item=>'<div style="background:#22232b;border:1px solid #40414b;border-radius:14px;padding:16px;margin:12px 0;color:#fff"><h3 style="margin:0 0 8px;font-size:18px">'+escapeAccessHtml(item.title)+'</h3><p style="margin:4px 0;color:#ddd">'+escapeAccessHtml(item.schedule)+'</p><p style="margin:4px 0 14px;color:#ddd">'+escapeAccessHtml(item.place)+'</p><a style="display:inline-block;background:#16846b;color:white;padding:12px 16px;border-radius:9px;text-decoration:none;font-weight:bold;margin:3px 8px 6px 0" href="'+escapeAccessHtml(item.whatsappUrl)+'">Entrar al grupo de WhatsApp</a><a style="display:inline-block;background:#444c61;color:white;padding:12px 16px;border-radius:9px;text-decoration:none;font-weight:bold;margin:3px 0 6px" href="'+escapeAccessHtml(item.mapsUrl)+'">Cómo llegar · Google Maps</a></div>').join('')+'<p style="color:#c8c8d1;font-size:12px">Estos accesos son para familias y alumnos con inscripción confirmada. No compartas los enlaces fuera del grupo.</p></div>';
+}
