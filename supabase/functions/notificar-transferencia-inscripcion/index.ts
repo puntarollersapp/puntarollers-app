@@ -19,7 +19,7 @@ function reply(body: unknown, status=200) {
 }
 function detail(program: string, row: any) {
   if (program === "PR Kids") return `<p><b>Horario:</b> ${esc(row.turno_sabado || "Sábado 19:00–20:00 · Pista cerrada Maldonado")}</p>`;
-  if (program === "Adultos · Clases Grupales") return `<p><b>Miércoles complementarios:</b> Principiantes 19:30–20:30 · Intermedios/avanzados 20:30–21:30 · Parada 2, Punta del Este. Sin costo adicional; sujetos a clima y disponibilidad docente, sin reposición en caso de suspensión.</p><p><b>Turno sábado:</b> ${esc(row.turno_sabado)}</p>`;
+  if (program === "Adultos · Clases Grupales") return `<p><b>Miércoles complementarios:</b> Principiantes 19:00–20:00 · Intermedios/avanzados 20:00–21:00 · Parada 2, Punta del Este. Sin costo adicional; sujetos a clima y disponibilidad docente, sin reposición en caso de suspensión.</p><p><b>Turno sábado:</b> ${esc(row.turno_sabado)}</p>`;
   if (program === "Personalizadas 1 a 1") return `<p><b>Modalidad:</b> Personalizadas 1 a 1</p><p style="color:#9d9da8">Los horarios disponibles se habilitan semanalmente para que elijas tu turno.</p>`;
   return `<p><b>Fechas:</b> 28, 29 y 30 de octubre de 2026</p><p><b>Experiencia:</b> Clínica completa · 3 jornadas</p>`;
 }
