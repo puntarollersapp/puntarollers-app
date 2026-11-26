@@ -1,0 +1,22 @@
+.pr-social-format-banner{position:relative;isolation:isolate;display:flex;align-items:center;gap:14px;overflow:hidden;border:1px solid color-mix(in srgb,var(--pr-social-accent) 32%,transparent);border-radius:22px;padding:20px;background:linear-gradient(135deg,var(--pr-social-gradient),var(--pr-social-bg) 70%);color:#fff}
+.pr-social-format-small{border:0;border-radius:0;padding:12px 16px;min-height:65px}
+.pr-social-format-icon{display:grid;place-items:center;flex:none;width:48px;height:48px;border:1px solid color-mix(in srgb,var(--pr-social-accent) 40%,transparent);border-radius:15px;background:color-mix(in srgb,var(--pr-social-accent) 13%,transparent);color:var(--pr-social-accent);font-size:26px;font-weight:900}
+.pr-social-format-small .pr-social-format-icon{width:36px;height:36px;border-radius:11px;font-size:20px}
+.pr-social-eyebrow{font-size:9px;letter-spacing:.15em;font-weight:900;color:var(--pr-social-accent);line-height:1.45}
+.pr-social-watermark{position:absolute;right:-4px;bottom:-9px;z-index:-1;color:var(--pr-social-accent);opacity:.055;font-size:clamp(36px,10vw,75px);font-weight:1000;line-height:1;white-space:nowrap;pointer-events:none}
+.pr-social-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px;min-height:154px;border:1px solid color-mix(in srgb,var(--pr-social-accent) 26%,transparent);border-radius:18px;background:linear-gradient(150deg,var(--pr-social-gradient),var(--pr-social-bg) 75%);text-align:left;padding:12px;transition:transform .16s,border-color .16s}
+.pr-social-choice:active:not(:disabled){transform:scale(.98)}.pr-social-choice:disabled{opacity:.5;cursor:not-allowed}.pr-social-choice .pr-social-eyebrow{margin-top:auto}
+.pr-social-editor{border:1px solid color-mix(in srgb,var(--pr-social-accent) 36%,transparent);background:var(--pr-social-bg);border-radius:28px;padding:16px;color:#fff}
+.pr-social-editor .pr-social-submit{background:var(--pr-social-accent);color:#19121b}
+.pr-social-editor textarea:focus,.pr-social-editor input:focus{outline-color:var(--pr-social-accent);border-color:var(--pr-social-accent)}
+.pr-social-card{border-color:color-mix(in srgb,var(--pr-social-accent) 32%,transparent)!important;background:linear-gradient(140deg,var(--pr-social-bg),#0d0d13 62%)!important;box-shadow:0 8px 28px #0003!important}
+.pr-social-reactions{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.pr-social-reaction{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:44px;min-height:42px;border-radius:14px;padding:6px 9px;border:1px solid #ffffff1c;background:#ffffff08;color:#fff;font-size:12px;font-weight:700;transition:background .2s,border-color .2s,transform .16s}
+.pr-social-reaction>span:first-child{display:inline-block;font-size:20px;line-height:1.2}.pr-social-reaction.is-selected{border-color:var(--reaction-color);background:color-mix(in srgb,var(--reaction-color) 20%,transparent);box-shadow:0 0 15px color-mix(in srgb,var(--reaction-color) 14%,transparent)}
+.pr-social-reaction:active:not(:disabled){transform:scale(.93)}.pr-social-reaction:disabled{opacity:.65}.pr-social-bounce{animation:pr-social-bounce .48s cubic-bezier(.2,.8,.3,1.2) both}.pr-social-burst{position:absolute;top:-5px;left:20%;color:var(--reaction-color);pointer-events:none;animation:pr-social-burst .65s ease-out both;white-space:nowrap}
+@keyframes pr-social-bounce{0%{transform:scale(.8)}35%{transform:translateY(-7px) rotate(-12deg) scale(1.45)}70%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes pr-social-burst{0%{opacity:1;transform:translateY(0) scale(.5)}100%{opacity:0;transform:translateY(-22px) scale(1.4)}}
+.pr-social-poll-fill{transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.pr-social-toast{animation:pr-social-toast .24s ease-out both}
+@keyframes pr-social-toast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.pr-social-bounce,.pr-social-burst,.pr-social-toast{animation:none}.pr-social-reaction,.pr-social-choice,.pr-social-poll-fill{transition:none}.pr-social-burst{display:none}}
