@@ -88,6 +88,13 @@ function loadImage(src) {
 }
 export async function cardToBlob(card) {
   if (!card || card.locked) return null
+  if (card.frontArt) {
+    const response = await fetch(card.frontArt, {cache:'force-cache'})
+    if (!response.ok) throw new Error('No se encontró el arte oficial')
+    const blob = await response.blob()
+    if (blob.type !== 'image/png') throw new Error('Formato de carta inválido')
+    return blob
+  }
   const W = 1000, H = 1400, accent = ACCENT[card.rarity] || ACCENT.holo
   const c = document.createElement('canvas'); c.width = W; c.height = H
   const ctx = c.getContext('2d')
@@ -127,7 +134,7 @@ export async function cardToBlob(card) {
 export async function shareOrDownloadCard(card) {
   const blob = await cardToBlob(card)
   if (!blob) return 'error'
-  const name = 'carta-' + normalizeBadgeTitle(card.title).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png'
+  const name = card.frontArt && card.code ? card.code + '.png' : 'carta-' + normalizeBadgeTitle(card.title).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png'
   const file = new File([blob], name, { type: 'image/png' })
   try {
     if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: card.title }); return 'shared' }
