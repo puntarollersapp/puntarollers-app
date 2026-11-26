@@ -25,7 +25,7 @@ const dayOf = (value) => {
 function ChatAttachment({message,modern,onOpen,viewerId}){
   const [signed,setSigned]=useState(null),[failed,setFailed]=useState(false),[retry,setRetry]=useState(0)
   const stored=message.media_url||'',path=stored.split('/storage/v1/object/public/pr-chat-media/')[1]||''
-  useEffect(()=>{let alive=true;setSigned(null);setFailed(false);if(!viewerId||!path||!(/^[0-9a-f-]{36}\\/[A-Za-z0-9._-]+$/.test(path))) {setFailed(true);return}
+  useEffect(()=>{let alive=true;setSigned(null);setFailed(false);if(!viewerId||!path||!(/^[0-9a-f-]{36}\/[A-Za-z0-9._-]+$/.test(path))) {setFailed(true);return}
     async function load(){const {data,error}=await supabase.storage.from('pr-chat-media').createSignedUrl(path,300);if(!alive)return;if(error||!data?.signedUrl){setFailed(true);setSigned(null)}else{setFailed(false);setSigned({path,viewerId,url:data.signedUrl})}}
     load();const timer=setInterval(load,240000);return()=>{alive=false;clearInterval(timer)}
   },[path,viewerId,retry])
