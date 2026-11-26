@@ -53,7 +53,7 @@ export default function RollerFeedComments({ feedKey, currentProfileId, canModer
         const profile = profiles[String(comment.profile_id)] || {}
         const name = [profile.nombre, profile.apellido].filter(Boolean).join(' ') || 'Roller PR'
         return <div key={comment.id} className="flex gap-2.5 pt-1">
-          <ProfileAvatar profile={profile} className="h-8 w-8" />
+          <ProfileAvatar profile={{...profile,id:comment.profile_id}} className="h-8 w-8" />
           <div className="min-w-0 flex-1 rounded-2xl bg-white/[.035] px-3 py-2.5">
             <div className="flex gap-2"><p className="min-w-0 flex-1 text-[10px] font-black text-white/70">{name}</p>{(String(comment.profile_id) === String(currentProfileId) || canModerate) && <button type="button" onClick={() => remove(comment)} className="text-[9px] text-red-300/65">Eliminar</button>}</div>
             <p className="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/65">{comment.body}</p>
