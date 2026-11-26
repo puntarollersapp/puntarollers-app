@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const RARITIES = {
-  plata: { label: 'COMÚN', accent: '#cfd3dc', foil: 0.28 },
-  holo: { label: 'HOLO', accent: '#ff0055', foil: 0.55 },
-  oro: { label: 'ÉPICA', accent: '#f5c451', foil: 0.6 },
+  plata: { label: 'CLASSIC', accent: '#cfd3dc', foil: 0.28 },
+  holo: { label: 'PRISM', accent: '#56e7d2', foil: 0.55 },
+  oro: { label: 'GOLD', accent: '#f5c451', foil: 0.6 },
   prisma: { label: 'LEGENDARIA', accent: '#9b7bff', foil: 0.7 },
-  navidad: { label: 'NAVIDAD', accent: '#ff3d6e', foil: 0.62 },
+  ruby: { label: 'RUBÍ', accent: '#ec345a', foil: 0.67 },
+  diamond: { label: 'DIAMOND', accent: '#b6e1f7', foil: 0.72 },
+  navidad: { label: 'LIMITED EDITION', accent: '#bb8fea', foil: 0.62 },
 }
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const reduced = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -19,13 +21,17 @@ export async function requestMotionPermission() {
 export const motionNeedsPermission = () => typeof window !== 'undefined' && typeof window.DeviceOrientationEvent?.requestPermission === 'function'
 
 export default function HoloCard({
-  rarity = 'holo', title, subtitle, number, total, art, emoji, artFit = 'contain', stats = [],
+  rarity = 'holo', title, subtitle, number, total, art, emoji, artFit = 'contain', stats = [], frontArt = null, backArt = null, upcoming = false,
   footer = 'PUNTA ROLLERS', locked = false, flipped = false, back = null, sensor = false,
   size = 'grid', onClick, className = '',
 }) {
   const ref = useRef(null)
   const raf = useRef(0)
   const [active, setActive] = useState(false)
+  const [failedFront,setFailedFront]=useState(null)
+  const [failedBack,setFailedBack]=useState(null)
+  const showFront=frontArt&&!locked&&!upcoming&&failedFront!==frontArt
+  const showBack=backArt&&!locked&&!upcoming&&failedBack!==backArt
   const r = RARITIES[rarity] || RARITIES.holo
   const setVars = useCallback((nx, ny) => {
     cancelAnimationFrame(raf.current)
@@ -56,7 +62,7 @@ export default function HoloCard({
   }, [sensor, locked, setVars, size])
   useEffect(() => () => cancelAnimationFrame(raf.current), [])
   const interactive = typeof onClick === 'function'
-  const label = locked ? 'Carta bloqueada: ' + title : 'Carta ' + r.label.toLowerCase() + ': ' + title + (subtitle ? ', ' + subtitle : '')
+  const label = upcoming ? 'Próximamente: '+title : locked ? 'Carta bloqueada: ' + title : 'Carta ' + r.label.toLowerCase() + ': ' + title + (subtitle ? ', ' + subtitle : '')
   const onKey = (e) => { if (interactive && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick() } }
   return (
     <div ref={ref}
@@ -70,15 +76,16 @@ export default function HoloCard({
       <div className="pr-holo-tilt">
         <div className="pr-holo-side pr-holo-front" aria-hidden={flipped}>
           <div className="pr-holo-face">
-            <div className="pr-holo-top"><span className="pr-holo-rarity">{locked ? 'BLOQUEADA' : r.label}</span>{number != null && <span className="pr-holo-num">{String(number).padStart(2, '0')}{total ? '/' + String(total).padStart(2, '0') : ''}</span>}</div>
-            <div className="pr-holo-art">{locked ? <span className="pr-holo-lock" aria-hidden="true">?</span> : art ? <img src={art} alt="" loading="lazy" decoding="async" draggable="false" style={{ objectFit: artFit }} /> : <span className="pr-holo-emoji" aria-hidden="true">{emoji || '⚡'}</span>}</div>
+            {showFront?<img className="pr-holo-full-art" src={frontArt} alt="" decoding="async" loading={size==='grid'?'lazy':'eager'} onError={()=>setFailedFront(frontArt)} draggable="false"/>:<>
+            <div className="pr-holo-top"><span className="pr-holo-rarity">{upcoming ? 'PRÓXIMAMENTE' : locked ? 'BLOQUEADA' : r.label}</span>{number != null && <span className="pr-holo-num">{String(number).padStart(2, '0')}{total ? '/' + String(total).padStart(2, '0') : ''}</span>}</div>
+            <div className="pr-holo-art">{locked||upcoming ? <span className="pr-holo-lock" aria-hidden="true">{upcoming?'?':'🔒'}</span> : art ? <img src={art} alt="" loading="lazy" decoding="async" draggable="false" style={{ objectFit: artFit }} /> : <span className="pr-holo-emoji" aria-hidden="true">{emoji || '⚡'}</span>}</div>
             <div className="pr-holo-body"><h3>{title}</h3>{subtitle && <p>{subtitle}</p>}{stats.length > 0 && <dl className="pr-holo-stats">{stats.map(s => <div key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></div>)}</dl>}</div>
-            <div className="pr-holo-foot">{footer}</div>
+            <div className="pr-holo-foot">{footer}</div></>}
           </div>
           {!locked && <><div className="pr-holo-foil" aria-hidden="true"/><div className="pr-holo-glare" aria-hidden="true"/></>}
         </div>
         <div className="pr-holo-side pr-holo-backside" aria-hidden={!flipped}>
-          <div className="pr-holo-face pr-holo-backface"><div className="pr-holo-top"><span className="pr-holo-rarity">{locked ? 'BLOQUEADA' : r.label}</span><span className="pr-holo-num">PR</span></div><div className="pr-holo-backbody">{back}</div><div className="pr-holo-foot">{footer}</div></div>
+          <div className="pr-holo-face pr-holo-backface">{showBack?<img className="pr-holo-full-art" src={backArt} alt="Dorso oficial" decoding="async" draggable="false" onError={()=>setFailedBack(backArt)}/>:<><div className="pr-holo-top"><span className="pr-holo-rarity">{locked ? 'BLOQUEADA' : r.label}</span><span className="pr-holo-num">PR</span></div><div className="pr-holo-backbody">{back}</div><div className="pr-holo-foot">{footer}</div></>}</div>
         </div>
       </div>
     </div>
@@ -86,6 +93,9 @@ export default function HoloCard({
 }
 
 export const HOLO_CSS = `
+.pr-holo-full-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#101015;display:block;pointer-events:none}
+.pr-holo[data-rarity="ruby"] .pr-holo-foil,.pr-holo[data-rarity="diamond"] .pr-holo-foil{background-image:repeating-conic-gradient(from 30deg,rgba(255,255,255,.24) 0deg,rgba(255,255,255,0) 45deg,rgba(120,215,255,.15) 90deg);background-size:42px 42px;background-position:calc(var(--mx)*100%) calc(var(--my)*100%)}
+
 .pr-holo{--mx:.5;--my:.5;--rx:0deg;--ry:0deg;--w:min(44vw,190px);width:var(--w);max-width:100%;aspect-ratio:5/7;perspective:900px;outline:none;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 .pr-holo--large{--w:min(78vw,310px);margin:0 auto;touch-action:none}
 .pr-holo[role="button"]{cursor:pointer}
