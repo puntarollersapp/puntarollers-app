@@ -7,7 +7,7 @@ import HoloCard, { HOLO_CSS, motionNeedsPermission, requestMotionPermission } fr
 import { dateLabel, shareOrDownloadCard, useCardsAccess } from '../lib/cartas'
 import { buildCollectibles } from '../lib/prCollectiblesAlbum'
 
-const TABS = [['todas','Todas'],['common','Comunes'],['holo','Holo'],['epic','Épicas'],['legendary','Legendarias'],['limited','Limitadas']]
+const TABS = [['todas','Todas'],['plata','Classic'],['holo','Prism'],['oro','Gold'],['ruby','Rubí'],['diamond','Diamond'],['navidad','Limited Edition']]
 const EMPTY = { loading: true, error: '', badges: [], grants: [], metrics: {}, previewEligible: [] }
 export default function Cartas() {
   const { user } = useAuth()
@@ -50,7 +50,7 @@ export default function Cartas() {
   const limited=owned-permanent
   const shown=cards.filter(c=>tab==='todas'||c.category===tab)
   const current=open?cards.find(c=>c.id===open):null
-  const next=cards.filter(c=>c.locked&&c.countsTowardMain&&c.progress!==null&&c.progress<1).sort((a,b)=>b.progress-a.progress)[0]
+  const next=cards.filter(c=>c.locked&&!c.upcoming&&c.countsTowardMain&&c.progress!==null&&c.progress<1).sort((a,b)=>b.progress-a.progress)[0]
   function openCard(id) {
     openerRef.current = document.activeElement
     setFlipped(false); setMsg(''); setOpen(id)
@@ -90,8 +90,8 @@ export default function Cartas() {
           <p className="mt-2 text-sm leading-6 text-white/65">Tu historia. Tu colección.</p>
           <div className="mt-6 flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-widest text-white/50">COLECCIÓN 001</p><p className="mt-1 text-4xl font-black text-white">{state.loading?'—':permanent}<span className="text-xl text-white/35"> / 40</span></p></div><span className="font-black text-[#FF79A5]">{state.loading?'—':Math.round(permanent/40*100)+'%'}</span></div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#FF0055]" style={{width:permanent/40*100+'%'}}/></div>
-          <p className="mt-3 text-xs text-white/60">{owned} cartas en total · {limited}/10 ediciones limitadas</p>
-          <div className="mt-4 grid grid-cols-4 gap-1">{TABS.slice(1,5).map(([key,label])=><div key={key} className="rounded-xl bg-white/[.06] p-2 text-center"><p className="text-lg font-black text-white">{cards.filter(c=>c.category===key&&!c.locked).length}</p><p className="text-[9px] text-white/55">{label}</p></div>)}</div>
+          <p className="mt-3 text-xs text-white/60">{owned} cartas publicadas conseguidas · {limited}/10 ediciones limitadas</p>
+          <div className="mt-4 grid grid-cols-3 gap-1">{TABS.slice(1).map(([key,label])=><div key={key} className="rounded-xl bg-white/[.06] p-2 text-center"><p className="text-lg font-black text-white">{cards.filter(c=>c.category===key&&!c.locked).length}</p><p className="text-[9px] text-white/55">{label}</p></div>)}</div>
           <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
           {user?.role==='admin'&&<Link to="/admin/collectibles" className="ml-4 text-xs font-bold text-[#FF79A5] underline">Administrar</Link>}
         </section>
@@ -104,13 +104,13 @@ export default function Cartas() {
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">{[0,1,2,3].map(i => <div key={i} className="aspect-[5/7] w-full max-w-[190px] animate-pulse rounded-[22px] bg-white/[.05]"/>)}</div>
         ) : shown.length ? (
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">
-            {shown.map(c => <HoloCard key={c.id} size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} emoji={c.emoji} number={c.number} total={c.total} locked={c.locked} onClick={() => openCard(c.id)}/>)}
+            {shown.map(c => <HoloCard key={c.id} size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={c.locked} onClick={() => openCard(c.id)}/>)}
           </div>
         ) : !state.error && (
           <section className="rounded-[28px] border border-white/[.08] bg-white/[.025] p-6 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-[22px] bg-white/[.06] text-3xl">🃏</div>
             <h2 className="mt-4 text-xl font-black text-white">{cards.length ? 'No tenés cartas de este tipo todavía' : 'Tu colección empieza acá'}</h2>
-            <p className="mt-2 text-sm leading-6 text-white/60">Cuando el equipo PR te otorgue una insignia o consigas un marco, va a aparecer como carta.</p>
+            <p className="mt-2 text-sm leading-6 text-white/60">Las cartas se consiguen con logros, asistencias, kilómetros y experiencias.</p>
           </section>
         )}
         {next&&!state.loading&&<section className="rounded-3xl border border-emerald-300/20 bg-[#19251f] p-4"><p className="text-[10px] font-black tracking-widest text-emerald-300">ESTÁS MUY CERCA</p><h2 className="mt-2 text-xl font-black text-white">{next.title}</h2><p className="mt-1 text-xs text-white/60">Próxima carta · progreso registrado</p><div className="mt-3 h-2 rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-300" style={{width:next.progress*100+'%'}}/></div><div className="mt-2 flex justify-between text-xs text-white/70"><span>{Number(next.progressValue.toFixed(1)).toLocaleString('es-UY')} / {next.progressTarget}</span><span>{Math.round(next.progress*100)}%</span></div><p className="mt-2 text-[10px] text-white/45">El progreso se sincroniza con tus registros verificados al abrir el álbum.</p></section>}
@@ -118,10 +118,11 @@ export default function Cartas() {
       {current && (
         <div className="fixed inset-0 z-[160] flex flex-col items-center overflow-y-auto bg-black/85 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={current.title} onClick={closeCard}>
           <div className="my-auto flex w-full max-w-sm flex-col items-center gap-5" onClick={e => e.stopPropagation()}>
-            <HoloCard size="large" rarity={current.rarity} title={current.title} subtitle={current.subtitle} art={current.art} emoji={current.emoji}
+            <HoloCard size="large" rarity={current.rarity} title={current.title} subtitle={current.subtitle} art={current.art} frontArt={current.frontArt} backArt={current.backArt} upcoming={current.upcoming} emoji={current.emoji}
               number={current.number} total={current.total} locked={current.locked} sensor={sensor} flipped={flipped}
               stats={current.locked ? [] : [{ label: 'CONSEGUIDA', value: dateLabel(current.date) || '—' }]}
-              back={current.locked ? <><h4>Carta bloqueada</h4><p>{current.description || 'Todavía no la conseguiste.'}</p></> : <><h4>{current.title}</h4>{current.description && <p>{current.description}</p>}<small>{dateLabel(current.date)}{current.by ? ' · Otorgada por ' + current.by : ''}</small></>}/>
+              back={current.upcoming ? <><h4>Próximamente</h4><p>{current.earned?'Tu logro ya está registrado. La carta estará disponible cuando se publique el diseño.':'Esta carta forma parte de la colección y se publicará próximamente.'}</p></> : current.locked ? <><h4>Carta bloqueada</h4><p>{current.description || 'Todavía no la conseguiste.'}</p></> : <><h4>{current.title}</h4>{current.description && <p>{current.description}</p>}<small>{dateLabel(current.date)}{current.by ? ' · Otorgada por ' + current.by : ''}</small></>}/>
+            {flipped&&current.backArt&&!current.locked&&<div className="w-full rounded-2xl bg-white/5 p-4 text-center text-xs text-white/75"><p className="font-bold text-white">{current.title}</p><p className="mt-1">{current.description}</p><p className="mt-1">{dateLabel(current.date)}{current.by?' · Otorgada por '+current.by:''}</p></div>}
             {msg && <p className="text-center text-xs text-white/70" role="status">{msg}</p>}
             <div className="flex w-full flex-wrap justify-center gap-2">
               <button type="button" onClick={() => setFlipped(v => !v)} className="min-h-[44px] rounded-full bg-white/10 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">{flipped ? 'Ver frente' : 'Ver dorso'}</button>
