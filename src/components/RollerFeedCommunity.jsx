@@ -1,16 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import CommunityPhoto from './community/CommunityPhoto'
+import {SocialComposer,SocialTags} from './community/SocialComposer'
 
 const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','👏']]
 
 export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) {
   const [posts,setPosts] = useState(initialPosts)
-  const [newPost,setNewPost] = useState('')
-  const [newPhotos,setNewPhotos] = useState([])
-  const [publishing,setPublishing] = useState(false)
-  const [composerMessage,setComposerMessage] = useState('')
   const [drafts,setDrafts] = useState({})
   const [busy,setBusy] = useState('')
   const [error,setError] = useState('')
@@ -27,7 +23,7 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
       else { const next=Array.isArray(data)?data:[]; setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next); setError(previous=>previous?'':previous) }
     } finally {refreshing.current=false}
   }
-  useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
+  useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);window.addEventListener('pr-social-published',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);window.removeEventListener('pr-social-published',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
   async function react(post,key) {
     if(busy)return
     setBusy(post.id);setError('')
@@ -45,31 +41,10 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     else {setDrafts(old=>({...old,[post.id]:''}));await refresh()}
     setBusy('')
   }
-  async function publishMemberPost(e) {
-    e.preventDefault()
-    if(publishing || (!newPost.trim()&&!newPhotos.length))return
-    setPublishing(true);setComposerMessage('')
-    try {
-      const media=[]
-      for(const photo of newPhotos){
-        if(!['image/jpeg','image/png','image/webp'].includes(photo.type)||photo.size>25*1024*1024)throw new Error('Usá fotos JPG, PNG o WEBP de hasta 25 MB cada una.')
-        const ext=(photo.name.split('.').pop()||'jpg').replace(/[^a-z0-9]/gi,'').toLowerCase()
-        const {data:path,error:pathError}=await supabase.rpc('community_media_path',{p_kind:'post',p_ext:ext})
-        if(pathError)throw pathError
-        const {error:uploadError}=await supabase.storage.from('community-media').upload(path,photo,{contentType:photo.type,upsert:false})
-        if(uploadError)throw uploadError
-        media.push(supabase.storage.from('community-media').getPublicUrl(path).data.publicUrl)
-      }
-      const {error:publishError}=await supabase.rpc('community_create_member_post',{p_body:newPost.trim(),p_media_paths:media})
-      if(publishError)throw publishError
-      setNewPost('');setNewPhotos([]);setComposerMessage('✓ Publicado para toda Punta Rollers');await refresh()
-    } catch(err) {setComposerMessage('No se pudo publicar: '+(err?.message||'Error inesperado'))}
-    finally {setPublishing(false)}
-  }
   const latest=[...posts.filter(p=>p?.id).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0)).slice(0,12)
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">PR Social · publicaciones y álbumes</p><h2 className="mt-1 font-display text-[30px] text-white">Actividad de la comunidad<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Lo último que compartimos en Punta Rollers, ordenado por fecha.</p></div><div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[190px]"><Link to="/app/comunidad#pr-community-composer" className="rounded-xl bg-[#FF0055] px-4 py-3 text-center text-sm font-black text-white shadow-[0_6px_22px_rgba(255,0,85,.35)]">＋ Crear publicación</Link><Link to="/app/comunidad" className="shrink-0 rounded-xl border border-[#FF0055]/30 px-3 py-2 text-[10px] font-bold text-[#FF91B2]">Ver comunidad →</Link></div></div>
-    <form onSubmit={publishMemberPost} className="rounded-2xl border border-rose-400/25 bg-[#1b121c] p-4"><label htmlFor="rollerfeed-new-post" className="block text-xs font-black text-rose-200">Compartí algo con toda Punta Rollers</label><p className="mt-1 text-[11px] text-white/55">Lo verán los miembros con perfil PR. Sumá hasta 10 fotos y un texto para compartir con toda la escuela.</p><textarea id="rollerfeed-new-post" value={newPost} onChange={e=>setNewPost(e.target.value)} maxLength={5000} rows={3} placeholder="¿Qué querés compartir hoy?" className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white outline-none focus:border-rose-400"/><div className="relative mt-3 min-h-12 overflow-hidden rounded-xl border border-rose-300/30 bg-rose-300/10"><span aria-hidden="true" className="pointer-events-none flex min-h-12 items-center justify-center px-3 text-sm font-bold text-rose-100">📷 Agregar fotos · {newPhotos.length}/10</span><input type="file" multiple accept="image/jpeg,image/png,image/webp" aria-label="Elegir hasta diez fotos" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" onChange={e=>{const picked=Array.from(e.target.files||[]);e.target.value='';if(newPhotos.length+picked.length>10){setComposerMessage('Podés agregar hasta 10 fotos por publicación.');return}setNewPhotos(previous=>[...previous,...picked]);setComposerMessage('')}}/></div>{newPhotos.length>0&&<div className="mt-2 space-y-2">{newPhotos.map((photo,index)=><div key={index} className="flex items-center justify-between gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-white/80"><span className="min-w-0 truncate">{index+1}. {photo.name}</span><button type="button" onClick={()=>setNewPhotos(previous=>previous.filter((_,i)=>i!==index))} className="shrink-0 rounded-lg border border-white/20 px-2 py-1 text-white">Quitar</button></div>)}</div>}<button type="submit" disabled={publishing||(!newPost.trim()&&!newPhotos.length)} className="mt-2 w-full rounded-xl bg-[#FF0055] px-4 py-3 text-sm font-black text-white disabled:opacity-40">{publishing?'PUBLICANDO…':'PUBLICAR PARA TODA PR'}</button>{composerMessage&&<p role="status" className="mt-2 text-xs text-white/70">{composerMessage}</p>}</form>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Compartí, reaccioná y comentá sin salir del feed.</p></div></div>
+    <SocialComposer compact onPublished={refresh}/>
     {error&&<p role="alert" className="rounded-xl border border-red-400/30 p-3 text-xs text-red-200">{error}</p>}
     {!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">Todavía no hay publicaciones para mostrar.</p>}
     {latest.map(entry=>{
@@ -82,10 +57,10 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
       return <article key={post.id} className="relative isolate overflow-hidden rounded-[26px] border border-[#FF0055]/35 bg-[linear-gradient(140deg,#1c0b16,#0d0d13_60%)] shadow-[0_0_25px_rgba(255,0,85,.10)]">
         <div className="h-[2px] bg-gradient-to-r from-[#FF0055] via-[#FF7AAB] to-transparent"/>
         <div className="p-4"><Link to={(post.author?.id||post.author_id)?'/app/comunidad/perfil/'+(post.author?.id||post.author_id):'/app/comunidad'} className="flex items-center gap-3">{post.author?.foto?<img src={post.author.foto} alt="" className="h-10 w-10 rounded-full border border-[#FF0055]/40 object-cover"/>:<span className="grid h-10 w-10 place-items-center rounded-full bg-[#FF0055]/15 text-white">PR</span>}<div><p className="text-sm font-black text-white">{name}</p><p className="text-[10px] text-white/40">{post.created_at?new Date(post.created_at).toLocaleString('es-UY'):''}</p></div></Link>
-        {post.body&&<p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-white/80">{post.body}</p>}</div>
+        {post.body&&<p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-white/80">{post.body}</p>}<SocialTags post={post} onChange={refresh}/></div>
         {media.length>0&&<div className={media.length===1?'grid grid-cols-1 gap-1 bg-black/25':'grid grid-cols-2 gap-1 bg-black/25'}>{media.slice(0,4).map((photo,index)=><button key={photo.id||photo.url} type="button" onClick={()=>setViewer({album:{title:'Fotos de '+name,photos:media},index})} className="relative block aspect-[4/3] min-h-0 overflow-hidden bg-black/30"><img src={photo.url} alt={'Foto '+(index+1)+' de '+media.length} loading="lazy" className="h-full w-full object-cover"/>{index===3&&media.length>4&&<span className="absolute inset-0 grid place-items-center bg-black/65 text-3xl font-black text-white">+{media.length-4}</span>}</button>)}</div>}
-        <div className="space-y-3 p-4"><div className="flex flex-wrap gap-2">{OPTIONS.map(([key,emoji])=><button key={key} type="button" disabled={Boolean(busy)} onClick={()=>react(post,key)} className="rounded-full border border-[#FF0055]/25 bg-[#FF0055]/[.06] px-3 py-2 text-xs text-white disabled:opacity-40">{emoji} {reactions.filter(r=>r.reaction===key).length||0}</button>)}</div>
-        {comments.length>0&&<div className="space-y-2">{comments.slice(expanded===post.id?0:-2).map(c=><p key={c.id} className="rounded-xl bg-white/[.035] px-3 py-2 text-[11px] text-white/65"><strong className="text-white/85">{c.nombre||c.name||c.author_name||'Alumno'}: </strong>{c.body}</p>)}{comments.length>2&&<button onClick={()=>setExpanded(expanded===post.id?null:post.id)} className="text-[10px] font-bold text-[#FF91B2]">{expanded===post.id?'Mostrar menos':'Ver todos los '+comments.length+' comentarios'}</button>}</div>}
+        <div className="space-y-3 p-4"><div className="flex flex-wrap gap-2">{OPTIONS.map(([key,emoji])=><button key={key} type="button" disabled={Boolean(busy)} onClick={()=>react(post,key)} aria-pressed={post.my_reaction===key} className={"rounded-full border px-3 py-2 text-xs text-white disabled:opacity-40 "+(post.my_reaction===key?"border-[#FF6694] bg-[#FF0055]/30":"border-[#FF0055]/25 bg-[#FF0055]/[.06]")}>{emoji} {reactions.filter(r=>r.reaction===key).length||0}</button>)}</div>
+        {comments.length>0&&<div className="space-y-2">{(expanded===post.id?comments:comments.slice(-2)).map(c=><p key={c.id} className="rounded-xl bg-white/[.035] px-3 py-2 text-[11px] text-white/65"><strong className="text-white/85">{c.nombre||c.name||c.author_name||'Alumno'}: </strong>{c.body}</p>)}{comments.length>2&&<button onClick={()=>setExpanded(expanded===post.id?null:post.id)} className="text-[10px] font-bold text-[#FF91B2]">{expanded===post.id?'Mostrar menos':'Ver todos los '+comments.length+' comentarios'}</button>}</div>}
         <form onSubmit={e=>{e.preventDefault();comment(post)}} className="flex gap-2"><input aria-label="Escribí un comentario" maxLength={1000} value={drafts[post.id]||''} onChange={e=>setDrafts(old=>({...old,[post.id]:e.target.value}))} placeholder="Comentá esta publicación…" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-xs text-white outline-none"/><button disabled={Boolean(busy)||!(drafts[post.id]||'').trim()} className="rounded-xl bg-[#FF0055] px-4 text-sm font-bold text-white disabled:opacity-40" aria-label="Publicar comentario">↑</button></form></div>
       </article>
     })}
