@@ -1,3 +1,4 @@
+import {SocialDaily} from '../components/community/PRSocial2'
 import RollerFeedOnline from '../components/RollerFeedOnline'
 import PRWeather from '../components/PRWeather'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -1239,6 +1240,7 @@ export default function Activity() {
 
         <button type="button" onClick={()=>window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>
 
+        <OptionalExperienceBoundary><SocialDaily/></OptionalExperienceBoundary>
         <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
 
         <nav aria-label="Explorar RollerFeed" className="w-full min-w-0">
