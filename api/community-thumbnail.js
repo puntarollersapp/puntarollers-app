@@ -6,8 +6,8 @@ const MAX_BYTES = 25 * 1024 * 1024
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
   const path = typeof req.query.path === 'string' ? req.query.path : ''
-  // Only existing public community images; never accept an arbitrary URL.
-  if (!/^(community-albums|community-media)\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/i.test(path)) {
+  // Only public post images. Album photos must use authenticated signed URLs.
+  if (!/^community-media\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/i.test(path)) {
     return res.status(400).end('Invalid image path')
   }
   try {
