@@ -6,6 +6,8 @@ import {isSantaAudience} from '../lib/prDecemberNavigation'
 import useWrappedAccess from '../lib/useWrappedAccess'
 const start=Date.parse('2026-12-01T00:00:00-03:00'),end=Date.parse('2027-01-01T00:00:00-03:00'),gap=6*60*60*1000
 const visited=new Set()
+// A real logout starts a new visit; route changes do not.
+supabase.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')visited.clear()})
 const get=k=>{try{return Number(localStorage.getItem(k)||0)}catch{return 0}}
 const put=(k,v)=>{try{localStorage.setItem(k,String(v))}catch{}}
 export default function SeasonCampaignNotice(){
@@ -37,7 +39,7 @@ export default function SeasonCampaignNotice(){
      if(next){if(!live||document.querySelector('[role="dialog"][aria-modal="true"]'))return;put(key+'last',Date.now());put(key+next.kind,Date.now())}
     }
     if(next&&live&&!document.querySelector('[role="dialog"][aria-modal="true"]')){visited.add(uid+':'+season);setNotice({...next,uid})}
-   }finally{running=false}
+   }catch{/* Retry on a later visible check. */}finally{running=false}
   }
   const first=setTimeout(check,1800),timer=setInterval(check,30000)
   return()=>{live=false;clearTimeout(first);clearInterval(timer)}
