@@ -29,7 +29,8 @@ export function useRollerFeedNotices(profileId, countOnly=false){
   },[])
   return {...(state.owner===profileId?state:{items:[],unread:0,status:'loading'}),mark,refresh}
 }
-export function rollerFeedTarget(kind){
+export function rollerFeedTarget(kind,entityId){
+  if(kind==='pr_general_staff_post'&&entityId)return '/app/actividad?socialPost='+encodeURIComponent(entityId)
   if(kind==='pr_general_feedback_nov24')return '/app/voice'
   if(kind==='pr_general_poll_results_nov24')return '#rollerfeed-votaciones'
   if(kind==='pr_profile_verified')return '/app/perfil'
@@ -40,6 +41,7 @@ export function rollerFeedTarget(kind){
   return '#rollerfeed-novedades'
 }
 export function rollerFeedNoticeIcon(kind){
+  if(kind==='pr_general_staff_post')return '📸'
   if(kind.includes('feedback')&&!kind.startsWith('training_'))return '💬'
   if(kind.startsWith('training_'))return '🏅'
   if(kind.includes('awards')||kind.includes('poll_results'))return '🏆'
