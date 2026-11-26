@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import {SocialComposer,SocialTags} from './community/SocialComposer'
+import {SocialPostTools,useSocialStatus,useSocialSaved} from './community/PRSocial2'
 
 const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','👏']]
 
 export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) {
+  const socialStatus=useSocialStatus(),saved=useSocialSaved(socialStatus)
+  const [onlySaved,setOnlySaved]=useState(false)
   const [posts,setPosts] = useState(initialPosts)
   const [drafts,setDrafts] = useState({})
   const [busy,setBusy] = useState('')
@@ -43,10 +46,10 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     else {setDrafts(old=>({...old,[post.id]:''}));await refresh()}
     setBusy('')
   }
-  const latest=[...posts.filter(p=>p?.id).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
+  const latest=[...posts.filter(p=>p?.id&&(!onlySaved||!socialStatus?.enabled||saved.includes(p.id))).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id&&(!onlySaved||!socialStatus?.enabled)).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Compartí, reaccioná y comentá sin salir del feed.</p></div></div>
-    <SocialComposer compact onPublished={refresh}/>
+    <SocialComposer compact onPublished={refresh}/>{socialStatus?.enabled&&<div className="flex gap-2"><button type="button" onClick={()=>setOnlySaved(false)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(!onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Todas</button><button type="button" onClick={()=>setOnlySaved(true)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Guardadas · {saved.length}</button></div>}
     {error&&<p role="alert" className="rounded-xl border border-red-400/30 p-3 text-xs text-red-200">{error}</p>}
     {!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">Todavía no hay publicaciones para mostrar.</p>}
     {latest.slice(0,visibleCount).map(entry=>{
@@ -56,10 +59,10 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
       const reactions=Array.isArray(post.reactions)?post.reactions:[]
       const comments=Array.isArray(post.comments)?post.comments:[]
       const media=Array.isArray(post.media)?post.media:[]
-      return <article key={post.id} className="relative isolate overflow-hidden rounded-[26px] border border-[#FF0055]/35 bg-[linear-gradient(140deg,#1c0b16,#0d0d13_60%)] shadow-[0_0_25px_rgba(255,0,85,.10)]">
+      return <article key={post.id} id={"social-post-"+post.id} className="relative isolate overflow-hidden rounded-[26px] border border-[#FF0055]/35 bg-[linear-gradient(140deg,#1c0b16,#0d0d13_60%)] shadow-[0_0_25px_rgba(255,0,85,.10)]">
         <div className="h-[2px] bg-gradient-to-r from-[#FF0055] via-[#FF7AAB] to-transparent"/>
         <div className="p-4"><Link to={(post.author?.id||post.author_id)?'/app/comunidad/perfil/'+(post.author?.id||post.author_id):'/app/comunidad'} className="flex items-center gap-3">{post.author?.foto?<img src={post.author.foto} alt="" className="h-10 w-10 rounded-full border border-[#FF0055]/40 object-cover"/>:<span className="grid h-10 w-10 place-items-center rounded-full bg-[#FF0055]/15 text-white">PR</span>}<div><p className="text-sm font-black text-white">{name}</p><p className="text-[10px] text-white/40">{post.created_at?new Date(post.created_at).toLocaleString('es-UY'):''}</p></div></Link>
-        {post.body&&<p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-white/80">{post.body}</p>}<SocialTags post={post} onChange={refresh}/></div>
+        {post.body&&<p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-white/80">{post.body}</p>}<SocialTags post={post} onChange={refresh}/><SocialPostTools post={post} status={socialStatus} saved={saved.includes(post.id)} onChange={refresh}/></div>
         {media.length>0&&<div className={media.length===1?'grid grid-cols-1 gap-1 bg-black/25':'grid grid-cols-2 gap-1 bg-black/25'}>{media.slice(0,4).map((photo,index)=><button key={photo.id||photo.url} type="button" onClick={()=>setViewer({album:{title:'Fotos de '+name,photos:media},index})} className="relative block aspect-[4/3] min-h-0 overflow-hidden bg-black/30"><img src={photo.url} alt={'Foto '+(index+1)+' de '+media.length} loading="lazy" className="h-full w-full object-cover"/>{index===3&&media.length>4&&<span className="absolute inset-0 grid place-items-center bg-black/65 text-3xl font-black text-white">+{media.length-4}</span>}</button>)}</div>}
         <div className="space-y-3 p-4"><div className="flex flex-wrap gap-2">{OPTIONS.map(([key,emoji])=><button key={key} type="button" disabled={Boolean(busy)} onClick={()=>react(post,key)} aria-pressed={post.my_reaction===key} className={"rounded-full border px-3 py-2 text-xs text-white disabled:opacity-40 "+(post.my_reaction===key?"border-[#FF6694] bg-[#FF0055]/30":"border-[#FF0055]/25 bg-[#FF0055]/[.06]")}>{emoji} {reactions.filter(r=>r.reaction===key).length||0}</button>)}</div>
         {comments.length>0&&<div className="space-y-2">{(expanded===post.id?comments:comments.slice(-2)).map(c=><p key={c.id} className="rounded-xl bg-white/[.035] px-3 py-2 text-[11px] text-white/65"><strong className="text-white/85">{c.nombre||c.name||c.author_name||'Alumno'}: </strong>{c.body}</p>)}{comments.length>2&&<button onClick={()=>setExpanded(expanded===post.id?null:post.id)} className="text-[10px] font-bold text-[#FF91B2]">{expanded===post.id?'Mostrar menos':'Ver todos los '+comments.length+' comentarios'}</button>}</div>}
