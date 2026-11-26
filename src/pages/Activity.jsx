@@ -1,5 +1,6 @@
 import {SocialDaily,useSocialStatus} from '../components/community/PRSocial2'
 import RollerFeedOnline from '../components/RollerFeedOnline'
+import RollerFeedNotifications from '../components/RollerFeedNotifications'
 import PRWeather from '../components/PRWeather'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -1220,6 +1221,7 @@ export default function Activity() {
       <div className={"pr-page pr-desktop-feed space-y-5 animate-page-enter "+(socialVisualStatus?.enabled?"pr-social-first":"")}>
         <RollerFeedOnline/>
         <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
+          <RollerFeedNotifications />
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,0,85,.08),transparent_65%),radial-gradient(ellipse_at_50%_100%,rgba(187,255,31,.035),transparent_55%)]" />
           <div aria-hidden="true" className="rf-shine" />
           {['a','b','c'].map(position => <span key={position} aria-hidden="true" className={`rf-envelope rf-envelope--${position}`}><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3 7 9 7 9-7"/></svg></span>)}
