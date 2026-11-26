@@ -1,4 +1,4 @@
-import {SocialDaily} from '../components/community/PRSocial2'
+import {SocialDaily,useSocialStatus} from '../components/community/PRSocial2'
 import RollerFeedOnline from '../components/RollerFeedOnline'
 import PRWeather from '../components/PRWeather'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -661,6 +661,7 @@ function buildBirthdayPosts(profiles) {
 
 export default function Activity() {
   const { user } = useAuth()
+  const socialVisualStatus=useSocialStatus()
   const savedUser = loadSavedUser()
 
   const profileId = user?.id || savedUser?.id || ''
@@ -1238,7 +1239,7 @@ export default function Activity() {
           </div>
         </section>
 
-        <button type="button" onClick={()=>window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>
+        <button type="button" onClick={()=>socialVisualStatus?.enabled?window.dispatchEvent(new CustomEvent('pr-social2-open',{detail:{kind:'choose'}})):window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>
 
         <OptionalExperienceBoundary><SocialDaily/></OptionalExperienceBoundary>
         <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
