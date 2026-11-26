@@ -295,7 +295,7 @@ export default function AdminInscripciones2026() {
                   </div>
                   <div>
                     <span>Modalidad</span>
-                    <b>{isKids ? 'Sábado 19:00–20:00' : row.modalidad === 'grupales' ? row.turno_sabado : '4 clases · $2.900'}</b>
+                    <b>{isKids ? 'Sábado 19:00–20:00' : row.modalidad === 'grupales' ? row.turno_sabado : '4 clases · Personalizadas'}</b>
                     <small>{isKids ? 'Pista cerrada · Maldonado' : row.modalidad === 'personalizadas' ? row.objetivo_personalizadas : 'Miércoles complementarios según nivel'}</small>
                   </div>
                   {isKids && (
