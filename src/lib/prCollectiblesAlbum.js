@@ -42,17 +42,17 @@ export function ruleDescription(c){
  if(r.type.includes('clinics'))return 'Participá en '+t+(t===1?' clínica verificada.':' clínicas verificadas.')
  return 'Participación verificada por el equipo PR.'
 }
-export function buildCollectibles({badges=[],grants=[],metrics={}}){
+export function buildCollectibles({badges=[],grants=[],metrics={},previewEligible=[]}){
  const bmap=new Map(badges.map(b=>[normalizeBadgeTitle(b.titulo),b]))
  const gmap=new Map(grants.map(g=>[g.card_code,g]))
  return PR_COLLECTIBLES_CATALOG.map(c=>{
   const rule=c.rule, badge=(rule.aliases||[]).map(s=>bmap.get(normalizeBadgeTitle(s))).find(Boolean),g=gmap.get(c.code)
   const value=metrics[rule.type.replace('badge_or_','')]
-  // Automatic metrics are a preview only until durable, server-side granting is deployed.
-  const locked=!(badge||g)
+  // Before launch the administrator can preview eligible cards without persisting grants.
+  const locked=!(badge||g||previewEligible.includes(c.number))
   const rarity=tones[c.rarity][0]
   const art=badge&&getBadgeImage(badge.titulo)||collectibleArtwork(c)
   return {...c,id:c.code,number:c.number,total:50,source:c.rarity,rarity,category:c.rarity,locked,
-   subtitle:c.countsTowardMain?'Colección 001':'Edición limitada',art,description:g?.reason||badge?.descripcion||ruleDescription(c),date:g?.granted_at||badge?.fecha,by:badge?.creado_por_nombre||'',progress:typeof value==='number'&&rule.target?Math.min(1,value/rule.target):null,progressValue:value,progressTarget:rule.target}
+   subtitle:c.countsTowardMain?'Colección 001':'Edición limitada',art,description:g?.reason||badge?.descripcion||ruleDescription(c),date:badge?.fecha||g?.granted_at,by:badge?.creado_por_nombre||'',progress:typeof value==='number'&&rule.target?Math.min(1,value/rule.target):null,progressValue:value,progressTarget:rule.target}
  })
 }
