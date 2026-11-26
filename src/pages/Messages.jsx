@@ -68,8 +68,8 @@ export default function MessagesPage() {
     if(!mounted.current||seq!==inboxSequence.current)return Array.isArray(inbox)?inbox:[]
     if (inboxError) setNotice('No pudimos actualizar tus mensajes. Revisá tu conexión.')
     else setConversations(Array.isArray(inbox) ? inbox : [])
-    setFriends(Array.isArray(community?.friends) ? community.friends : [])
-    if (!silent) setLoading(false)
+    if(community)setFriends(Array.isArray(community.friends)?community.friends:[])
+    setLoading(false)
     return Array.isArray(inbox) ? inbox : []
   }
 
@@ -77,7 +77,7 @@ export default function MessagesPage() {
     if(sending||uploading||recording)return
     activeRef.current=conversation.id
     setActive(conversation)
-    setDraft('');setMessageMenu(null);setChatMenu(false);setChatLoading(true)
+    setNewChat(false);setDraft('');setMessageMenu(null);setChatMenu(false);setChatLoading(true)
     setMessages([])
     setNotice('')
     setParams({ chat: conversation.id }, { replace: true })
@@ -121,9 +121,10 @@ export default function MessagesPage() {
     }
     setUploading(true)
     setNotice('')
+    let objectPath=null
     try {
       const ext = (file.name?.split('.').pop() || (mediaType === 'audio' ? 'webm' : 'jpg')).replace(/[^a-z0-9]/gi, '')
-      const objectPath = `${active.id}/${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}.${ext}`
+      objectPath = `${active.id}/${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}.${ext}`
       const { error: uploadError } = await supabase.storage.from('pr-chat-media').upload(objectPath, file, { contentType: file.type, upsert: false })
       if (uploadError) throw uploadError
       const { data: publicData } = supabase.storage.from('pr-chat-media').getPublicUrl(objectPath)
@@ -135,7 +136,7 @@ export default function MessagesPage() {
         body_value: null,
       })
       if (error || !data?.success) throw new Error(data?.error || error?.message || 'No se pudo enviar el archivo.')
-      await refreshActive()
+      await refreshActive();notifyChanged()
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 30)
     } catch (error) {
       setNotice(error.message || 'No se pudo enviar el archivo.')
@@ -153,7 +154,7 @@ export default function MessagesPage() {
     try {
       if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){setNotice('Este dispositivo no permite grabar audio desde el navegador.');return}
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });recorderStream.current=stream
-      if(!mounted.current){stream.getTracks().forEach(t=>t.stop());return}
+      if(!mounted.current||activeRef.current!==active?.id){stream.getTracks().forEach(t=>t.stop());recorderStream.current=null;return}
       const recorder = new MediaRecorder(stream)
       audioChunksRef.current = []
       recorder.ondataavailable = (event) => { if (event.data.size) audioChunksRef.current.push(event.data) }
@@ -162,6 +163,7 @@ export default function MessagesPage() {
         recorderStream.current=null
         if(!mounted.current)return
         setRecording(false)
+        if(activeRef.current!==active?.id)return
         const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
         const ext=blob.type.includes('mp4')?'m4a':blob.type.includes('ogg')?'ogg':'webm'
         const file = new File([blob], `audio-${Date.now()}.${ext}`, { type: blob.type || 'audio/webm' })
@@ -199,8 +201,9 @@ export default function MessagesPage() {
       setSending(false)
       return
     }
-    const { data: rows } = await supabase.rpc('pr_dm_messages', { conversation_id_value: active.id })
-    setMessages(Array.isArray(rows) ? rows : [])
+    const { data: rows,error:refreshError } = await supabase.rpc('pr_dm_messages', { conversation_id_value: active.id })
+    if(!refreshError&&Array.isArray(rows)&&activeRef.current===active.id&&mounted.current)setMessages(rows)
+    notifyChanged()
     await loadInbox({ silent: true })
     setSending(false)
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 30)
