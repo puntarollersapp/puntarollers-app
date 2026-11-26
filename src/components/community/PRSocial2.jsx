@@ -11,8 +11,34 @@ const action='min-h-11 rounded-xl border border-white/15 bg-white/5 px-3 py-2 te
 const prompts=DAILY_PROMPTS
 const badges=[['first_post','✦','Primera publicación'],['photographer','📸','Fotógrafo PR'],['companionship','💛','Compañerismo'],['daily','⚡','PR Daily'],['after_class','🛼','Después de clase']]
 const emit=(context={})=>window.dispatchEvent(new CustomEvent('pr-social2-open',{detail:context}))
-export function useSocialStatus(){const {user}=useAuth();const [status,setStatus]=useState(null);useEffect(()=>{let active=true;setStatus(null);if(!user?.id)return;async function load(){const {data,error}=await supabase.rpc('pr_social_status');if(active)setStatus(error?null:data)}load();const timer=setInterval(load,60000);window.addEventListener('focus',load);return()=>{active=false;clearInterval(timer);window.removeEventListener('focus',load)}},[user?.id]);return status}
-function useSocialHome(status){const [data,setData]=useState(null),[error,setError]=useState('');useEffect(()=>{let active=true;setData(null);if(!status?.enabled)return;async function load(){const {data,error}=await supabase.rpc('pr_social_home');if(active){if(error)setError('No se pudo actualizar PR Social.');else{setData(data);setError('')}}}load();const t=setInterval(load,60000);window.addEventListener('pr-social-published',load);window.addEventListener('pr-social2-refresh',load);return()=>{active=false;clearInterval(t);window.removeEventListener('pr-social-published',load);window.removeEventListener('pr-social2-refresh',load)}},[status?.enabled]);return [data,error]}
+// Share concurrent read requests only; never retain another account's data in a global cache.
+const socialReads=new Map()
+function sharedSocialRead(uid,rpc){
+ const key=uid+'|'+rpc
+ if(socialReads.has(key))return socialReads.get(key)
+ const request=Promise.resolve().then(()=>supabase.rpc(rpc)).catch(error=>({data:null,error})).finally(()=>{if(socialReads.get(key)===request)socialReads.delete(key)})
+ socialReads.set(key,request);return request
+}
+export function useSocialStatus(){
+ const {user}=useAuth(),uid=user?.id
+ const [snapshot,setSnapshot]=useState(null)
+ useEffect(()=>{let active=true;if(!uid)return
+ async function load(){if(document.visibilityState==='hidden')return;const {data,error}=await sharedSocialRead(uid,'pr_social_status');if(active)setSnapshot({uid,value:error?null:data})}
+ load();const timer=setInterval(load,60000);window.addEventListener('focus',load);document.addEventListener('visibilitychange',load)
+ return()=>{active=false;clearInterval(timer);window.removeEventListener('focus',load);document.removeEventListener('visibilitychange',load)}
+ },[uid])
+ return snapshot?.uid===uid?snapshot?.value||null:null
+}
+function useSocialHome(status){
+ const {user}=useAuth(),uid=user?.id
+ const [snapshot,setSnapshot]=useState(null)
+ useEffect(()=>{let active=true;if(!uid||!status?.enabled)return
+ async function load(){if(document.visibilityState==='hidden')return;const {data,error}=await sharedSocialRead(uid,'pr_social_home');if(active)setSnapshot(old=>({uid,data:error?(old?.uid===uid?old.data:null):data,error:error?'No se pudo actualizar PR Social.':''}))}
+ load();const t=setInterval(load,60000);window.addEventListener('pr-social-published',load);window.addEventListener('pr-social2-refresh',load);document.addEventListener('visibilitychange',load)
+ return()=>{active=false;clearInterval(t);window.removeEventListener('pr-social-published',load);window.removeEventListener('pr-social2-refresh',load);document.removeEventListener('visibilitychange',load)}
+ },[uid,status?.enabled])
+ return uid&&status?.enabled&&snapshot?.uid===uid?[snapshot.data,snapshot.error]:[null,'']
+}
 export function SocialGlobal(){
  const status=useSocialStatus(),[home]=useSocialHome(status),[context,setContext]=useState(null),[toast,setToast]=useState(''),[publishedId,setPublishedId]=useState(null);
  const dialogRef=useRef(null),closeRef=useRef(null),previousFocus=useRef(null),editorScroll=useRef(null);
