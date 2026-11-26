@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout, { OptionalExperienceBoundary } from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
+import {useProfileVisualRefresh} from '../lib/profileAccessories'
 import { supabase } from '../lib/supabase'
 import RollerFeedComments from '../components/RollerFeedComments'
 import RollerFeedSeasonal from '../components/RollerFeedSeasonal'
@@ -1637,10 +1638,11 @@ function ProfileAvatar({
   verified = false,
   size = 'normal',
 }) {
-  const classes =
-    size === 'large'
-      ? 'w-14 h-14 rounded-[19px]'
-      : 'w-11 h-11 rounded-[16px]'
+  const {user}=useAuth()
+  const visualRefresh=useProfileVisualRefresh(user)
+  const classes = size === 'large'
+    ? (visualRefresh?'w-16 h-16 rounded-[21px]':'w-14 h-14 rounded-[19px]')
+    : (visualRefresh?'w-[52px] h-[52px] rounded-[18px]':'w-11 h-11 rounded-[16px]')
 
   return (
     <div className="relative shrink-0">
