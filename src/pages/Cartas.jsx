@@ -4,10 +4,11 @@ import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import HoloCard, { HOLO_CSS, motionNeedsPermission, requestMotionPermission } from '../components/HoloCard'
-import { badgeCards, dateLabel, frameCards, shareOrDownloadCard, useCardsAccess } from '../lib/cartas'
+import { dateLabel, shareOrDownloadCard, useCardsAccess } from '../lib/cartas'
+import { buildCollectibles } from '../lib/prCollectiblesAlbum'
 
-const TABS = [['todas', 'Todas'], ['badge', 'Insignias'], ['frame', 'Marcos']]
-const EMPTY = { loading: true, error: '', badges: [], catalog: [], grants: [] }
+const TABS = [['todas','Todas'],['common','Comunes'],['holo','Holo'],['epic','Épicas'],['legendary','Legendarias'],['limited','Limitadas']]
+const EMPTY = { loading: true, error: '', badges: [], grants: [], metrics: {} }
 export default function Cartas() {
   const { user } = useAuth()
   const allowed = useCardsAccess(user)
@@ -29,28 +30,39 @@ export default function Cartas() {
     let live = true
     ;(async () => {
       try {
-        const [b, c, g] = await Promise.all([
-          supabase.from('actividad_pr').select('id,titulo,descripcion,fecha,creado_por_nombre').eq('alumno_id', uid).eq('tipo', 'Insignia').or('eliminado.is.null,eliminado.eq.false').order('fecha', { ascending: false }),
-          supabase.from('pr_collectible_frames').select('code,title,description,enabled,visible_locked,sort_order').order('sort_order'),
-          supabase.from('pr_profile_frames').select('frame_code,granted_at,revoked_at').eq('profile_id', uid),
+        const [b,g,d]=await Promise.all([
+          supabase.from('actividad_pr').select('id,titulo,descripcion,fecha,creado_por_nombre').eq('alumno_id',uid).eq('tipo','Insignia').or('eliminado.is.null,eliminado.eq.false').order('fecha',{ascending:false}),
+          supabase.from('pr_collectibles_grants').select('card_code,granted_at,reason').eq('profile_id',uid),
+          supabase.from('pr_training_v2_submissions').select('assignment_duty_id').eq('profile_id',uid).eq('status','approved'),
         ])
-        if (b.error) throw b.error
-        const framesFailed = Boolean(c.error || g.error)
-        if (live) setState({ loading: false, error: framesFailed ? 'Los marcos no se pudieron cargar ahora.' : '', badges: b.data || [], catalog: framesFailed ? [] : c.data || [], grants: framesFailed ? [] : g.data || [] })
+        if(b.error)throw b.error
+        const metrics={}
+        if(!d.error)metrics.duties_total=new Set((d.data||[]).map(x=>x.assignment_duty_id)).size
+        // Verified skating activities only; paginate to avoid treating a truncated list as lifetime totals.
+        let distance=0,max=0,valid=true
+        for(let page=0;page<50;page++){
+          const result=await supabase.from('pr_activities').select('id,distancia_metros,strava_activity_id').eq('alumno_id',uid).eq('tipo','Patinaje').in('estado_validacion',['validada','sincronizada']).or('eliminada.is.null,eliminada.eq.false').order('id').range(page*500,page*500+499)
+          if(result.error){valid=false;break}
+          const rows=result.data||[]
+          for(const row of rows){const km=Number(row.distancia_metros)/1000;if(Number.isFinite(km)&&km>0){distance+=km;max=Math.max(max,km)}}
+          if(rows.length<500)break
+          if(page===49)valid=false
+        }
+        if(valid){metrics.distance_total=distance;metrics.distance_single=max}
+        if(live)setState({loading:false,error:g.error?'Las entregas manuales aún no están disponibles. Tus insignias siguen visibles.':'',badges:b.data||[],grants:g.data||[],metrics})
       } catch (e) {
         if (live) setState({ ...EMPTY, loading: false, error: 'No se pudieron cargar tus cartas. Probá de nuevo.' })
       }
     })()
     return () => { live = false }
   }, [uid, allowed, retry])
-  const cards = useMemo(() => {
-    const all = [...frameCards(state.catalog, state.grants), ...badgeCards(state.badges)]
-    return all.map((c, i) => ({ ...c, number: i + 1, total: all.length }))
-  }, [state])
-  const owned = cards.filter(c => !c.locked).length
-  const shown = cards.filter(c => tab === 'todas' || c.source === tab)
-  const current = open ? cards.find(c => c.id === open) : null
-
+  const cards=useMemo(()=>buildCollectibles(state),[state])
+  const owned=cards.filter(c=>!c.locked).length
+  const permanent=cards.filter(c=>c.countsTowardMain&&!c.locked).length
+  const limited=owned-permanent
+  const shown=cards.filter(c=>tab==='todas'||c.category===tab)
+  const current=open?cards.find(c=>c.id===open):null
+  const next=cards.filter(c=>c.locked&&c.countsTowardMain&&c.progress!==null&&c.progress<1).sort((a,b)=>b.progress-a.progress)[0]
   function openCard(id) {
     openerRef.current = document.activeElement
     setFlipped(false); setMsg(''); setOpen(id)
@@ -81,15 +93,19 @@ export default function Cartas() {
   }
   if (!allowed) return <Navigate to="/app/insignias" replace/>
   return (
-    <AppLayout title="Mis cartas" showBack>
+    <AppLayout title="PR Collectibles" showBack>
       <style>{HOLO_CSS}</style>
       <div className="pr-page animate-page-enter space-y-5 pb-28">
-        <section className="rounded-[28px] border border-white/10 bg-gradient-to-br from-[#1a0a14] to-[#0d0d12] p-5">
-          <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF79A5]">Colección PR</p>
-          <h1 className="mt-2 text-3xl font-black uppercase leading-none text-white">Tus cartas</h1>
-          <p className="mt-2 text-sm leading-6 text-white/70">Cada insignia y cada marco que conseguís se convierte en una carta con brillo holográfico. Tocá una para verla de cerca, moverla y guardarla como imagen.</p>
-          <p className="mt-4 text-xs font-bold text-white/70" role="status">{state.loading ? 'Cargando…' : owned + (owned === 1 ? ' carta conseguida' : ' cartas conseguidas') + (cards.length > owned ? ' · ' + (cards.length - owned) + ' por descubrir' : '')}</p>
-          <Link to="/app/insignias" className="mt-3 inline-block text-[11px] font-bold text-white/60 underline">Ver insignias en lista</Link>
+        <section className="relative overflow-hidden rounded-[28px] border border-[#FF0055]/20 bg-gradient-to-br from-[#25121f] via-[#171820] to-[#0d0d12] p-5">
+          <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF79A5]">PUNTA ROLLERS · ECOSISTEMA</p>
+          <h1 className="mt-2 text-3xl font-black uppercase leading-none text-white">PR Collectibles</h1>
+          <p className="mt-2 text-sm leading-6 text-white/65">Tu historia. Tu colección.</p>
+          <div className="mt-6 flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-widest text-white/50">COLECCIÓN 001</p><p className="mt-1 text-4xl font-black text-white">{state.loading?'—':permanent}<span className="text-xl text-white/35"> / 40</span></p></div><span className="font-black text-[#FF79A5]">{state.loading?'—':Math.round(permanent/40*100)+'%'}</span></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#FF0055]" style={{width:permanent/40*100+'%'}}/></div>
+          <p className="mt-3 text-xs text-white/60">{owned} cartas en total · {limited}/10 ediciones limitadas</p>
+          <div className="mt-4 grid grid-cols-4 gap-1">{TABS.slice(1,5).map(([key,label])=><div key={key} className="rounded-xl bg-white/[.06] p-2 text-center"><p className="text-lg font-black text-white">{cards.filter(c=>c.category===key&&!c.locked).length}</p><p className="text-[9px] text-white/55">{label}</p></div>)}</div>
+          <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
+          {user?.role==='admin'&&<Link to="/admin/collectibles" className="ml-4 text-xs font-bold text-[#FF79A5] underline">Administrar</Link>}
         </section>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filtro de cartas">
           {TABS.map(([k, l]) => <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}
@@ -109,6 +125,7 @@ export default function Cartas() {
             <p className="mt-2 text-sm leading-6 text-white/60">Cuando el equipo PR te otorgue una insignia o consigas un marco, va a aparecer como carta.</p>
           </section>
         )}
+        {next&&!state.loading&&<section className="rounded-3xl border border-emerald-300/20 bg-[#19251f] p-4"><p className="text-[10px] font-black tracking-widest text-emerald-300">ESTÁS MUY CERCA</p><h2 className="mt-2 text-xl font-black text-white">{next.title}</h2><p className="mt-1 text-xs text-white/60">Próxima carta · progreso registrado</p><div className="mt-3 h-2 rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-300" style={{width:next.progress*100+'%'}}/></div><div className="mt-2 flex justify-between text-xs text-white/70"><span>{Number(next.progressValue.toFixed(1)).toLocaleString('es-UY')} / {next.progressTarget}</span><span>{Math.round(next.progress*100)}%</span></div><p className="mt-2 text-[10px] text-white/45">El desbloqueo automático de este objetivo está en preparación.</p></section>}
       </div>
       {current && (
         <div className="fixed inset-0 z-[160] flex flex-col items-center overflow-y-auto bg-black/85 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={current.title} onClick={closeCard}>
