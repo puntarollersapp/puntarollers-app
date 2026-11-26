@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { loadActiveMoments } from '../lib/moments'
 import ProfileAvatar from './ProfileAvatar'
+import {useSocialStatus} from './community/PRSocial2'
 
 export default function PRMomentsRail({ currentProfileId }) {
   const navigate = useNavigate()
+  const status=useSocialStatus(),modern=Boolean(status?.enabled),[seen,setSeen]=useState([])
   const [moments, setMoments] = useState([])
   const [profiles, setProfiles] = useState({})
   const [loading, setLoading] = useState(true)
@@ -30,10 +32,11 @@ export default function PRMomentsRail({ currentProfileId }) {
 
   useEffect(() => {
     load()
-    const timer = window.setInterval(load, 60000)
-    return () => window.clearInterval(timer)
+    const refresh=()=>{if(document.visibilityState==='visible')load()};const timer=window.setInterval(refresh,60000);window.addEventListener('pr-moments-changed',refresh);window.addEventListener('focus',refresh)
+    return()=>{window.clearInterval(timer);window.removeEventListener('pr-moments-changed',refresh);window.removeEventListener('focus',refresh)}
   }, [])
 
+  useEffect(()=>{if(!modern)return;let active=true;const refresh=()=>supabase.rpc('pr_social_moment_seen').then(({data,error})=>{if(active&&!error)setSeen(Array.isArray(data)?data:[])});refresh();window.addEventListener('pr-moments-changed',refresh);window.addEventListener('focus',refresh);return()=>{active=false;window.removeEventListener('pr-moments-changed',refresh);window.removeEventListener('focus',refresh)}},[modern,currentProfileId])
   const groups = useMemo(() => {
     const map = new Map()
     moments.forEach((moment) => {
@@ -48,7 +51,7 @@ export default function PRMomentsRail({ currentProfileId }) {
     <section className="rounded-[28px] border border-violet-300/10 bg-gradient-to-br from-violet-500/[.08] via-[#0b0b10] to-[#09090d] px-4 py-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">PR MOMENTS</p><p className="mt-1 text-xs text-white/35">72 horas. Tu momento. Tu roll.</p></div>
-        <button type="button" onClick={() => navigate('/app/moments?create=1')} className="rounded-2xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-[10px] font-black text-violet-200">+ Nuevo</button>
+        <button type="button" onClick={() => navigate(modern?'/app/moments':'/app/moments?create=1')} className="rounded-2xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-[10px] font-black text-violet-200">{modern?'Ver todos →':'+ Nuevo'}</button>
       </div>
       {error && <p className="mb-3 rounded-2xl bg-amber-400/10 px-3 py-2 text-[10px] text-amber-100/70">{error}</p>}
       <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -57,7 +60,7 @@ export default function PRMomentsRail({ currentProfileId }) {
           const profile = profiles[profileId] || {}
           const name = [profile.nombre, profile.apellido].filter(Boolean).join(' ') || 'Roller PR'
           const own = String(profileId) === String(currentProfileId)
-          return <button key={profileId} type="button" onClick={() => navigate(`/app/moments?moment=${items[0].id}`)} className="flex w-[72px] shrink-0 flex-col items-center gap-2"><div className={`grid h-16 w-16 place-items-center rounded-full border-2 ${own ? 'border-amber-300' : 'border-violet-400'} bg-white/[.04] p-[2px]`}><ProfileAvatar profile={profile} className="h-full w-full" rounded="rounded-full" /></div><span className="max-w-[70px] truncate text-[9px] font-bold text-white/55">{own ? 'Vos' : name.split(' ')[0]}</span></button>
+          return <button key={profileId} type="button" onClick={() => navigate(`/app/moments?moment=${(modern?items.find(m=>!seen.includes(m.id)):null)?.id||items[0].id}`)} className="flex w-[72px] shrink-0 flex-col items-center gap-2"><div className={`grid h-16 w-16 place-items-center rounded-full border-2 ${own ? 'border-amber-300' : modern&&items.every(m=>seen.includes(m.id))?'border-white/25':'border-violet-400'} bg-white/[.04] p-[2px]`}><ProfileAvatar profile={profile} className="h-full w-full" rounded="rounded-full" /></div><span className="max-w-[70px] truncate text-[9px] font-bold text-white/55">{own ? 'Vos' : name.split(' ')[0]}</span></button>
         })}
         {!loading && !error && !groups.length && <div className="flex min-w-[190px] items-center px-2 text-[10px] leading-4 text-white/30">Todavía no hay Moments activos. La pista está lista para vos.</div>}
       </div>
