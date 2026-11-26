@@ -1,0 +1,1 @@
+alter table public.pr_inscripciones_2026 add column if not exists manual_access_email_sent_at timestamptz;
