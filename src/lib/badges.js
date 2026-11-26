@@ -1,4 +1,9 @@
 const BADGE_IMAGES = {
+  'mi primera publicacion pr': '/insignias-pr/social-first-post.svg',
+  'fotografo pr': '/insignias-pr/social-photographer.svg',
+  'companerismo social pr': '/insignias-pr/social-companionship.svg',
+  'pr daily': '/insignias-pr/social-daily.svg',
+  'pr after class': '/insignias-pr/social-after-class.svg',
   '6 km solidarios · juntos por valentino': '/insignias-pr/6km-solidarios-valentino(1).webp',
   'travesia la barra 19k': '/insignias-pr/travesia-la-barra-19k-1.png?v=4',
   'primer evento pr': '/insignias-pr/primer-evento-pr.png',
