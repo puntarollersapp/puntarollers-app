@@ -20,7 +20,7 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
   const [expanded,setExpanded] = useState(null)
   const [openAlbums,setOpenAlbums] = useState([])
   const [viewer,setViewer] = useState(null)
-  const [visibleCount,setVisibleCount] = useState(12)
+  const [visibleCount,setVisibleCount] = useState(()=>new URLSearchParams(window.location.search).has('socialPost')?100:12)
   const refreshAgain = useRef(false)
   const refreshing = useRef(false)
   async function refresh() {
@@ -49,9 +49,9 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     else {setDrafts(old=>({...old,[post.id]:''}));await refresh()}
     setBusy('')
   }
-  const [scrollPost,setScrollPost]=useState(null)
+  const [scrollPost,setScrollPost]=useState(()=>new URLSearchParams(window.location.search).get('socialPost'))
   useEffect(()=>{const open=e=>{setOnlySaved(false);setFormatFilter('all');setVisibleCount(100);setScrollPost(e.detail)};window.addEventListener('pr-social2-scroll-post',open);return()=>window.removeEventListener('pr-social2-scroll-post',open)},[])
-  useEffect(()=>{if(!scrollPost)return;const el=document.getElementById('social-post-'+scrollPost);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});setScrollPost(null)}},[scrollPost,visibleCount,posts,onlySaved,formatFilter])
+  useEffect(()=>{if(!scrollPost)return;const el=document.getElementById('social-post-'+scrollPost);if(el){el.scrollIntoView({block:'center',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});setScrollPost(null);const url=new URL(window.location.href);if(url.searchParams.has('socialPost')){url.searchParams.delete('socialPost');window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash)}}},[scrollPost,visibleCount,posts,onlySaved,formatFilter])
   const allEntries=[...posts.filter(p=>p?.id&&(!onlySaved||!socialStatus?.enabled||saved.includes(p.id))).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id&&(!onlySaved||!socialStatus?.enabled)).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
   const latest=allEntries.filter(e=>!socialStatus?.enabled||formatFilter==='all'||(e.kind==='album'?'album':e.item.social_kind||'post')===formatFilter)
   function selectFilter(key){setFormatFilter(key);setVisibleCount(12)}
