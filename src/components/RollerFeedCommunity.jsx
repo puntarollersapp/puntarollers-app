@@ -22,15 +22,21 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
   const [viewer,setViewer] = useState(null)
   const [visibleCount,setVisibleCount] = useState(()=>new URLSearchParams(window.location.search).has('socialPost')?100:12)
   const refreshAgain = useRef(false)
-  const refreshing = useRef(false)
-  async function refresh() {
-    if(refreshing.current){refreshAgain.current=true;return}
-    refreshing.current=true
-    try {
-      const {data,error:loadError} = await supabase.rpc('community_social_feed')
-      if (loadError) setError(previous=>previous||'No se pudieron actualizar las publicaciones. Intentá de nuevo.')
-      else { const next=Array.isArray(data)?data:[]; setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next); setError(previous=>previous?'':previous) }
-    } finally {refreshing.current=false;if(refreshAgain.current){refreshAgain.current=false;void refresh()}}
+  const refreshing = useRef(null)
+  function refresh() {
+    if(refreshing.current){refreshAgain.current=true;return refreshing.current}
+    const task=async()=>{
+      do {
+        refreshAgain.current=false
+        try{
+          const {data,error:loadError}=await supabase.rpc('community_social_feed')
+          if(loadError)setError(previous=>previous||'No se pudieron actualizar las publicaciones. Intentá de nuevo.')
+          else{const next=Array.isArray(data)?data:[];setPosts(previous=>JSON.stringify(previous)===JSON.stringify(next)?previous:next);setError('')}
+        }catch{setError('No se pudieron actualizar las publicaciones. Intentá de nuevo.')}
+      }while(refreshAgain.current)
+    }
+    refreshing.current=task().finally(()=>{refreshing.current=null})
+    return refreshing.current
   }
   useEffect(()=>{refresh();const timer=setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);const onFocus=()=>refresh();const onVisibility=()=>{if(document.visibilityState==='visible')refresh()};window.addEventListener('focus',onFocus);window.addEventListener('pr-social-published',onFocus);document.addEventListener('visibilitychange',onVisibility);return()=>{clearInterval(timer);window.removeEventListener('focus',onFocus);window.removeEventListener('pr-social-published',onFocus);document.removeEventListener('visibilitychange',onVisibility)}},[])
   async function react(post,key) {
