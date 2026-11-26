@@ -8,7 +8,7 @@ import { dateLabel, shareOrDownloadCard, useCardsAccess } from '../lib/cartas'
 import { buildCollectibles } from '../lib/prCollectiblesAlbum'
 
 const TABS = [['todas','Todas'],['common','Comunes'],['holo','Holo'],['epic','Épicas'],['legendary','Legendarias'],['limited','Limitadas']]
-const EMPTY = { loading: true, error: '', badges: [], grants: [], metrics: {} }
+const EMPTY = { loading: true, error: '', badges: [], grants: [], metrics: {}, previewEligible: [] }
 export default function Cartas() {
   const { user } = useAuth()
   const allowed = useCardsAccess(user)
@@ -30,26 +30,14 @@ export default function Cartas() {
     let live = true
     ;(async () => {
       try {
-        const [b,g,d]=await Promise.all([
+        const sync=await supabase.rpc('pr_collectibles_sync_my_cards')
+        const [b,g]=await Promise.all([
           supabase.from('actividad_pr').select('id,titulo,descripcion,fecha,creado_por_nombre').eq('alumno_id',uid).eq('tipo','Insignia').or('eliminado.is.null,eliminado.eq.false').order('fecha',{ascending:false}),
-          supabase.from('pr_collectibles_grants').select('card_code,granted_at,reason').eq('profile_id',uid),
-          supabase.from('pr_training_v2_submissions').select('assignment_duty_id').eq('profile_id',uid).eq('status','approved'),
+          supabase.from('pr_collectibles_grants').select('card_code,granted_at,reason,source').eq('profile_id',uid),
         ])
         if(b.error)throw b.error
-        const metrics={}
-        if(!d.error)metrics.duties_total=new Set((d.data||[]).map(x=>x.assignment_duty_id)).size
-        // Verified skating activities only; paginate to avoid treating a truncated list as lifetime totals.
-        let distance=0,max=0,valid=true
-        for(let page=0;page<50;page++){
-          const result=await supabase.from('pr_activities').select('id,distancia_metros,strava_activity_id').eq('alumno_id',uid).eq('tipo','Patinaje').in('estado_validacion',['validada','sincronizada']).or('eliminada.is.null,eliminada.eq.false').order('id').range(page*500,page*500+499)
-          if(result.error){valid=false;break}
-          const rows=result.data||[]
-          for(const row of rows){const km=Number(row.distancia_metros)/1000;if(Number.isFinite(km)&&km>0){distance+=km;max=Math.max(max,km)}}
-          if(rows.length<500)break
-          if(page===49)valid=false
-        }
-        if(valid){metrics.distance_total=distance;metrics.distance_single=max}
-        if(live)setState({loading:false,error:g.error?'Las entregas manuales aún no están disponibles. Tus insignias siguen visibles.':'',badges:b.data||[],grants:g.data||[],metrics})
+        const errors=[sync.error?'No se pudo sincronizar el progreso.':null,g.error?'No se pudieron leer las entregas.':null].filter(Boolean)
+        if(live)setState({loading:false,error:errors.join(' '),badges:b.data||[],grants:g.data||[],metrics:sync.error?{}:sync.data?.metrics||{},previewEligible:sync.data?.preview?sync.data.eligible_numbers||[]:[]})
       } catch (e) {
         if (live) setState({ ...EMPTY, loading: false, error: 'No se pudieron cargar tus cartas. Probá de nuevo.' })
       }
@@ -125,7 +113,7 @@ export default function Cartas() {
             <p className="mt-2 text-sm leading-6 text-white/60">Cuando el equipo PR te otorgue una insignia o consigas un marco, va a aparecer como carta.</p>
           </section>
         )}
-        {next&&!state.loading&&<section className="rounded-3xl border border-emerald-300/20 bg-[#19251f] p-4"><p className="text-[10px] font-black tracking-widest text-emerald-300">ESTÁS MUY CERCA</p><h2 className="mt-2 text-xl font-black text-white">{next.title}</h2><p className="mt-1 text-xs text-white/60">Próxima carta · progreso registrado</p><div className="mt-3 h-2 rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-300" style={{width:next.progress*100+'%'}}/></div><div className="mt-2 flex justify-between text-xs text-white/70"><span>{Number(next.progressValue.toFixed(1)).toLocaleString('es-UY')} / {next.progressTarget}</span><span>{Math.round(next.progress*100)}%</span></div><p className="mt-2 text-[10px] text-white/45">El desbloqueo automático de este objetivo está en preparación.</p></section>}
+        {next&&!state.loading&&<section className="rounded-3xl border border-emerald-300/20 bg-[#19251f] p-4"><p className="text-[10px] font-black tracking-widest text-emerald-300">ESTÁS MUY CERCA</p><h2 className="mt-2 text-xl font-black text-white">{next.title}</h2><p className="mt-1 text-xs text-white/60">Próxima carta · progreso registrado</p><div className="mt-3 h-2 rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-300" style={{width:next.progress*100+'%'}}/></div><div className="mt-2 flex justify-between text-xs text-white/70"><span>{Number(next.progressValue.toFixed(1)).toLocaleString('es-UY')} / {next.progressTarget}</span><span>{Math.round(next.progress*100)}%</span></div><p className="mt-2 text-[10px] text-white/45">El progreso se sincroniza con tus registros verificados al abrir el álbum.</p></section>}
       </div>
       {current && (
         <div className="fixed inset-0 z-[160] flex flex-col items-center overflow-y-auto bg-black/85 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={current.title} onClick={closeCard}>
