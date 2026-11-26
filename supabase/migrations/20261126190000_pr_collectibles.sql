@@ -16,11 +16,12 @@ alter table public.pr_collectibles_catalog enable row level security;
 alter table public.pr_collectibles_grants enable row level security;
 revoke all on public.pr_collectibles_catalog,public.pr_collectibles_grants from anon,authenticated;
 grant select on public.pr_collectibles_catalog to authenticated;
-grant select,insert on public.pr_collectibles_grants to authenticated;
-create policy pr_collectibles_catalog_read on public.pr_collectibles_catalog for select to authenticated using (public.pr_frames_is_admin() or now()>='2026-12-01 00:00:00-03'::timestamptz);
-create policy pr_collectibles_grants_read on public.pr_collectibles_grants for select to authenticated using (public.pr_frames_is_admin() or (profile_id=public.pr_current_profile_id() and now()>='2026-12-01 00:00:00-03'::timestamptz));
+grant select on public.pr_collectibles_grants to authenticated;
+grant insert(profile_id,card_code,granted_by,reason) on public.pr_collectibles_grants to authenticated;
+create policy pr_collectibles_catalog_read on public.pr_collectibles_catalog for select to authenticated using ((public.pr_frames_is_admin() and public.pr_current_profile_id()='admin-claudio') or now()>='2026-12-01 00:00:00-03'::timestamptz);
+create policy pr_collectibles_grants_read on public.pr_collectibles_grants for select to authenticated using ((public.pr_frames_is_admin() and public.pr_current_profile_id()='admin-claudio') or (profile_id=public.pr_current_profile_id() and now()>='2026-12-01 00:00:00-03'::timestamptz));
 create policy pr_collectibles_grants_insert on public.pr_collectibles_grants for insert to authenticated with check (
- public.pr_frames_is_admin() and granted_by=public.pr_current_profile_id()
+ (public.pr_frames_is_admin() and public.pr_current_profile_id()='admin-claudio') and granted_by=public.pr_current_profile_id()
  and exists(select 1 from public.pr_collectibles_catalog c where c.code=card_code and c.grant_enabled)
  and exists(select 1 from public.profiles p where p.id=profile_id and (p.role='alumno' or p.participa_como_alumno=true))
 );
@@ -68,8 +69,8 @@ insert into public.pr_collectibles_catalog(code,card_number,title,rarity,main_co
 ('PR-041',41,'Juntos por Valentino 2026','limited',false,true),
 ('PR-042',42,'Travesía La Barra 19K','limited',false,true),
 ('PR-043',43,'Shifter 2026','limited',false,true),
-('PR-044',44,'10 años de Punta Rollers','limited',false,false),
-('PR-045',45,'Navidad 2026','limited',false,false),
+('PR-044',44,'10 años de Punta Rollers','limited',false,true),
+('PR-045',45,'Navidad 2026','limited',false,true),
 ('PR-046',46,'Verano 2027','limited',false,false),
 ('PR-047',47,'Roller Night 2027','limited',false,false),
 ('PR-048',48,'Clínica especial 2027','limited',false,false),
