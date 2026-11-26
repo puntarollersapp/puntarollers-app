@@ -1,4 +1,4 @@
-import {FeedFormatBanner,AnimatedReactions,formatStyle} from './community/SocialVisual'
+import {FeedFormatBanner,AnimatedReactions,formatStyle,FORMATS} from './community/SocialVisual'
 import {SocialVideo} from './community/SocialVideo'
 import SocialCommentInput from './community/SocialCommentInput'
 import { useEffect, useRef, useState } from 'react'
@@ -12,6 +12,7 @@ const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','�
 export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) {
   const socialStatus=useSocialStatus(),saved=useSocialSaved(socialStatus),polls=useSocialPolls(socialStatus)
   const [onlySaved,setOnlySaved]=useState(false)
+  const [formatFilter,setFormatFilter]=useState('all')
   const [posts,setPosts] = useState(initialPosts)
   const [drafts,setDrafts] = useState({})
   const [busy,setBusy] = useState('')
@@ -49,14 +50,17 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
     setBusy('')
   }
   const [scrollPost,setScrollPost]=useState(null)
-  useEffect(()=>{const open=e=>{setOnlySaved(false);setVisibleCount(100);setScrollPost(e.detail)};window.addEventListener('pr-social2-scroll-post',open);return()=>window.removeEventListener('pr-social2-scroll-post',open)},[])
-  useEffect(()=>{if(!scrollPost)return;const el=document.getElementById('social-post-'+scrollPost);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});setScrollPost(null)}},[scrollPost,visibleCount,posts,onlySaved])
-  const latest=[...posts.filter(p=>p?.id&&(!onlySaved||!socialStatus?.enabled||saved.includes(p.id))).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id&&(!onlySaved||!socialStatus?.enabled)).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
+  useEffect(()=>{const open=e=>{setOnlySaved(false);setFormatFilter('all');setVisibleCount(100);setScrollPost(e.detail)};window.addEventListener('pr-social2-scroll-post',open);return()=>window.removeEventListener('pr-social2-scroll-post',open)},[])
+  useEffect(()=>{if(!scrollPost)return;const el=document.getElementById('social-post-'+scrollPost);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});setScrollPost(null)}},[scrollPost,visibleCount,posts,onlySaved,formatFilter])
+  const allEntries=[...posts.filter(p=>p?.id&&(!onlySaved||!socialStatus?.enabled||saved.includes(p.id))).map(p=>({kind:'post',created_at:p.created_at,item:p})),...albums.filter(a=>a?.id&&(!onlySaved||!socialStatus?.enabled)).map(a=>({kind:'album',created_at:a.created_at,item:a}))].sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))
+  const latest=allEntries.filter(e=>!socialStatus?.enabled||formatFilter==='all'||(e.kind==='album'?'album':e.item.social_kind||'post')===formatFilter)
+  function selectFilter(key){setFormatFilter(key);setVisibleCount(12)}
   return <section id="rollerfeed-comunidad" className="scroll-mt-36 space-y-3">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF6694]">ROLLERFEED · PR SOCIAL</p><h2 className="mt-1 font-display text-[30px] text-white">Publicaciones<span className="text-[#FF0055]">.</span></h2><p className="mt-1 text-xs text-white/45">Compartí, reaccioná y comentá sin salir del feed.</p></div></div>
     {socialStatus?.enabled?<button type="button" onClick={()=>window.dispatchEvent(new CustomEvent("pr-social2-open",{detail:{kind:"choose"}}))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-rose-300/25 bg-rose-500/10 p-4 text-left text-sm font-black text-white">¿Qué querés compartir hoy?<span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs">＋ Crear</span></button>:<SocialComposer compact onPublished={refresh}/>}{socialStatus?.enabled&&<div className="flex gap-2"><button type="button" onClick={()=>setOnlySaved(false)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(!onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Todas</button><button type="button" onClick={()=>setOnlySaved(true)} className={'rounded-xl px-3 py-2 text-xs font-bold '+(onlySaved?'bg-rose-500 text-white':'bg-white/5 text-white/65')}>Guardadas · {saved.length}</button></div>}
+    {socialStatus?.enabled&&<div className="flex gap-2 overflow-x-auto pb-2" aria-label="Filtrar publicaciones">{['all','post','daily','class','poll','video','album'].map(key=><button key={key} type="button" aria-pressed={formatFilter===key} onClick={()=>selectFilter(key)} style={{color:formatFilter===key?(FORMATS[key]?.color||'#ff719e'):undefined}} className={'shrink-0 rounded-full border px-3 py-2 text-xs font-bold '+(formatFilter===key?'border-current bg-white/10':'border-white/10 text-white/65')}>{key==='all'?'Todo':FORMATS[key].icon+' '+FORMATS[key].label}</button>)}</div>}
     {error&&<p role="alert" className="rounded-xl border border-red-400/30 p-3 text-xs text-red-200">{error}</p>}
-    {!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">Todavía no hay publicaciones para mostrar.</p>}
+    {!latest.length&&!error&&<p className="rounded-2xl border border-white/10 p-5 text-center text-xs text-white/50">{onlySaved?'Todavía no tenés publicaciones guardadas de este formato.':formatFilter!=='all'?'Todavía no hay publicaciones de este formato.':'Todavía no hay publicaciones para mostrar.'}{socialStatus?.enabled&&formatFilter!=='all'&&<button type="button" className="mx-auto mt-3 block text-rose-200 font-bold" onClick={()=>selectFilter('all')}>Ver todos los formatos</button>}</p>}
     {latest.slice(0,visibleCount).map(entry=>{
       if(entry.kind==='album') { const album=entry.item; const photos=album.photos||[]; const opened=openAlbums.includes(album.id); return <article key={'album-'+album.id} className="overflow-hidden rounded-[26px] border border-orange-400/30 bg-[#161017] shadow-lg"><div className="p-4"><p className="text-[10px] font-black uppercase tracking-widest text-orange-300">🛼 Álbum · {album.owner_name||'Punta Rollers'}</p><h3 className="mt-1 text-lg font-black text-white">{album.title}</h3><p className="mt-1 text-xs text-white/60">{photos.length} fotos · {album.created_at?new Date(album.created_at).toLocaleString('es-UY'):''}</p></div><div className="grid grid-cols-3 gap-1">{(opened?photos:photos.slice(0,3)).map((photo,index)=><button key={photo.id} type="button" onClick={()=>setViewer({album,index})} className="aspect-square overflow-hidden bg-black/30"><img src={photo.url} alt={'Foto '+(index+1)} loading="lazy" className="h-full w-full object-cover"/></button>)}</div>{photos.length>3&&<button type="button" onClick={()=>setOpenAlbums(ids=>opened?ids.filter(id=>id!==album.id):[...ids,album.id])} className="w-full border-t border-white/10 px-4 py-3 text-center text-sm font-bold text-orange-200">{opened?'Mostrar menos fotos ↑':'Ver las '+photos.length+' fotos acá ↓'}</button>}</article> }
       const post=entry.item;
