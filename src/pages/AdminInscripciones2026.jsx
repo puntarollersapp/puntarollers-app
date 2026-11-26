@@ -161,13 +161,28 @@ export default function AdminInscripciones2026() {
     setToggleLoading(false)
   }
 
+  const [sendingAccess,setSendingAccess] = useState({})
+  const sendAccessEmail = async (id) => {
+    setSendingAccess(prev=>({...prev,[id]:true}))
+    setError('')
+    try {
+      const {data,error:sendError}=await supabase.functions.invoke('notificar-accesos-inscripcion',{body:{registrationId:id}})
+      if(sendError||!data?.ok) throw new Error('No se pudo enviar el correo de accesos.')
+      setRows(prev=>prev.map(row=>row.id===id?{...row,manual_access_email_sent_at:data.sentAt}:row))
+    } catch {
+      setError('Pago verificado. No pudimos confirmar el envío del correo de accesos. Podés reintentarlo desde la inscripción.')
+    } finally {
+      setSendingAccess(prev=>({...prev,[id]:false}))
+    }
+  }
   const setStatus = async (id, estado) => {
-    const { error: updateError } = await supabase
-      .from('pr_inscripciones_2026')
-      .update({ estado, comprobante_recibido: ['pago_verificado','confirmado'].includes(estado), updated_at: new Date().toISOString() })
-      .eq('id', id)
-    if (updateError) return setError(updateError.message)
-    setRows(prev => prev.map(row => row.id === id ? { ...row, estado, comprobante_recibido: ['pago_verificado','confirmado'].includes(estado) } : row))
+    const paid=['pago_verificado','confirmado'].includes(estado)
+    const {data,error:updateError}=await supabase.from('pr_inscripciones_2026')
+      .update({estado,comprobante_recibido:paid,updated_at:new Date().toISOString()})
+      .eq('id',id).select('*').single()
+    if(updateError||!data) return setError(updateError?.message||'No se pudo actualizar la inscripción.')
+    setRows(prev=>prev.map(row=>row.id===id?data:row))
+    if(paid&&['kids','grupales'].includes(data.modalidad)&&data.metodo_pago!=='Mercado Pago'&&!data.manual_access_email_sent_at) await sendAccessEmail(id)
   }
 
   const setLoanStatus = async (id, estado) => {
@@ -317,6 +332,7 @@ export default function AdminInscripciones2026() {
                     {Object.entries(statusLabel).map(([value,label]) => <option value={value} key={value}>{label}</option>)}
                   </select>}
                   {row.isLoan && <select aria-label="Estado de préstamo de patines" disabled={updatingLoan === row.id} value={row.estado} onChange={e => setLoanStatus(row.id, e.target.value)}><option value="pendiente">🟡 En lista de espera</option><option value="contactado">📲 Contactado</option><option value="asignado">✅ Patines asignados</option><option value="cancelado">✕ Cancelado</option></select>}
+                  {!row.isLoan && ['kids','grupales'].includes(row.modalidad) && ['pago_verificado','confirmado'].includes(row.estado) && row.metodo_pago!=='Mercado Pago' && (row.manual_access_email_sent_at ? <small style={{color:'#8ce3d1'}}>✓ Correo de accesos enviado</small> : <button type="button" disabled={!!sendingAccess[row.id]} onClick={()=>sendAccessEmail(row.id)}>{sendingAccess[row.id]?'Enviando…':'Enviar correo de accesos'}</button>)}
                   {whatsappLink(row) && <a href={whatsappLink(row)} target="_blank" rel="noreferrer">WhatsApp · mensaje listo</a>}
                   {!row.isLoan && <button type="button" className="pr-admin-delete" onClick={() => deleteRegistration(row)} disabled={deletingId === row.id}>
                     {deletingId === row.id ? 'Eliminando…' : 'Eliminar'}

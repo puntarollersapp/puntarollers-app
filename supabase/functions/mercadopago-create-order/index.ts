@@ -12,7 +12,7 @@ import {
   safeProviderCode,
   type RegistrationType,
 } from "../_shared/mercadopago.ts";
-import { classAccessForRegistration, type ClassAccessItem } from "../_shared/classAccess.ts";
+import { classAccessForRegistration, paidClassAccessEmailHtml, type ClassAccessItem } from "../_shared/classAccess.ts";
 
 type CardPayload = {
   registrationType?: unknown;
@@ -114,7 +114,7 @@ async function notifyPaidRegistration(
     : data.modalidad === "kids" ? "PR Kids" : data.modalidad === "grupales" ? "Adultos · Clases Grupales" : "Personalizadas 1 a 1";
   const amount = attempt.amount.toLocaleString("es-UY");
   const adminEmail = Deno.env.get("PAYMENT_NOTIFICATION_EMAIL") ?? "claudiofaccelli@gmail.com";
-  const customerEmail = typeof data.email === "string" && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(data.email.trim()) ? data.email.trim().toLowerCase() : null;
+  const customerEmail = typeof data.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()) ? data.email.trim().toLowerCase() : null;
 
   const schedule = attempt.registrationType === "clinica_oct_2026"
     ? "<p><strong>Fechas:</strong> 28, 29 y 30 de octubre de 2026</p><p><strong>Modalidad:</strong> Clínica completa · 3 jornadas</p>"
@@ -125,7 +125,7 @@ async function notifyPaidRegistration(
         : "<p><strong>Modalidad:</strong> Personalizadas 1 a 1</p><p>Los horarios disponibles se habilitan semanalmente para que elijas tu turno.</p>";
 
   const adminHtml = `<!doctype html><html><body style="margin:0;background:#f5f6f8;font-family:Arial,sans-serif;color:#111"><div style="max-width:620px;margin:auto;padding:24px"><div style="background:#fff;border:1px solid #e6e6ea;border-radius:22px;padding:30px"><div style="font-size:12px;font-weight:900;letter-spacing:1.4px;color:#00a650">PUNTA ROLLERS · PAGO ACREDITADO</div><h1 style="font-size:26px;margin:10px 0 18px">${escapeHtml(program)}</h1><p><strong>Alumno/a:</strong> ${escapeHtml(data.nombre_completo)}</p><p><strong>Monto:</strong> ${escapeHtml(amount)} UYU</p><p><strong>WhatsApp:</strong> ${escapeHtml(data.telefono)}</p><p><strong>Email:</strong> ${escapeHtml(data.email)}</p>${schedule}<p><strong>ID de inscripción:</strong> ${escapeHtml(attempt.registrationId)}</p><p><strong>ID de pago:</strong> ${escapeHtml(attempt.paymentId)}</p></div></div></body></html>`;
-  const customerHtml = `<!doctype html><html><body style="margin:0;background:#0b0b0f;font-family:Arial,sans-serif;color:#fff"><div style="max-width:620px;margin:auto;padding:28px 16px"><div style="background:#15151c;border:1px solid #292934;border-radius:24px;padding:30px"><div style="color:#78df9a;font-size:12px;font-weight:900;letter-spacing:1.5px">PUNTA ROLLERS · PAGO ACREDITADO</div><h1 style="margin:10px 0 12px;font-size:30px">Tu lugar está confirmado ✓</h1><p style="color:#c8c8d1;line-height:1.6">Hola, <b>${escapeHtml(data.nombre_completo)}</b>. Mercado Pago confirmó correctamente tu pago de <b>${escapeHtml(amount)} UYU</b>.</p><div style="background:#101014;border-radius:16px;padding:18px;margin:22px 0"><p style="margin:0 0 10px"><b>${escapeHtml(program)}</b></p>${schedule}</div><p style="color:#c8c8d1;line-height:1.6">${attempt.registrationType === "clinica_oct_2026" ? "Tu inscripción a la clínica quedó confirmada." : data.modalidad === "personalizadas" ? "Tu cuponera quedó confirmada. Vas a poder elegir tus horarios dentro de la disponibilidad semanal." : "Tu inscripción quedó confirmada. Te esperamos sobre ruedas."}</p><p style="margin-top:24px;color:#777784;font-size:12px">Punta Rollers · No es solo patinar, es pertenecer.</p></div></div></body></html>`;
+  const customerHtml = `<!doctype html><html><body style="margin:0;background:#0b0b0f;font-family:Arial,sans-serif;color:#fff"><div style="max-width:620px;margin:auto;padding:28px 16px"><div style="background:#15151c;border:1px solid #292934;border-radius:24px;padding:30px"><div style="color:#78df9a;font-size:12px;font-weight:900;letter-spacing:1.5px">PUNTA ROLLERS · PAGO ACREDITADO</div><h1 style="margin:10px 0 12px;font-size:30px">Tu lugar está confirmado ✓</h1><p style="color:#c8c8d1;line-height:1.6">Hola, <b>${escapeHtml(data.nombre_completo)}</b>. Mercado Pago confirmó correctamente tu pago de <b>${escapeHtml(amount)} UYU</b>.</p><div style="background:#101014;border-radius:16px;padding:18px;margin:22px 0"><p style="margin:0 0 10px"><b>${escapeHtml(program)}</b></p>${schedule}</div><p style="color:#c8c8d1;line-height:1.6">${attempt.registrationType === "clinica_oct_2026" ? "Tu inscripción a la clínica quedó confirmada." : data.modalidad === "personalizadas" ? "Tu cuponera quedó confirmada. Vas a poder elegir tus horarios dentro de la disponibilidad semanal." : "Tu inscripción quedó confirmada. Te esperamos sobre ruedas."}</p>${attempt.registrationType === "inscripciones_2026" ? paidClassAccessEmailHtml(data.modalidad, data.turno_sabado) : ""}<p style="margin-top:24px;color:#777784;font-size:12px">Punta Rollers · No es solo patinar, es pertenecer.</p></div></div></body></html>`;
 
   const batch = [{ from: "Punta Rollers <hola@puntarollers.com>", to: [adminEmail], subject: `✅ Pago acreditado — ${program} — ${data.nombre_completo}`, html: adminHtml }];
   if (customerEmail) batch.push({ from: "Punta Rollers <hola@puntarollers.com>", to: [customerEmail], subject: `✓ Pago acreditado · ${program}`, html: customerHtml });
