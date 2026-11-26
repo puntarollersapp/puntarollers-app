@@ -125,3 +125,25 @@
 @keyframes prSunFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-7px,9px,0)}}
 @media(max-width:640px){.pr-reg-summer .pr-reg-brand{padding:12px 16px}.pr-reg-wordmark .pr-reg-logo{width:40px;height:40px}.pr-reg-wordmark strong{font-size:.69rem}.pr-reg-wordmark small{font-size:.49rem}.pr-reg-summer .pr-reg-pill{font-size:.58rem;padding:7px 8px}.pr-reg-summer .pr-reg-language{padding:8px 16px;justify-content:flex-end}.pr-reg-summer .pr-reg-language button{flex:0 1 auto}.pr-reg-summer .pr-reg-progress{padding:12px 17px 0}.pr-reg-summer .pr-reg-landing{padding:17px 16px 35px}.pr-reg-hero-content{padding:22px 18px 18px}.pr-reg-hero-location{margin-bottom:24px;font-size:.59rem}.pr-reg-hero{min-height:0}.pr-reg-hero-sun{right:-45px;top:52px;opacity:.45}.pr-reg-hero-content>p:not(.pr-reg-hero-location):not(.pr-reg-hero-edition){font-size:.84rem}.pr-reg-choice-editorial .pr-reg-choice{min-height:175px;padding:16px}.pr-reg-choice-editorial .pr-reg-choice-top{margin-bottom:0}.pr-reg-choice-top svg{width:27px;height:27px}.pr-reg-summer .pr-reg-stage:not(.pr-reg-landing){padding:30px 17px 85px}}
 @media(prefers-reduced-motion:reduce){.pr-reg-summer .pr-reg-stage,.pr-reg-hero-sun{animation:none!important}.pr-reg-summer *{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Compact, value-first adult group membership. */
+.pr-membership-value .pr-membership-highlights{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 5px}
+.pr-membership-highlights>div{padding:14px 12px;display:grid;gap:5px;border-radius:15px;background:#ff005512;border:1px solid #ff00552e;min-width:0}
+.pr-membership-highlights>div+div{background:#ff875d12;border-color:#ff875d35}
+.pr-membership-highlights strong{font-size:clamp(1.6rem,5vw,2.5rem);line-height:1;letter-spacing:-.055em;color:#ff91b5;font-weight:950}
+.pr-membership-highlights>div+div strong{color:#ffb38c}
+.pr-membership-highlights b{font-size:.88rem;line-height:1.2;color:#f3f1ec}
+.pr-membership-highlights small{font-size:.76rem;line-height:1.35;color:#d7d2dc}
+.pr-reg-summer .pr-membership-value ul{gap:11px;margin:18px 0 10px}
+.pr-reg-summer .pr-membership-value li{padding-bottom:10px;gap:10px}
+.pr-membership-value li>span{background:#ff005518;color:#ff9cbd;font-size:.66rem;letter-spacing:-.02em}
+.pr-membership-value li p{font-size:.83rem;line-height:1.4;margin-top:3px}
+.pr-membership-details{font-size:.77rem;color:#c9c4ce;margin:12px 0 16px}
+.pr-membership-details summary{cursor:pointer;color:#f1c5d5;font-weight:700;padding:6px 0}
+.pr-membership-details p{margin:8px 0;line-height:1.5}
+.pr-membership-total{border-top:1px solid #ff00553b;padding:16px 0 0}
+.pr-membership-total>p:first-child{color:#ffb1ca;font-size:.65rem;font-weight:900;letter-spacing:.14em;margin:0}
+.pr-membership-total .pr-summer-price{padding:9px 0 10px;border:0}
+.pr-membership-total .pr-summer-price strong{color:#ff91b5}
+.pr-membership-total>p:last-child{color:#f3f1ec;font-weight:750;font-size:.86rem;line-height:1.45;margin:0}
