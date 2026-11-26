@@ -1,3 +1,4 @@
+import ProfileAccessory from '../components/ProfileAccessory'
 import {SocialDaily,useSocialStatus} from '../components/community/PRSocial2'
 import RollerFeedOnline from '../components/RollerFeedOnline'
 import RollerFeedNotifications from '../components/RollerFeedNotifications'
@@ -1599,7 +1600,7 @@ function SocialPostCard({ item }) {
   const name=[item.author?.nombre,item.author?.apellido].filter(Boolean).join(' ')||'Integrante PR'
   return <article className="overflow-hidden rounded-[29px] border border-white/10 bg-white/[.035] p-4">
     <button type="button" onClick={()=>navigate(`/app/comunidad/perfil/${item.author_id}`)} className="flex items-center gap-3 text-left">
-      <ProfileAvatar photo={item.author?.foto} name={name}/><div><p className="text-sm font-black text-white">{name}</p><p className="mt-1 text-[10px] text-white/35">{new Date(item.created_at).toLocaleString('es-UY')}</p></div>
+      <ProfileAvatar profileId={item.author_id} photo={item.author?.foto} name={name}/><div><p className="text-sm font-black text-white">{name}</p><p className="mt-1 text-[10px] text-white/35">{new Date(item.created_at).toLocaleString('es-UY')}</p></div>
     </button>
     {item.body&&<p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-white/75">{item.body}</p>}
     {item.media?.length>0&&<div className="mt-3 grid grid-cols-2 gap-1">{item.media.map(photo=><a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="aspect-square overflow-hidden rounded-xl"><CommunityPhoto src={photo.url}/></a>)}</div>}
@@ -1615,7 +1616,7 @@ function MomentCard({ item }) {
     <article className="overflow-hidden rounded-[28px] border border-violet-300/20 bg-gradient-to-br from-violet-500/[.14] via-[#121018] to-[#09090d]">
       <button type="button" onClick={openMoment} className="w-full text-left">
         <div className="flex items-center gap-3 p-4">
-          <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} />
+          <ProfileAvatar profileId={item.userId||item.alumno_id||item.profile_id} photo={item.userPhoto} name={item.userName} verified={item.verified} />
           <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{item.userName}</p><p className="mt-1 text-[10px] text-white/35">PR Moment · queda {timeLeft(item.expires_at)}</p></div>
           <span className="rounded-full bg-violet-400/10 px-3 py-2 text-[10px] font-bold text-violet-200">Ver</span>
         </div>
@@ -1630,6 +1631,7 @@ function MomentCard({ item }) {
 }
 
 function ProfileAvatar({
+  profileId,
   photo,
   name,
   verified = false,
@@ -1658,6 +1660,7 @@ function ProfileAvatar({
         )}
       </div>
 
+      <ProfileAccessory profileId={profileId}/>
       {verified && <VerifiedBadge size={22} className="absolute -top-1.5 -right-1.5 z-20" />}
     </div>
   )
@@ -1672,7 +1675,7 @@ function TrainingCard({
       <div className="h-[2px] bg-gradient-to-r from-[#FF0055] via-[#FF5285] to-transparent" />
       <div className="px-3 py-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
-          <ProfileAvatar photo={item.userPhoto} name={item.userName} verified={item.verified} />
+          <ProfileAvatar profileId={item.userId||item.alumno_id||item.profile_id} photo={item.userPhoto} name={item.userName} verified={item.verified} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-extrabold text-white">{item.userName}</p>
             <p className="mt-0.5 text-[10px] text-white/45">{formatRelativeDate(item.date)} · {item.source === 'strava' ? 'Strava' : 'Punta Rollers'}</p>
@@ -1721,6 +1724,7 @@ function BirthdayCard({
     <article className="relative overflow-hidden rounded-[26px] border border-fuchsia-300/25 bg-gradient-to-br from-fuchsia-500/[0.18] via-[#17101c] to-[#0b090d] p-4">
       <div className="flex items-start justify-between gap-4">
         <ProfileAvatar
+          profileId={item.userId||item.alumno_id||item.profile_id}
           photo={item.userPhoto}
           name={item.userName}
           verified={item.verified}
@@ -1775,7 +1779,7 @@ function BirthdayGridCard({ item, reactions, currentProfileId, savingReactionKey
           const heartCount = birthdayReactions.filter((reaction) => reaction.reaction === 'corazon').length
           const dateLabel = new Date(birthday.birthdayDate).toLocaleDateString('es-UY',{day:'numeric',month:'short'})
           return <article key={birthday.id} className="relative min-h-[170px] overflow-hidden rounded-[22px] border border-white/[.07] bg-black/20 p-3">
-            <div className="flex items-start justify-between gap-2"><ProfileAvatar photo={birthday.userPhoto} name={birthday.userName} verified={birthday.verified}/><span className="text-base">🎂</span></div>
+            <div className="flex items-start justify-between gap-2"><ProfileAvatar profileId={birthday.userId} photo={birthday.userPhoto} name={birthday.userName} verified={birthday.verified}/><span className="text-base">🎂</span></div>
             <p className="mt-3 truncate text-sm font-black text-white">{birthday.userName}</p>
             <p className="mt-1 text-[10px] font-bold uppercase tracking-[.08em] text-fuchsia-200/70">{birthday.daysUntil===0?'HOY':dateLabel}</p>
             <button type="button" disabled={Boolean(savingReactionKey)} onClick={()=>onReact(birthday,'corazon')} className={'absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-black '+(myReaction?.reaction==='corazon'?'border-pink-300/30 bg-pink-400/15 text-pink-200':'border-white/[.08] bg-white/[.035] text-white/45')}><span>❤️</span>{heartCount>0&&<span>{heartCount}</span>}</button>
@@ -1809,6 +1813,7 @@ function CommunityCard({
     <article className={`relative overflow-hidden rounded-[29px] border p-5 ${isAchievement?'border-amber-200/45 bg-[radial-gradient(circle_at_95%_0%,rgba(251,191,36,.2),transparent_50%),linear-gradient(135deg,#173b2b,#151912)] shadow-[0_12px_35px_rgba(16,185,129,.12)]':'border-white/[0.08] bg-gradient-to-br from-white/[0.045] to-white/[0.018]'}`}>
       <div className="flex items-center gap-3">
         <ProfileAvatar
+          profileId={item.userId||item.alumno_id||item.profile_id}
           photo={item.userPhoto}
           name={item.userName}
           verified={item.verified}
@@ -2078,6 +2083,7 @@ function ReactionsModal({
                   className="flex items-center gap-3 rounded-[20px] px-2 py-3"
                 >
                   <ProfileAvatar
+                    profileId={profile?.id}
                     photo={getProfilePhoto(profile)}
                     name={name}
                     verified={getProfileVerified(profile)}
