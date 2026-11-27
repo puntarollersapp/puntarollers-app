@@ -55,6 +55,11 @@ export default function Cartas() {
   const owned=cards.filter(c=>!c.locked).length
   const permanent=cards.filter(c=>c.countsTowardMain&&!c.locked).length
   const limited=owned-permanent
+  const total=cards.length
+  const mainTotal=cards.filter(c=>c.countsTowardMain).length
+  const limitedTotal=total-mainTotal
+  const published=cards.filter(c=>!c.upcoming).length
+  const progress=total?owned/total*100:0
   const shown=cards.filter(c=>(!preview||!c.upcoming)&&(tab==='todas'||c.category===tab)).sort((a,b)=>Number(a.upcoming)-Number(b.upcoming)||a.number-b.number)
   const viewLocked=c=>c.locked&&!(preview&&!c.upcoming)
   const current=open?cards.find(c=>c.id===open):null
@@ -97,11 +102,11 @@ export default function Cartas() {
       <div className="pr-page animate-page-enter space-y-5 pb-28">
         <CollectiblesHero/>
         <section className="prc-stats">
-          <div className="flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-widest text-white/50">COLECCIÓN 001</p><p className="mt-1 text-4xl font-black text-white">{state.loading?'—':permanent}<span className="text-xl text-white/35"> / 40</span></p></div><span className="font-black text-violet-200">{state.loading?'—':Math.round(permanent/40*100)+'%'}</span></div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="prc-progress h-full rounded-full" style={{width:permanent/40*100+'%'}}/></div>
-          <p className="mt-3 text-xs text-white/60">{owned} cartas publicadas conseguidas · {limited}/10 ediciones limitadas</p>
+          <div className="flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-widest text-white/50">COLECCIÓN 001 · ÁLBUM COMPLETO</p><p className="mt-1 text-4xl font-black text-white">{state.loading?'—':owned}<span className="text-xl text-white/35"> / {total}</span></p></div><span className="font-black text-violet-200">{state.loading?'—':Math.round(progress)+'%'}</span></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="prc-progress h-full rounded-full" style={{width:progress+'%'}}/></div>
+          <p className="mt-3 text-xs text-white/60">{permanent}/{mainTotal} colección principal · {limited}/{limitedTotal} ediciones limitadas</p>
           <div className="mt-4 grid grid-cols-3 gap-2">{TABS.slice(1).map(([key,label])=><div key={key} className="prc-rarity-stat" style={{'--tone':RARITY_TONE[key]}}><strong>{cards.filter(c=>c.category===key&&!c.locked).length}</strong><p>{label}</p></div>)}</div>
-          <p className="mt-3 text-xs leading-5 text-white/60">Coleccioná con tus asistencias, kilómetros y experiencias. 10 diseños publicados · 40 por descubrir.</p>
+          <p className="mt-3 text-xs leading-5 text-white/60">Coleccioná con tus asistencias, kilómetros y experiencias. {published} diseños publicados · {total-published} por descubrir.</p>
           {isOwner&&<button type="button" aria-pressed={preview} onClick={()=>{setDesignPreview(v=>!v);setOpen(null);setTab('todas')}} className={"mt-4 block w-full rounded-xl border px-4 py-3 text-xs font-black "+(preview?"border-amber-300/60 bg-amber-300/10 text-amber-200":"border-white/15 bg-white/5 text-white")}>{preview?"Salir de la vista de diseño (10 cartas)":"Vista de diseño · probar los 10 frentes"}</button>}
           {preview&&<p className="mt-2 text-[10px] text-amber-200/80">Vista exclusiva del administrador. No otorga cartas ni modifica los logros reales.</p>}
           <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
