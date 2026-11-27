@@ -11,6 +11,20 @@ assert(!slides.find(s=>s.id==='mark-6').small.includes('Redujiste'))
 assert(slides.find(s=>s.id==='shifter').small.includes('No representa un resultado oficial'))
 assert.equal(personality(complete),'Roller en evolución')
 assert.equal(plaqueStats(complete).length,4)
+// Partial QR history must never affect Wrapped stories, export or personality.
+for(const classes of [0,1,2,8,10,38,200]) {
+ const attendance={classes,busiestMonth:11,favoriteWeekday:6};
+ for(const base of [empty,complete,{...empty,activity:{km:12,hours:1},duties:{approved:2}}]) {
+  const {attendance:ignored,...withoutQr}=base;
+  const withQr={...withoutQr,attendance};
+  assert.deepEqual(buildSlides(withQr,'qr-regression'),buildSlides(withoutQr,'qr-regression'));
+  assert.deepEqual(plaqueStats(withQr),plaqueStats(withoutQr));
+  assert.equal(personality(withQr),personality(withoutQr));
+  assert(!buildSlides(withQr).some(s=>s.id==='classes'));
+  assert(!plaqueStats(withQr).some(s=>s.label==='CLASES'));
+ }
+}
+assert.deepEqual(plaqueStats(complete).map(s=>s.label),['KM EN STRAVA','HORAS RODANDO','DEBERES APROBADOS','DESAFÍOS SHIFTER'])
 assert(!buildSlides({...empty,activity:{km:null,hours:0},duties:{approved:0}}).some(s=>s.id==='km'||s.id==='time'||s.id==='duties'))
 assert(!buildSlides({...empty,awards:null}).some(s=>s.id==='awards'))
 assert(buildSlides({...empty,manualActivities:1}).some(s=>s.id==='manual'))
