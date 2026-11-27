@@ -14,7 +14,23 @@ function OfficialRecognition({official}){const people=official.participants||[];
 
 const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','👏']]
 
-export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) {
+function ConversometroBanner(){
+  return <Link to="/app/conversometro" className="rf-cm-banner" aria-label="Abrir el Conversómetro PR">
+    <div className="rf-cm-art" aria-hidden="true">
+      <span className="rf-cm-bubble rf-cm-bubble-a">💬</span>
+      <span className="rf-cm-bubble rf-cm-bubble-b">…</span>
+      <span className="rf-cm-bubble rf-cm-bubble-c">JA!</span>
+      <div className="rf-cm-meter"><i/><i/><i/><i/><i/></div>
+    </div>
+    <div className="rf-cm-copy">
+      <p className="rf-cm-kicker">PR · EL LABORATORIO DEL BLA BLA BLA</p>
+      <h3>Conversómetro<span>.</span></h3>
+      <p className="rf-cm-desc">¿Quién patina más… y quién habla más? 😂</p>
+      <span className="rf-cm-cta">Ver el ranking de conversadores <span aria-hidden="true">→</span></span>
+    </div>
+  </Link>
+}
+export default function RollerFeedCommunity({ initialPosts = [], albums = [], showConversometro = false }) {
   const location=useLocation()
   const targetId=useRef(new URLSearchParams(location.search).get('socialPost'))
   const [targetUnavailable,setTargetUnavailable]=useState(false)
@@ -101,7 +117,8 @@ export default function RollerFeedCommunity({ initialPosts = [], albums = [] }) 
         {comments.length>0&&<div className="space-y-2">{(expanded===post.id?comments:comments.slice(-2)).map(c=><div key={c.id} className={"rounded-xl bg-white/[.035] px-3 py-2 text-[11px] text-white/65 "+(c.parent_comment_id?"ml-5 border-l border-rose-300/20":"")}><strong className="text-white/85">{c.nombre||c.name||c.author_name||'Alumno'}: </strong>{c.body}<SocialReply post={post} comment={c} status={post.official&&socialStatus?.preview?null:socialStatus} onChange={refresh}/></div>)}{comments.length>2&&<button onClick={()=>setExpanded(expanded===post.id?null:post.id)} className="text-[10px] font-bold text-[#FF91B2]">{expanded===post.id?'Mostrar menos':'Ver todos los '+comments.length+' comentarios'}</button>}</div>}
         {socialStatus?.enabled&&!(post.official&&socialStatus.preview)?<SocialCommentInput post={post} status={socialStatus} onChange={refresh} disabled={Boolean(busy)}/>:<form onSubmit={e=>{e.preventDefault();comment(post)}} className="flex gap-2"><input aria-label="Escribí un comentario" maxLength={1000} value={drafts[post.id]||''} onChange={e=>setDrafts(old=>({...old,[post.id]:e.target.value}))} placeholder="Comentá esta publicación…" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-3 text-xs text-white outline-none"/><button disabled={Boolean(busy)||!(drafts[post.id]||'').trim()} className="rounded-xl bg-[#FF0055] px-4 text-sm font-bold text-white disabled:opacity-40" aria-label="Publicar comentario">↑</button></form>}</div>
       </article>
-    })}
+    }).flatMap((card,index)=>showConversometro&&!onlySaved&&formatFilter==='all'&&index===Math.min(2,latest.length,visibleCount)-1?[card,<ConversometroBanner key="rf-conversometro"/>]:[card])}
+    {showConversometro&&!onlySaved&&formatFilter==='all'&&latest.length===0&&<ConversometroBanner/>}
     {latest.length>visibleCount&&<button type="button" onClick={()=>setVisibleCount(n=>n+12)} className="w-full rounded-xl border border-rose-300/30 p-3 text-sm font-bold text-rose-200">Ver más publicaciones ↓</button>}
     {viewer&&<div className="fixed inset-0 z-[250] flex flex-col bg-black/95" role="dialog" aria-modal="true" aria-label="Galería de fotos"><div className="flex items-center justify-between gap-3 px-4 py-4 text-white"><div><p className="text-sm font-bold">{viewer.album.title}</p><p className="text-xs text-white/60">{viewer.index+1} de {viewer.album.photos.length}</p></div><button type="button" onClick={()=>setViewer(null)} className="rounded-full bg-white/15 px-4 py-2 text-sm font-bold">Cerrar ✕</button></div><div className="flex min-h-0 flex-1 items-center justify-between gap-1 px-2"><button type="button" disabled={viewer.index===0} onClick={()=>setViewer(v=>({...v,index:v.index-1}))} className="rounded-full bg-white/15 px-3 py-3 text-xl text-white disabled:opacity-20">‹</button><div className="min-w-0 flex-1"><CommunityFullPhoto src={viewer.album.photos[viewer.index]?.url}/></div><button type="button" disabled={viewer.index===viewer.album.photos.length-1} onClick={()=>setViewer(v=>({...v,index:v.index+1}))} className="rounded-full bg-white/15 px-3 py-3 text-xl text-white disabled:opacity-20">›</button></div></div>}
   </section>

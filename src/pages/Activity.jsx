@@ -3,6 +3,7 @@ import {SocialDaily,useSocialStatus} from '../components/community/PRSocial2'
 import RollerFeedOnline from '../components/RollerFeedOnline'
 import RollerFeedNotifications from '../components/RollerFeedNotifications'
 import PRWeather from '../components/PRWeather'
+import { DECEMBER_NAV_START } from '../lib/prDecemberNavigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout, { OptionalExperienceBoundary } from '../layouts/AppLayout'
@@ -665,6 +666,16 @@ function buildBirthdayPosts(profiles) {
 export default function Activity() {
   const { user } = useAuth()
   const socialVisualStatus=useSocialStatus()
+  // Owner preview now; permanent public layout from Dec 1, Uruguay time.
+  const [feedReleased,setFeedReleased]=useState(()=>Date.now()>=DECEMBER_NAV_START)
+  useEffect(()=>{
+    const refresh=()=>setFeedReleased(Date.now()>=DECEMBER_NAV_START)
+    refresh();const timer=window.setInterval(refresh,15000)
+    window.addEventListener('focus',refresh)
+    document.addEventListener('visibilitychange',refresh)
+    return()=>{window.clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh)}
+  },[])
+  const feedDecember=feedReleased||(user?.id==='admin-claudio'&&user?.role==='admin')
   const savedUser = loadSavedUser()
 
   const profileId = user?.id || savedUser?.id || ''
@@ -1220,7 +1231,7 @@ export default function Activity() {
 
   return (
     <AppLayout title="RollerFeed ⚡️">
-      <div className={"pr-page pr-desktop-feed space-y-5 animate-page-enter "+(socialVisualStatus?.enabled?"pr-social-first":"")}>
+      <div className={"pr-page pr-desktop-feed space-y-5 animate-page-enter "+(socialVisualStatus?.enabled?"pr-social-first":"")+(feedDecember?" rf-december-layout":"")}>
         <RollerFeedOnline/>
         <section className="rf-hero relative overflow-hidden rounded-[30px] border border-[#FF0055]/25 bg-[#0D0303] px-5 py-6 text-center shadow-[0_22px_60px_rgba(0,0,0,.48)] sm:p-7">
           <RollerFeedNotifications />
@@ -1243,10 +1254,15 @@ export default function Activity() {
           </div>
         </section>
 
+        {feedDecember&&<div className="rf-december-priority space-y-5">
+          <OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>
+          <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
+        </div>}
+
         {!socialVisualStatus?.enabled&&<button type="button" onClick={()=>socialVisualStatus?.enabled?window.dispatchEvent(new CustomEvent('pr-social2-open',{detail:{kind:'choose'}})):window.dispatchEvent(new Event('pr-social-open-composer'))} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-[#FF0055]/35 bg-[#FF0055]/[.09] px-4 py-3 text-left text-white"><span className="text-sm font-bold">¿Qué querés compartir hoy?</span><span className="shrink-0 rounded-xl bg-[#FF0055] px-3 py-2 text-xs font-black">＋ Publicar</span></button>}
 
         <OptionalExperienceBoundary><SocialDaily/></OptionalExperienceBoundary>
-        {!socialVisualStatus?.enabled&&<OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>}
+        {!feedDecember&&!socialVisualStatus?.enabled&&<OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>}
 
         <nav aria-label="Explorar RollerFeed" className={"w-full min-w-0 "+(socialVisualStatus?.enabled?"rf-quick-nav":"")}>
           <div className="grid w-full grid-cols-5 gap-1 py-1 sm:gap-2">
@@ -1277,7 +1293,7 @@ export default function Activity() {
         </nav>
 
         <div className="pr-feed-desktop-rail">
-        {socialVisualStatus?.enabled&&<OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>}
+        {!feedDecember&&socialVisualStatus?.enabled&&<OptionalExperienceBoundary><PRWeather placement="feed"/></OptionalExperienceBoundary>}
         <RollerFeedTopRanking profilesByAnyId={profilesByAnyId} profileId={profileId} />
 
 
@@ -1327,11 +1343,11 @@ export default function Activity() {
 
         <div id="rollerfeed-novedades" className="scroll-mt-36"><RollerFeedSeasonal section="news" /></div>
 
-        <div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>
+        {!feedDecember&&<div id="rollerfeed-votaciones" className="scroll-mt-36"><RollerFeedSeasonal section="polls" /></div>}
 
         </div>
         <div className="pr-feed-desktop-main">
-        <RollerFeedCommunity initialPosts={socialPosts} albums={shifterAlbums} />
+        <RollerFeedCommunity initialPosts={socialPosts} albums={shifterAlbums} showConversometro={feedDecember} />
 
         <section id="rollerfeed-actividades" className="scroll-mt-36">
           <div className="flex items-end justify-between gap-4 mb-3">
