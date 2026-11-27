@@ -1,3 +1,4 @@
+import { CollectiblesHero } from '../components/PRCollectiblesVisual'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
@@ -8,6 +9,7 @@ import { dateLabel, shareOrDownloadCard, useCardsAccess } from '../lib/cartas'
 import { buildCollectibles } from '../lib/prCollectiblesAlbum'
 
 const TABS = [['todas','Todas'],['plata','Classic'],['holo','Prism'],['oro','Gold'],['ruby','Rubí'],['diamond','Diamond'],['navidad','Limited Edition']]
+const RARITY_TONE={plata:"#d2d5e3",holo:"#74d5ef",oro:"#f6cc72",ruby:"#ff6c95",diamond:"#b9e7ff",navidad:"#cbb5ff"}
 const EMPTY = { loading: true, error: '', badges: [], grants: [], metrics: {}, previewEligible: [] }
 export default function Cartas() {
   const { user } = useAuth()
@@ -93,23 +95,21 @@ export default function Cartas() {
     <AppLayout title="PR Collectibles" showBack>
       <style>{HOLO_CSS}</style>
       <div className="pr-page animate-page-enter space-y-5 pb-28">
-        <section className="relative overflow-hidden rounded-[28px] border border-[#FF0055]/20 bg-gradient-to-br from-[#25121f] via-[#171820] to-[#0d0d12] p-5">
-          <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#FF79A5]">PUNTA ROLLERS · ECOSISTEMA</p>
-          <h1 className="mt-2 text-3xl font-black uppercase leading-none text-white">PR Collectibles</h1>
-          <p className="mt-2 text-sm leading-6 text-white/65">Tu historia. Tu colección.</p>
-          <div className="mt-6 flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-widest text-white/50">COLECCIÓN 001</p><p className="mt-1 text-4xl font-black text-white">{state.loading?'—':permanent}<span className="text-xl text-white/35"> / 40</span></p></div><span className="font-black text-[#FF79A5]">{state.loading?'—':Math.round(permanent/40*100)+'%'}</span></div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#FF0055]" style={{width:permanent/40*100+'%'}}/></div>
+        <CollectiblesHero/>
+        <section className="prc-stats">
+          <div className="flex items-end justify-between"><div><p className="text-[10px] font-bold tracking-widest text-white/50">COLECCIÓN 001</p><p className="mt-1 text-4xl font-black text-white">{state.loading?'—':permanent}<span className="text-xl text-white/35"> / 40</span></p></div><span className="font-black text-violet-200">{state.loading?'—':Math.round(permanent/40*100)+'%'}</span></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="prc-progress h-full rounded-full" style={{width:permanent/40*100+'%'}}/></div>
           <p className="mt-3 text-xs text-white/60">{owned} cartas publicadas conseguidas · {limited}/10 ediciones limitadas</p>
-          <div className="mt-4 grid grid-cols-3 gap-1">{TABS.slice(1).map(([key,label])=><div key={key} className="rounded-xl bg-white/[.06] p-2 text-center"><p className="text-lg font-black text-white">{cards.filter(c=>c.category===key&&!c.locked).length}</p><p className="text-[9px] text-white/55">{label}</p></div>)}</div>
-          <p className="mt-3 text-xs leading-5 text-white/60">Coleccioná cartas con tus asistencias, kilómetros y experiencias. Hay 10 diseños publicados y 40 por descubrir. Las cartas no se compran, se viven.</p>
+          <div className="mt-4 grid grid-cols-3 gap-2">{TABS.slice(1).map(([key,label])=><div key={key} className="prc-rarity-stat" style={{'--tone':RARITY_TONE[key]}}><strong>{cards.filter(c=>c.category===key&&!c.locked).length}</strong><p>{label}</p></div>)}</div>
+          <p className="mt-3 text-xs leading-5 text-white/60">Coleccioná con tus asistencias, kilómetros y experiencias. 10 diseños publicados · 40 por descubrir.</p>
           {isOwner&&<button type="button" aria-pressed={preview} onClick={()=>{setDesignPreview(v=>!v);setOpen(null);setTab('todas')}} className={"mt-4 block w-full rounded-xl border px-4 py-3 text-xs font-black "+(preview?"border-amber-300/60 bg-amber-300/10 text-amber-200":"border-white/15 bg-white/5 text-white")}>{preview?"Salir de la vista de diseño (10 cartas)":"Vista de diseño · probar los 10 frentes"}</button>}
           {preview&&<p className="mt-2 text-[10px] text-amber-200/80">Vista exclusiva del administrador. No otorga cartas ni modifica los logros reales.</p>}
           <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
           {user?.role==='admin'&&<Link to="/admin/collectibles" className="ml-4 text-xs font-bold text-[#FF79A5] underline">Administrar</Link>}
         </section>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtro de cartas">
+        <div className="prc-filters" role="group" aria-label="Filtro de cartas">
           {TABS.map(([k, l]) => <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}
-            className={'min-h-[40px] rounded-full px-4 text-xs font-bold ' + (tab === k ? 'bg-[#FF0055] text-white' : 'bg-white/10 text-white/70')}>{l}</button>)}
+            className="prc-filter">{l}</button>)}
         </div>
         {state.error && <div className="rounded-2xl bg-rose-500/15 px-4 py-3 text-xs text-rose-200" role="alert">{state.error} <button type="button" onClick={() => setRetry(v => v + 1)} className="ml-2 font-bold underline">Reintentar</button></div>}
         {state.loading ? (
