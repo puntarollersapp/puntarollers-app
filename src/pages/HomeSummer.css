@@ -125,3 +125,49 @@
 /* Summer edition logo, scoped to the public header and footer only. */
 .pr-summer-home .ph-brand img.ph-sunset-logo{width:49px;height:49px;flex:none;background:transparent;border-radius:0;padding:2px;filter:drop-shadow(0 0 8px #ff9c5540)}
 .pr-summer-home .ph-footer img.ph-sunset-logo{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 0 14px #ff8c5540)}
+
+/* Enrollment only — athletic editorial campaign; no skate illustration. */
+.pr-summer-home .ph-registration .ph-sign{
+ --enroll-accent:#c8f65c;--enroll-deep:#24371b;--enroll-wash:#638837;
+ position:relative;isolation:isolate;display:flex;align-items:center;justify-content:flex-start;
+ min-height:204px;padding:20px 17px;border:1px solid color-mix(in srgb,var(--enroll-accent) 48%,#181b20);
+ border-radius:23px;color:#f3f1ec;background:
+ radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--enroll-accent) 40%,transparent),transparent 62%),
+ linear-gradient(112deg,#15191c 0%,#191e20 43%,var(--enroll-deep) 75%,var(--enroll-wash) 100%);
+ box-shadow:inset 0 1px 0 #ffffff13,0 12px 32px #0004;
+}
+.pr-summer-home .ph-registration .ph-kids{--enroll-accent:#81e5f5;--enroll-deep:#153442;--enroll-wash:#29758b}
+.pr-summer-home .ph-registration .ph-sign-copy{width:68%;max-width:100%;gap:8px;z-index:3}
+.pr-summer-home .ph-registration .ph-sign-copy>span{font-size:10px;font-weight:900;letter-spacing:.15em;color:var(--enroll-accent)}
+.pr-summer-home .ph-registration .ph-sign-copy>strong{font-size:clamp(22px,5.6vw,34px);font-weight:900;line-height:1.05;letter-spacing:-.045em;color:#f3f1ec}
+.pr-summer-home .ph-registration .ph-sign-copy>small{color:#dededb;font-size:12px;font-weight:600;line-height:1.35}
+.pr-summer-home .ph-registration .ph-sign-copy>b{align-self:flex-start;display:block;margin-top:5px;padding:8px 10px;border-radius:7px;background:var(--enroll-accent);color:#131b1d;font-size:10px;font-weight:900;line-height:1.3}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art{display:block;position:absolute;z-index:1;width:41%;height:100%;top:0;right:0;aspect-ratio:auto;transform:none;color:var(--enroll-accent);opacity:1;overflow:visible;transition:none;pointer-events:none}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art svg{display:none}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art:before{
+ display:block;content:"";position:absolute;inset:auto;top:50%;left:50%;width:150%;height:74%;border:0;border-radius:50%;
+ background:repeating-radial-gradient(ellipse at center,transparent 0 12px,color-mix(in srgb,var(--enroll-accent) 70%,transparent) 13px 14px,transparent 15px 22px);
+ opacity:.48;transform:translate(-50%,-50%) rotate(-35deg);animation:phEnrollTrack 8s ease-in-out infinite;
+}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after{
+ display:grid;place-items:center;content:"GO.";position:absolute;inset:0;border:0;border-radius:0;opacity:1;
+ font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;font-size:clamp(40px,12vw,72px);font-weight:900;font-style:italic;letter-spacing:-.075em;line-height:1;
+ color:var(--enroll-accent);text-shadow:0 4px 0 #101810,0 8px 18px #0007;transform:translate(-4%,-1%) skewX(-5deg);
+ animation:phEnrollWord 5s ease-in-out infinite;
+}
+.pr-summer-home .ph-registration .ph-kids .ph-banner-art:before{
+ width:123%;height:96%;border-radius:50%;background:
+ radial-gradient(circle at 76% 26%,#e4fbff 0 2px,transparent 3px),
+ radial-gradient(circle at 24% 72%,var(--enroll-accent) 0 3px,transparent 4px),
+ repeating-radial-gradient(ellipse at 50% 50%,transparent 0 13px,#81e5f580 14px 15px,transparent 16px 24px);
+ transform:translate(-50%,-50%) rotate(32deg);animation:phEnrollOrbit 9s ease-in-out infinite;
+}
+.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{content:"PLAY.";font-size:clamp(32px,9vw,54px);letter-spacing:-.055em;text-shadow:0 4px 0 #112c39,0 8px 18px #0006;animation-delay:-2.5s}
+.pr-summer-home .ph-registration .ph-sign:hover .ph-banner-art,.pr-summer-home .ph-registration .ph-sign:focus-visible .ph-banner-art,.pr-summer-home .ph-registration .ph-sign:active .ph-banner-art{transform:none;filter:none}
+.pr-summer-home .ph-registration .ph-sign:after{background:linear-gradient(110deg,transparent 32%,#ffffff12 50%,transparent 68%);animation-duration:11s}
+@keyframes phEnrollTrack{0%,100%{transform:translate(-50%,-50%) rotate(-35deg) scale(1)}50%{transform:translate(-50%,-50%) rotate(-25deg) scale(1.08)}}
+@keyframes phEnrollOrbit{0%,100%{transform:translate(-50%,-50%) rotate(32deg) scale(1)}50%{transform:translate(-50%,-50%) rotate(50deg) scale(1.07)}}
+@keyframes phEnrollWord{0%,100%{transform:translate(-4%,-1%) skewX(-5deg)}50%{transform:translate(-4%,-5%) skewX(-5deg)}}
+@media(min-width:760px){.pr-summer-home .ph-registration .ph-sign{min-height:220px;padding:24px}.pr-summer-home .ph-registration .ph-sign-copy{width:67%}}
+@media(max-width:350px){.pr-summer-home .ph-registration .ph-sign{min-height:195px;padding:15px 12px}.pr-summer-home .ph-registration .ph-sign-copy{width:72%;gap:6px}.pr-summer-home .ph-registration .ph-sign-copy>strong{font-size:21px}.pr-summer-home .ph-registration .ph-sign .ph-banner-art{width:33%}.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after{font-size:37px}.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.pr-summer-home .ph-registration .ph-sign .ph-banner-art:before,.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after{animation:none!important}}
