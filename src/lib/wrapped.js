@@ -1,6 +1,5 @@
 // PR Wrapped 2026: presentation of server-returned aggregates only.
 const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const weekdays=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 export const fmt=(v,d=0)=>Number(v).toLocaleString('es-UY',{maximumFractionDigits:d});
 const positive=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>0;
 export function personality(d){
@@ -8,7 +7,6 @@ export function personality(d){
  if(d.shifter?.completed>=5)return 'Espíritu competitivo';
  if(d.frames?.frames>=3)return 'Coleccionista de logros';
  if(d.activity?.km>=100)return 'Máquina de kilómetros';
- if(d.attendance?.classes>=8)return 'Constancia sobre ruedas';
  if(positive(d.activity?.km))return 'Explorador sobre ruedas';
  return 'El comienzo de algo grande';
 }
@@ -17,7 +15,6 @@ const tracks={
  'Espíritu competitivo':["Don’t Stop Me Now",'Queen','0p24EtuK24h0puuFcF0fdC','Una canción para las ganas de ir por más.'],
  'Coleccionista de logros':['The Nights','Avicii','5q3WmXzOGexzRsl2MMqhfx','Para guardar momentos que valen la pena.'],
  'Máquina de kilómetros':['The Nights','Avicii','5q3WmXzOGexzRsl2MMqhfx','Para salir a sumar nuevas historias.'],
- 'Constancia sobre ruedas':['Unstoppable','Sia','7lOdqJGxCwcWdnd8WwRqLI','Por volver a intentarlo, una y otra vez.'],
  'Explorador sobre ruedas':['Send Me On My Way','Rusted Root','28ZcNpDof0Lnl0doY1E9s0','Para perderse en una buena rodada.'],
  'El comienzo de algo grande':["Don’t Stop Believin’",'Journey','1sbBhiEnhgUrAe6xm3fzGO','Todo gran recorrido empieza con un paso.']
 };
@@ -46,9 +43,9 @@ export function humorSlides(d,seed=''){
 const badgeKey=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
 export function buildSlides(d,seed=''){
  const s=[{id:'intro',theme:'dark',kicker:'PR WRAPPED 2026',big:'TU AÑO SOBRE RUEDAS',small:d.name?d.name+', esta es tu historia.':'Esta es tu historia.'}];
- const a=d.attendance,c=d.activity,t=d.duties,h=d.shifter,p=d.performance,f=d.frames;
+ // QR attendance began late in 2026; it cannot represent the full year.
+ const c=d.activity,t=d.duties,h=d.shifter,p=d.performance,f=d.frames;
  const add=(id,theme,kicker,value,unit,small,decimals=0)=>{if(positive(value))s.push({id,theme,kicker,value,unit,small,decimals})};
- add('classes','fucsia','Elegiste ponerte los patines',a?.classes,'clases registradas',a?.busiestMonth?('Tu mes más activo: '+months[a.busiestMonth-1]+'. Día favorito: '+weekdays[a.favoriteWeekday]+'.'):'');
  add('km','dark','Cada kilómetro cuenta',c?.km,'kilómetros en Strava',c?.bestMonth?'Tu mes más fuerte: '+months[c.bestMonth-1]+'.':'',1);
  add('time','ivory','Tiempo sobre ruedas',c?.hours,'horas en movimiento',positive(c?.hours)&&c.hours>=3?'Equivale a unos '+fmt(c.hours/1.5,1)+' partidos de fútbol.':'',1);
  add('manual','dark','También quedó registrado',d.manualActivities,'actividades manuales validadas','Registro independiente; no se suma a los kilómetros de Strava.');
@@ -75,6 +72,6 @@ export function buildSlides(d,seed=''){
  return s;
 }
 export function plaqueStats(d){
- const items=[[d.attendance?.classes,'CLASES',0],[d.activity?.km,'KM EN STRAVA',1],[d.activity?.hours,'HORAS RODANDO',1],[d.duties?.approved,'DEBERES APROBADOS',0],[d.shifter?.completed,'DESAFÍOS SHIFTER',0],[d.performance?.count,'TOMAS DE TIEMPO',0],[d.frames?.frames,'MARCOS',0],[d.goals,'OBJETIVOS',0]];
+ const items=[[d.activity?.km,'KM EN STRAVA',1],[d.activity?.hours,'HORAS RODANDO',1],[d.duties?.approved,'DEBERES APROBADOS',0],[d.shifter?.completed,'DESAFÍOS SHIFTER',0],[d.performance?.count,'TOMAS DE TIEMPO',0],[d.frames?.frames,'MARCOS',0],[d.goals,'OBJETIVOS',0]];
  return items.filter(([v])=>positive(v)).slice(0,4).map(([v,label,precision])=>({value:fmt(v,precision),label}));
 }
