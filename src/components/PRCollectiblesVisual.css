@@ -8,7 +8,7 @@
 .prc-eyebrow{font:800 9px/1.4 system-ui,sans-serif;letter-spacing:.13em;color:#d0bfef;display:flex;align-items:center;gap:6px}
 .prc-eyebrow span{width:6px;height:6px;flex:none;border-radius:50%;background:#d7c2ff;box-shadow:0 0 11px #ad7bff}
 .prc-wordmark{margin:12px 0;display:flex;flex-direction:column;align-items:flex-start;font-size:clamp(30px,7.9vw,58px);font-weight:900;font-style:italic;letter-spacing:-.055em;line-height:.88;color:#eee}
-.prc-wordmark span{background:linear-gradient(180deg,#fff 3%,#d9dce5 36%,#808597 49%,#f4f6ff 55%,#b7bac8 92%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 3px 0 #060609) drop-shadow(0 0 10px #b5a5ff30)}
+.prc-wordmark span{line-height:1;padding-inline-end:.16em;padding-block:.035em;overflow:visible;background:linear-gradient(180deg,#fff 3%,#d9dce5 36%,#808597 49%,#f4f6ff 55%,#b7bac8 92%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 3px 0 #060609) drop-shadow(0 0 10px #b5a5ff30)}
 .prc-wordmark span:first-child{font-size:1.35em;letter-spacing:-.075em}
 .prc-hero-tag{font:800 10px/1.5 system-ui,sans-serif;letter-spacing:.09em;color:#c4c5d0}
 .prc-hero-tag strong{font-size:1.2em;color:#fff}
