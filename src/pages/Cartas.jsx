@@ -13,6 +13,9 @@ export default function Cartas() {
   const { user } = useAuth()
   const allowed = useCardsAccess(user)
   const uid = user?.id
+  const isOwner=user?.id==='admin-claudio'&&user?.role==='admin'
+  const [designPreview,setDesignPreview]=useState(false)
+  const preview=isOwner&&designPreview
   const [state, setState] = useState(EMPTY)
   const [tab, setTab] = useState('todas')
   const [open, setOpen] = useState(null)
@@ -48,7 +51,8 @@ export default function Cartas() {
   const owned=cards.filter(c=>!c.locked).length
   const permanent=cards.filter(c=>c.countsTowardMain&&!c.locked).length
   const limited=owned-permanent
-  const shown=cards.filter(c=>tab==='todas'||c.category===tab)
+  const shown=cards.filter(c=>(!preview||!c.upcoming)&&(tab==='todas'||c.category===tab)).sort((a,b)=>Number(a.upcoming)-Number(b.upcoming)||a.number-b.number)
+  const viewLocked=c=>c.locked&&!(preview&&!c.upcoming)
   const current=open?cards.find(c=>c.id===open):null
   const next=cards.filter(c=>c.locked&&!c.upcoming&&c.countsTowardMain&&c.progress!==null&&c.progress<1).sort((a,b)=>b.progress-a.progress)[0]
   function openCard(id) {
@@ -92,6 +96,9 @@ export default function Cartas() {
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#FF0055]" style={{width:permanent/40*100+'%'}}/></div>
           <p className="mt-3 text-xs text-white/60">{owned} cartas publicadas conseguidas · {limited}/10 ediciones limitadas</p>
           <div className="mt-4 grid grid-cols-3 gap-1">{TABS.slice(1).map(([key,label])=><div key={key} className="rounded-xl bg-white/[.06] p-2 text-center"><p className="text-lg font-black text-white">{cards.filter(c=>c.category===key&&!c.locked).length}</p><p className="text-[9px] text-white/55">{label}</p></div>)}</div>
+          <p className="mt-3 text-xs leading-5 text-white/60">Coleccioná cartas con tus asistencias, kilómetros y experiencias. Hay 10 diseños publicados y 40 por descubrir. Las cartas no se compran, se viven.</p>
+          {isOwner&&<button type="button" aria-pressed={preview} onClick={()=>{setDesignPreview(v=>!v);setOpen(null);setTab('todas')}} className={"mt-4 block w-full rounded-xl border px-4 py-3 text-xs font-black "+(preview?"border-amber-300/60 bg-amber-300/10 text-amber-200":"border-white/15 bg-white/5 text-white")}>{preview?"Salir de la vista de diseño (10 cartas)":"Vista de diseño · probar los 10 frentes"}</button>}
+          {preview&&<p className="mt-2 text-[10px] text-amber-200/80">Vista exclusiva del administrador. No otorga cartas ni modifica los logros reales.</p>}
           <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
           {user?.role==='admin'&&<Link to="/admin/collectibles" className="ml-4 text-xs font-bold text-[#FF79A5] underline">Administrar</Link>}
         </section>
@@ -104,7 +111,7 @@ export default function Cartas() {
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">{[0,1,2,3].map(i => <div key={i} className="aspect-[5/7] w-full max-w-[190px] animate-pulse rounded-[22px] bg-white/[.05]"/>)}</div>
         ) : shown.length ? (
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">
-            {shown.map(c => <HoloCard key={c.id} size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={c.locked} onClick={() => openCard(c.id)}/>)}
+            {shown.map(c => <HoloCard key={c.id} size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={viewLocked(c)} onClick={() => openCard(c.id)}/>)}
           </div>
         ) : !state.error && (
           <section className="rounded-[28px] border border-white/[.08] bg-white/[.025] p-6 text-center">
@@ -119,15 +126,16 @@ export default function Cartas() {
         <div className="fixed inset-0 z-[160] flex flex-col items-center overflow-y-auto bg-black/85 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={current.title} onClick={closeCard}>
           <div className="my-auto flex w-full max-w-sm flex-col items-center gap-5" onClick={e => e.stopPropagation()}>
             <HoloCard size="large" rarity={current.rarity} title={current.title} subtitle={current.subtitle} art={current.art} frontArt={current.frontArt} backArt={current.backArt} upcoming={current.upcoming} emoji={current.emoji}
-              number={current.number} total={current.total} locked={current.locked} sensor={sensor} flipped={flipped}
+              number={current.number} total={current.total} locked={viewLocked(current)} sensor={sensor} flipped={flipped}
               stats={current.locked ? [] : [{ label: 'CONSEGUIDA', value: dateLabel(current.date) || '—' }]}
               back={current.upcoming ? <><h4>Próximamente</h4><p>{current.earned?'Tu logro ya está registrado. La carta estará disponible cuando se publique el diseño.':'Esta carta forma parte de la colección y se publicará próximamente.'}</p></> : current.locked ? <><h4>Carta bloqueada</h4><p>{current.description || 'Todavía no la conseguiste.'}</p></> : <><h4>{current.title}</h4>{current.description && <p>{current.description}</p>}<small>{dateLabel(current.date)}{current.by ? ' · Otorgada por ' + current.by : ''}</small></>}/>
-            {flipped&&current.backArt&&!current.locked&&<div className="w-full rounded-2xl bg-white/5 p-4 text-center text-xs text-white/75"><p className="font-bold text-white">{current.title}</p><p className="mt-1">{current.description}</p><p className="mt-1">{dateLabel(current.date)}{current.by?' · Otorgada por '+current.by:''}</p></div>}
+            {flipped&&current.backArt&&!viewLocked(current)&&<div className="w-full rounded-2xl bg-white/5 p-4 text-center text-xs text-white/75"><p className="font-bold text-white">{current.title}</p><p className="mt-1">{current.description}</p><p className="mt-1">{dateLabel(current.date)}{current.by?' · Otorgada por '+current.by:''}</p></div>}
+            {preview&&current.locked&&<p className="text-center text-[11px] text-amber-200">Vista de diseño · este logro aún no está conseguido.</p>}
             {msg && <p className="text-center text-xs text-white/70" role="status">{msg}</p>}
             <div className="flex w-full flex-wrap justify-center gap-2">
               <button type="button" onClick={() => setFlipped(v => !v)} className="min-h-[44px] rounded-full bg-white/10 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">{flipped ? 'Ver frente' : 'Ver dorso'}</button>
               {!current.locked && <button type="button" disabled={busy} onClick={save} className="min-h-[44px] rounded-full bg-[#FF0055] px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95 disabled:opacity-50">{busy ? 'Preparando…' : 'Guardar imagen'}</button>}
-              {motionNeedsPermission() && !sensor && !current.locked && <button type="button" onClick={enableSensor} className="min-h-[44px] rounded-full border border-white/20 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">Activar inclinación</button>}
+              {motionNeedsPermission() && !sensor && !viewLocked(current) && <button type="button" onClick={enableSensor} className="min-h-[44px] rounded-full border border-white/20 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">Activar inclinación</button>}
             </div>
             <button ref={closeRef} type="button" onClick={closeCard} className="min-h-[44px] px-6 text-xs font-bold text-white/70">Cerrar</button>
           </div>
