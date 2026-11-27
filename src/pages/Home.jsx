@@ -34,7 +34,7 @@ const tools=[
  ['08','Reglas PR','Conocé cómo funciona la escuela.','/terminos']
 ]
 const number=v=>Number(v).toLocaleString('es-UY',{maximumFractionDigits:1})
-const localMonth=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date())
+const localMonth=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month}
 const monthName=day=>new Intl.DateTimeFormat('es-UY',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(day+'T12:00:00Z'))
 function Label({children}){return <p className="ph-label">{children}</p>}
 function Header({label,title,children}){return <div className="ph-heading"><Label>{label}</Label><h2>{title}</h2>{children&&<p>{children}</p>}</div>}
@@ -45,13 +45,14 @@ function ActivityChart({weekly,monthStart}){
  const lastDay=new Date(Date.UTC(Number(monthStart.slice(0,4)),Number(monthStart.slice(5,7)),0)).getUTCDate()
  return <div className="ph-chart"><div className="ph-chart-title"><strong>El mes, tramo a tramo</strong><span>KM</span></div><div className="ph-bars">{weekly.map(x=>{const start=(x.bucket-1)*7+1,end=Math.min(x.bucket*7,lastDay);return <div className="ph-bar-col" key={x.bucket}><span>{number(x.km)}</span><div className="ph-bar-track"><div className="ph-bar" style={{height:(Number(x.km)/max*100)+'%'}}/></div><small>{start}–{end}</small></div>})}</div><p className="ph-muted">Días del mes · el último tramo puede estar en curso.</p></div>
 }
-function Motion({summary,loading,error}){
+function Motion({summary,loading,error,destination}){
  const current=summary&&String(summary.month_start).slice(0,7)===localMonth()
- const available=current&&summary.km!=null&&summary.participants!=null&&summary.outings!=null
+ const fresh=current&&Date.now()-Date.parse(summary.updated_at)<2*60*60*1000
+ const available=fresh&&summary.km!=null&&summary.participants!=null&&summary.outings!=null
  return <section className="ph-motion ph-section" aria-labelledby="ph-motion-title">
   <div className="ph-motion-head"><div><Label>03 / PUNTA ROLLERS EN MOVIMIENTO</Label><h2 id="ph-motion-title">Cada kilómetro<br/>nos conecta<span>.</span></h2><p>Lo que nuestra comunidad va construyendo sobre ruedas.</p></div><span className="ph-motion-mark" aria-hidden="true">↗</span></div>
   {available?<><div className="ph-total"><span>{monthName(summary.month_start)}</span><strong>{number(summary.km)} <small>KM</small></strong><p>Distancia registrada en el mes</p></div><div className="ph-motion-grid"><Metric value={number(summary.outings)} label="Rodadas registradas"/><Metric value={number(summary.participants)} label="Participantes con actividad"/></div>{Array.isArray(summary.weekly)&&summary.weekly.length>0&&<ActivityChart weekly={summary.weekly} monthStart={summary.month_start}/>}<p className="ph-source">Datos agregados de patinaje en Strava compartidos públicamente. No representan el padrón total ni incluyen actividades privadas. Actualización cada 30 minutos.</p></>:<div className="ph-data-state" role="status">{loading?'Estamos cargando los kilómetros de este mes…':error?'No pudimos actualizar las estadísticas. Volvé a consultar en otro momento.':'Todavía no hay suficientes registros públicos para mostrar el resumen mensual.'}</div>}
-  <div className="ph-private"><div><strong>RollerFeed vive dentro de PR.</strong><p>Publicaciones, desafíos y momentos de los alumnos, en su espacio personal.</p></div><Link to="/login" aria-label="Ingresar a la plataforma Punta Rollers">Ingresar ↗</Link></div>
+  <div className="ph-private"><div><strong>RollerFeed vive dentro de PR.</strong><p>Publicaciones, desafíos y momentos de los alumnos, en su espacio personal.</p></div><Link to={destination} aria-label="Ingresar a la plataforma Punta Rollers">Ingresar ↗</Link></div>
  </section>
 }
 export default function Home(){
@@ -81,7 +82,7 @@ export default function Home(){
   <header className="ph-hero">
    <div className="ph-hero-top"><div className="ph-brand"><img src="/logo.png" alt="Punta Rollers"/><div><strong>PUNTA ROLLERS</strong><small>Punta del Este · Maldonado</small></div></div><Link className="ph-login" to={destination}>{user?'Mi espacio':'Ingresar'} ↗</Link></div>
    <div className="ph-hero-content"><div className="ph-hero-copy"><div className="ph-edition"><span>☀</span> SUMMER SEASON / 26—27</div><Label>DESDE 2016 · URUGUAY</Label><h1>No es solo<br/>patinar.<br/><em>Es pertenecer.</em></h1><p>Aprendé a patinar, disfrutá el verano y encontrá tu comunidad. Desde tus primeras ruedas hasta tu próximo desafío.</p><div className="ph-cta-row"><a className="ph-button ph-primary" href="#inscripciones">Quiero patinar <span>↗</span></a><a className="ph-button ph-secondary" href="#clases">Ver horarios ↓</a></div></div>
-   <div className="ph-art" aria-hidden="true"><div className="ph-sun"/><TrackArt/><div className="ph-art-type">ROLL<br/>INTO<br/><span>2027.</span></div><div className="ph-art-tag">35° S / PUNTA DEL ESTE</div></div></div>
+   <div className="ph-art" aria-hidden="true"><div className="ph-sun"/><TrackArt/><div className="ph-art-type">ROLL<br/>INTO<br/><span>2027.</span></div><div className="ph-art-tag">COSTA / PUNTA DEL ESTE</div></div></div>
    <div className="ph-hero-stats"><Metric value="10" label="Años sobre ruedas"/><Metric value="2" label="Sedes PR"/><Metric value={schedule.sabado.length+schedule.miercoles.length} label="Turnos de verano"/></div>
   </header>
   <section id="clases" className="ph-section ph-schedule">
@@ -93,7 +94,7 @@ export default function Home(){
    <p className="ph-note">El equipo confirma tu inscripción y crea tu acceso a la plataforma.</p>
   </section>
   <section className="ph-section ph-about"><Header label="02 / SOMOS PR" title="Una escuela. Una comunidad.">Hace 10 años acompañamos a niños, adolescentes, adultos y adultos mayores. La técnica importa, pero compartir el camino también.</Header><div className="ph-places"><div><Label>01 / OUTDOOR</Label><h3>Parada 2</h3><p>Punta del Este · Aire libre</p></div><div><Label>02 / INDOOR</Label><h3>Pista cerrada</h3><p>Maldonado</p></div></div><div className="ph-team"><img src="/logo.png" alt=""/><div><strong>Equipo Punta Rollers</strong><p>Claudio Facelli · David Almeida · Lucía Bernales</p></div></div></section>
-  <Motion summary={summary} loading={loading} error={error}/>
+  <Motion summary={summary} loading={loading} error={error} destination={destination}/>
   <section className="ph-section ph-digital"><Header label="04 / LA EXPERIENCIA PR" title="Mucho más que venir a clase.">Tu camino no termina cuando te sacás los patines. En PR tenés herramientas para disfrutar, entrenar y crecer.</Header><div className="ph-digital-grid">{[['01','Tu perfil','Tus logros y tu identidad roller.'],['02','Entrenamiento','Deberes, objetivos y devoluciones.'],['03','Progreso','Kilómetros, tomas de tiempo y evolución.'],['04','Comunidad','Experiencias y beneficios compartidos.']].map(([n,t,d])=><article key={n}><span>{n}</span><strong>{t}</strong><p>{d}</p></article>)}</div><Link className="ph-button ph-primary" to={destination}>{user?'Ir a mi espacio':'Acceder a mi cuenta'} ↗</Link></section>
   <section id="explorar" className="ph-section"><Header label="05 / ECOSISTEMA" title="Todo Punta Rollers.">Explorá los servicios, beneficios y experiencias de nuestra escuela.</Header><div className="ph-service-grid">{tools.map(([n,t,d,to])=>{const content=<><span>{n} <b aria-hidden="true">↗</b></span><strong>{t}</strong><p>{d}</p></>;return to.startsWith('https://')?<a key={to} href={to} target="_blank" rel="noreferrer">{content}</a>:<Link key={to} to={to}>{content}</Link>})}</div></section>
   <section className="ph-section"><Header label="06 / MOMENTOS PR" title="Así se vive sobre ruedas.">Volvé a nuestras clases, rolleadas y recuerdos.</Header><div className="ph-gallery">{gallery.map(([name,url],i)=><a key={name} href={url} target="_blank" rel="noreferrer"><span>0{i+1} / GALERÍA</span><strong>{name}</strong><b>↗</b></a>)}</div></section>
