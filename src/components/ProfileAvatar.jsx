@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import {useAuth} from '../lib/auth'
+import {useProfileVisualRefresh} from '../lib/profileAccessories'
 import { isRollerweenActive } from '../lib/rollerween'
 
 import RollerweenBadge from './RollerweenBadge'
+import ProfileAccessory from './ProfileAccessory'
 
 function profileName(profile) {
   return profile?.nombre_completo || profile?.display_name || [profile?.nombre, profile?.apellido].filter(Boolean).join(' ') || 'Integrante PR'
@@ -14,13 +17,17 @@ function initials(name) { return String(name || 'PR').split(/\s+/).filter(Boolea
 export default function ProfileAvatar({ profile, className='h-14 w-14', rounded='rounded-full', badge=true, rollerweenBadge=false, imageClassName='' }) {
   const name=profileName(profile), photo=profilePhoto(profile), treasury=isTreasury(profile), professor=isProfessor(profile), rollerween=isRollerweenActive()
   const [failedPhoto,setFailedPhoto]=useState(null)
+  const {user}=useAuth()
+  const visualRefresh=useProfileVisualRefresh(user)
+  const avatarClass=visualRefresh?className.replace(/\bh-8 w-8\b/g,'h-9 w-9').replace(/\bh-10 w-10\b/g,'h-12 w-12').replace(/\bh-11 w-11\b/g,'h-[52px] w-[52px]'):className
   const title=treasury ? `${name} · Tesorera` : professor ? `${name} · Profe` : name
   const showRollerweenBadge=rollerween&&rollerweenBadge
-  return <div className={`relative shrink-0 ${className}`} title={title}>
+  return <div className={`relative shrink-0 ${avatarClass}`} title={title}>
     {rollerween&&<div className={`absolute -inset-[3px] ${rounded} bg-gradient-to-br from-fuchsia-500 via-violet-500 to-lime-300 opacity-95 blur-[.2px] shadow-[0_0_12px_rgba(168,85,247,.62),0_0_20px_rgba(190,255,55,.20)]`}/>} 
     <div className={`relative z-[1] grid h-full w-full place-items-center overflow-hidden border ${rollerween?'border-black/70':'border-white/10'} bg-gradient-to-br from-orange-400/20 to-violet-500/15 ${rounded}`}>
       {photo && failedPhoto!==photo ? <img src={photo} onError={()=>setFailedPhoto(photo)} alt={name} className={`h-full w-full object-cover ${imageClassName}`} /> : <span className="text-xs font-black text-white/75">{initials(name)}</span>}
     </div>
+    <ProfileAccessory profileId={profile?.id||profile?.profile_id}/>
     {showRollerweenBadge&&<RollerweenBadge className="absolute -right-1 -bottom-1 z-20 h-7 w-7"/>}
     {badge && treasury && <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-200/25 bg-emerald-300 px-2 py-[3px] text-[7px] font-black uppercase tracking-[.13em] text-[#07120d] shadow-[0_5px_14px_rgba(0,0,0,.38)]">TESORERA</span>}
     {badge && !treasury && professor && <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-200/30 bg-[#f3c64f] px-2 py-[3px] text-[7px] font-black uppercase tracking-[.13em] text-black shadow-[0_5px_14px_rgba(0,0,0,.38)]">PROFE</span>}

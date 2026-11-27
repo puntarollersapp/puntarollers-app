@@ -43,6 +43,12 @@ export default function AdminPersonalizadas({desktopCalendar=null}={}) {
   const [slots, setSlots] = useState([])
   const [reservations, setReservations] = useState([])
   const [students, setStudents] = useState([])
+  const [memberOptions,setMemberOptions]=useState([])
+  const [memberLinkOpen,setMemberLinkOpen]=useState(false)
+  const [memberChoice,setMemberChoice]=useState('')
+  const [linkBusy,setLinkBusy]=useState(false)
+  const [linkNotice,setLinkNotice]=useState('')
+
   const [passes, setPasses] = useState([])
   const [history, setHistory] = useState([])
   const [slot, setSlot] = useState({ fecha: '', hora_inicio: '' })
@@ -85,6 +91,25 @@ export default function AdminPersonalizadas({desktopCalendar=null}={}) {
   }, [students, search])
 
   const selectedStudent = students.find((s) => s.id === selectedStudentId) || null
+  useEffect(()=>{setMemberLinkOpen(false);setMemberChoice('');setLinkNotice('')},[selectedStudentId])
+  async function openMemberLink(){
+    setLinkBusy(true);setLinkNotice('')
+    const {data,error}=await supabase.from('profiles').select('id,nombre,apellido,telefono,es_solo_personalizadas').eq('role','alumno').not('auth_user_id','is',null).order('nombre')
+    if(error)setLinkNotice('No pudimos cargar las cuentas PR.')
+    else{setMemberOptions(data||[]);setMemberLinkOpen(true)}
+    setLinkBusy(false)
+  }
+  async function linkMember(){
+    const member=memberOptions.find(x=>x.id===memberChoice)
+    if(!member||!selectedStudent||linkBusy)return
+    if(!window.confirm('¿Confirmás que '+selectedStudent.nombre+' y '+member.nombre+' '+(member.apellido||'')+' son la misma persona? No se modifican los créditos ni las mensualidades grupales.'))return
+    setLinkBusy(true);setLinkNotice('')
+    const {error}=await supabase.rpc('pr_personal_admin_link_member',{p_personal_id:selectedStudent.id,p_member_id:member.id})
+    setLinkNotice(error?'No se vinculó: '+error.message:'Cuenta PR vinculada. El alumno puede consultar su cuponera dentro de su perfil.')
+    if(!error)setMemberLinkOpen(false)
+    setLinkBusy(false)
+  }
+
   const selectedPasses = passes.filter((p) => p.alumno_id === selectedStudentId)
   const activePass = selectedPasses.find((p) => p.habilitada && p.estado === 'activa') || null
   const selectedReservations = reservations.filter((r) => r.alumno_id === selectedStudentId)
@@ -289,6 +314,7 @@ export default function AdminPersonalizadas({desktopCalendar=null}={}) {
 
         {selectedStudent && <section className="rounded-[30px] border border-red-300/20 bg-gradient-to-br from-red-500/10 via-white/[.035] to-black p-5"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="flex items-center gap-4"><Avatar student={selectedStudent} size="h-16 w-16" /><div><p className="text-[10px] font-black uppercase tracking-[.28em] text-red-300">Ficha del alumno</p><h2 className="mt-1 text-2xl font-black">{selectedStudent.nombre} {selectedStudent.apellido || ''}</h2><p className="mt-1 text-sm text-white/40">{selectedStudent.telefono || 'Sin teléfono'}{selectedStudent.email ? ` · ${selectedStudent.email}` : ''}</p></div></div><button onClick={() => setSelectedStudentId(null)} className="self-start rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-white/45">Cerrar</button></div>
 
+          {String(selectedStudent.id).startsWith('personal_')&&<section className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-400/[.06] p-4"><p className="text-xs font-black uppercase tracking-widest text-emerald-200">Cuenta de plataforma PR</p><p className="mt-2 text-xs text-white/70">Vinculá únicamente una cuenta de la misma persona. Su modalidad grupal o exclusiva se mantiene.</p><button type="button" disabled={linkBusy} onClick={openMemberLink} className="mt-3 rounded-xl border border-emerald-300/30 px-4 py-3 text-sm font-bold text-emerald-200">Vincular cuenta existente</button>{memberLinkOpen&&<div className="mt-3 grid gap-3"><select aria-label="Cuenta PR del alumno" value={memberChoice} onChange={e=>setMemberChoice(e.target.value)} className="w-full rounded-xl border border-white/15 bg-[#191a20] p-3 text-sm text-white"><option value="">Seleccioná la cuenta correcta</option>{memberOptions.map(m=><option key={m.id} value={m.id}>{m.nombre} {m.apellido||''} · {m.telefono||'Sin teléfono'} · {m.es_solo_personalizadas?'Solo particulares':'Modalidad general'}</option>)}</select><button type="button" disabled={!memberChoice||linkBusy} onClick={linkMember} className="rounded-xl bg-emerald-300 p-3 text-sm font-black text-black disabled:opacity-40">Confirmar vinculación</button></div>}{linkNotice&&<p role="status" className="mt-3 text-sm text-white/85">{linkNotice}</p>}</section>}
           <div className={`mt-5 rounded-2xl border p-4 ${selectedStudent.telefono ? 'border-emerald-300/15 bg-emerald-400/[.06]' : 'border-amber-300/20 bg-amber-300/10'}`}><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Acceso al link de Personalizadas</p><p className="mt-1 text-sm text-white/55">{selectedStudent.telefono ? `Puede identificarse con ${selectedStudent.telefono}.` : 'Necesita un teléfono para poder identificarse desde el link público.'}</p></div><button disabled={busy} onClick={editPhone} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">{selectedStudent.telefono ? 'Editar teléfono' : '+ Agregar teléfono'}</button></div></div>
 
           <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-white/35">Email de contacto</p><p className="mt-1 text-sm text-white/55">{selectedStudent.email || 'Sin email cargado · no requiere documento'}</p></div><button disabled={busy} onClick={editEmail} className="rounded-xl bg-white px-4 py-2 text-xs font-black text-black">{selectedStudent.email ? 'Editar email' : '+ Agregar email'}</button></div></div>
