@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
 import { useAuth } from '../lib/auth'
@@ -73,23 +73,71 @@ function BannerContent({n,title,description,kind,link=true}){return <><BannerArt
 
 const number=v=>Number(v).toLocaleString('es-UY',{maximumFractionDigits:1})
 const localMonth=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month}
-const monthName=day=>new Intl.DateTimeFormat('es-UY',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(day+'T12:00:00Z'))
+const monthName=day=>new Intl.DateTimeFormat('es-UY',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(day+'T12:00:00Z')).replace(' de ',' ')
+const validMotionRow=row=>Boolean(row&&[row.km,row.outings,row.participants].every(v=>v!=null&&Number.isFinite(Number(v))&&Number(v)>=0)&&Number(row.participants)>=3)
+function selectMotionSummary(rows){
+ const month=localMonth(),[year,m]=month.split('-').map(Number)
+ const previous=new Date(Date.UTC(year,m-2,1)).toISOString().slice(0,7)
+ const current=rows.find(r=>String(r.month_start).slice(0,7)===month)
+ const last=rows.find(r=>String(r.month_start).slice(0,7)===previous)
+ // Once activated, a suppressed current month must not revert to an earlier month.
+ if(current?.activated_at)return current
+ if(validMotionRow(last))return last
+ return current||null
+}
 function Label({children}){return <p className="ph-label">{children}</p>}
 function Header({label,title,children}){return <div className="ph-heading"><Label>{label}</Label><h2>{title}</h2>{children&&<p>{children}</p>}</div>}
 function Metric({value,label}){return <div className="ph-metric"><strong>{value}</strong><span>{label}</span></div>}
 function TrackArt(){return <svg className="ph-track" viewBox="0 0 500 500" fill="none" aria-hidden="true"><defs><linearGradient id="ph-track-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff" stopOpacity=".72"/><stop offset="1" stopColor="#fff" stopOpacity=".12"/></linearGradient></defs>{[0,1,2,3,4].map(i=><rect key={i} x={54+i*24} y={54+i*24} width={392-i*48} height={392-i*48} rx={196-i*24} stroke="url(#ph-track-grad)" strokeWidth="2"/>)}<path d="M250 14v472M14 250h472" stroke="#fff" strokeOpacity=".16" strokeDasharray="5 10"/><circle cx="250" cy="250" r="40" fill="#191A20"/><path d="M253 221l-19 32h17l-5 26 22-35h-19l4-23z" fill="#d8ff65"/></svg>}
-function ActivityChart({weekly,monthStart}){
- const max=Math.max(1,...weekly.map(x=>Number(x.km)||0))
+function MotionArtwork(){
+ return <svg className="ph-motion-art" viewBox="0 0 360 210" fill="none" aria-hidden="true" focusable="false">
+  <defs><linearGradient id="ph-motion-metal" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#f3f1ec"/><stop offset=".38" stopColor="#75e6ef"/><stop offset="1" stopColor="#1d596e" stopOpacity=".12"/></linearGradient><linearGradient id="ph-motion-trail"><stop stopColor="#75e6ef" stopOpacity="0"/><stop offset=".72" stopColor="#75e6ef"/><stop offset="1" stopColor="#efffff"/></linearGradient></defs>
+  <g transform="rotate(-24 205 103)">
+   {[0,1,2,3].map(i=><rect key={i} x={83+i*13} y={31+i*13} width={260-i*26} height={148-i*26} rx={74-i*13} stroke="url(#ph-motion-metal)" strokeOpacity={.25+i*.12} strokeWidth="1.4"/>)}
+   <rect className="ph-motion-orbit" x="96" y="44" width="234" height="122" rx="61" stroke="url(#ph-motion-trail)" strokeWidth="3" strokeDasharray="55 120 10 330" pathLength="515"/>
+   <rect className="ph-motion-orbit ph-motion-orbit-alt" x="122" y="70" width="182" height="70" rx="35" stroke="#e1fbff" strokeOpacity=".8" strokeWidth="2" strokeDasharray="30 430" pathLength="460"/>
+   <path d="M8 72H94M20 89H86M0 109H82M36 132H96M310 17H356M331 190H357" stroke="#75e6ef" strokeOpacity=".35" strokeLinecap="round"/>
+   <path d="M150 105H266" stroke="#75e6ef" strokeOpacity=".22" strokeDasharray="2 7"/><path d="M211 91l17 14-17 14M229 91l17 14-17 14" stroke="url(#ph-motion-metal)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+   <circle cx="96" cy="105" r="3.5" fill="#f3f1ec"/><circle cx="304" cy="105" r="2.5" fill="#75e6ef"/>
+  </g>
+ </svg>
+}
+function MotionCount({value}){
+ const target=Number(value),[shown,setShown]=useState(0),node=useRef(null),started=useRef(false)
+ useEffect(()=>{
+  let frame,observer,finished=false
+  const preference=window.matchMedia?.('(prefers-reduced-motion: reduce)')
+  const finish=()=>{finished=true;started.current=true;cancelAnimationFrame(frame);observer?.disconnect();setShown(target)}
+  if(started.current||preference?.matches){finish();return}
+  const run=()=>{
+   if(started.current||finished)return
+   started.current=true;observer?.disconnect()
+   let start
+   const tick=now=>{if(finished)return;if(start===undefined)start=now;const t=Math.min(1,(now-start)/1050);setShown(Math.round(target*(1-Math.pow(1-t,3))*10)/10);if(t<1)frame=requestAnimationFrame(tick);else finish()}
+   frame=requestAnimationFrame(tick)
+  }
+  if(typeof IntersectionObserver==='undefined'||!node.current)run()
+  else{observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting))run()},{threshold:.2});observer.observe(node.current)}
+  const reduce=e=>{if(e.matches)finish()}
+  preference?.addEventListener?.('change',reduce)
+  return()=>{finished=true;observer?.disconnect();cancelAnimationFrame(frame);preference?.removeEventListener?.('change',reduce)}
+ },[target])
+ const digits=number(target).length
+ return <strong ref={node} className="ph-motion-number" style={{'--ph-digit-size':Math.min(27,125/Math.max(5,digits))+'cqi'}} aria-label={number(target)+' kilómetros'}><span aria-hidden="true">{number(shown)}</span><small aria-hidden="true">KM</small></strong>
+}
+function ActivityChart({weekly,monthStart,current}){
+ const max=Math.max(0,...weekly.map(x=>Number(x.km)||0))
  const lastDay=new Date(Date.UTC(Number(monthStart.slice(0,4)),Number(monthStart.slice(5,7)),0)).getUTCDate()
- return <div className="ph-chart"><div className="ph-chart-title"><strong>El mes, tramo a tramo</strong><span>KM</span></div><div className="ph-bars">{weekly.map(x=>{const start=(x.bucket-1)*7+1,end=Math.min(x.bucket*7,lastDay);return <div className="ph-bar-col" key={x.bucket}><span>{number(x.km)}</span><div className="ph-bar-track"><div className="ph-bar" style={{height:(Number(x.km)/max*100)+'%'}}/></div><small>{start}–{end}</small></div>})}</div><p className="ph-muted">Días del mes · el último tramo puede estar en curso.</p></div>
+ return <div className="ph-chart"><div className="ph-chart-title"><strong>El mes, tramo a tramo</strong><span>KM / ACTIVIDAD</span></div><div className="ph-bars">{weekly.map(x=>{const start=(x.bucket-1)*7+1,end=Math.min(x.bucket*7,lastDay),peak=max>0&&Number(x.km)===max;return <div className={'ph-bar-col'+(peak?' ph-bar-peak':'')} key={x.bucket}><span>{number(x.km)}</span><div className="ph-bar-track"><div className="ph-bar" style={{height:(max?Number(x.km)/max*100:0)+'%'}}/></div><small>{start}–{end}</small></div>})}</div><p className="ph-muted">Días del mes{current?' · el último tramo puede estar en curso.':'. Período completado.'}{max>0?' · En celeste luminoso, el tramo de mayor actividad.':''}</p></div>
 }
 function Motion({summary,loading,error,destination}){
  const current=summary&&String(summary.month_start).slice(0,7)===localMonth()
- const fresh=current&&Date.now()-Date.parse(summary.updated_at)<2*60*60*1000
- const available=fresh&&summary.km!=null&&summary.participants!=null&&summary.outings!=null
+ const available=validMotionRow(summary)
+ const students=available&&summary.students_only===true
+ const stale=current&&available&&Date.now()-Date.parse(summary.updated_at)>2*60*60*1000
  return <section className="ph-motion ph-section" aria-labelledby="ph-motion-title">
-  <div className="ph-motion-head"><div><Label>03 / PUNTA ROLLERS EN MOVIMIENTO</Label><h2 id="ph-motion-title">Cada kilómetro<br/>nos conecta<span>.</span></h2><p>Lo que nuestra comunidad va construyendo sobre ruedas.</p></div><span className="ph-motion-mark" aria-hidden="true">↗</span></div>
-  {available?<><div className="ph-total"><span>{monthName(summary.month_start)}</span><strong>{number(summary.km)} <small>KM</small></strong><p>Distancia registrada en el mes</p></div><div className="ph-motion-grid"><Metric value={number(summary.outings)} label="Rodadas registradas"/><Metric value={number(summary.participants)} label="Participantes con actividad"/></div>{Array.isArray(summary.weekly)&&summary.weekly.length>0&&<ActivityChart weekly={summary.weekly} monthStart={summary.month_start}/>}<p className="ph-source">Datos agregados de patinaje en Strava compartidos públicamente. No representan el padrón total ni incluyen actividades privadas. Actualización cada 30 minutos.</p></>:<div className="ph-data-state" role="status">{loading?'Estamos cargando los kilómetros de este mes…':error?'No pudimos actualizar las estadísticas. Volvé a consultar en otro momento.':'Todavía no hay suficientes registros públicos para mostrar el resumen mensual.'}</div>}
+  <div className="ph-motion-head"><MotionArtwork/><div className="ph-motion-copy"><Label>03 / PUNTA ROLLERS EN MOVIMIENTO</Label><h2 id="ph-motion-title">{students?'Nuestros alumnos':'Nuestra comunidad'}<br/>{students?'no paran':'no para'}<span>.</span></h2><p>Cada salida, cada entrenamiento y cada kilómetro cuenta. Así se mueve nuestra comunidad sobre ruedas.</p></div></div>
+  {available?<><div className="ph-total"><div className="ph-motion-period"><span>{current?'Este mes en movimiento':'Último mes completado'}</span><strong>{monthName(summary.month_start)}</strong></div><MotionCount value={summary.km}/><p>Kilómetros recorridos por {students?'nuestros alumnos':'nuestra comunidad'}.</p>{(error||stale)&&<p className="ph-motion-stale" role="status">Últimos datos disponibles · pendiente de actualización.</p>}</div><div className="ph-motion-grid"><Metric value={number(summary.outings)} label="Rodadas registradas"/><Metric value={number(summary.participants)} label={students?'Alumnos con actividad registrada':'Participantes con actividad registrada'}/></div>{Array.isArray(summary.weekly)&&summary.weekly.length>0?<ActivityChart key={summary.month_start} weekly={summary.weekly} monthStart={summary.month_start} current={current}/>:<p className="ph-muted">Desglose por tramos no disponible para proteger la privacidad.</p>}<p className="ph-source">Datos agregados de actividades de patinaje en Strava registradas y compartidas públicamente. No representan el padrón total ni todas las actividades; no incluyen actividades privadas. Actualización cada 30 minutos.</p></>:<div className="ph-data-state" role="status">{loading?'Estamos cargando los kilómetros de nuestra comunidad…':error?'No pudimos actualizar las estadísticas. Volvé a consultar en otro momento.':'Todavía no hay suficientes registros públicos para mostrar el resumen mensual.'}{summary&&<span className="ph-motion-unavailable-period"> · {monthName(summary.month_start)}</span>}</div>}
   <div className="ph-private"><div><strong>RollerFeed vive dentro de PR.</strong><p>Publicaciones, desafíos y momentos de los alumnos, en su espacio personal.</p></div><Link to={destination} aria-label="Ingresar a la plataforma Punta Rollers">Ingresar ↗</Link></div>
  </section>
 }
@@ -104,9 +152,10 @@ export default function Home(){
  const destination=user?(user.role==='familiar'?'/kids':'/app/perfil'):'/login'
  useEffect(()=>{if(!window.location.hash)return;const timer=setTimeout(()=>document.getElementById(window.location.hash.slice(1))?.scrollIntoView(),100);return()=>clearTimeout(timer)},[])
  useEffect(()=>{
-  let live=true
+  let live=true,request=0
   async function load(){
-   try{const {data,error:err}=await supabase.from('pr_home_monthly_summary').select('month_start,km,outings,participants,weekly,updated_at').eq('id',1).maybeSingle();if(err)throw err;if(live){setSummary(data);setError(false)}}catch{if(live){setSummary(null);setError(true)}}finally{if(live)setLoading(false)}
+   const id=++request
+   try{const {data,error:err}=await supabase.from('pr_home_monthly_history').select('month_start,km,outings,participants,weekly,updated_at,students_only,activated_at').order('month_start',{ascending:false}).limit(2);if(err)throw err;if(live&&id===request){setSummary(selectMotionSummary(data||[]));setError(false)}}catch{if(live&&id===request)setError(true)}finally{if(live&&id===request)setLoading(false)}
   }
   load();const timer=setInterval(load,30*60*1000);window.addEventListener('focus',load)
   return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',load)}
