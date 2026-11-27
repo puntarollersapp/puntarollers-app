@@ -10,7 +10,7 @@ import { isOracleSlide } from '../lib/oraclePlaque'
 import './wrapped.css'
 
 const themes={dark:['#191A20','#F3F1EC','#FF0055'],fucsia:['#FF0055','#F3F1EC','#191A20'],ivory:['#F3F1EC','#191A20','#FF0055']}
-const demo={year:2026,name:'Sofi',lastInitial:'R',attendance:{classes:38,busiestMonth:10,favoriteWeekday:3},activity:{km:186.4,hours:17.5,bestMonth:11},duties:{approved:11},shifter:{category:'6K',completed:7},performance:{count:2,distances:[{km:3,count:2,firstSeconds:780,lastSeconds:690,bestSeconds:690,bestPace:230,bestSpeed:15.65,timeReductionPct:11.54}]},frames:{frames:4},badges:['Primeros 6K','Rodador frecuente','Ya frena en T']}
+const demo={year:2026,name:'Sofi',lastInitial:'R',activity:{km:186.4,hours:17.5,bestMonth:11},duties:{approved:11},shifter:{category:'6K',completed:7},performance:{count:2,distances:[{km:3,count:2,firstSeconds:780,lastSeconds:690,bestSeconds:690,bestPace:230,bestSpeed:15.65,timeReductionPct:11.54}]},frames:{frames:4},badges:['Primeros 6K','Rodador frecuente','Ya frena en T']}
 const localDate=v=>new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',day:'numeric',month:'long',year:'numeric'}).format(new Date(v))
 function Count({value,decimals=0,motion}) {
  const [n,setN]=useState(()=>motion?0:value)
