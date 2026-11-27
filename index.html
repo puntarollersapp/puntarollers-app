@@ -60,16 +60,6 @@
           }
           const rankingVisible = location.pathname.startsWith('/app/') && !/^\/app\/(?:rollermap|mensajes|comunidad)(?:\/|$)/.test(location.pathname)
           document.querySelector('.pr-weekly-ranking-shortcut')?.remove()
-          // Conversómetro occupies the former right-side ranking position.
-          if (rankingVisible && location.pathname !== '/app/conversometro' && !document.querySelector('.pr-conversometro-shortcut')) {
-            const tab = document.createElement('a')
-            tab.href = '/app/conversometro'
-            tab.className = 'pr-conversometro-shortcut'
-            tab.innerHTML = '<span class="pr-conversometro-bubble" aria-hidden="true">💬</span><span class="pr-conversometro-vertical">CONVERSÓMETRO</span>'
-            tab.setAttribute('aria-label', 'Abrir Conversómetro PR')
-            document.body.appendChild(tab)
-          }
-          if (!rankingVisible || location.pathname === '/app/conversometro') document.querySelector('.pr-conversometro-shortcut')?.remove()
           ensureInlineRanking()
           compactBirthdays()
           if (location.pathname === '/personalizadas') {
