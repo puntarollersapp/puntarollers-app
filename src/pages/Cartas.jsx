@@ -21,6 +21,8 @@ export default function Cartas() {
   const [open, setOpen] = useState(null)
   const [flipped, setFlipped] = useState(false)
   const [sensor, setSensor] = useState(false)
+  const [motionDenied,setMotionDenied]=useState(false)
+  const motionRequest=useRef(null)
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   const [retry, setRetry] = useState(0)
@@ -58,7 +60,15 @@ export default function Cartas() {
   function openCard(id) {
     openerRef.current = document.activeElement
     setFlipped(false); setMsg(''); setOpen(id)
-    if (typeof window !== 'undefined' && 'DeviceOrientationEvent' in window && !motionNeedsPermission()) setSensor(true)
+    const selected=cards.find(c=>c.id===id)
+    if (!selected || viewLocked(selected) || typeof window==='undefined' || !('DeviceOrientationEvent' in window) || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    if (!motionNeedsPermission()) { setSensor(true); return }
+    // iOS requires a trusted user gesture: request directly from the card tap.
+    // Reuse the result for this session, so subsequent cards open without a second prompt.
+    if (!motionRequest.current) {
+      motionRequest.current=requestMotionPermission()
+      motionRequest.current.then(ok=>{setSensor(ok);setMotionDenied(!ok)})
+    }
   }
   function closeCard() { setOpen(null); setMsg(''); requestAnimationFrame(() => openerRef.current?.focus?.()) }
   useEffect(() => {
@@ -69,11 +79,6 @@ export default function Cartas() {
     closeRef.current?.focus()
     return () => { document.removeEventListener('keydown', k); document.body.style.overflow = prev }
   }, [current])
-  async function enableSensor() {
-    const ok = await requestMotionPermission()
-    setSensor(ok)
-    setMsg(ok ? 'Listo: incliná el teléfono y mirá cómo brilla.' : 'No se habilitó el sensor. Igual podés mover la carta con el dedo.')
-  }
   async function save() {
     if (busy || !current || current.locked) return
     setBusy(true); setMsg('Preparando imagen…')
@@ -131,11 +136,11 @@ export default function Cartas() {
               back={current.upcoming ? <><h4>Próximamente</h4><p>{current.earned?'Tu logro ya está registrado. La carta estará disponible cuando se publique el diseño.':'Esta carta forma parte de la colección y se publicará próximamente.'}</p></> : current.locked ? <><h4>Carta bloqueada</h4><p>{current.description || 'Todavía no la conseguiste.'}</p></> : <><h4>{current.title}</h4>{current.description && <p>{current.description}</p>}<small>{dateLabel(current.date)}{current.by ? ' · Otorgada por ' + current.by : ''}</small></>}/>
             {flipped&&current.backArt&&!viewLocked(current)&&<div className="w-full rounded-2xl bg-white/5 p-4 text-center text-xs text-white/75"><p className="font-bold text-white">{current.title}</p><p className="mt-1">{current.description}</p><p className="mt-1">{dateLabel(current.date)}{current.by?' · Otorgada por '+current.by:''}</p></div>}
             {preview&&current.locked&&<p className="text-center text-[11px] text-amber-200">Vista de diseño · este logro aún no está conseguido.</p>}
+            {motionDenied&&!viewLocked(current)&&<p className="text-center text-[11px] text-white/55">Mové la carta con el dedo si el sensor de inclinación no está disponible.</p>}
             {msg && <p className="text-center text-xs text-white/70" role="status">{msg}</p>}
             <div className="flex w-full flex-wrap justify-center gap-2">
               <button type="button" onClick={() => setFlipped(v => !v)} className="min-h-[44px] rounded-full bg-white/10 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">{flipped ? 'Ver frente' : 'Ver dorso'}</button>
               {!current.locked && <button type="button" disabled={busy} onClick={save} className="min-h-[44px] rounded-full bg-[#FF0055] px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95 disabled:opacity-50">{busy ? 'Preparando…' : 'Guardar imagen'}</button>}
-              {motionNeedsPermission() && !sensor && !viewLocked(current) && <button type="button" onClick={enableSensor} className="min-h-[44px] rounded-full border border-white/20 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">Activar inclinación</button>}
             </div>
             <button ref={closeRef} type="button" onClick={closeCard} className="min-h-[44px] px-6 text-xs font-bold text-white/70">Cerrar</button>
           </div>
