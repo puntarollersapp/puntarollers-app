@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useCardsAccess } from '../lib/cartas'
 import AppLayout from '../layouts/AppLayout'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
@@ -17,6 +19,7 @@ function dateLabel(value) {
 
 export default function Insignias() {
   const { user } = useAuth()
+  const showCards = useCardsAccess(user)
   const profileId = ({ ...savedUser(), ...user }).id
   const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
@@ -75,6 +78,7 @@ export default function Insignias() {
                 <p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-white/28">Colección</p>
               </div>
             </div>
+            {showCards && <Link to="/app/cartas" className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-pr-gold px-5 text-xs font-black text-black active:scale-95">✨ Ver como cartas holográficas</Link>}
           </div>
         </section>
 
