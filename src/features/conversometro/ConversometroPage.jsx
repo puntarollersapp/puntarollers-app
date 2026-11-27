@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import ConversometroPrototype from './ConversometroPrototype';
 import { createConversationMark, loadConversationData, undoConversationMark } from './data';
@@ -9,7 +9,10 @@ const authorized = user => Boolean(user && (user.role === 'admin' || user.role =
 export default function ConversometroPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const backButton = <button type="button" onClick={() => navigate('/app/perfil')} aria-label="Volver a mi perfil" style={{position:'relative',zIndex:5,display:'inline-flex',alignItems:'center',gap:9,margin:'16px 16px 4px',padding:'11px 16px',borderRadius:14,border:'1px solid rgba(216,180,254,.4)',background:'#24113d',color:'#fff',fontWeight:800,fontSize:14,cursor:'pointer'}}>← Volver a mi perfil</button>;
+  const fromRollerFeed = useLocation().state?.fromRollerFeed === true;
+  const returnPath = fromRollerFeed ? '/app/actividad' : '/app/perfil';
+  const returnLabel = fromRollerFeed ? 'Volver a RollerFeed' : 'Volver a mi perfil';
+  const backButton = <button type="button" onClick={() => navigate(returnPath)} aria-label={returnLabel} style={{position:'relative',zIndex:5,display:'inline-flex',alignItems:'center',gap:9,margin:'16px 16px 4px',padding:'11px 16px',borderRadius:14,border:'1px solid rgba(216,180,254,.4)',background:'#24113d',color:'#fff',fontWeight:800,fontSize:14,cursor:'pointer'}}>← {returnLabel}</button>;
   const [state,setState] = useState({loading:true,ready:false,students:[],marks:[],error:''});
   const [saving,setSaving] = useState(false);
   const refresh = useCallback(async () => {

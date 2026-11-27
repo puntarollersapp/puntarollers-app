@@ -15,7 +15,7 @@ function OfficialRecognition({official}){const people=official.participants||[];
 const OPTIONS = [['heart','❤️'],['fire','🔥'],['skate','🛼'],['clap','👏']]
 
 function ConversometroBanner(){
-  return <Link to="/app/conversometro" className="rf-cm-banner" aria-label="Abrir el Conversómetro PR">
+  return <Link to="/app/conversometro" state={{fromRollerFeed:true}} className="rf-cm-banner" aria-label="Abrir el Conversómetro PR">
     <div className="rf-cm-art" aria-hidden="true">
       <span className="rf-cm-bubble rf-cm-bubble-a">💬</span>
       <span className="rf-cm-bubble rf-cm-bubble-b">…</span>
