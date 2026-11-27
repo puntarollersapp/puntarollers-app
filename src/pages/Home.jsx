@@ -1,689 +1,103 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../layouts/PublicLayout'
-import { getCupos } from '../data/cupos'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
+import './HomeSummer.css'
 
-const GALLERY_LINKS = {
-  clases: 'https://drive.google.com/drive/folders/1Bn4Yy6IDiy8lJYyKf12z99Qyx5GllSST',
-  rolleadas: 'https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ',
-  contenido: 'https://drive.google.com/drive/folders/1hnBU-O1sjZC88O6EqMa_1dKAE5HybkW_',
+const ADULT='/inscripciones-2026', KIDS='/inscripciones-kids-2026'
+const schedule={
+ sabado:[
+  {time:'08:00',end:'09:00',title:'Intermedios + avanzados',place:'Parada 2 · Punta del Este',type:'Aire libre'},
+  {time:'09:00',end:'10:00',title:'Principiantes',place:'Parada 2 · Punta del Este',type:'Aire libre'},
+  {time:'19:00',end:'20:00',title:'PR Kids',place:'Pista cerrada · Maldonado',type:'Indoor',kids:true},
+  {time:'20:00',end:'21:00',title:'Adultos · todos los niveles',place:'Pista cerrada · Maldonado',type:'Indoor'}
+ ],
+ miercoles:[
+  {time:'19:00',end:'20:00',title:'Principiantes',place:'Parada 2 · Punta del Este',type:'Aire libre'},
+  {time:'20:00',end:'21:00',title:'Intermedios + avanzados',place:'Parada 2 · Punta del Este',type:'Aire libre'}
+ ]
 }
-
-const DEFAULT_EVENTS = [
-  {
-    titulo: 'Primera Clínica de Patinaje con Miguel Flores',
-    inicio: '2026-09-04T03:00:00.000Z',
-    mes_referencia: '4, 5 y 6 de septiembre · horario a confirmar',
-    lugar: 'Ubicación a confirmar',
-    estado: 'Publicado',
-    visible_feed: true,
-    color: 'violet',
-  },
-  {
-    titulo: 'Segunda Clínica de Patinaje con Miguel Flores',
-    inicio: '2026-10-28T03:00:00.000Z',
-    mes_referencia: '28, 29 y 30 de octubre · horario a confirmar',
-    lugar: 'Ubicación a confirmar',
-    estado: 'Próximamente',
-    visible_feed: true,
-    color: 'electric',
-  },
+const gallery=[
+ ['Clases','https://drive.google.com/drive/folders/1Bn4Yy6IDiy8lJYyKf12z99Qyx5GllSST'],
+ ['Rolleadas','https://drive.google.com/drive/folders/1b7I4VFk36V9CTcXsCJDogcD8ayC1WIfJ'],
+ ['Videos','https://drive.google.com/drive/folders/1hnBU-O1sjZC88O6EqMa_1dKAE5HybkW_']
 ]
-
-const MINI_LINKS = [
-  { to: '/pasaporte-kids', icon: '📕', title: 'Pasaporte Kids', text: 'Progreso y aventuras PR Kids' },
-  { to: '/cuponeras', icon: '🎟️', title: 'Cuponeras', text: 'Beneficios de tu experiencia PR' },
-  { to: '/uniformes', icon: '👕', title: 'Uniformes', text: 'La identidad oficial del equipo' },
-  { to: '/tracking', icon: '📍', title: 'PR Tracking', text: 'Protegé tus elementos con NFC' },
+const tools=[
+ ['01','Pasaporte Kids','Cada pequeño logro cuenta.','/pasaporte-kids'],
+ ['02','Cuponeras','Elegí tu experiencia PR.','/cuponeras'],
+ ['03','Uniformes','Llevá nuestros colores.','/uniformes'],
+ ['04','PR Tracking','Identificá tus elementos con NFC.','/tracking'],
+ ['05','PR Card','Beneficios en comercios adheridos.','https://puntarollerscard.com/'],
+ ['06','RollerMap','Descubrí lugares para rodar.','/rollermap/'],
+ ['07','Alianza Rollers','Una red que nos conecta.','/alianza'],
+ ['08','Reglas PR','Conocé cómo funciona la escuela.','/terminos']
 ]
-
-export default function Home() {
-  const { user } = useAuth()
-  const [day, setDay] = useState('miercoles')
-  const [cupos, setCupos] = useState(getCupos())
-  const [events, setEvents] = useState(DEFAULT_EVENTS)
-  const [feedPulse, setFeedPulse] = useState({
-    activitiesToday: 0,
-    kilometersToday: 0,
-    skatersToday: 0,
-    latestName: '',
-    latestTitle: '',
-    totalActivities: 0,
-    totalKilometers: 0,
-    activeThisWeek: 0,
-    loading: true,
-  })
-  const [ambientPulse, setAmbientPulse] = useState({
-    count: 0,
-    active: false,
-  })
-
-  const isLoggedIn = Boolean(user)
-  const isStaff = user?.role === 'admin' || user?.role === 'profesor'
-  const privateDestination = user?.role==='familiar'?'/kids':'/app/perfil'
-
-  useEffect(() => {
-    if (!window.location.hash) return
-    const id = window.location.hash.replace('#', '')
-    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 180)
-  }, [])
-
-  useEffect(() => {
-    const refresh = () => setCupos(getCupos())
-    window.addEventListener('focus', refresh)
-    window.addEventListener('storage', refresh)
-    return () => {
-      window.removeEventListener('focus', refresh)
-      window.removeEventListener('storage', refresh)
-    }
-  }, [])
-
-  useEffect(() => {
-    let active = true
-    async function loadEvents() {
-      try {
-        const { data, error } = await supabase.from('rollerfeed_events').select('*')
-        if (error || !active) return
-        const visible = (data || [])
-          .filter((event) => event.visible_feed !== false && event.estado !== 'Cancelado')
-          .filter((event) => !event.inicio || new Date(event.inicio).getTime() >= Date.now() - 86400000)
-          .sort((a, b) => {
-            if (!a.inicio) return 1
-            if (!b.inicio) return -1
-            return new Date(a.inicio) - new Date(b.inicio)
-          })
-        if (visible.length) setEvents(visible)
-      } catch (_) {}
-    }
-    loadEvents()
-    return () => { active = false }
-  }, [])
-
-  useEffect(() => {
-    let active = true
-
-    async function loadRollerFeedPulse() {
-      try {
-        const start = new Date()
-        start.setHours(0, 0, 0, 0)
-
-        const weekStart = new Date(Date.now() - 7 * 86400000).toISOString()
-        const [activitiesResponse, profilesResponse, historyResponse] = await Promise.all([
-          supabase
-            .from('pr_inline_skate_public_activities')
-            .select('*')
-            .eq('eliminada', false)
-            .gte('fecha_inicio', start.toISOString())
-            .order('fecha_inicio', { ascending: false })
-            .limit(60),
-
-          supabase
-            .from('profiles_feed')
-            .select('*')
-            .limit(500),
-
-          supabase
-            .from('pr_inline_skate_public_activities')
-            .select('*')
-            .eq('eliminada', false)
-            .order('fecha_inicio', { ascending: false })
-            .limit(1000),
-        ])
-
-        if (!active) return
-
-        const publicActivities = (activitiesResponse.data || []).filter(
-          (activity) =>
-            activity &&
-            activity.eliminada !== true &&
-            activity.es_privada !== true &&
-            activity.privada !== true &&
-            activity.privado !== true &&
-            activity.visible_feed !== false
-        )
-
-        const profiles = profilesResponse.data || []
-        const publicHistory = (historyResponse.data || []).filter(
-          (activity) =>
-            activity &&
-            activity.eliminada !== true &&
-            activity.es_privada !== true &&
-            activity.privada !== true &&
-            activity.privado !== true &&
-            activity.visible_feed !== false
-        )
-        const profilesById = new Map()
-
-        profiles.forEach((profile) => {
-          if (profile?.id) profilesById.set(String(profile.id), profile)
-          if (profile?.auth_user_id) profilesById.set(String(profile.auth_user_id), profile)
-        })
-
-        const kilometersToday =
-          publicActivities.reduce(
-            (sum, activity) => sum + (Number(activity.distancia_metros) || 0),
-            0
-          ) / 1000
-
-        const skatersToday = new Set(
-          publicActivities
-            .map((activity) => activity.alumno_id)
-            .filter(Boolean)
-            .map(String)
-        ).size
-
-        const latest = publicActivities[0]
-        const latestProfile = latest?.alumno_id
-          ? profilesById.get(String(latest.alumno_id))
-          : null
-
-        const latestName =
-          latestProfile?.nombre_completo ||
-          latestProfile?.display_name ||
-          [latestProfile?.nombre, latestProfile?.apellido].filter(Boolean).join(' ') ||
-          latest?.alumno_nombre ||
-          latest?.nombre_alumno ||
-          ''
-
-        const totalKilometers = publicHistory.reduce(
-          (sum, activity) => sum + (Number(activity.distancia_metros) || 0),
-          0
-        ) / 1000
-
-        const activeThisWeek = new Set(
-          publicHistory
-            .filter((activity) => String(activity.fecha_inicio || '') >= weekStart)
-            .map((activity) => activity.alumno_id)
-            .filter(Boolean)
-            .map(String)
-        ).size
-
-        setFeedPulse({
-          activitiesToday: publicActivities.length,
-          kilometersToday,
-          skatersToday,
-          latestName,
-          latestTitle: latest?.nombre || 'Entrenamiento sobre ruedas',
-          totalActivities: publicHistory.length,
-          totalKilometers,
-          activeThisWeek,
-          loading: false,
-        })
-      } catch (_) {
-        if (!active) return
-        setFeedPulse((current) => ({ ...current, loading: false }))
-      }
-    }
-
-    loadRollerFeedPulse()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  useEffect(() => {
-    function updateAmbientPulse() {
-      const now = new Date()
-      const hour = now.getHours()
-      const active = hour >= 8 && hour < 21
-
-      if (!active) {
-        setAmbientPulse({ count: 0, active: false })
-        return
-      }
-
-      // Pulso visual estable por bloques de 4 minutos.
-      // No representa presencia real: evita mostrar datos personales
-      // y da sensación de comunidad activa sin exponer a nadie.
-      const slot = Math.floor(now.getTime() / (4 * 60 * 1000))
-      const sequence = [3, 5, 7, 4, 8, 6, 5, 7, 3, 6, 8, 4]
-      const count = sequence[slot % sequence.length]
-
-      setAmbientPulse({ count, active: true })
-    }
-
-    updateAmbientPulse()
-    const timer = window.setInterval(updateAmbientPulse, 60 * 1000)
-
-    return () => window.clearInterval(timer)
-  }, [])
-
-  return (
-    <PublicLayout>
-      <main className="overflow-hidden bg-[#050508] text-white">
-        <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-
-          {/* HERO */}
-          <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#090a0d] shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_10%,rgba(249,115,22,.19),transparent_34%),radial-gradient(circle_at_5%_100%,rgba(37,99,235,.15),transparent_38%)]" />
-            <div className="relative p-5 sm:p-8 lg:p-11">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <img src="/logo.png" alt="Punta Rollers" className="h-12 w-12 rounded-2xl object-contain" />
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">Punta Rollers</p>
-                    <p className="text-xs text-white/45">Punta del Este · Uruguay</p>
-                  </div>
-                </div>
-                <Link to={isLoggedIn ? privateDestination : '/login'} className="rounded-full border border-white/10 bg-white/[.06] px-4 py-2 text-xs font-bold text-white transition active:scale-95">
-                  {isLoggedIn ? 'Mi espacio' : 'Ingresar'}
-                </Link>
-              </div>
-
-              <div className="mt-10 max-w-2xl sm:mt-14">
-                <p className="text-xs font-black uppercase tracking-[.22em] text-orange-400">10 años sobre ruedas</p>
-                <h1 className="mt-3 text-[43px] font-black leading-[.94] tracking-[-.045em] sm:text-6xl lg:text-7xl">
-                  No es solo<br />patinar. <span className="text-orange-500">Es pertenecer.</span>
-                </h1>
-                <p className="mt-5 max-w-xl text-sm leading-6 text-white/60 sm:text-base">Escuela, entrenamientos y una comunidad que comparte cada kilómetro. Todo Punta Rollers, en un mismo lugar.</p>
-                <a href="#clases" className="mt-7 inline-flex min-h-12 items-center gap-3 rounded-2xl bg-orange-500 px-5 text-sm font-black text-black shadow-[0_12px_35px_rgba(249,115,22,.22)] active:scale-[.98]">Ver horarios y cupos <span>→</span></a>
-              </div>
-
-              <div className="mt-9 grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 pt-5">
-                <HeroStat value="10" label="años juntos" />
-                <HeroStat value="3" label="turnos semanales" />
-                <HeroStat value="2" label="sedes PR" />
-              </div>
-            </div>
-          </section>
-
-          {/* LOGGED USER */}
-          {isLoggedIn && (
-            <section className="mt-5 flex items-center gap-3 rounded-2xl border border-orange-400/20 bg-orange-500/[.08] p-4">
-              <span className="text-2xl">👋</span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black">Hola, {user.nombre}</p>
-                <p className="text-xs text-white/45">Tu sesión está activa.</p>
-              </div>
-              <Link to={privateDestination} className="rounded-xl bg-orange-500 px-4 py-2 text-xs font-black text-black">Entrar</Link>
-            </section>
-          )}
-
-          {/* CLASES + CUPOS: PRIORIDAD */}
-          <section id="clases" className="scroll-mt-8 pt-10">
-            <SectionTitle emoji="🛼" eyebrow="Clases PR" title="Elegí cuándo rodar." text="Horarios y ubicaciones. Confirmá la disponibilidad antes de inscribirte." />
-
-            <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-white/[.05] p-1.5">
-              <DayButton active={day === 'miercoles'} onClick={() => setDay('miercoles')}>Miércoles</DayButton>
-              <DayButton active={day === 'sabado'} onClick={() => setDay('sabado')}>Sábado</DayButton>
-            </div>
-
-            <div className="mt-3 space-y-3">
-              {day === 'miercoles' ? (
-                <ClassRow emoji="🌊" title="Clases mixtas" subtitle="Principiantes · Intermedios · Avanzados" time="19:30 — 20:30" location="Parada 2 · Punta del Este" seats={cupos.miercoles.principiantes} />
-              ) : (
-                <>
-                  <ClassRow emoji="☀️" title="Adultos mixtos" subtitle="Clase al aire libre" time="09:00 — 10:00" location="Parada 2 · Punta del Este" seats={null} />
-                  <ClassRow emoji="🧒" title="PR Kids" subtitle="Pista cerrada" time="19:00 — 20:00" location="Maldonado · Indoor" seats={cupos.sabado.kids} />
-                  <ClassRow emoji="⚡" title="Adultos mixtos" subtitle="Pista cerrada" time="20:00 — 21:00" location="Maldonado · Indoor" seats={cupos.sabado.adultos} />
-                </>
-              )}
-            </div>
-
-            <div id="inscripciones" className="mt-4 grid grid-cols-2 gap-3 scroll-mt-8">
-              <ActionLink href="https://form.jotform.com/Claudinio/inscripcioneskids" emoji="🎒" title="PR Kids" label="Inscripción" />
-              <ActionLink href="/inscripciones-2026" emoji="🛼" title="Adultos" label="Inscripción" internal />
-            </div>
-            <p className="mt-3 text-center text-[11px] leading-5 text-white/35">Las cuentas de la app son creadas por el equipo Punta Rollers. Las inscripciones no crean usuarios automáticamente.</p>
-          </section>
-
-
-          {/* QUIÉNES SOMOS — inmediatamente después de clases */}
-          <section className="pt-9">
-            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0c10]">
-              <div className="p-5 sm:p-7">
-                <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">
-                  🧡 ¿Quiénes somos?
-                </p>
-                <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">
-                  Una escuela. Una comunidad.
-                </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-                  Hace 10 años acompañamos a niños, adolescentes, adultos y adultos mayores
-                  en su camino sobre ruedas. Clases, calle, pista, eventos, competencia y
-                  experiencias compartidas.
-                </p>
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <Place emoji="🌊" title="Parada 2" text="Punta del Este · Aire libre" />
-                  <Place emoji="🏟️" title="Pista cerrada" text="Maldonado · Indoor" />
-                </div>
-
-                <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/10 pt-4">
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-white">Equipo Punta Rollers</p>
-                    <p className="mt-1 text-[11px] leading-4 text-white/40">
-                      Claudio Facelli · David Almeida · Lucía Bernales
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-2xl">🛼</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ROLLERFEED — preview público + pulso visual */}
-          <section className="pt-9">
-            <div className="relative overflow-hidden rounded-[30px] border border-orange-300/20 bg-gradient-to-br from-[#28160d] via-[#0c0c11] to-violet-500/[.08] p-5 sm:p-7">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-orange-500/15 blur-3xl" />
-              <div className="relative">
-                <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-300">MÁS QUE VENIR A CLASE</p>
-                <h2 className="mt-2 max-w-xl text-[30px] font-black leading-[.98] tracking-[-.035em] sm:text-4xl">Cada alumno tiene su propio ecosistema PR.</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/48">Actividad, objetivos, evolución, logros y comunidad. Un lugar para registrar el recorrido y acompañar todo lo que pasa entre una clase y la siguiente.</p>
-
-                <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 rounded-[24px] border border-white/10 bg-black/20 py-5">
-                  <ProofStat value={feedPulse.loading ? '…' : feedPulse.totalKilometers.toLocaleString('es-UY', { maximumFractionDigits: 1 })} label="km compartidos" />
-                  <ProofStat value={feedPulse.loading ? '…' : feedPulse.totalActivities} label="entrenamientos" />
-                  <ProofStat value={feedPulse.loading ? '…' : feedPulse.activeThisWeek} label="activos esta semana" />
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-2.5">
-                  <div className="rounded-[20px] border border-white/[.08] bg-white/[.035] p-4"><span className="text-xl">🎯</span><p className="mt-2 text-xs font-black">Objetivos propios</p><p className="mt-1 text-[10px] leading-4 text-white/35">Metas y devoluciones que acompañan el proceso.</p></div>
-                  <div className="rounded-[20px] border border-white/[.08] bg-white/[.035] p-4"><span className="text-xl">📈</span><p className="mt-2 text-xs font-black">Evolución real</p><p className="mt-1 text-[10px] leading-4 text-white/35">Progreso construido con actividad y tomas.</p></div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ROLLERFEED — preview público + pulso visual */}
-          <section className="pt-9">
-            <div className="relative overflow-hidden rounded-[28px] border border-orange-400/20 bg-[#0a0b0f]">
-              <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-orange-500/10 blur-3xl" />
-              <div className="absolute -bottom-20 -left-16 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl" />
-
-              <div className="relative p-5 sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
-                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                      </span>
-                      <p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">
-                        RollerFeed
-                      </p>
-
-                      {ambientPulse.active ? (
-                        <span className="rounded-full border border-emerald-400/15 bg-emerald-400/[.08] px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] text-emerald-300">
-                          ⚡ Pulso PR · {ambientPulse.count} rodando ahora
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-white/10 bg-white/[.04] px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] text-white/35">
-                          🌙 PR descansa
-                        </span>
-                      )}
-                    </div>
-
-                    <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">
-                      Mirá lo que está pasando.
-                    </h2>
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
-                      Entrenos, kilómetros, eventos y movimiento de la comunidad.
-                      Una pequeña ventana pública al mundo Punta Rollers.
-                    </p>
-                  </div>
-
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-orange-400/20 bg-orange-500/10 text-xl">
-                    ⚡
-                  </div>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-3.5">
-                  <div className="flex -space-x-2">
-                    {['👩🏻‍🦰', '👨🏽‍🦱', '👩🏼', '👨🏻', '👩🏽‍🦱', '👨🏼‍🦰']
-                      .slice(0, Math.min(4, Math.max(3, ambientPulse.count || 3)))
-                      .map((emoji, item) => (
-                        <div
-                          key={`${emoji}-${item}`}
-                          className="grid h-9 w-9 place-items-center rounded-full border-2 border-[#0a0b0f] bg-gradient-to-br from-orange-500/25 to-blue-500/20 text-base shadow-lg"
-                          aria-hidden="true"
-                        >
-                          {emoji}
-                        </div>
-                      ))}
-                  </div>
-
-                  <div className="min-w-0 flex-1 text-right">
-                    <p className="text-[11px] font-black text-white">
-                      {ambientPulse.active
-                        ? `${ambientPulse.count} patinadores en movimiento`
-                        : 'La comunidad vuelve a rodar mañana'}
-                    </p>
-                    <p className="mt-0.5 text-[9px] text-white/30">
-                      Pulso visual anónimo · 08:00 a 21:00
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[.035] py-4">
-                  <PulseStat
-                    value={feedPulse.loading ? '…' : feedPulse.skatersToday}
-                    label="rodaron hoy"
-                  />
-                  <PulseStat
-                    value={feedPulse.loading ? '…' : feedPulse.activitiesToday}
-                    label="actividades"
-                  />
-                  <PulseStat
-                    value={
-                      feedPulse.loading
-                        ? '…'
-                        : feedPulse.kilometersToday > 0
-                          ? feedPulse.kilometersToday.toLocaleString('es-UY', {
-                              maximumFractionDigits: 1,
-                            })
-                          : '0'
-                    }
-                    label="km hoy"
-                  />
-                </div>
-
-                <div className="mt-3 space-y-2.5">
-                  <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-orange-500/10 text-lg">
-                      🛼
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black uppercase tracking-[.12em] text-orange-300">
-                        Actividad de hoy
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-white/60">
-                        {feedPulse.activitiesToday > 0
-                          ? `${feedPulse.activitiesToday} ${feedPulse.activitiesToday === 1 ? 'entreno registrado' : 'entrenos registrados'} · ${feedPulse.kilometersToday.toLocaleString('es-UY', { maximumFractionDigits: 1 })} km compartidos`
-                          : 'La próxima vuelta puede ser la primera actividad del día.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {events?.[0] && (
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-blue-500/10 text-lg">
-                        🗓️
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-black uppercase tracking-[.12em] text-blue-300">
-                          Se viene
-                        </p>
-                        <p className="mt-1 truncate text-xs font-black text-white/75">
-                          {events[0].titulo}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3 rounded-2xl bg-white/[.035] p-3.5">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-fuchsia-500/10 text-lg">
-                      🏅
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black uppercase tracking-[.12em] text-fuchsia-300">
-                        Comunidad PR
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-white/55">
-                        Logros, insignias, cumpleaños, actividades y momentos compartidos viven dentro de RollerFeed.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <Link
-                  to="/rollerfeed"
-                  className="mt-5 flex min-h-12 items-center justify-between rounded-2xl bg-orange-500 px-4 text-sm font-black text-black transition active:scale-[.98]"
-                >
-                  <span>Chusmear RollerFeed</span>
-                  <span>→</span>
-                </Link>
-
-                <p className="mt-3 text-[9px] leading-4 text-white/25">
-                  “Pulso PR” es un indicador visual anónimo de comunidad activa y no representa
-                  presencia individual en tiempo real. RollerFeed público muestra únicamente contenido
-                  marcado como visible/público; los datos privados de cada alumno siguen protegidos.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* QUICK 4 BLOCKS */}
-          <section id="explorar" className="scroll-mt-8 pt-11">
-            <SectionTitle emoji="✨" eyebrow="Universo PR" title="Mucho más que clases." text="Todo lo que ya forma parte de Punta Rollers, sin convertir el Home en un chorizo infinito." />
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              {MINI_LINKS.map((item) => <MiniCard key={item.to} {...item} />)}
-            </div>
-          </section>
-
-          {/* PLATAFORMAS 4 compact */}
-          <section className="pt-11">
-            <SectionTitle emoji="📲" eyebrow="Ecosistema PR" title="Todo conectado." />
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <ExternalMini href="https://puntarollerscard.com/" emoji="💳" title="PR Card" text="Beneficios y comercios" />
-              <ExternalMini href="/rollermap/" emoji="🗺️" title="RollerMap" text="Lugares para rodar" />
-              <LinkMini to="/alianza" emoji="🤝" title="Alianza Rollers" text="La red que nos conecta" />
-              <LinkMini to="/terminos" emoji="📋" title="Reglas PR" text="Cómo funciona el club" />
-            </div>
-          </section>
-
-          {/* GALLERY */}
-          <section className="pt-11">
-            <SectionTitle emoji="📸" eyebrow="Somos esto" title="Fotos, rolleadas y recuerdos." text="La comunidad también se guarda." />
-            <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-              <GalleryTile href={GALLERY_LINKS.clases} emoji="📷" title="Clases" />
-              <GalleryTile href={GALLERY_LINKS.rolleadas} emoji="🎉" title="Rolleadas" />
-              <GalleryTile href={GALLERY_LINKS.contenido} emoji="🎬" title="Videos" />
-            </div>
-          </section>
-
-          {/* EVENTS AT BOTTOM */}
-          <section className="pt-11">
-            <SectionTitle emoji="🗓️" eyebrow="Agenda PR" title="Próximos eventos." text="Se ven sin iniciar sesión y se actualizan desde el sistema de eventos." />
-            <div className="mt-5 flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {events.slice(0, 5).map((event, index) => <EventCard key={event.id || `${event.titulo}-${index}`} event={event} />)}
-            </div>
-          </section>
-
-          {/* FINAL */}
-          <section className="pb-5 pt-11">
-            <div className="border-t border-white/10 pt-7 text-center">
-              <img src="/logo.png" alt="Punta Rollers" className="mx-auto h-14 w-14 object-contain" />
-              <p className="mt-3 text-lg font-black">No es solo patinar.</p>
-              <p className="text-lg font-black text-orange-500">Es pertenecer.</p>
-              <p className="mt-3 text-xs text-white/30">Punta del Este · Maldonado · Uruguay</p>
-            </div>
-          </section>
-        </div>
-      </main>
-    </PublicLayout>
-  )
+const number=v=>Number(v).toLocaleString('es-UY',{maximumFractionDigits:1})
+const localMonth=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit'}).format(new Date())
+const monthName=day=>new Intl.DateTimeFormat('es-UY',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(day+'T12:00:00Z'))
+function Label({children}){return <p className="ph-label">{children}</p>}
+function Header({label,title,children}){return <div className="ph-heading"><Label>{label}</Label><h2>{title}</h2>{children&&<p>{children}</p>}</div>}
+function Metric({value,label}){return <div className="ph-metric"><strong>{value}</strong><span>{label}</span></div>}
+function TrackArt(){return <svg className="ph-track" viewBox="0 0 500 500" fill="none" aria-hidden="true"><defs><linearGradient id="ph-track-grad" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff" stopOpacity=".72"/><stop offset="1" stopColor="#fff" stopOpacity=".12"/></linearGradient></defs>{[0,1,2,3,4].map(i=><rect key={i} x={54+i*24} y={54+i*24} width={392-i*48} height={392-i*48} rx={196-i*24} stroke="url(#ph-track-grad)" strokeWidth="2"/>)}<path d="M250 14v472M14 250h472" stroke="#fff" strokeOpacity=".16" strokeDasharray="5 10"/><circle cx="250" cy="250" r="40" fill="#191A20"/><path d="M253 221l-19 32h17l-5 26 22-35h-19l4-23z" fill="#d8ff65"/></svg>}
+function ActivityChart({weekly,monthStart}){
+ const max=Math.max(1,...weekly.map(x=>Number(x.km)||0))
+ const lastDay=new Date(Date.UTC(Number(monthStart.slice(0,4)),Number(monthStart.slice(5,7)),0)).getUTCDate()
+ return <div className="ph-chart"><div className="ph-chart-title"><strong>El mes, tramo a tramo</strong><span>KM</span></div><div className="ph-bars">{weekly.map(x=>{const start=(x.bucket-1)*7+1,end=Math.min(x.bucket*7,lastDay);return <div className="ph-bar-col" key={x.bucket}><span>{number(x.km)}</span><div className="ph-bar-track"><div className="ph-bar" style={{height:(Number(x.km)/max*100)+'%'}}/></div><small>{start}–{end}</small></div>})}</div><p className="ph-muted">Días del mes · el último tramo puede estar en curso.</p></div>
 }
-
-function HeroStat({ value, label }) {
-  return <div className="px-3 first:pl-0"><p className="text-xl font-black text-white sm:text-2xl">{value}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-[.12em] text-white/35">{label}</p></div>
+function Motion({summary,loading,error}){
+ const current=summary&&String(summary.month_start).slice(0,7)===localMonth()
+ const available=current&&summary.km!=null&&summary.participants!=null&&summary.outings!=null
+ return <section className="ph-motion ph-section" aria-labelledby="ph-motion-title">
+  <div className="ph-motion-head"><div><Label>03 / PUNTA ROLLERS EN MOVIMIENTO</Label><h2 id="ph-motion-title">Cada kilómetro<br/>nos conecta<span>.</span></h2><p>Lo que nuestra comunidad va construyendo sobre ruedas.</p></div><span className="ph-motion-mark" aria-hidden="true">↗</span></div>
+  {available?<><div className="ph-total"><span>{monthName(summary.month_start)}</span><strong>{number(summary.km)} <small>KM</small></strong><p>Distancia registrada en el mes</p></div><div className="ph-motion-grid"><Metric value={number(summary.outings)} label="Rodadas registradas"/><Metric value={number(summary.participants)} label="Participantes con actividad"/></div>{Array.isArray(summary.weekly)&&summary.weekly.length>0&&<ActivityChart weekly={summary.weekly} monthStart={summary.month_start}/>}<p className="ph-source">Datos agregados de patinaje en Strava compartidos públicamente. No representan el padrón total ni incluyen actividades privadas. Actualización cada 30 minutos.</p></>:<div className="ph-data-state" role="status">{loading?'Estamos cargando los kilómetros de este mes…':error?'No pudimos actualizar las estadísticas. Volvé a consultar en otro momento.':'Todavía no hay suficientes registros públicos para mostrar el resumen mensual.'}</div>}
+  <div className="ph-private"><div><strong>RollerFeed vive dentro de PR.</strong><p>Publicaciones, desafíos y momentos de los alumnos, en su espacio personal.</p></div><Link to="/login" aria-label="Ingresar a la plataforma Punta Rollers">Ingresar ↗</Link></div>
+ </section>
 }
-
-function SectionTitle({ emoji, eyebrow, title, text }) {
-  return <div><p className="text-[10px] font-black uppercase tracking-[.22em] text-orange-400">{emoji} {eyebrow}</p><h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-.03em] sm:text-4xl">{title}</h2>{text && <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">{text}</p>}</div>
-}
-
-function DayButton({ active, onClick, children }) {
-  return <button type="button" onClick={onClick} className={`min-h-11 rounded-xl text-sm font-black transition ${active ? 'bg-white text-black shadow-lg' : 'text-white/45'}`}>{children}</button>
-}
-
-function ClassRow({ emoji, title, subtitle, time, location, seats }) {
-  const low = Number(seats) <= 2
-  return (
-    <article className="rounded-[22px] border border-white/10 bg-[#0b0c10] p-4">
-      <div className="flex items-start gap-3">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/[.06] text-xl">{emoji}</div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div><h3 className="text-sm font-black">{title}</h3><p className="mt-0.5 text-[11px] text-white/40">{subtitle}</p></div>
-            {seats == null ? <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black text-white/70">Consultar cupos</span> : <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${low ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'}`}>{seats} cupos</span>}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/55"><span>🕐 {time}</span><span>📍 {location}</span></div>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function ActionLink({ href, emoji, title, label, internal = false }) {
-  const className = 'rounded-[22px] border border-orange-400/20 bg-orange-500/[.08] p-4 transition active:scale-[.98]'
-  const content = <><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] font-bold text-orange-300">{label} →</p></>
-  return internal ? <Link to={href} className={className}>{content}</Link> : <a href={href} target="_blank" rel="noreferrer" className={className}>{content}</a>
-}
-
-function MiniCard({ to, icon, title, text }) {
-  return <Link to={to} className="group min-h-[145px] rounded-[24px] border border-white/10 bg-[#0b0c10] p-4 transition active:scale-[.98]"><div className="text-3xl">{icon}</div><p className="mt-4 text-sm font-black">{title}</p><p className="mt-1 text-[11px] leading-4 text-white/40">{text}</p><span className="mt-3 block text-xs font-black text-orange-400">Ver →</span></Link>
-}
-
-function ExternalMini({ href, emoji, title, text }) {
-  return <a href={href} target="_blank" rel="noreferrer" className="rounded-[22px] border border-white/10 bg-white/[.035] p-4 active:scale-[.98]"><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] text-white/40">{text}</p></a>
-}
-
-function LinkMini({ to, emoji, title, text }) {
-  return <Link to={to} className="rounded-[22px] border border-white/10 bg-white/[.035] p-4 active:scale-[.98]"><span className="text-2xl">{emoji}</span><p className="mt-3 text-sm font-black">{title}</p><p className="mt-1 text-[11px] text-white/40">{text}</p></Link>
-}
-
-function GalleryTile({ href, emoji, title }) {
-  return <a href={href} target="_blank" rel="noreferrer" className="flex aspect-[.9] flex-col justify-between rounded-[22px] border border-white/10 bg-gradient-to-b from-white/[.06] to-white/[.02] p-3 active:scale-[.98]"><span className="text-3xl">{emoji}</span><div><p className="text-xs font-black sm:text-sm">{title}</p><p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-orange-400">Abrir ↗</p></div></a>
-}
-
-function PulseStat({ value, label }) {
-  return (
-    <div className="px-2 text-center">
-      <p className="text-xl font-black text-white sm:text-2xl">{value}</p>
-      <p className="mt-1 text-[8px] font-black uppercase tracking-[.12em] text-white/30 sm:text-[9px]">
-        {label}
-      </p>
-    </div>
-  )
-}
-
-function ProofStat({ value, label }) {
-  return <div className="min-w-0 px-2 text-center"><p className="truncate text-xl font-black text-white sm:text-2xl">{value}</p><p className="mt-1 text-[7px] font-black uppercase tracking-[.1em] text-white/30 sm:text-[8px]">{label}</p></div>
-}
-
-function Place({ emoji, title, text }) {
-  return <div className="rounded-2xl bg-white/[.045] p-3"><span className="text-xl">{emoji}</span><p className="mt-2 text-xs font-black">{title}</p><p className="mt-1 text-[10px] leading-4 text-white/40">{text}</p></div>
-}
-
-function EventCard({ event }) {
-  const date = event.inicio ? new Date(event.inicio) : null
-  const day = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('es-UY', { day: '2-digit' }).format(date) : 'PR'
-  const month = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('es-UY', { month: 'short' }).format(date).replace('.', '').toUpperCase() : 'EVENTO'
-  return (
-    <article className="min-w-[82%] snap-start overflow-hidden rounded-[24px] border border-white/10 bg-[#0b0c10] sm:min-w-[360px]">
-      <div className="h-1.5 bg-gradient-to-r from-orange-500 via-fuchsia-500 to-blue-500" />
-      <div className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-orange-500 text-center text-black"><div><p className="text-xl font-black leading-none">{day}</p><p className="mt-1 text-[9px] font-black">{month}</p></div></div>
-          <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[.18em] text-orange-400">Evento Punta Rollers</p><h3 className="mt-1 text-base font-black leading-5">{event.titulo}</h3></div>
-        </div>
-        <p className="mt-4 text-xs leading-5 text-white/50">{event.mes_referencia || 'Próximamente más información'}</p>
-        <p className="mt-2 text-xs text-white/35">📍 {event.lugar || 'Ubicación a confirmar'}</p>
-      </div>
-    </article>
-  )
+export default function Home(){
+ const {user}=useAuth()
+ const [day,setDay]=useState('sabado')
+ const [summary,setSummary]=useState(null)
+ const [loading,setLoading]=useState(true)
+ const [error,setError]=useState(false)
+ const [events,setEvents]=useState([])
+ const [eventStatus,setEventStatus]=useState('loading')
+ const destination=user?(user.role==='familiar'?'/kids':'/app/perfil'):'/login'
+ useEffect(()=>{if(!window.location.hash)return;const timer=setTimeout(()=>document.getElementById(window.location.hash.slice(1))?.scrollIntoView(),100);return()=>clearTimeout(timer)},[])
+ useEffect(()=>{
+  let live=true
+  async function load(){
+   try{const {data,error:err}=await supabase.from('pr_home_monthly_summary').select('month_start,km,outings,participants,weekly,updated_at').eq('id',1).maybeSingle();if(err)throw err;if(live){setSummary(data);setError(false)}}catch{if(live){setSummary(null);setError(true)}}finally{if(live)setLoading(false)}
+  }
+  load();const timer=setInterval(load,30*60*1000);window.addEventListener('focus',load)
+  return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',load)}
+ },[])
+ useEffect(()=>{
+  let live=true
+  async function load(){try{const {data,error:err}=await supabase.from('rollerfeed_events').select('id,titulo,inicio,fin,mes_referencia,lugar,estado,visible_feed').eq('visible_feed',true).gte('inicio',new Date().toISOString()).in('estado',['Publicado','Próximamente']).order('inicio').limit(5);if(err)throw err;if(live){setEvents(data||[]);setEventStatus('ready')}}catch{if(live)setEventStatus('error')}}
+  load();return()=>{live=false}
+ },[])
+ return <PublicLayout><main className="pr-summer-home"><div className="ph-shell">
+  <header className="ph-hero">
+   <div className="ph-hero-top"><div className="ph-brand"><img src="/logo.png" alt="Punta Rollers"/><div><strong>PUNTA ROLLERS</strong><small>Punta del Este · Maldonado</small></div></div><Link className="ph-login" to={destination}>{user?'Mi espacio':'Ingresar'} ↗</Link></div>
+   <div className="ph-hero-content"><div className="ph-hero-copy"><div className="ph-edition"><span>☀</span> SUMMER SEASON / 26—27</div><Label>DESDE 2016 · URUGUAY</Label><h1>No es solo<br/>patinar.<br/><em>Es pertenecer.</em></h1><p>Aprendé a patinar, disfrutá el verano y encontrá tu comunidad. Desde tus primeras ruedas hasta tu próximo desafío.</p><div className="ph-cta-row"><a className="ph-button ph-primary" href="#inscripciones">Quiero patinar <span>↗</span></a><a className="ph-button ph-secondary" href="#clases">Ver horarios ↓</a></div></div>
+   <div className="ph-art" aria-hidden="true"><div className="ph-sun"/><TrackArt/><div className="ph-art-type">ROLL<br/>INTO<br/><span>2027.</span></div><div className="ph-art-tag">35° S / PUNTA DEL ESTE</div></div></div>
+   <div className="ph-hero-stats"><Metric value="10" label="Años sobre ruedas"/><Metric value="2" label="Sedes PR"/><Metric value={schedule.sabado.length+schedule.miercoles.length} label="Turnos de verano"/></div>
+  </header>
+  <section id="clases" className="ph-section ph-schedule">
+   <Header label="01 / SUMMER ROLLERCLASS" title="Elegí tu próxima rodada.">Clases para empezar desde cero, mejorar tu técnica o volver a disfrutar sobre ruedas.</Header>
+   <div className="ph-day-switch" role="group" aria-label="Día de clases">{[['sabado','Sábados','Turno regular'],['miercoles','Miércoles','Extra incluido']].map(([key,label,sub])=><button type="button" aria-pressed={day===key} key={key} onClick={()=>setDay(key)}><strong>{label}</strong><small>{sub}</small></button>)}</div>
+   <div className="ph-class-list">{schedule[day].map(item=><article className="ph-class" key={item.time}><div className="ph-time"><strong>{item.time}</strong><small>— {item.end}</small></div><div className="ph-class-info"><strong>{item.title}</strong><p>{item.place}</p><span>{item.type}</span></div>{day==='sabado'&&<Link className="ph-class-link" to={item.kids?KIDS:ADULT} aria-label={'Consultar inscripción '+item.title+' '+item.time}>↗</Link>}</article>)}</div>
+   <p className="ph-note">{day==='sabado'?'Elegí tu turno fijo semanal. Si suspendemos una clase regular, coordinamos su reposición.':'Clases complementarias para adultos incluidas en la membresía, según nivel, clima y disponibilidad docente. No tienen reposición si se suspenden.'} La disponibilidad se confirma en el proceso de inscripción.</p>
+   <div id="inscripciones" className="ph-registration"><Link className="ph-sign ph-adults" to={ADULT}><span>01 / ADULTOS</span><strong>Tu próxima<br/>historia empieza acá.</strong><small>Grupales o personalizadas 1 a 1</small><b>Ver opciones e inscribirme ↗</b></Link><Link className="ph-sign ph-kids" to={KIDS}><span>02 / PR KIDS</span><strong>Pequeñas ruedas.<br/>Grandes aventuras.</strong><small>Clases para niños · pista cerrada</small><b>Conocer PR Kids ↗</b></Link></div>
+   <p className="ph-note">El equipo confirma tu inscripción y crea tu acceso a la plataforma.</p>
+  </section>
+  <section className="ph-section ph-about"><Header label="02 / SOMOS PR" title="Una escuela. Una comunidad.">Hace 10 años acompañamos a niños, adolescentes, adultos y adultos mayores. La técnica importa, pero compartir el camino también.</Header><div className="ph-places"><div><Label>01 / OUTDOOR</Label><h3>Parada 2</h3><p>Punta del Este · Aire libre</p></div><div><Label>02 / INDOOR</Label><h3>Pista cerrada</h3><p>Maldonado</p></div></div><div className="ph-team"><img src="/logo.png" alt=""/><div><strong>Equipo Punta Rollers</strong><p>Claudio Facelli · David Almeida · Lucía Bernales</p></div></div></section>
+  <Motion summary={summary} loading={loading} error={error}/>
+  <section className="ph-section ph-digital"><Header label="04 / LA EXPERIENCIA PR" title="Mucho más que venir a clase.">Tu camino no termina cuando te sacás los patines. En PR tenés herramientas para disfrutar, entrenar y crecer.</Header><div className="ph-digital-grid">{[['01','Tu perfil','Tus logros y tu identidad roller.'],['02','Entrenamiento','Deberes, objetivos y devoluciones.'],['03','Progreso','Kilómetros, tomas de tiempo y evolución.'],['04','Comunidad','Experiencias y beneficios compartidos.']].map(([n,t,d])=><article key={n}><span>{n}</span><strong>{t}</strong><p>{d}</p></article>)}</div><Link className="ph-button ph-primary" to={destination}>{user?'Ir a mi espacio':'Acceder a mi cuenta'} ↗</Link></section>
+  <section id="explorar" className="ph-section"><Header label="05 / ECOSISTEMA" title="Todo Punta Rollers.">Explorá los servicios, beneficios y experiencias de nuestra escuela.</Header><div className="ph-service-grid">{tools.map(([n,t,d,to])=>{const content=<><span>{n} <b aria-hidden="true">↗</b></span><strong>{t}</strong><p>{d}</p></>;return to.startsWith('https://')?<a key={to} href={to} target="_blank" rel="noreferrer">{content}</a>:<Link key={to} to={to}>{content}</Link>})}</div></section>
+  <section className="ph-section"><Header label="06 / MOMENTOS PR" title="Así se vive sobre ruedas.">Volvé a nuestras clases, rolleadas y recuerdos.</Header><div className="ph-gallery">{gallery.map(([name,url],i)=><a key={name} href={url} target="_blank" rel="noreferrer"><span>0{i+1} / GALERÍA</span><strong>{name}</strong><b>↗</b></a>)}</div></section>
+  <section className="ph-section"><Header label="07 / AGENDA" title="Lo próximo en PR.">Nuevas fechas y actividades de la comunidad.</Header>{events.length?<div className="ph-events">{events.map(event=><article key={event.id}><Label>{new Intl.DateTimeFormat('es-UY',{day:'numeric',month:'long',timeZone:'America/Montevideo'}).format(new Date(event.inicio))}</Label><h3>{event.titulo}</h3><p>{event.mes_referencia||''}</p><p>{event.lugar||'Ubicación a confirmar'}</p></article>)}</div>:<div className="ph-data-state">{eventStatus==='loading'?'Cargando agenda…':eventStatus==='error'?'La agenda no está disponible en este momento.':'Nuevas fechas próximamente.'}</div>}</section>
+  <footer className="ph-footer"><img src="/logo.png" alt="Punta Rollers"/><Label>SUMMER SEASON 2026—2027</Label><h2>No es solo patinar.<br/><em>Es pertenecer.</em></h2><p>Punta del Este · Maldonado · Uruguay</p><a className="ph-button ph-primary" href="#inscripciones">Empezá tu historia ↗</a></footer>
+ </div></main></PublicLayout>
 }
