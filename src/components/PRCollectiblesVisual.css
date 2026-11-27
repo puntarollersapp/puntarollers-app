@@ -1,0 +1,50 @@
+/* PR Collectibles — carbon, brushed chrome, restrained spectral light. */
+.prc-hero,.prc-banner{position:relative;isolation:isolate;overflow:hidden;border:1px solid #74728b80;border-radius:29px;background:radial-gradient(ellipse at 92% 30%,#50406a55,transparent 55%),repeating-linear-gradient(125deg,#ffffff06 0 1px,transparent 1px 8px),linear-gradient(145deg,#191b22,#090a0e 68%);box-shadow:0 16px 42px #0007,inset 0 1px 0 #ffffff21;color:#f3f1ec}
+.prc-hero:before,.prc-banner:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,#c8b4ff14 49%,#fff2 50%,transparent 70%);transform:translateX(-100%);animation:prcSweep 6s ease-in-out infinite;pointer-events:none;z-index:-1}
+.prc-hero:after,.prc-banner:after{content:"";position:absolute;inset:5px;border:1px solid #b0a9c21c;border-radius:24px;pointer-events:none}
+.prc-hero{min-height:235px;padding:26px 18px 24px;display:flex;align-items:center}
+.prc-hero-copy,.prc-banner-copy{position:relative;z-index:2;min-width:0}
+.prc-hero-copy{width:76%}
+.prc-eyebrow{font:800 9px/1.4 system-ui,sans-serif;letter-spacing:.13em;color:#d0bfef;display:flex;align-items:center;gap:6px}
+.prc-eyebrow span{width:6px;height:6px;flex:none;border-radius:50%;background:#d7c2ff;box-shadow:0 0 11px #ad7bff}
+.prc-wordmark{margin:12px 0;display:flex;flex-direction:column;align-items:flex-start;font-size:clamp(30px,7.9vw,58px);font-weight:900;font-style:italic;letter-spacing:-.055em;line-height:.88;color:#eee}
+.prc-wordmark span{background:linear-gradient(180deg,#fff 3%,#d9dce5 36%,#808597 49%,#f4f6ff 55%,#b7bac8 92%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 3px 0 #060609) drop-shadow(0 0 10px #b5a5ff30)}
+.prc-wordmark span:first-child{font-size:1.35em;letter-spacing:-.075em}
+.prc-hero-tag{font:800 10px/1.5 system-ui,sans-serif;letter-spacing:.09em;color:#c4c5d0}
+.prc-hero-tag strong{font-size:1.2em;color:#fff}
+.prc-hero-description{font-size:11px;line-height:1.4;color:#c4c2d0;max-width:175px;margin-top:12px}
+.prc-hero-art{position:absolute;right:-18px;bottom:0;width:44%;height:95%;pointer-events:none}
+.prc-fan{position:relative;width:100%;height:100%;min-height:140px;isolation:isolate;pointer-events:none}
+.prc-orbit{position:absolute;inset:5% -10%;border-radius:50%;border:1px solid #c6b2ff38;box-shadow:0 0 25px #9c72ff26;transform:rotate(-25deg);background:radial-gradient(ellipse,#c1a8ff27,transparent 65%)}
+.prc-fan-card{position:absolute;width:51%;aspect-ratio:5/7;top:50%;left:50%;border-radius:6%;overflow:hidden;box-shadow:0 10px 19px #000a,0 0 16px #d5c7ff22;transform:translate(-50%,-50%) rotate(var(--angle));animation:prcFloat 4.8s ease-in-out infinite;will-change:transform}
+.prc-fan-card img{width:100%;height:100%;display:block;object-fit:contain}
+.prc-fan-card:after,.prc-side-sheen{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 30%,#fff2 48%,#d1c0ff44 50%,transparent 68%);transform:translateX(-120%);animation:prcSweep 6s ease-in-out infinite}
+.prc-fan-left{--angle:-22deg;left:29%;top:53%;animation-delay:-1.6s}
+.prc-fan-right{--angle:19deg;left:73%;top:47%;animation-delay:-.8s}
+.prc-fan-center{--angle:-5deg;top:55%;z-index:2;width:54%}
+.prc-banner{display:flex;min-height:196px;align-items:center;padding:22px 18px;text-decoration:none;transition:transform .2s,border-color .2s}
+.prc-banner .prc-fan{position:absolute;right:-5px;top:0;width:43%;height:100%}
+.prc-banner-copy{width:70%}
+.prc-banner .prc-wordmark{font-size:clamp(25px,6.1vw,41px);margin:10px 0 12px}
+.prc-banner-copy>p:not(.prc-eyebrow){font-size:11px;color:#c8c6d3;max-width:165px;line-height:1.5}
+.prc-banner-action{display:inline-flex;gap:6px;align-items:center;color:#e1d5ff;font-size:11px;font-weight:900;margin-top:12px}
+.prc-banner:active{transform:scale(.99)}
+.prc-banner:focus-visible,.prc-side:focus-visible{outline:2px solid #d7c4ff;outline-offset:4px}
+.prc-side{position:fixed;z-index:90;right:0;top:37%;display:grid;place-items:center;width:64px;height:100px;text-decoration:none;overflow:visible;touch-action:manipulation}
+.prc-side-card{position:relative;width:64px;aspect-ratio:5/7;transform:translateX(9px) rotate(-9deg);border-radius:7px;overflow:hidden;box-shadow:-5px 8px 18px #000c,0 0 13px #b59bff38;animation:prcPeek 4.5s ease-in-out infinite}
+.prc-side-card img{display:block;width:100%;height:100%;object-fit:contain}
+body:has([data-pr-chat-composer]) .prc-side,body:has(input:focus) .prc-side,body:has(textarea:focus) .prc-side,body:has([aria-modal="true"]) .prc-side{display:none!important;pointer-events:none!important}
+.prc-stats{border:1px solid #b8aec32c;border-radius:22px;padding:16px;background:linear-gradient(150deg,#1c1c25,#101016);box-shadow:inset 0 1px 0 #ffffff09}
+.prc-progress{background:linear-gradient(90deg,#74758e,#c6b8ec,#e4e7f2);box-shadow:0 0 12px #c3a9ff55}
+.prc-rarity-stat{background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 12%,#121219),#121219);border:1px solid color-mix(in srgb,var(--tone) 25%,transparent);border-radius:12px;text-align:center;padding:8px 3px}
+.prc-rarity-stat strong{color:var(--tone);font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
+.prc-rarity-stat p{font-size:9px;color:#d2cdd8}
+.prc-filters{display:flex;gap:7px;flex-wrap:wrap}
+.prc-filter{min-height:40px;padding:0 12px;border-radius:10px;border:1px solid #ffffff18;background:#17171e;color:#ccc;font-size:11px;font-weight:800}
+.prc-filter[aria-pressed="true"]{color:#101018;background:linear-gradient(145deg,#f4f5fa,#b4a3d7);border-color:#e7dcff;box-shadow:0 0 12px #ad98e640}
+@keyframes prcFloat{0%,100%{transform:translate(-50%,-50%) rotate(var(--angle))}50%{transform:translate(-50%,-55%) rotate(calc(var(--angle) + 3deg))}}
+@keyframes prcSweep{0%,20%{transform:translateX(-120%)}65%,100%{transform:translateX(120%)}}
+@keyframes prcPeek{0%,100%{transform:translate(9px,0) rotate(-9deg)}50%{transform:translate(6px,-5px) rotate(-5deg)}}
+@media(min-width:700px){.prc-hero{min-height:270px;padding:32px}.prc-hero-art{width:35%;right:18px}.prc-banner .prc-fan{width:34%;right:12px}}
+@media(max-width:360px){.prc-wordmark{font-size:27px}.prc-hero{padding:24px 13px}.prc-banner{padding:20px 13px}.prc-banner .prc-wordmark{font-size:23px}.prc-side{width:56px}.prc-side-card{width:56px}}
+@media(prefers-reduced-motion:reduce){.prc-hero:before,.prc-banner:before,.prc-fan-card,.prc-fan-card:after,.prc-side-card,.prc-side-sheen{animation:none!important}}
