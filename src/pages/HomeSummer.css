@@ -171,3 +171,23 @@
 @media(min-width:760px){.pr-summer-home .ph-registration .ph-sign{min-height:220px;padding:24px}.pr-summer-home .ph-registration .ph-sign-copy{width:67%}}
 @media(max-width:350px){.pr-summer-home .ph-registration .ph-sign{min-height:195px;padding:15px 12px}.pr-summer-home .ph-registration .ph-sign-copy{width:72%;gap:6px}.pr-summer-home .ph-registration .ph-sign-copy>strong{font-size:21px}.pr-summer-home .ph-registration .ph-sign .ph-banner-art{width:33%}.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after{font-size:37px}.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{font-size:29px}}
 @media(prefers-reduced-motion:reduce){.pr-summer-home .ph-registration .ph-sign .ph-banner-art:before,.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after{animation:none!important}}
+
+/* Enrollment headline: make the audience, not an English slogan, the hero. */
+.pr-summer-home .ph-registration .ph-sign{container-type:inline-size;align-items:flex-start;min-height:226px;padding:18px 17px 20px}
+.pr-summer-home .ph-registration .ph-sign-copy{width:100%;margin-top:clamp(66px,20cqi,96px);gap:7px}
+.pr-summer-home .ph-registration .ph-sign-copy>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.pr-summer-home .ph-registration .ph-sign-copy>strong{max-width:90%;font-size:clamp(20px,6.4cqi,28px);line-height:1.1}
+.pr-summer-home .ph-registration .ph-sign-copy>small{max-width:90%}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art{width:100%;height:100%;right:0;top:0}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art:before{left:94%;top:52%;width:68%;height:100%;opacity:.28}
+.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after,
+.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{
+ display:block;content:"ADULTOS";inset:15px 12px auto 17px;
+ font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;
+ font-size:clamp(43px,17cqi,82px);font-weight:900;font-style:italic;letter-spacing:-.055em;
+ line-height:1.06;white-space:nowrap;transform:none;animation:none;
+ text-shadow:0 3px 0 #101810,0 8px 20px #0006;
+}
+.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{content:"KIDS";text-shadow:0 3px 0 #112c39,0 8px 20px #0006}
+@media(min-width:760px){.pr-summer-home .ph-registration .ph-sign{min-height:245px;padding:24px}.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after,.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{inset:19px 18px auto 24px}}
+@media(max-width:350px){.pr-summer-home .ph-registration .ph-sign{min-height:215px;padding:14px 12px 17px}.pr-summer-home .ph-registration .ph-sign .ph-banner-art:after,.pr-summer-home .ph-registration .ph-kids .ph-banner-art:after{inset:11px 8px auto 12px;font-size:clamp(37px,17cqi,55px)}}
