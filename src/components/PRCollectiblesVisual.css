@@ -56,14 +56,14 @@ body:has([data-pr-chat-composer]) .prc-side,body:has(input:focus) .prc-side,body
 .prc-explore-kicker{font-size:9px!important;font-weight:900;letter-spacing:.12em;color:#d9c5ff!important}
 .prc-explore-guide h2{font-size:19px;font-weight:900;color:#fff;margin:2px 0 4px;line-height:1.2}
 .prc-explore-guide p{font-size:12px;line-height:1.5;color:#ddd7e9}
-.prc-open-card,.prc-slot-details{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:190px;min-height:44px;padding:8px 5px;border-radius:12px;line-height:1.2;cursor:pointer;touch-action:manipulation}
-.prc-open-card{position:relative;overflow:hidden;isolation:isolate;color:#17131f;background:linear-gradient(115deg,#f9f7ff,#cdb7ff 48%,#eee5ff);border:1px solid #f2e8ff;box-shadow:0 2px 12px #aa8aff3b;font-size:clamp(9px,2.6vw,11px);font-weight:950;letter-spacing:.025em}
-.prc-open-card svg{width:15px;height:15px;flex:none}
-.prc-open-spark{font-size:15px;flex:none;color:#5f3eb4}
-.prc-open-card:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(110deg,transparent 30%,#fff9 49%,transparent 68%);transform:translateX(-120%);animation:prcSweep 3.8s ease-in-out 3}
+.prc-open-card,.prc-slot-details{display:flex;align-items:center;justify-content:center;gap:4px;width:auto;max-width:100%;min-height:28px;padding:4px 8px;border-radius:7px;line-height:1.2;cursor:pointer;touch-action:manipulation}
+.prc-open-card{color:#d9c9fa;background:#b6a0ef12;border:1px solid #b6a0ef30;font-size:10px;font-weight:750;letter-spacing:.015em}
+.prc-open-card svg{width:11px;height:11px;flex:none}
+.prc-open-spark{display:none}
+
 .prc-open-card:active,.prc-slot-details:active{transform:scale(.97)}
 .prc-open-card:focus-visible,.prc-slot-details:focus-visible{outline:2px solid #e4d8ff;outline-offset:3px}
-.prc-slot-details{color:#c5c0cf;background:#ffffff08;border:1px solid #ffffff18;font-size:10px;font-weight:700}
+.prc-slot-details{color:#b7b2c1;background:transparent;border:1px solid transparent;font-size:10px;font-weight:600}
 .prc-modal-hint{display:flex;align-items:center;justify-content:center;gap:8px;color:#e7d9ff;border:1px solid #b6a0ef40;background:#b6a0ef15;border-radius:14px;padding:11px 14px;font-size:12px;line-height:1.5;text-align:center;max-width:100%}
 .prc-modal-hint span{font-size:19px;flex:none}
 @keyframes prcExplorePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.13);filter:drop-shadow(0 0 6px #d9c5ff)}}
