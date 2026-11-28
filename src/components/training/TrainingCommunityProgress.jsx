@@ -1,13 +1,20 @@
 import {useEffect,useState} from 'react'
 import {supabase} from '../../lib/supabase'
 
-export default function TrainingCommunityProgress({month}){
+export default function TrainingCommunityProgress({month,compact=false}){
+ const [expanded,setExpanded]=useState(false)
  const [people,setPeople]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState('')
  useEffect(()=>{let alive=true;async function load(){const {data,error:e}=await supabase.rpc('pr_training_v2_community_progress',{p_month:month});if(!alive)return;if(e)setError('No se pudo actualizar el progreso del equipo.');else {setPeople(Array.isArray(data)?data:[]);setError('')}setLoading(false)}load();const timer=setInterval(load,60000);return()=>{alive=false;clearInterval(timer)}},[month])
  const active=people.filter(p=>Number(p.started??p.approved)>0)
  const inactive=people.filter(p=>Number(p.started??p.approved)===0)
  const completed=active.filter(p=>Number(p.percent)===100).length
  const average=people.length?Math.round(people.reduce((n,p)=>n+Number(p.percent||0),0)/people.length):0
+ if(compact)return <section aria-label="Progreso de tareas de la comunidad" className="mt-5 rounded-[26px] border border-[#FF2777]/30 bg-gradient-to-br from-[#281626] via-[#17171F] to-[#11141D] p-4">
+ <p className="text-[10px] font-black uppercase tracking-widest text-[#FF78AA]">AVANZAMOS JUNTOS</p><h2 className="mt-1 text-xl font-black italic uppercase">Así va nuestro equipo.</h2>
+ {loading?<p className="mt-3 text-xs text-white/60">Cargando avances…</p>:error?<p className="mt-3 text-xs text-amber-200">{error}</p>:<><div className="mt-4 flex items-center gap-4"><div className="relative grid h-24 w-24 shrink-0 place-items-center rounded-full" style={{background:'conic-gradient(#FF2777 '+average+'%,#3B293B 0)',boxShadow:'0 0 22px #FF277722'}}><div className="absolute inset-[7px] grid place-items-center rounded-full bg-[#211A25]"><div className="text-center"><strong className="text-2xl text-[#FF78AA]">{average}%</strong><p className="text-[9px] text-white/60">Promedio</p></div></div></div><div className="text-xs leading-6 text-white/70"><p><strong className="text-white">{active.length}</strong> en marcha</p><p><strong className="text-white">{completed}</strong> completaron</p><p>{people.length} alumnos con plan</p></div></div>
+ {active.length>0&&<><div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-8">{(expanded?active:active.slice(0,8)).map(p=><div key={p.id} className="min-w-0 text-center" title={[p.nombre,p.apellido].filter(Boolean).join(' ')+' · '+p.approved+'/'+p.total}><div className="mx-auto grid h-12 w-12 place-items-center rounded-full p-[3px]" style={{background:'conic-gradient(#C4FF24 '+Math.max(0,Math.min(100,Number(p.percent)||0))+'%,#534454 0)'}}>{p.foto?<img src={p.foto} alt="" loading="lazy" className="h-full w-full rounded-full border-2 border-[#211A25] object-cover"/>:<span className="grid h-full w-full place-items-center rounded-full bg-[#3A273B] text-sm font-black">{(p.nombre||'P')[0]}</span>}</div><p className="mt-1 text-[11px] font-black text-[#D8FF9B]">{p.percent}%</p><p className="truncate text-[10px] text-white/65">{p.nombre}</p></div>)}</div>{active.length>8&&<button className="mt-3 w-full rounded-xl border border-white/15 p-2 text-xs font-bold text-white/80" onClick={()=>setExpanded(v=>!v)}>{expanded?'Ver menos':'Ver todos los avances ('+active.length+')'}</button>}</>}
+ {!active.length&&<p className="mt-3 text-xs text-white/60">Todavía no hay entregas este mes.</p>}<p className="mt-3 text-[10px] leading-4 text-white/45">El porcentaje cuenta solo tareas aprobadas. El promedio incluye los planes asignados.</p></>}
+ </section>
  return <section aria-label="Progreso de tareas de la comunidad" className="mx-3 mt-6 overflow-hidden rounded-[28px] border border-[#FF2777]/30 bg-gradient-to-br from-[#281626] via-[#17171F] to-[#11141D] p-5 sm:p-7">
   <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#FF78AA]">PR TRAINING · NOS MOTIVAMOS ENTRE TODOS</p>
   <h2 className="mt-2 text-2xl font-black italic uppercase text-white">Así va nuestro equipo<span className="text-[#FF2777]">.</span></h2>
