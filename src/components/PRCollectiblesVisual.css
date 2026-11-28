@@ -48,3 +48,23 @@ body:has([data-pr-chat-composer]) .prc-side,body:has(input:focus) .prc-side,body
 @media(min-width:700px){.prc-hero{min-height:270px;padding:32px}.prc-hero-art{width:35%;right:18px}.prc-banner .prc-fan{width:34%;right:12px}}
 @media(max-width:360px){.prc-wordmark{font-size:27px}.prc-hero{padding:24px 13px}.prc-banner{padding:20px 13px}.prc-banner .prc-wordmark{font-size:23px}.prc-side{width:56px}.prc-side-card{width:56px}}
 @media(prefers-reduced-motion:reduce){.prc-hero:before,.prc-banner:before,.prc-fan-card,.prc-fan-card:after,.prc-side-card,.prc-side-sheen{animation:none!important}}
+
+/* Discoverable album actions: never overlay or obscure card artwork. */
+.prc-explore-guide{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid #b7a4f16b;border-radius:20px;background:radial-gradient(ellipse at 0% 0%,#a58be42b,transparent 65%),linear-gradient(125deg,#262031,#131219);box-shadow:0 0 18px #a58be415}
+.prc-explore-symbol{display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;border-radius:14px;background:#b6a0ef25;color:#e4d8ff;border:1px solid #b6a0ef50}
+.prc-explore-symbol svg{width:26px;height:26px;animation:prcExplorePulse 2.8s ease-in-out 3}
+.prc-explore-kicker{font-size:9px!important;font-weight:900;letter-spacing:.12em;color:#d9c5ff!important}
+.prc-explore-guide h2{font-size:19px;font-weight:900;color:#fff;margin:2px 0 4px;line-height:1.2}
+.prc-explore-guide p{font-size:12px;line-height:1.5;color:#ddd7e9}
+.prc-open-card,.prc-slot-details{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:190px;min-height:44px;padding:8px 5px;border-radius:12px;line-height:1.2;cursor:pointer;touch-action:manipulation}
+.prc-open-card{position:relative;overflow:hidden;isolation:isolate;color:#17131f;background:linear-gradient(115deg,#f9f7ff,#cdb7ff 48%,#eee5ff);border:1px solid #f2e8ff;box-shadow:0 2px 12px #aa8aff3b;font-size:clamp(9px,2.6vw,11px);font-weight:950;letter-spacing:.025em}
+.prc-open-card svg{width:15px;height:15px;flex:none}
+.prc-open-spark{font-size:15px;flex:none;color:#5f3eb4}
+.prc-open-card:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(110deg,transparent 30%,#fff9 49%,transparent 68%);transform:translateX(-120%);animation:prcSweep 3.8s ease-in-out 3}
+.prc-open-card:active,.prc-slot-details:active{transform:scale(.97)}
+.prc-open-card:focus-visible,.prc-slot-details:focus-visible{outline:2px solid #e4d8ff;outline-offset:3px}
+.prc-slot-details{color:#c5c0cf;background:#ffffff08;border:1px solid #ffffff18;font-size:10px;font-weight:700}
+.prc-modal-hint{display:flex;align-items:center;justify-content:center;gap:8px;color:#e7d9ff;border:1px solid #b6a0ef40;background:#b6a0ef15;border-radius:14px;padding:11px 14px;font-size:12px;line-height:1.5;text-align:center;max-width:100%}
+.prc-modal-hint span{font-size:19px;flex:none}
+@keyframes prcExplorePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.13);filter:drop-shadow(0 0 6px #d9c5ff)}}
+@media(prefers-reduced-motion:reduce){.prc-explore-symbol svg,.prc-open-card:before{animation:none!important}.prc-open-card:active,.prc-slot-details:active{transform:none}}
