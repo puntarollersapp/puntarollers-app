@@ -444,7 +444,7 @@ function PRTareasHome({user,coneBanner}){
   <div className="relative mx-auto mt-6 inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-[#C4FF24]/30 bg-[#C4FF24]/[.08] px-4 py-2.5 text-center text-[10px] font-black uppercase tracking-[.08em] text-[#E0FFB0]"><span className="pr-tareas-beacon h-2 w-2 shrink-0 rounded-full bg-[#C4FF24]"/> Un ejercicio a la vez · A tu ritmo</div>
  </header>
   {decemberDesign&&<TrainingMonthComparison month={month} done={done} total={tasks.length} inReview={inReview} toCorrect={toCorrect}/>}
-  {privateDecember&&<div className="mt-4 rounded-xl border border-amber-300/35 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100"><strong>Vista privada · diciembre 2026</strong><br/>Estás viendo el plan de avanzados en la pantalla principal. No se generan entregas, códigos reales ni recompensas y noviembre se conserva.</div>}
+  {privateDecember&&<div className="mt-4 rounded-xl border border-amber-300/35 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100"><strong>Vista privada · diciembre 2026</strong><br/>Estás viendo el plan de avanzados en la pantalla principal. Podés probar invitaciones y códigos ficticios sin modificar el historial ni enviar avisos reales.</div>}
   {!decemberDesign&&<>  <div className="mt-4 grid grid-cols-3 gap-2 rounded-[22px] border border-white/10 bg-gradient-to-r from-[#20242A] to-[#181B20] p-3 text-center shadow-[0_12px_32px_rgba(0,0,0,.14)] sm:p-4">
    <div><p className="text-xl font-black text-[#C4FF24]">{String(done).padStart(2,'0')}</p><p className="text-[10px] text-white/60">Aprobadas</p></div>
    <div className="border-x border-white/10"><p className="text-xl font-black text-white">{String(inReview).padStart(2,'0')}</p><p className="text-[10px] text-white/60">En revisión</p></div>
@@ -502,7 +502,7 @@ function PRTareasHome({user,coneBanner}){
     {chartPoints.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r="4.5" fill="#A1F1E6" stroke="#152536" strokeWidth="2"/>{i>0&&<text x={p.x} y="173" textAnchor="middle" fontSize="10" fontWeight="700" fill="#B5D0E1">{String(i).padStart(2,'0')}</text>}</g>)}
    </svg><div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-sky-200/60"><span>Tarea 01</span><span>{done} aprobadas</span><span>Tarea 06</span></div>
   </section></>}
-  {decemberDesign&&<><TareasDuo onComplete={refresh} focusDuty={focusDuty}/><TrainingTeam onComplete={refresh}/></>}
+  {decemberDesign&&<><TareasDuo onComplete={refresh} focusDuty={focusDuty} privatePreview={privateDecember}/><TrainingTeam onComplete={refresh} privatePreview={privateDecember}/></>}
   <TrainingCommunityProgress month={month} compact={decemberDesign}/>
   {decemberDesign&&<details className="pr-task-help mt-5 rounded-2xl border border-white/10 bg-white/5 p-4"><summary className="cursor-pointer text-sm font-black">Ayuda y material de entrenamiento</summary>
   <nav className="mt-5 rounded-[24px] border border-[#C4FF24]/25 bg-[#111C17] p-3 shadow-[0_12px_38px_rgba(0,0,0,.3)]" aria-label="Menú de tareas">
