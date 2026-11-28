@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { PUBLISHED_ART, FIRST_BATCH, SECOND_BATCH, frontFor, officialBack } from '../src/lib/prCollectiblesArt.js'
+import { PUBLISHED_ART, FIRST_BATCH, SECOND_BATCH, frontFor, officialBack, albumSlots, visualRarity } from '../src/lib/prCollectiblesArt.js'
 import { PR_COLLECTIBLES_CATALOG } from '../src/lib/prCollectiblesCatalog.js'
 assert.equal(FIRST_BATCH.length,10)
 assert.equal(SECOND_BATCH.length,10)
@@ -24,3 +24,14 @@ for (const code of [...PUBLISHED_ART,'PR-BACK']) {
  console.log(code+' '+w+'x'+h)
 }
 console.log('PR Collectibles: 20 distinct PNG fronts and universal back verified')
+
+// Even in a mixed collection, unpublished and locked positions never disappear or move.
+const allNumbers=Array.from({length:50},(_,i)=>i+1)
+const slots=PR_COLLECTIBLES_CATALOG.map(c=>({...c,category:visualRarity(c),upcoming:!frontFor(c.code),locked:true})).reverse()
+assert.deepEqual(albumSlots(slots).map(c=>c.number),allNumbers)
+assert.deepEqual(albumSlots(slots.map(c=>({...c,locked:false}))).map(c=>c.number),allNumbers)
+assert.equal(albumSlots(slots).filter(c=>c.upcoming).length,30)
+for(const category of ['plata','holo','oro','ruby','diamond','navidad']){
+ assert.deepEqual(albumSlots(slots,category).map(c=>c.number),slots.filter(c=>c.category===category).map(c=>c.number).sort((a,b)=>a-b))
+}
+console.log('PR Collectibles: all 50 numbered album slots and rarity filters verified')
