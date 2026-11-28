@@ -113,6 +113,10 @@ export default function Cartas() {
           <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
           {user?.role==='admin'&&<Link to="/admin/collectibles" className="ml-4 text-xs font-bold text-[#FF79A5] underline">Administrar</Link>}
         </section>
+        <section className="prc-explore-guide" aria-label="Cómo explorar tus cartas">
+          <span className="prc-explore-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path d="M12 7v10M7 12h10"/></svg></span>
+          <div><p className="prc-explore-kicker">EXPERIENCIA HOLOGRÁFICA</p><h2>¡Tocá tus cartas!</h2><p>Tocá una carta desbloqueada para verla en grande. Incliná el celular o mové el dedo sobre la carta para descubrir sus reflejos. También podés ver su dorso.</p></div>
+        </section>
         <div className="prc-filters" role="group" aria-label="Filtro de cartas">
           {TABS.map(([k, l]) => <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}
             className="prc-filter">{l}</button>)}
@@ -123,7 +127,7 @@ export default function Cartas() {
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">{[0,1,2,3].map(i => <div key={i} className="aspect-[5/7] w-full max-w-[190px] animate-pulse rounded-[22px] bg-white/[.05]"/>)}</div>
         ) : shown.length ? (
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">
-            {shown.map(c => <div key={c.id} className="flex w-full min-w-0 flex-col items-center gap-2"><HoloCard size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={viewLocked(c)} onClick={() => openCard(c.id)}/><span className="text-[10px] font-bold tabular-nums tracking-widest text-white/55">PR-{String(c.number).padStart(3,'0')}</span></div>)}
+            {shown.map(c => <div key={c.id} className="flex w-full min-w-0 flex-col items-center gap-2"><HoloCard size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={viewLocked(c)} onClick={() => openCard(c.id)}/><span className="text-[10px] font-bold tabular-nums tracking-widest text-white/55">PR-{String(c.number).padStart(3,'0')}</span>{!viewLocked(c)?<button type="button" className="prc-open-card" aria-label={'Ver '+c.title+' en grande con efecto holográfico'} onClick={()=>openCard(c.id)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg><span>VER EN GRANDE</span><span className="prc-open-spark" aria-hidden="true">✦</span></button>:<button type="button" className="prc-slot-details" aria-label={'Ver detalles de '+c.title} onClick={()=>openCard(c.id)}>{c.upcoming?'Próximamente · info':'Cómo conseguirla'} <span aria-hidden="true">›</span></button>}</div>)}
           </div>
         ) : !state.error && (
           <section className="rounded-[28px] border border-white/[.08] bg-white/[.025] p-6 text-center">
@@ -143,7 +147,7 @@ export default function Cartas() {
               back={current.upcoming ? <><h4>Próximamente</h4><p>{current.earned?'Tu logro ya está registrado. La carta estará disponible cuando se publique el diseño.':'Esta carta forma parte de la colección y se publicará próximamente.'}</p></> : current.locked ? <><h4>Carta bloqueada</h4><p>{current.description || 'Todavía no la conseguiste.'}</p></> : <><h4>{current.title}</h4>{current.description && <p>{current.description}</p>}<small>{dateLabel(current.date)}{current.by ? ' · Otorgada por ' + current.by : ''}</small></>}/>
             {flipped&&current.backArt&&!viewLocked(current)&&<div className="w-full rounded-2xl bg-white/5 p-4 text-center text-xs text-white/75"><p className="font-bold text-white">{current.title}</p><p className="mt-1">{current.description}</p><p className="mt-1">{dateLabel(current.date)}{current.by?' · Otorgada por '+current.by:''}</p></div>}
             {preview&&current.locked&&!current.upcoming&&<p className="text-center text-[11px] text-amber-200">Vista de diseño · este logro aún no está conseguido.</p>}
-            {motionDenied&&!viewLocked(current)&&<p className="text-center text-[11px] text-white/55">Mové la carta con el dedo si el sensor de inclinación no está disponible.</p>}
+            {!viewLocked(current)&&!flipped&&<div className="prc-modal-hint"><span aria-hidden="true">✦</span><p>{motionDenied?'Mové el dedo sobre la carta para ver los reflejos.':'Incliná tu celular o mové el dedo sobre la carta para ver la magia holográfica.'}</p></div>}
             {msg && <p className="text-center text-xs text-white/70" role="status">{msg}</p>}
             <div className="flex w-full flex-wrap justify-center gap-2">
               <button type="button" onClick={() => setFlipped(v => !v)} className="min-h-[44px] rounded-full bg-white/10 px-5 text-xs font-black uppercase tracking-widest text-white active:scale-95">{flipped ? 'Ver frente' : 'Ver dorso'}</button>
