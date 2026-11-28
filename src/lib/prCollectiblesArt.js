@@ -9,3 +9,8 @@ export function visualRarity(card){
  if(card.rarity==='legendary')return [36,38].includes(card.number)?'diamond':'ruby'
  return ({common:'plata',holo:'holo',epic:'oro',limited:'navidad'})[card.rarity]||'plata'
 }
+
+// The album always keeps every catalog position, regardless of unlock or art status.
+export function albumSlots(cards, category='todas'){
+ return cards.filter(c=>category==='todas'||c.category===category).sort((a,b)=>a.number-b.number)
+}

@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import HoloCard, { HOLO_CSS, motionNeedsPermission, requestMotionPermission } from '../components/HoloCard'
 import { dateLabel, shareOrDownloadCard, useCardsAccess } from '../lib/cartas'
 import { buildCollectibles } from '../lib/prCollectiblesAlbum'
+import { albumSlots } from '../lib/prCollectiblesArt'
 
 const TABS = [['todas','Todas'],['plata','Classic'],['holo','Prism'],['oro','Gold'],['ruby','Rubí'],['diamond','Diamond'],['navidad','Limited Edition']]
 const RARITY_TONE={plata:"#d2d5e3",holo:"#74d5ef",oro:"#f6cc72",ruby:"#ff6c95",diamond:"#b9e7ff",navidad:"#cbb5ff"}
@@ -60,7 +61,7 @@ export default function Cartas() {
   const limitedTotal=total-mainTotal
   const published=cards.filter(c=>!c.upcoming).length
   const progress=total?owned/total*100:0
-  const shown=cards.filter(c=>(!preview||!c.upcoming)&&(tab==='todas'||c.category===tab)).sort((a,b)=>Number(a.upcoming)-Number(b.upcoming)||a.number-b.number)
+  const shown=albumSlots(cards,tab)
   const viewLocked=c=>c.locked&&!(preview&&!c.upcoming)
   const current=open?cards.find(c=>c.id===open):null
   const next=cards.filter(c=>c.locked&&!c.upcoming&&c.countsTowardMain&&c.progress!==null&&c.progress<1).sort((a,b)=>b.progress-a.progress)[0]
@@ -107,8 +108,8 @@ export default function Cartas() {
           <p className="mt-3 text-xs text-white/60">{permanent}/{mainTotal} colección principal · {limited}/{limitedTotal} ediciones limitadas</p>
           <div className="mt-4 grid grid-cols-3 gap-2">{TABS.slice(1).map(([key,label])=><div key={key} className="prc-rarity-stat" style={{'--tone':RARITY_TONE[key]}}><strong>{cards.filter(c=>c.category===key&&!c.locked).length}</strong><p>{label}</p></div>)}</div>
           <p className="mt-3 text-xs leading-5 text-white/60">Coleccioná con tus asistencias, kilómetros y experiencias. {published} diseños publicados · {total-published} por descubrir.</p>
-          {isOwner&&<button type="button" aria-pressed={preview} onClick={()=>{setDesignPreview(v=>!v);setOpen(null);setTab('todas')}} className={"mt-4 block w-full rounded-xl border px-4 py-3 text-xs font-black "+(preview?"border-amber-300/60 bg-amber-300/10 text-amber-200":"border-white/15 bg-white/5 text-white")}>{preview?`Salir de la vista de diseño (${published} cartas)`:`Vista de diseño · probar los ${published} frentes`}</button>}
-          {preview&&<p className="mt-2 text-[10px] text-amber-200/80">Vista exclusiva del administrador. No otorga cartas ni modifica los logros reales.</p>}
+          {isOwner&&<button type="button" aria-pressed={preview} onClick={()=>{setDesignPreview(v=>!v);setOpen(null);setTab('todas')}} className={"mt-4 block w-full rounded-xl border px-4 py-3 text-xs font-black "+(preview?"border-amber-300/60 bg-amber-300/10 text-amber-200":"border-white/15 bg-white/5 text-white")}>{preview?`Salir de la vista de diseño`:`Vista de diseño · probar los ${published} frentes`}</button>}
+          {preview&&<p className="mt-2 text-[10px] text-amber-200/80">Vista exclusiva del administrador. Los 50 espacios conservan su posición; solo se previsualizan los frentes publicados. No otorga cartas ni modifica los logros reales.</p>}
           <Link to="/app/insignias" className="mt-4 inline-block text-xs text-white/65 underline">Ver mis insignias</Link>
           {user?.role==='admin'&&<Link to="/admin/collectibles" className="ml-4 text-xs font-bold text-[#FF79A5] underline">Administrar</Link>}
         </section>
@@ -116,12 +117,13 @@ export default function Cartas() {
           {TABS.map(([k, l]) => <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}
             className="prc-filter">{l}</button>)}
         </div>
+        <p className="text-xs text-white/60" aria-live="polite">{tab==='todas'?`${total} espacios · orden oficial 001–050`:`${shown.length} espacios de esta rareza · numeración original`}</p>
         {state.error && <div className="rounded-2xl bg-rose-500/15 px-4 py-3 text-xs text-rose-200" role="alert">{state.error} <button type="button" onClick={() => setRetry(v => v + 1)} className="ml-2 font-bold underline">Reintentar</button></div>}
         {state.loading ? (
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">{[0,1,2,3].map(i => <div key={i} className="aspect-[5/7] w-full max-w-[190px] animate-pulse rounded-[22px] bg-white/[.05]"/>)}</div>
         ) : shown.length ? (
           <div className="grid grid-cols-2 justify-items-center gap-x-3 gap-y-6">
-            {shown.map(c => <HoloCard key={c.id} size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={viewLocked(c)} onClick={() => openCard(c.id)}/>)}
+            {shown.map(c => <div key={c.id} className="flex w-full min-w-0 flex-col items-center gap-2"><HoloCard size="grid" rarity={c.rarity} title={c.title} subtitle={c.subtitle} art={c.art} frontArt={c.frontArt} backArt={c.backArt} upcoming={c.upcoming} emoji={c.emoji} number={c.number} total={c.total} locked={viewLocked(c)} onClick={() => openCard(c.id)}/><span className="text-[10px] font-bold tabular-nums tracking-widest text-white/55">PR-{String(c.number).padStart(3,'0')}</span></div>)}
           </div>
         ) : !state.error && (
           <section className="rounded-[28px] border border-white/[.08] bg-white/[.025] p-6 text-center">
@@ -140,7 +142,7 @@ export default function Cartas() {
               stats={current.locked ? [] : [{ label: 'CONSEGUIDA', value: dateLabel(current.date) || '—' }]}
               back={current.upcoming ? <><h4>Próximamente</h4><p>{current.earned?'Tu logro ya está registrado. La carta estará disponible cuando se publique el diseño.':'Esta carta forma parte de la colección y se publicará próximamente.'}</p></> : current.locked ? <><h4>Carta bloqueada</h4><p>{current.description || 'Todavía no la conseguiste.'}</p></> : <><h4>{current.title}</h4>{current.description && <p>{current.description}</p>}<small>{dateLabel(current.date)}{current.by ? ' · Otorgada por ' + current.by : ''}</small></>}/>
             {flipped&&current.backArt&&!viewLocked(current)&&<div className="w-full rounded-2xl bg-white/5 p-4 text-center text-xs text-white/75"><p className="font-bold text-white">{current.title}</p><p className="mt-1">{current.description}</p><p className="mt-1">{dateLabel(current.date)}{current.by?' · Otorgada por '+current.by:''}</p></div>}
-            {preview&&current.locked&&<p className="text-center text-[11px] text-amber-200">Vista de diseño · este logro aún no está conseguido.</p>}
+            {preview&&current.locked&&!current.upcoming&&<p className="text-center text-[11px] text-amber-200">Vista de diseño · este logro aún no está conseguido.</p>}
             {motionDenied&&!viewLocked(current)&&<p className="text-center text-[11px] text-white/55">Mové la carta con el dedo si el sensor de inclinación no está disponible.</p>}
             {msg && <p className="text-center text-xs text-white/70" role="status">{msg}</p>}
             <div className="flex w-full flex-wrap justify-center gap-2">
